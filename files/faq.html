@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ — Global Bestie | USA Products Delivery Pakistan</title>
+<meta name="description" content="Common questions about ordering USA products from Global Bestie Pakistan. Delivery time, payment methods, authenticity guarantee, and more.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#FFD1D3;--pink-light:#FFF0F1;--pink-mid:#F4A0A5;--pink-deep:#C4525A;--pink-dark:#8B2E34;
+  --ink:#1A1015;--ink2:#2A1E20;--ink3:#3A2830;
+  --bg:#FFF8F9;--bg2:#FFF0F1;--card:#FFFFFF;
+  --muted:#8B6E72;--muted2:#BDA8AA;
+  --border:#FFE4E6;--border2:#F4CDD0;
+  --wa:#25D366;
+  --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
+.announce-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 28s linear infinite;padding:0 2rem;align-items:center}
+.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.15)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.35rem;font-weight:500;letter-spacing:0.5px;cursor:pointer;text-decoration:none}
+.logo span{color:var(--pink-mid)}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:#8A7474;font-size:0.67rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s;text-decoration:none}
+.nav-links a:hover,.nav-links a.active{color:var(--pink)}
+.nav-right{display:flex;gap:0.8rem;align-items:center}
+.wa-nav{background:transparent;color:var(--wa);font-size:0.65rem;font-weight:500;padding:5px 14px;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.wa-nav:hover{background:rgba(37,211,102,0.08)}
+.cart-link{color:var(--pink);font-size:0.67rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--pink)}
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:200;flex-direction:column;padding:5rem 2rem 2rem;gap:0}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0;text-decoration:none}
+.mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
+.page-hero{background:var(--ink2);padding:4rem 2rem;text-align:center;border-bottom:1px solid rgba(196,82,90,0.12);position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 100% at 50% 100%,rgba(196,82,90,0.06) 0%,transparent 70%)}
+.page-eyebrow{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);display:block;margin-bottom:0.8rem;position:relative}
+.page-title{font-family:'Cormorant Garamond',serif;color:#fff;font-size:clamp(2.2rem,4vw,3.2rem);font-weight:400;line-height:1.15;position:relative}
+.page-sub{color:#5A4A4C;font-size:0.82rem;margin-top:0.8rem;position:relative}
+
+/* ── FAQ CONTENT ── */
+.faq-wrap{max-width:1100px;margin:0 auto;padding:5rem 2rem}
+.faq-cols{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem}
+.faq-group-title{font-size:0.6rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+.faq-item{border-bottom:1px solid var(--border);overflow:hidden;transition:padding-left 0.2s}
+.faq-item.open{border-left:2px solid var(--pink-deep);padding-left:0.8rem}
+.faq-q{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 0;cursor:pointer;gap:1rem}
+.faq-q span{font-size:0.82rem;font-weight:500;color:var(--ink);line-height:1.4;transition:color 0.2s}
+.faq-item.open .faq-q span{color:var(--pink-deep)}
+.faq-icon{font-size:0.75rem;color:var(--muted2);transition:transform 0.25s,color 0.2s;flex-shrink:0}
+.faq-item.open .faq-icon{transform:rotate(180deg);color:var(--pink-deep)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.3s ease}
+.faq-item.open .faq-a{max-height:200px}
+.faq-a p{font-size:0.78rem;color:var(--muted);line-height:1.8;padding-bottom:1rem}
+
+/* ── STILL HAVE QUESTIONS ── */
+.faq-cta{background:var(--ink2);padding:4rem 2rem;text-align:center;border-top:1px solid rgba(196,82,90,0.12)}
+.faq-cta h3{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.8rem;font-weight:400;margin-bottom:0.5rem}
+.faq-cta p{color:#5A4A4C;font-size:0.8rem;margin-bottom:1.8rem;line-height:1.8}
+.btn-wa-lg{background:var(--wa);color:#fff;padding:0.8rem 2.5rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:opacity 0.2s;display:inline-block;text-decoration:none}
+.btn-wa-lg:hover{opacity:0.9}
+
+/* ── FOOTER ── */
+.footer{background:var(--ink);padding:3.5rem 2rem 1.5rem}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
+.footer-logo span{color:var(--pink-mid)}
+.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem}
+.footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
+.footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
+.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
+.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;text-decoration:none}
+.footer-col a:hover{color:var(--pink)}
+.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+@media(max-width:768px){
+  .nav-links,.wa-nav{display:none}
+  .hamburger{display:flex}
+  .faq-cols{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
+  .faq-wrap{padding:3rem 1.5rem}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+  nav{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<nav>
+  <a class="logo" href="index.html">Global <span>Bestie</span></a>
+  <div class="nav-links">
+    <a href="index.html">Women</a>
+    <a href="index.html">Men</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a href="policy.html">Policy</a>
+  </div>
+  <div class="nav-right">
+    <div class="wa-nav" onclick="openWA()">WhatsApp</div>
+    <a href="index.html" class="cart-link">Cart</a>
+    <div class="hamburger" onclick="openMobileNav()"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <a href="index.html">Women's Collection</a>
+  <a href="index.html">Men's Collection</a>
+  <a href="about.html">About Us</a>
+  <a href="contact.html">Contact</a>
+  <a href="faq.html">FAQ</a>
+  <a href="policy.html">Policy</a>
+  <a onclick="openWA()">WhatsApp Us</a>
+</div>
+
+<div class="page-hero">
+  <span class="page-eyebrow">Frequently Asked</span>
+  <h1 class="page-title">Got questions?</h1>
+  <p class="page-sub">Everything you need to know about ordering from Global Bestie.</p>
+</div>
+
+<div class="faq-wrap">
+  <div class="faq-cols">
+    <div>
+      <div class="faq-group-title">Ordering &amp; Payment</div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>How do I place an order?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Browse our collection, add items to your cart, fill in your details at checkout, and transfer the payment via bank transfer. WhatsApp us your payment screenshot to confirm.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>What payment methods do you accept?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>We accept bank transfer to HBL. Account details are shown at checkout. All payments are in PKR — no foreign currency conversion needed.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Is bank transfer safe?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Yes. We use a verified HBL account. Always save your transfer screenshot and share it with us on WhatsApp to confirm your order immediately.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Can I cancel my order?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Orders can be cancelled before we place them with our US supplier (typically within 24 hours). After that, the advance is non-refundable as the order has been placed.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Why can't I get a Google rate conversion?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Our PKR prices already include import duties, international shipping, and our service fee — all bundled in. A Google rate comparison doesn't account for these costs, so it's not an accurate comparison.</p></div>
+      </div>
+    </div>
+    <div>
+      <div class="faq-group-title">Shipping &amp; Products</div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>How long does delivery take?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Preorders take approximately 4 weeks from order confirmation. In-stock items ship within 3–5 business days within Pakistan after payment is confirmed.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Do you deliver to my city?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Yes! We deliver to all major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you're unsure about your area.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Are your products authentic?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Absolutely. We source every product directly from US retailers — no third parties, no copies. Authenticity is our core promise. If it's not real, we won't sell it.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Do shoes come with the original box?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Shoes are shipped without the original box by default to keep shipping costs low. If you need the box, WhatsApp us before ordering — there may be an additional charge.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFAQ(this)"><span>Can I request a specific product?</span><span class="faq-icon">›</span></div>
+        <div class="faq-a"><p>Yes! WhatsApp us with the product you're looking for. We'll check availability and pricing. Custom sourcing is available for most US retail brands.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="faq-cta">
+  <h3>Still have a question?</h3>
+  <p>We're on WhatsApp and reply within 2 hours during business hours.</p>
+  <button class="btn-wa-lg" onclick="openWA()">Chat on WhatsApp</button>
+</div>
+
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Global <span>Bestie</span></div>
+      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-socials">
+        <div class="footer-social" onclick="openWA()">WhatsApp</div>
+        <div class="footer-social">Instagram</div>
+      </div>
+      <div class="footer-copy">© 2026 Global Bestie</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Shop</div>
+      <a href="index.html">Women's Collection</a>
+      <a href="index.html">Men's Collection</a>
+      <a href="index.html">New Arrivals</a>
+      <a href="index.html">Bags &amp; Accessories</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Help</div>
+      <a href="faq.html">FAQs</a>
+      <a href="policy.html">Shipping &amp; Policy</a>
+      <a href="policy.html">Order Policy</a>
+      <a onclick="openWA()">WhatsApp Us</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">About</div>
+      <a href="about.html">Our Story</a>
+      <a href="about.html">Authenticity Promise</a>
+      <a href="contact.html">Contact Us</a>
+      <a href="policy.html">Terms &amp; Conditions</a>
+    </div>
+  </div>
+  <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let WA_NUMBER = '03214992211';
+function openWA(){window.open('https://wa.me/'+WA_NUMBER,'_blank');}
+function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.body.style.overflow='';}
+function toggleFAQ(el){
+  const item=el.parentElement;
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+document.querySelectorAll('.nav-links a').forEach(a=>{
+  if(a.getAttribute('href')===location.pathname.split('/').pop()) a.classList.add('active');
+});
+
+(function(){
+  var d=localStorage.getItem('gb_content_faq');
+  if(!d)return;
+  try{
+    var c=JSON.parse(d);
+    if(!c.items)return;
+    var items=document.querySelectorAll('.faq-item');
+    c.items.forEach(function(item,i){
+      if(!items[i])return;
+      var qSpan=items[i].querySelector('.faq-q span');
+      var aP=items[i].querySelector('.faq-a p');
+      if(qSpan&&item.q)qSpan.textContent=item.q;
+      if(aP&&item.a)aP.textContent=item.a;
+    });
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

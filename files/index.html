@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Bestie — USA Products Delivered to Pakistan</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&family=Pacifico&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#FFD1D3;--pink-light:#FFF0F1;--pink-mid:#F4A0A5;--pink-deep:#C4525A;--pink-dark:#8B2E34;
+  --ink:#1A1015;--ink2:#2A1E20;--ink3:#3A2830;
+  --bg:#FFF8F9;--bg2:#FFF0F1;--card:#FFFFFF;
+  --muted:#8B6E72;--muted2:#BDA8AA;
+  --border:#FFE4E6;--border2:#F4CDD0;
+  --sage:#2E5E47;--sage-light:#E8F3ED;
+  --sienna:#8B4513;--sienna-light:#FAF0E6;
+  --wa:#25D366;
+  --shadow:0 1px 4px rgba(26,16,21,0.06);
+  --shadow-md:0 4px 20px rgba(26,16,21,0.10);
+  --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ── ANNOUNCEMENT BAR ── */
+.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
+.announce-track{display:flex;gap:4rem;white-space:nowrap;animation:marquee 40s linear infinite;padding:0 2rem;align-items:center}
+.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.15)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.35rem;font-weight:500;letter-spacing:0.5px;cursor:pointer}
+.logo span{color:var(--pink-mid)}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:#8A7474;font-size:0.67rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s}
+.nav-links a:hover,.nav-links a.active{color:var(--pink)}
+.nav-right{display:flex;gap:0.8rem;align-items:center}
+.wa-nav{background:transparent;color:var(--wa);font-size:0.65rem;font-weight:500;padding:5px 14px;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.wa-nav:hover{background:rgba(37,211,102,0.08)}
+.cart-wrap{position:relative;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--pink);font-size:0.67rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase}
+.cart-badge{background:var(--pink-deep);color:#fff;font-size:9px;font-weight:600;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--pink);transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:200;flex-direction:column;padding:5rem 2rem 2rem;gap:0}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0}
+.mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
+
+/* ── HERO ── */
+.hero{background:var(--ink2);padding:6rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 20% 50%,rgba(196,82,90,0.08) 0%,transparent 70%)}
+.hero::after{content:'';position:absolute;top:0;right:0;bottom:0;left:40%;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(196,82,90,0.015) 40px,rgba(196,82,90,0.015) 41px);pointer-events:none}
+.hero-left{max-width:520px;position:relative;z-index:1}
+.hero-tag{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem;display:block}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.8rem,5vw,4rem);color:#fff;line-height:1.15;margin-bottom:1rem;font-weight:400;letter-spacing:0.3px}
+.hero-title em{color:var(--pink-mid);font-style:italic}
+.hero-sub{color:#6A5460;font-size:0.82rem;line-height:1.85;margin-bottom:1.8rem;font-weight:300}
+.hero-btns{display:flex;gap:0.8rem;flex-wrap:wrap}
+.btn-primary{background:var(--pink-deep);color:#fff;padding:0.75rem 2.2rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s}
+.btn-primary:hover{background:var(--pink-dark)}
+.btn-wa{background:transparent;color:var(--wa);padding:0.75rem 1.8rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s}
+.btn-wa:hover{background:rgba(37,211,102,0.08)}
+.hero-stats{display:flex;flex-direction:row;gap:0;position:relative;z-index:1;border:1px solid rgba(196,82,90,0.2)}
+.hstat{flex:1;background:rgba(255,255,255,0.02);padding:1.1rem 1.3rem;border-right:1px solid rgba(196,82,90,0.1);text-align:center}
+.hstat:last-child{border-right:none}
+.hstat-label{font-size:0.56rem;color:rgba(196,82,90,0.5);font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.hstat-val{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;color:var(--pink);letter-spacing:0.2px}
+
+/* ── SHARED SECTION ELEMENTS ── */
+.sec-divider{width:40px;height:1px;background:rgba(196,82,90,0.3);margin:0 auto}
+.section-eyebrow{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-deep);display:block;text-align:center}
+.section-heading{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,3vw,2.5rem);font-weight:400;text-align:center;line-height:1.2;color:var(--ink)}
+.section-subtext{font-size:0.8rem;color:var(--muted);text-align:center;line-height:1.85;max-width:520px;margin-left:auto;margin-right:auto}
+
+/* ── CATEGORY EDITORIAL ── */
+.cat-editorial{background:var(--bg2);padding:5rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cat-editorial-inner{max-width:1100px;margin:0 auto}
+.cat-editorial .section-eyebrow{margin-bottom:0.8rem}
+.cat-editorial .section-heading{margin-bottom:2.5rem}
+.cat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border2)}
+.cat-card{position:relative;height:320px;overflow:hidden;cursor:pointer;display:flex;align-items:flex-end}
+.cat-card-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:6rem;transition:transform 0.4s ease}
+.cat-card:hover .cat-card-bg{transform:scale(1.06)}
+.cat-card-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,16,21,0.88) 0%,rgba(26,16,21,0.2) 60%,transparent 100%)}
+.cat-card-content{position:relative;z-index:1;padding:1.5rem;width:100%}
+.cat-card-name{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:400;color:#fff;margin-bottom:6px;letter-spacing:0.3px}
+.cat-card-link{font-size:0.62rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+
+/* ── PRICE/CATEGORY BANNER ── */
+.price-banner{background:var(--ink);border-bottom:1px solid rgba(196,82,90,0.2);padding:0.65rem 2rem;display:flex;align-items:center;justify-content:center;gap:1.2rem;flex-wrap:wrap}
+.pb-item{font-size:0.62rem;font-weight:400;color:#4A3C3E;letter-spacing:1.5px;text-transform:uppercase}
+.pb-dot{width:3px;height:3px;background:rgba(196,82,90,0.35);border-radius:50%;display:inline-block}
+
+/* ── PREORDER BANNER ── */
+.preorder-banner{background:var(--sienna-light);border:1px solid #DFC4A8;padding:1rem 1.4rem;margin:1.2rem auto;max-width:1100px;display:flex;align-items:flex-start;gap:1rem}
+.pb-content h4{font-size:0.75rem;font-weight:600;color:var(--sienna);margin-bottom:0.3rem;letter-spacing:0.3px}
+.pb-content p{font-size:0.72rem;color:#7A3810;line-height:1.65}
+.pb-content p b{color:var(--sienna);font-weight:600}
+
+/* ── GENDER TABS ── */
+.gender-tabs{display:flex;max-width:1100px;margin:0 auto;padding:1.4rem 2rem 0;gap:0}
+.gtab{flex:1;padding:0.85rem;text-align:center;font-size:0.65rem;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);transition:all 0.2s;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.gtab.active-women{border-bottom:2px solid var(--pink-deep);color:var(--pink-dark);background:var(--pink-light)}
+.gtab.active-men{border-bottom:2px solid var(--ink);color:var(--ink);background:var(--bg2)}
+
+/* ── CATEGORY PILLS ── */
+.cats-row{display:flex;gap:0.5rem;padding:1rem 2rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
+.cats-row::-webkit-scrollbar{display:none}
+.cat-pill{display:flex;align-items:center;gap:5px;padding:0.38rem 1rem;background:var(--card);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:0.62rem;font-weight:500;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+.cat-pill:hover,.cat-pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ── PRODUCTS SECTION ── */
+.section{padding:0.5rem 2rem 2.5rem;max-width:1100px;margin:0 auto}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;letter-spacing:0.3px}
+.section-sub{font-size:0.65rem;color:var(--muted2);margin-top:3px;letter-spacing:0.5px}
+
+/* ── PRODUCT GRID ── */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border)}
+.prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:box-shadow 0.2s,transform 0.2s}
+.prod-card:hover{box-shadow:0 8px 32px rgba(26,16,21,0.12);z-index:1;position:relative;transform:translateY(-3px)}
+.prod-img{height:190px;display:flex;align-items:center;justify-content:center;position:relative;font-size:2.8rem;background:var(--bg2)}
+.prod-img img{width:100%;height:100%;object-fit:cover}
+.prod-body{padding:1rem}
+.prod-cat{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);margin-bottom:4px}
+.prod-cat.men-cat{color:var(--muted)}
+.prod-name{font-size:0.88rem;font-weight:500;margin-bottom:2px;color:var(--ink);line-height:1.35}
+.prod-brand{font-size:0.68rem;color:var(--muted2);margin-bottom:8px;letter-spacing:0.2px}
+.availability-tag{display:inline-flex;align-items:center;gap:4px;font-size:0.58rem;font-weight:500;padding:2px 8px;margin-bottom:7px;letter-spacing:1px;text-transform:uppercase;border:1px solid}
+.avail-stock{background:var(--sage-light);color:var(--sage);border-color:#BDD9C8}
+.avail-preorder{background:var(--sienna-light);color:var(--sienna);border-color:#E8D0B8}
+.preorder-note{font-size:0.62rem;color:var(--sienna);background:var(--sienna-light);padding:3px 8px;margin-bottom:7px;border-left:2px solid #DFC4A8}
+.prod-pkr{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--ink);margin-bottom:10px;letter-spacing:0.2px}
+.add-btn{width:100%;background:var(--ink);color:#fff;padding:0.55rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:background 0.2s}
+.add-btn:hover{background:var(--ink3)}
+.add-btn.preorder-btn{background:var(--pink-deep)}
+.add-btn.preorder-btn:hover{background:var(--pink-dark)}
+
+/* ── TESTIMONIALS ── */
+.testimonials{background:var(--ink2);padding:5rem 2rem;border-top:1px solid rgba(196,82,90,0.12)}
+.testimonials-inner{max-width:1100px;margin:0 auto}
+.testimonials .section-eyebrow{color:var(--pink-mid);margin-bottom:0.8rem}
+.testimonials .section-heading{color:#fff;margin-bottom:0.5rem}
+.testimonials .section-subtext{color:#5A4A4C;margin-bottom:2.5rem}
+.testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(196,82,90,0.1)}
+.testi-card{background:#1E1318;padding:1.8rem;border-left:3px solid rgba(196,82,90,0.2);transition:border-color 0.25s,box-shadow 0.25s,transform 0.25s}
+.testi-card:hover{border-left-color:var(--pink-deep);box-shadow:0 4px 24px rgba(0,0,0,0.25);transform:translateY(-2px)}
+.testi-stars{color:var(--pink-deep);font-size:0.8rem;margin-bottom:1rem;letter-spacing:2px}
+.testi-quote{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:#E0CCCE;line-height:1.75;margin-bottom:1.2rem}
+.testi-author{font-size:0.65rem;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+
+/* ── POLICY ── */
+.policy-section{background:var(--ink2);padding:4.5rem 2rem}
+.policy-inner{max-width:1100px;margin:0 auto}
+.policy-title{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.9rem;font-weight:400;text-align:center;margin-bottom:0.4rem;letter-spacing:0.3px}
+.policy-title span{color:var(--pink-mid);font-style:italic}
+.policy-title-sub{font-size:0.72rem;color:#4A3A3C;text-align:center;margin-bottom:2rem;letter-spacing:0.5px}
+.policy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:rgba(196,82,90,0.12)}
+.policy-card{background:#1E1318;padding:1.5rem 1.6rem}
+.policy-card h4{color:var(--pink);font-size:0.72rem;font-weight:500;margin-bottom:0.5rem;letter-spacing:0.3px}
+.policy-card p{color:#5A4A4C;font-size:0.72rem;line-height:1.7}
+.policy-card p b{color:#A88090;font-weight:500}
+
+/* ── HOW IT WORKS ── */
+.hiw{background:var(--bg2);padding:4rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.hiw-inner{max-width:1100px;margin:0 auto}
+.hiw-title{font-family:'Cormorant Garamond',serif;color:var(--ink);font-size:1.8rem;font-weight:400;text-align:center;margin-bottom:0.4rem;letter-spacing:0.3px}
+.hiw-title span{color:var(--pink-deep);font-style:italic}
+.hiw-sub{font-size:0.72rem;color:var(--muted);text-align:center;margin-bottom:2rem;letter-spacing:0.5px}
+.hiw-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--border)}
+.hiw-step{background:var(--card);padding:1.4rem 1.2rem;text-align:center}
+.hiw-num{font-family:'Cormorant Garamond',serif;width:32px;height:32px;background:var(--ink);color:var(--pink-mid);display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:400;margin:0 auto 0.8rem}
+.hiw-step h4{color:var(--ink);font-size:0.72rem;font-weight:500;margin-bottom:0.3rem;letter-spacing:0.3px}
+.hiw-step p{color:var(--muted2);font-size:0.68rem;line-height:1.6}
+
+/* ── TRUST BAR ── */
+.trust-row{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.trust-card{background:var(--card);padding:1.1rem;text-align:center;border-right:1px solid var(--border)}
+.trust-card:last-child{border-right:none}
+.trust-title{font-size:0.68rem;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:0.5px}
+.trust-desc{font-size:0.62rem;color:var(--muted2)}
+
+/* ── FOOTER ── */
+.footer{background:var(--ink);padding:3.5rem 2rem 1.5rem}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
+.footer-logo span{color:var(--pink-mid)}
+.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem;letter-spacing:0.3px}
+.footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
+.footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
+.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
+.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px}
+.footer-col a:hover{color:var(--pink)}
+.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+
+/* ── CART SIDEBAR ── */
+.cart-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.5);backdrop-filter:blur(4px);z-index:200}
+.cart-overlay.open{display:block}
+.cart-sidebar{position:fixed;top:0;right:0;width:340px;max-width:95vw;height:100%;background:var(--card);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.16,1,.3,1);border-left:1px solid var(--border)}
+.cart-sidebar.open{transform:translateX(0)}
+.cart-head{background:var(--ink);padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(196,82,90,0.2)}
+.cart-head h3{color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;letter-spacing:0.3px}
+.cart-close{color:#6A5460;font-size:1rem;cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.1);width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.cart-close:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+.cart-body{flex:1;overflow-y:auto;padding:1rem}
+.cart-empty{text-align:center;padding:3rem 1rem;color:var(--muted2);font-size:0.8rem;letter-spacing:0.3px}
+.cart-item{display:flex;gap:0.8rem;align-items:flex-start;padding:0.8rem 0;border-bottom:1px solid var(--border)}
+.ci-emoji{font-size:1.2rem;width:42px;height:42px;background:var(--pink-light);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-info{flex:1}
+.ci-name{font-size:0.78rem;font-weight:500;color:var(--ink);margin-bottom:2px}
+.ci-section-label{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;margin-top:6px;border-top:1px solid var(--border);color:var(--muted2)}
+.ci-section-label:first-child{border-top:none;margin-top:0}
+.ci-subtotal{display:flex;justify-content:space-between;align-items:center;padding:6px 0;margin-top:3px;border-top:1px solid var(--border)}
+.ci-subtotal-label{font-size:0.68rem;font-weight:500;color:var(--muted)}
+.ci-subtotal-val{font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:500}
+.ci-qty-row{display:flex;align-items:center;gap:7px;margin-top:5px}
+.ci-qty-btn{width:22px;height:22px;border:1px solid var(--border);background:var(--bg2);color:var(--ink);font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:all 0.15s}
+.ci-qty-btn:hover{border-color:var(--pink-deep);color:var(--pink-dark)}
+.ci-qty-num{font-size:0.8rem;font-weight:500;min-width:16px;text-align:center}
+.ci-price{font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:500;color:var(--pink-dark);margin-left:auto}
+.ci-remove{font-size:0.6rem;color:var(--muted2);cursor:pointer;margin-top:3px;display:inline-block;letter-spacing:0.5px}
+.ci-remove:hover{color:var(--sienna)}
+.cart-foot{padding:1rem;border-top:1px solid var(--border);background:var(--bg2)}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem}
+.cart-total span:first-child{font-size:0.62rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.cart-total span:last-child{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500}
+.cart-advance{background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.6rem 0.8rem;margin-bottom:0.8rem;font-size:0.7rem;color:var(--sienna);font-weight:400;letter-spacing:0.3px}
+.checkout-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.75rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:background 0.2s}
+.checkout-btn:hover{background:var(--pink-dark)}
+
+/* ── CHECKOUT MODAL ── */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.modal-wrap.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-head{background:var(--ink);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(196,82,90,0.2)}
+.modal-head h3{color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;letter-spacing:0.3px}
+.modal-close{color:#6A5460;font-size:1rem;cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.1);width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.modal-close:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+.modal-body{padding:1.5rem}
+.step-tabs{display:flex;margin-bottom:1.5rem;border:1px solid var(--border)}
+.step-tab{flex:1;padding:0.55rem;text-align:center;font-size:0.62rem;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.step-tab.active{background:var(--ink);color:#fff}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:0.62rem;font-weight:500;color:var(--muted);margin-bottom:6px;display:block;letter-spacing:1.5px;text-transform:uppercase}
+.form-input,.form-select,.form-input-email{width:100%;padding:0.62rem 0.9rem;border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--ink);background:var(--bg);transition:all 0.2s;border-radius:0}
+.form-input:focus,.form-select:focus,.form-input-email:focus{outline:none;border-color:var(--pink-deep);background:#fff;box-shadow:inset 0 0 0 1px var(--pink-deep)}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:0.8rem;background:var(--sienna-light);border:1px solid #DFC4A8;margin-bottom:1rem}
+.checkbox-row input{margin-top:3px;accent-color:var(--pink-deep)}
+.checkbox-row label{font-size:0.7rem;color:#7A3810;font-weight:400;line-height:1.65;cursor:pointer}
+.bank-box{background:var(--ink);padding:1.1rem 1.2rem;margin-bottom:1rem}
+.bank-box h4{color:var(--pink-mid);font-size:0.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.8rem}
+.bank-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.bank-row:last-child{border:none}
+.bank-label{font-size:0.65rem;color:#4A3C3E;font-weight:400;letter-spacing:0.3px}
+.bank-val{font-size:0.76rem;color:var(--pink);font-weight:400}
+.copy-btn{background:transparent;color:var(--pink-mid);border:1px solid rgba(196,82,90,0.3);padding:2px 8px;font-size:0.58rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
+.copy-btn:hover{background:rgba(196,82,90,0.1);border-color:var(--pink-deep)}
+.order-box{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.1rem;margin-bottom:1rem}
+.order-box h4{font-size:0.62rem;font-weight:500;color:var(--muted);margin-bottom:0.7rem;letter-spacing:1.5px;text-transform:uppercase}
+.os-row{display:flex;justify-content:space-between;font-size:0.75rem;padding:0.25rem 0;color:var(--ink3)}
+.os-row.total{font-weight:500;font-size:0.85rem;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.4rem;color:var(--ink)}
+.os-row.advance{font-weight:500;color:var(--sage);font-size:0.8rem}
+.advance-notice{background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.7rem 0.9rem;margin-bottom:1rem;font-size:0.7rem;color:var(--sienna);font-weight:400;line-height:1.65}
+.wa-box{background:#F0FBF5;border:1px solid #B8E0C8;padding:1rem 1.1rem;margin-bottom:1rem}
+.wa-box h4{color:#1A5E35;font-size:0.7rem;font-weight:500;margin-bottom:0.4rem;letter-spacing:0.3px}
+.wa-box p{font-size:0.7rem;color:#2A5A3A;line-height:1.65}
+.btn-wa-full{width:100%;background:var(--wa);color:#fff;padding:0.78rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.2s}
+.btn-wa-full:hover{opacity:0.9}
+.next-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.72rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;transition:background 0.2s}
+.next-btn:hover{background:var(--pink-dark)}
+.back-btn{width:100%;background:transparent;color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:400;border:1px solid var(--border);cursor:pointer;margin-top:0.5rem;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.back-btn:hover{border-color:var(--ink);color:var(--ink)}
+.step-panel{display:none}
+.step-panel.active{display:block}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;font-weight:400;letter-spacing:0.5px;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── PRODUCT DETAIL MODAL ── */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.7);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.detail-overlay.open{display:flex}
+.detail-modal{background:var(--card);border:1px solid var(--border);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.detail-img-wrap{height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;flex-shrink:0;background:var(--bg2)}
+.detail-img-wrap img{width:100%;height:100%;object-fit:cover}
+.detail-img-emoji{font-size:5rem;opacity:0.5}
+.detail-close-btn{position:absolute;top:12px;right:12px;background:rgba(26,16,21,0.5);color:#fff;border:none;width:30px;height:30px;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.detail-close-btn:hover{background:rgba(26,16,21,0.8)}
+.detail-body{padding:1.4rem}
+.detail-cat{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);margin-bottom:5px}
+.detail-cat.men-cat{color:var(--muted)}
+.detail-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:3px;line-height:1.3;letter-spacing:0.2px}
+.detail-brand{font-size:0.72rem;color:var(--muted2);margin-bottom:12px;letter-spacing:0.3px}
+.detail-desc{font-size:0.8rem;color:var(--muted);line-height:1.75;margin-bottom:14px;padding:1rem;background:var(--bg2);border-left:2px solid var(--pink-deep)}
+.detail-preorder-note{font-size:0.7rem;color:var(--sienna);background:var(--sienna-light);padding:5px 10px;margin-bottom:14px;border-left:2px solid #DFC4A8}
+.detail-price{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;color:var(--ink);margin-bottom:14px;letter-spacing:0.3px}
+.detail-add-btn{width:100%;padding:0.8rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:opacity 0.2s}
+.detail-add-btn:hover{opacity:0.88}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links,.wa-nav{display:none}
+  .hamburger{display:flex}
+  .hero{padding:3rem 1.5rem;flex-direction:column}
+  .hero-title{font-size:clamp(2.2rem,7vw,3rem)}
+  .hero-stats{flex-direction:column;width:100%}
+  .hstat{border-right:none;border-bottom:1px solid rgba(196,82,90,0.1);text-align:left}
+  .hstat:last-child{border-bottom:none}
+  .cat-cards{grid-template-columns:1fr}
+  .testi-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
+  .trust-row{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+  .trust-row{grid-template-columns:repeat(2,1fr)}
+  nav{padding:0 1rem}
+  .hero{padding:2.5rem 1rem}
+  .cat-editorial,.testimonials{padding:3.5rem 1.2rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <span class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">Global <span>Bestie</span></span>
+  <div class="nav-links">
+    <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
+    <a onclick="setGender('men')" id="nav-men">Men</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a onclick="showPolicy()">Policy</a>
+  </div>
+  <div class="nav-right">
+    <div class="wa-nav" onclick="openWA('')">WhatsApp</div>
+    <div class="cart-wrap" onclick="openCart()">
+      Cart <span class="cart-badge" id="cartBadge">0</span>
+    </div>
+    <div class="hamburger" onclick="openMobileNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
+  <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
+  <a href="about.html">About Us</a>
+  <a href="contact.html">Contact</a>
+  <a href="faq.html">FAQ</a>
+  <a onclick="showPolicy();closeMobileNav()">Policy</a>
+  <a onclick="openWA('');closeMobileNav()">WhatsApp Us</a>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <span class="hero-tag">USA · Authentic · Delivered to Pakistan</span>
+    <h1 class="hero-title">Your American<br><em>Shopping Bestie</em><br>in Pakistan</h1>
+    <p class="hero-sub">Authentic USA products sourced and delivered to your door. Women's &amp; men's fashion, beauty, bags and more — ordered fresh from the US just for you.</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="scrollToProducts()">Shop Now</button>
+      <button class="btn-wa" onclick="openWA('')">WhatsApp Us</button>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat">
+      <div class="hstat-label">Payment</div>
+      <div class="hstat-val">Bank Transfer (PKR)</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">Delivery</div>
+      <div class="hstat-val">~4 Weeks</div>
+    </div>
+    <div class="hstat">
+      <div class="hstat-label">Advance</div>
+      <div class="hstat-val">50% to Confirm</div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY EDITORIAL STRIP -->
+<div class="cat-editorial">
+  <div class="cat-editorial-inner">
+    <span class="section-eyebrow">Shop by Category</span>
+    <h2 class="section-heading">Curated just for you</h2>
+    <div class="cat-cards">
+      <div class="cat-card" onclick="setGender('women');filterCat('makeup',null);scrollToProducts()">
+        <div class="cat-card-bg" style="background:linear-gradient(135deg,#2A1E20,#3D2428)">💄</div>
+        <div class="cat-card-overlay"></div>
+        <div class="cat-card-content">
+          <div class="cat-card-name">Makeup &amp; Beauty</div>
+          <div class="cat-card-link">Explore →</div>
+        </div>
+      </div>
+      <div class="cat-card" onclick="setGender('women');filterCat('bags',null);scrollToProducts()">
+        <div class="cat-card-bg" style="background:linear-gradient(135deg,#1E2430,#2A3040)">👜</div>
+        <div class="cat-card-overlay"></div>
+        <div class="cat-card-content">
+          <div class="cat-card-name">Bags &amp; Accessories</div>
+          <div class="cat-card-link">Explore →</div>
+        </div>
+      </div>
+      <div class="cat-card" onclick="setGender('women');filterCat('fashion',null);scrollToProducts()">
+        <div class="cat-card-bg" style="background:linear-gradient(135deg,#1E2820,#2A3828)">👗</div>
+        <div class="cat-card-overlay"></div>
+        <div class="cat-card-content">
+          <div class="cat-card-name">Fashion</div>
+          <div class="cat-card-link">Explore →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICE BANNER -->
+<div class="price-banner">
+  <span class="pb-item">Makeup &amp; Beauty</span><span class="pb-dot"></span>
+  <span class="pb-item">Handbags &amp; Wallets</span><span class="pb-dot"></span>
+  <span class="pb-item">Skincare</span><span class="pb-dot"></span>
+  <span class="pb-item">Fashion &amp; Apparel</span><span class="pb-dot"></span>
+  <span class="pb-item">Home &amp; Living</span><span class="pb-dot"></span>
+  <span class="pb-item">Shoes &amp; Accessories</span>
+</div>
+
+<div style="padding:0.8rem 1.5rem 0;max-width:1100px;margin:0 auto">
+  <div class="preorder-banner">
+    <div class="pb-content">
+      <h4>A note from your bestie</h4>
+      <p>Your items are ordered fresh from the USA just for you · <b>50% advance</b> secures your order · Items arrive in <b>~4 weeks</b> · All taxes &amp; shipping are already included — no hidden costs</p>
+    </div>
+  </div>
+</div>
+
+<div class="gender-tabs" id="genderTabs">
+  <div class="gtab active-women" id="gtab-women" onclick="setGender('women')">Women's Collection</div>
+  <div class="gtab" id="gtab-men" onclick="setGender('men')">Men's Collection</div>
+</div>
+
+<div class="cats-row" id="catsRow"></div>
+
+<div class="section" id="productsSection">
+  <div class="section-header">
+    <div>
+      <div class="section-title" id="sectionTitle">Women's Collection</div>
+      <div class="section-sub">Sourced from USA · Pay via Bank Transfer · 50% advance for preorders</div>
+    </div>
+  </div>
+  <div class="products-grid" id="productsGrid"></div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div class="testimonials">
+  <div class="testimonials-inner">
+    <span class="section-eyebrow">What Our Customers Say</span>
+    <h2 class="section-heading">Loved across Pakistan</h2>
+    <p class="section-subtext">Real orders, real customers, real reactions.</p>
+    <div class="testi-grid">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"My Charlotte Tilbury lipstick arrived perfectly packaged and 100% authentic. The colour is exactly as it looks on the website — I've already ordered three more!"</div>
+        <div class="testi-author">Ayesha K. · Lahore</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"I was nervous about ordering a Coach bag online but Global Bestie made it so easy. The bag is stunning and arrived within 4 weeks exactly as promised."</div>
+        <div class="testi-author">Sana R. · Karachi</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-quote">"Finally a service that's honest about pricing. No hidden charges, no rate games — just real USA products at a fair PKR price. Will order again!"</div>
+        <div class="testi-author">Mariam T. · Islamabad</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POLICY -->
+<div class="policy-section" id="policySection">
+  <div class="policy-inner">
+    <div class="policy-title">Our <span>Preorder Policy</span></div>
+    <div class="policy-title-sub">Please read before placing your order — we want no surprises.</div>
+    <div class="policy-grid">
+      <div class="policy-card"><h4>50% Advance Required</h4><p>Pay <b>50% of the total</b> to confirm your order. Remaining 50% due before dispatch.</p></div>
+      <div class="policy-card"><h4>4 Weeks Delivery</h4><p>Preorder delivery takes approximately <b>4 weeks</b> from order confirmation.</p></div>
+      <div class="policy-card"><h4>Shoes Without Box</h4><p>Shoes are shipped without the original box by default to keep costs low for you.</p></div>
+      <div class="policy-card"><h4>Fixed Prices</h4><p>All prices are <b>fixed</b>. No discounts. Prices include all taxes, customs &amp; shipping.</p></div>
+      <div class="policy-card"><h4>No Google Rates</h4><p>We cannot provide Google conversion prices. Our prices are final — please understand.</p></div>
+      <div class="policy-card"><h4>Third-Party Courier</h4><p>Courier companies are <b>not under our control</b>. Dispatch does not mean immediate delivery.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="hiw">
+  <div class="hiw-inner">
+    <div class="hiw-title">How to Order from <span>Global Bestie</span></div>
+    <div class="hiw-sub">Simple 5-step process · No account required</div>
+    <div class="hiw-steps">
+      <div class="hiw-step"><div class="hiw-num">1</div><h4>Browse &amp; Add to Cart</h4><p>Pick any product and add it to your cart.</p></div>
+      <div class="hiw-step"><div class="hiw-num">2</div><h4>Fill Your Details</h4><p>Enter your name, WhatsApp &amp; delivery address.</p></div>
+      <div class="hiw-step"><div class="hiw-num">3</div><h4>Bank Transfer</h4><p>Transfer 50% advance (preorders) or full amount (in-stock).</p></div>
+      <div class="hiw-step"><div class="hiw-num">4</div><h4>Send Screenshot</h4><p>WhatsApp us your payment screenshot to confirm.</p></div>
+      <div class="hiw-step"><div class="hiw-num">5</div><h4>We Deliver!</h4><p>Sit back — your USA product is on its way!</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRUST BAR -->
+<div class="trust-row">
+  <div class="trust-card"><div class="trust-title">USA Sourced</div><div class="trust-desc">Real US stores</div></div>
+  <div class="trust-card"><div class="trust-title">100% Authentic</div><div class="trust-desc">No fakes, ever</div></div>
+  <div class="trust-card"><div class="trust-title">Bank Transfer</div><div class="trust-desc">Safe PKR payments</div></div>
+  <div class="trust-card"><div class="trust-title">Home Delivery</div><div class="trust-desc">All across Pakistan</div></div>
+  <div class="trust-card"><div class="trust-title">WhatsApp Support</div><div class="trust-desc">Always here for you</div></div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Global <span>Bestie</span></div>
+      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-socials">
+        <div class="footer-social" onclick="openWA('')">WhatsApp</div>
+        <div class="footer-social">Instagram</div>
+      </div>
+      <div class="footer-copy">© 2026 Global Bestie</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Shop</div>
+      <a onclick="setGender('women')">Women's Collection</a>
+      <a onclick="setGender('men')">Men's Collection</a>
+      <a onclick="setGender('women');filterCat('all',null);scrollToProducts()">New Arrivals</a>
+      <a onclick="setGender('women');filterCat('bags',null);scrollToProducts()">Bags &amp; Accessories</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Help</div>
+      <a href="faq.html">FAQs</a>
+      <a onclick="showPolicy()">Shipping &amp; Policy</a>
+      <a onclick="showPolicy()">Order Policy</a>
+      <a onclick="openWA('')">WhatsApp Us</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">About</div>
+      <a href="about.html">Our Story</a>
+      <a href="about.html">Authenticity Promise</a>
+      <a href="contact.html">Contact Us</a>
+      <a onclick="showPolicy()">Terms &amp; Conditions</a>
+    </div>
+  </div>
+  <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-head"><h3>Your Cart</h3><button class="cart-close" onclick="closeCart()">✕</button></div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-foot" id="cartFoot" style="display:none">
+    <div class="cart-total"><span>Pay Now</span><span id="cartTotalDisplay">Rs 0</span></div>
+    <div class="cart-advance" id="cartAdvanceDisplay"></div>
+    <button class="checkout-btn" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-wrap" id="modalWrap">
+  <div class="modal">
+    <div class="modal-head"><h3>Complete Your Order</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="step-tabs">
+        <div class="step-tab active" id="tab1">1. Details</div>
+        <div class="step-tab" id="tab2">2. Payment</div>
+      </div>
+      <div class="step-panel active" id="step1">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" type="text" id="custName" placeholder="e.g. Ayesha Khan"></div>
+        <div class="form-group"><label class="form-label">WhatsApp Number *</label><input class="form-input" type="tel" id="custPhone" placeholder="e.g. 0300-1234567"></div>
+        <div class="form-group"><label class="form-label">Email Address * <span style="font-size:0.68rem;color:var(--muted)">(for order updates)</span></label><input class="form-input-email form-input" type="email" id="custEmail" placeholder="e.g. ayesha@gmail.com"></div>
+        <div class="form-group"><label class="form-label">City *</label><input class="form-input" type="text" id="custCity" placeholder="e.g. Lahore"></div>
+        <div class="form-group"><label class="form-label">Full Delivery Address *</label><input class="form-input" type="text" id="custAddr" placeholder="House #, Street, Area"></div>
+        <div class="form-group"><label class="form-label">Order Notes (optional)</label><input class="form-input" type="text" id="custNotes" placeholder="Size, colour, special instructions..."></div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="policyAgree">
+          <label for="policyAgree">I have read and agree to the Preorder Policy. I understand delivery takes ~4 weeks, 50% advance is required, and prices are fixed with no discounts.</label>
+        </div>
+        <button class="next-btn" onclick="goStep2()">Continue to Payment →</button>
+      </div>
+      <div class="step-panel" id="step2">
+        <div class="order-box">
+          <h4>Order Summary</h4>
+          <div id="orderSummaryItems"></div>
+          <div class="os-row total"><span>Pay Now</span><span id="orderTotal"></span></div>
+          <div class="os-row advance" id="advanceRow" style="display:none"></div>
+        </div>
+        <div class="advance-notice" id="advanceNotice"></div>
+        <div class="bank-box">
+          <h4>Bank Transfer Details</h4>
+          <div class="bank-row"><span class="bank-label">Bank</span><span class="bank-val" id="co-bank-name">HBL</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-val" id="co-bank-acname">Hamna Yaqoob</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Account No.</span><span class="bank-val" id="co-bank-acno">22687106647203</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">IBAN</span><span class="bank-val" id="co-bank-iban" style="font-size:0.68rem">PK40HABB0022687106647203</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Amount to Pay</span><span class="bank-val" id="bankAmount" style="font-size:0.95rem"></span><button class="copy-btn" onclick="copyBankAmt()">Copy</button></div>
+        </div>
+        <div class="wa-box" style="margin-top:1rem">
+          <h4>After transferring — send your screenshot</h4>
+          <p>WhatsApp your payment screenshot to confirm your order. Tap below — your order details are pre-filled.</p>
+          <div style="font-size:0.82rem;font-weight:500;color:#1A5E35;margin:0.6rem 0 0.4rem;letter-spacing:0.3px">+92 300 4992211</div>
+        </div>
+        <button class="btn-wa-full" onclick="confirmAndSendWA()">Send Screenshot on WhatsApp</button>
+        <button class="back-btn" onclick="goStep1()">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PRODUCT DETAIL MODAL -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal">
+    <div class="detail-img-wrap" id="detailImgWrap">
+      <button class="detail-close-btn" onclick="closeDetail()">✕</button>
+      <span class="detail-img-emoji" id="detailEmoji"></span>
+    </div>
+    <div class="detail-body">
+      <div class="detail-cat" id="detailCat"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-brand" id="detailBrand"></div>
+      <div class="availability-tag" id="detailAvail"></div>
+      <div class="detail-desc" id="detailDesc" style="display:none"></div>
+      <div class="detail-preorder-note" id="detailPreorderNote" style="display:none">50% advance required · ~4 weeks delivery from USA</div>
+      <div class="detail-price" id="detailPrice"></div>
+      <button class="detail-add-btn" id="detailAddBtn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUPABASE CONFIG — paste your values from Dashboard → Settings → API
+// ═══════════════════════════════════════════════════════════
+const SUPA_URL = '';  // e.g. 'https://abcxyz.supabase.co'
+const SUPA_KEY = '';  // anon/public key starting with eyJ...
+const _supa = (SUPA_URL && SUPA_KEY) ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let WA_NUMBER = '03214992211';
+const SHEET_URL = '';
+const SHEET_ID = '';
+
+function parseGviz(text) {
+  try {
+    const match = text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
+    if (!match) return null;
+    const json = JSON.parse(match[1]);
+    const cols = json.table.cols.map(c => c.label || c.id);
+    return (json.table.rows || []).map(row => {
+      const obj = {};
+      (row.c || []).forEach((cell, i) => { obj[cols[i]] = (cell && cell.v != null) ? String(cell.v) : ''; });
+      return obj;
+    }).filter(row => Object.values(row).some(v => v !== ''));
+  } catch(e) { return null; }
+}
+
+let productsCache = null;
+function getProducts() {
+  if (productsCache) return productsCache;
+  const saved = localStorage.getItem('gb_products');
+  if (saved) { productsCache = JSON.parse(saved); return productsCache; }
+  return getDefaultProducts();
+}
+
+function getDefaultProducts() {
+  return [
+    {id:1,gender:'women',cat:'makeup',name:'NYX Matte Lipstick Set (12 colors)',brand:'NYX Professional',pkr:9000,inStock:false,description:'',image:''},
+    {id:2,gender:'women',cat:'bags',name:'Coach Mini Crossbody Bag',brand:'Coach',pkr:70500,inStock:false,description:'',image:''},
+    {id:3,gender:'women',cat:'makeup',name:'e.l.f. Power Grip Primer',brand:'e.l.f. Cosmetics',pkr:6300,inStock:true,description:'',image:''},
+    {id:4,gender:'women',cat:'accessories',name:'Kendra Scott Gold Earrings',brand:'Kendra Scott',pkr:21900,inStock:false,description:'',image:''},
+    {id:5,gender:'women',cat:'skincare',name:'CeraVe Moisturizing Cream',brand:'CeraVe',pkr:9400,inStock:true,description:'',image:''},
+    {id:6,gender:'women',cat:'bags',name:'Kate Spade Tote Bag',brand:'Kate Spade',pkr:89000,inStock:false,description:'',image:''},
+    {id:7,gender:'women',cat:'makeup',name:'Fenty Beauty Gloss Bomb',brand:'Fenty Beauty',pkr:10400,inStock:false,description:'',image:''},
+    {id:8,gender:'women',cat:'hair',name:'Olaplex No.3 Hair Perfector',brand:'Olaplex',pkr:12500,inStock:true,description:'',image:''},
+    {id:9,gender:'women',cat:'fashion',name:'Free People Floral Dress',brand:'Free People',pkr:33400,inStock:false,description:'',image:''},
+    {id:10,gender:'women',cat:'skincare',name:'Tatcha The Water Cream',brand:'Tatcha',pkr:26400,inStock:false,description:'',image:''},
+    {id:11,gender:'women',cat:'home',name:'Capri Blue Volcano Candle',brand:'Anthropologie',pkr:13900,inStock:true,description:'',image:''},
+    {id:12,gender:'women',cat:'makeup',name:'Charlotte Tilbury Pillow Talk Lipstick',brand:'Charlotte Tilbury',pkr:14900,inStock:false,description:'',image:''},
+    {id:13,gender:'women',cat:'bags',name:'Fossil Leather Wallet',brand:'Fossil',pkr:18400,inStock:true,description:'',image:''},
+    {id:14,gender:'women',cat:'accessories',name:'BaubleBar Bracelet Stack',brand:'BaubleBar',pkr:16000,inStock:false,description:'',image:''},
+    {id:15,gender:'men',cat:'grooming',name:"Brickell Men's Face Wash",brand:'Brickell',pkr:10400,inStock:true,description:'',image:''},
+    {id:16,gender:'men',cat:'fashion',name:"Levi's 501 Original Jeans",brand:"Levi's",pkr:26800,inStock:false,description:'',image:''},
+    {id:17,gender:'men',cat:'bags',name:'Tumi Alpha Backpack',brand:'Tumi',pkr:105300,inStock:false,description:'',image:''},
+    {id:18,gender:'men',cat:'grooming',name:'Jack Black Beard Oil',brand:'Jack Black',pkr:11800,inStock:false,description:'',image:''},
+    {id:19,gender:'men',cat:'accessories',name:"Fossil Men's Leather Belt",brand:'Fossil',pkr:18400,inStock:true,description:'',image:''},
+    {id:20,gender:'men',cat:'shoes',name:'Nike Air Max 270',brand:'Nike',pkr:54900,inStock:false,description:'',image:''},
+    {id:21,gender:'men',cat:'fashion',name:'Ralph Lauren Polo Shirt',brand:'Ralph Lauren',pkr:33700,inStock:false,description:'',image:''},
+    {id:22,gender:'men',cat:'grooming',name:"Kiehl's Moisturizer SPF 50",brand:"Kiehl's",pkr:16000,inStock:true,description:'',image:''},
+    {id:23,gender:'men',cat:'bags',name:"Coach Men's Messenger Bag",brand:'Coach',pkr:67100,inStock:false,description:'',image:''},
+    {id:24,gender:'men',cat:'home',name:'Yankee Candle Man Town',brand:'Yankee Candle',pkr:13200,inStock:true,description:'',image:''},
+  ];
+}
+
+(async function loadProducts(){
+  // ── 1. Try Supabase ──
+  if(_supa){
+    try{
+      const {data,error}=await _supa.from('products').select('*').order('id');
+      if(error) throw error;
+      if(data&&data.length){
+        productsCache=data.map(p=>({
+          id:p.id,gender:p.gender,cat:p.cat,name:p.name,brand:p.brand||'',
+          pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||''
+        }));
+        localStorage.setItem('gb_products',JSON.stringify(productsCache));
+        renderProducts(filterProds());
+        loadCart();
+        return;
+      }
+    }catch(e){console.warn('Supabase product load failed:',e.message);}
+  }
+  // ── 2. Fallback: Google Sheet ──
+  const sid=SHEET_ID||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetId||'');
+  if(!sid) return;
+  try{
+    const r=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:json&sheet=Products`);
+    const data=parseGviz(await r.text());
+    if(!data||!data.length||!data.some(p=>p.name)) return;
+    const mapped=data.map(p=>({
+      id:parseInt(p.id)||p.id, gender:p.gender||'women', cat:p.cat||'accessories',
+      name:String(p.name||''), brand:String(p.brand||''),
+      pkr:parseFloat(p.pkr)||0, inStock:p.inStock==='true'||p.inStock===true,
+      description:p.description||'', image:p.image||''
+    })).filter(p=>p.name&&p.pkr>0);
+    if(!mapped.length) return;
+    productsCache=mapped;
+    localStorage.setItem('gb_products',JSON.stringify(productsCache));
+    renderProducts(filterProds());
+    loadCart();
+  }catch(e){}
+})();
+
+const womenCats=['makeup','skincare','bags','accessories','fashion','home','hair'];
+const menCats=['grooming','bags','fashion','accessories','shoes','home'];
+const bgs={makeup:'#FFF0F5',bags:'#FFF8EE',skincare:'#F0FFF8',accessories:'#F5F0FF',fashion:'#F0F5FF',home:'#FFF5F0',hair:'#FFFFF0',grooming:'#F0F8FF',shoes:'#FFF0EA'};
+const catLabels={makeup:'Makeup',skincare:'Skincare',bags:'Bags',accessories:'Accessories',fashion:'Fashion',home:'Home',hair:'Hair',grooming:'Grooming',shoes:'Shoes'};
+const catIcons={makeup:'💄',skincare:'🧴',bags:'👜',accessories:'💍',fashion:'👗',home:'🕯️',hair:'💇',grooming:'🧼',shoes:'👟'};
+
+let cart=[], currentGender='women', currentCat='all';
+
+function saveCart(){localStorage.setItem('gb_cart',JSON.stringify(cart));}
+function loadCart(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('gb_cart')||'[]');
+    const prods=getProducts();
+    cart=saved.filter(c=>prods.some(p=>p.id===c.id)).map(c=>{
+      const p=prods.find(p=>p.id===c.id);
+      return{...c,pkr:p.pkr};
+    });
+  }catch(e){cart=[];}
+  updateBadge();
+}
+
+window.addEventListener('storage',e=>{
+  if(e.key==='gb_products'){productsCache=null;renderProducts(filterProds());}
+});
+
+const fmtPKR=n=>'Rs '+Math.round(n).toLocaleString();
+
+function setGender(g){
+  currentGender=g; currentCat='all';
+  document.getElementById('nav-women').className=g==='women'?'active':'';
+  document.getElementById('nav-men').className=g==='men'?'active':'';
+  document.getElementById('gtab-women').className='gtab'+(g==='women'?' active-women':'');
+  document.getElementById('gtab-men').className='gtab'+(g==='men'?' active-men':'');
+  document.getElementById('sectionTitle').textContent=g==='women'?"Women's Collection":"Men's Collection";
+  renderCats(g); renderProducts(filterProds());
+}
+
+function renderCats(g){
+  const cats=g==='women'?womenCats:menCats;
+  document.getElementById('catsRow').innerHTML=
+    `<div class="cat-pill active" onclick="filterCat('all',this)">All</div>`+
+    cats.map(c=>`<div class="cat-pill" onclick="filterCat('${c}',this)">${catLabels[c]||c}</div>`).join('');
+}
+
+function filterCat(cat,el){
+  currentCat=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  renderProducts(filterProds());
+}
+
+function filterProds(){
+  return getProducts().filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+}
+
+function renderProducts(data){
+  document.getElementById('productsGrid').innerHTML=data.map(p=>{
+    const bg=bgs[p.cat]||'#f8f8ff';
+    const isPreorder=!p.inStock;
+    return `<div class="prod-card" onclick="openProductDetail(${p.id})">
+      <div class="prod-img" style="background:${p.image?'#100808':bg}">
+        ${p.image?`<img src="${p.image}" alt="${p.name}">`:`<span style="font-size:2.5rem">${catIcons[p.cat]||'✨'}</span>`}
+      </div>
+      <div class="prod-body">
+        <div class="prod-cat${currentGender==='men'?' men-cat':''}">${catLabels[p.cat]||p.cat}</div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-brand">${p.brand}</div>
+        <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
+        ${isPreorder?`<div class="preorder-note">50% advance · ~4 weeks delivery</div>`:''}
+        <div class="prod-pkr">${fmtPKR(p.pkr)}</div>
+        <button class="add-btn${isPreorder?' preorder-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addToCart(id){
+  const p=getProducts().find(x=>x.id===id);
+  const ex=cart.find(x=>x.id===id);
+  if(ex){if(ex.qty>=5){showToast('Max 5 per item');return;}ex.qty++;}
+  else{cart.push({...p,qty:1,pkr:p.pkr});}
+  saveCart(); updateBadge();
+  showToast(p.inStock?'Added to cart!':'Preorder added!');
+}
+
+function updateBadge(){document.getElementById('cartBadge').textContent=cart.reduce((a,c)=>a+c.qty,0);}
+function cartTotal(){return cart.reduce((a,c)=>a+c.pkr*c.qty,0);}
+function hasPreorder(){return cart.some(c=>!c.inStock);}
+
+function openCart(){
+  const body=document.getElementById('cartBody'),foot=document.getElementById('cartFoot');
+  if(!cart.length){
+    body.innerHTML=`<div class="cart-empty"><div style="font-size:2rem;margin-bottom:0.5rem">🛒</div><p>Your cart is empty!<br>Add something you love!</p></div>`;
+    foot.style.display='none';
+  } else {
+    const stockItems=cart.filter(c=>c.inStock),preItems=cart.filter(c=>!c.inStock);
+    const stockSub=stockItems.reduce((a,c)=>a+c.pkr*c.qty,0);
+    const preSub=preItems.reduce((a,c)=>a+c.pkr*c.qty,0);
+    const preAdv=Math.round(preSub*0.5);
+    const ri=c=>`<div class="cart-item">
+      <div class="ci-emoji">${catIcons[c.cat]||'✨'}</div>
+      <div class="ci-info">
+        <div class="ci-name">${c.name}</div>
+        <div class="ci-qty-row">
+          <button class="ci-qty-btn" onclick="changeQty(${c.id},-1)">−</button>
+          <span class="ci-qty-num">${c.qty}</span>
+          <button class="ci-qty-btn" onclick="changeQty(${c.id},1)">+</button>
+          <span class="ci-price">${fmtPKR(c.pkr*c.qty)}</span>
+        </div>
+        <span class="ci-remove" onclick="removeItem(${c.id})">Remove</span>
+      </div></div>`;
+    let html='';
+    if(stockItems.length){
+      html+=`<div class="ci-section-label">In-Stock — Pay in Full</div>`;
+      html+=stockItems.map(ri).join('');
+      html+=`<div class="ci-subtotal"><span class="ci-subtotal-label">In-stock total</span><span class="ci-subtotal-val" style="color:var(--sage)">${fmtPKR(stockSub)}</span></div>`;
+    }
+    if(preItems.length){
+      html+=`<div class="ci-section-label" style="margin-top:${stockItems.length?'8px':'0'}">Preorder — 50% Advance</div>`;
+      html+=preItems.map(ri).join('');
+      html+=`<div class="ci-subtotal"><span class="ci-subtotal-label">Full price</span><span class="ci-subtotal-val" style="color:var(--muted);text-decoration:line-through">${fmtPKR(preSub)}</span></div>`;
+      html+=`<div class="ci-subtotal" style="border-top:none;padding-top:2px"><span class="ci-subtotal-label">50% advance due now</span><span class="ci-subtotal-val" style="color:var(--pink-deep)">${fmtPKR(preAdv)}</span></div>`;
+    }
+    body.innerHTML=html;
+    const payNow=stockSub+preAdv;
+    document.getElementById('cartTotalDisplay').textContent=fmtPKR(payNow);
+    document.getElementById('cartAdvanceDisplay').textContent=preItems.length?`Remaining preorder balance (${fmtPKR(preSub-preAdv)}) due before dispatch`:``;
+    foot.style.display='block';
+  }
+  document.getElementById('cartOverlay').classList.add('open');
+  document.getElementById('cartSidebar').classList.add('open');
+}
+
+function closeCart(){
+  document.getElementById('cartOverlay').classList.remove('open');
+  document.getElementById('cartSidebar').classList.remove('open');
+}
+
+function removeItem(id){cart=cart.filter(c=>c.id!==id);saveCart();updateBadge();openCart();}
+function changeQty(id,delta){
+  const item=cart.find(c=>c.id===id);
+  if(!item)return;
+  const nq=item.qty+delta;
+  if(nq<=0){cart=cart.filter(c=>c.id!==id);}
+  else if(nq>5){showToast('Max 5 per item');return;}
+  else{item.qty=nq;}
+  saveCart();updateBadge();openCart();
+}
+
+function openCheckout(){closeCart();goStep1();document.getElementById('modalWrap').classList.add('open');}
+function closeModal(){document.getElementById('modalWrap').classList.remove('open');}
+function setStep(n){[1,2].forEach(i=>{document.getElementById('step'+i).classList.toggle('active',i===n);document.getElementById('tab'+i).classList.toggle('active',i===n);});}
+function goStep1(){setStep(1);}
+
+function goStep2(){
+  const name=document.getElementById('custName').value.trim();
+  const phone=document.getElementById('custPhone').value.trim();
+  const email=document.getElementById('custEmail').value.trim();
+  const city=document.getElementById('custCity').value.trim();
+  const addr=document.getElementById('custAddr').value.trim();
+  if(!name||!phone||!email||!city||!addr){showToast('Please fill all required fields');return;}
+  if(!/^(\+92|0092|0)3[0-9]{9}$/.test(phone.replace(/[\s\-]/g,''))){showToast('Please enter a valid Pakistan mobile number');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showToast('Please enter a valid email address');return;}
+  if(!document.getElementById('policyAgree').checked){showToast('Please agree to our ordering policy');return;}
+  const stockItems=cart.filter(c=>c.inStock),preItems=cart.filter(c=>!c.inStock);
+  const stockSub=stockItems.reduce((a,c)=>a+c.pkr*c.qty,0);
+  const preSub=preItems.reduce((a,c)=>a+c.pkr*c.qty,0);
+  const preAdv=Math.round(preSub*0.5);
+  const payNow=stockSub+preAdv;
+  let sh='';
+  if(stockItems.length){
+    sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:2px">In-Stock — Pay in Full</div>`;
+    sh+=stockItems.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');
+    sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>In-stock subtotal</span><span style="color:var(--sage)">${fmtPKR(stockSub)}</span></div>`;
+  }
+  if(preItems.length){
+    sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sienna);text-transform:uppercase;letter-spacing:0.5px;padding:${stockItems.length?'10px':'0'} 0 2px">Preorder — 50% Advance</div>`;
+    sh+=preItems.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');
+    sh+=`<div class="os-row" style="padding-top:4px;border-top:1px dashed var(--border2)"><span style="color:var(--muted)">Full price</span><span style="color:var(--muted);text-decoration:line-through">${fmtPKR(preSub)}</span></div>`;
+    sh+=`<div class="os-row" style="font-weight:600"><span>50% advance due now</span><span style="color:var(--pink-deep)">${fmtPKR(preAdv)}</span></div>`;
+    sh+=`<div class="os-row" style="font-size:0.7rem;color:var(--muted)"><span>Remaining due before dispatch</span><span>${fmtPKR(preSub-preAdv)}</span></div>`;
+  }
+  document.getElementById('orderSummaryItems').innerHTML=sh;
+  document.getElementById('orderTotal').textContent=fmtPKR(payNow);
+  document.getElementById('advanceRow').style.display='none';
+  document.getElementById('advanceNotice').textContent=preItems.length?`Transfer ${fmtPKR(payNow)} now to confirm your order.${stockItems.length?' In-stock items will ship immediately.':''} Preorder balance (${fmtPKR(preSub-preAdv)}) due before dispatch.`:`Transfer ${fmtPKR(payNow)} in full — your items will be dispatched promptly.`;
+  document.getElementById('bankAmount').textContent=fmtPKR(payNow);
+  window._payNow=payNow; window._total=cartTotal();
+  setStep(2);
+}
+
+async function confirmAndSendWA(){
+  const name=document.getElementById('custName').value.trim(),phone=document.getElementById('custPhone').value.trim(),email=document.getElementById('custEmail').value.trim(),city=document.getElementById('custCity').value.trim(),addr=document.getElementById('custAddr').value.trim(),notes=document.getElementById('custNotes').value.trim();
+  if(_supa){
+    try{ await saveOrderToSupabase({name,phone,email,city,addr,notes}); }
+    catch(e){ console.error('Order save failed:',e.message); }
+  } else {
+    await saveOrderToSheet({name,phone,email,city,addr,notes});
+  }
+  sendWA();
+  closeModal();
+}
+
+async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
+  const orderNum='GB-'+Date.now().toString(36).toUpperCase();
+  const {data:order,error:oErr}=await _supa.from('orders').insert({
+    order_number:orderNum,customer_name:name,customer_phone:phone,
+    customer_email:email,customer_city:city,customer_address:addr,
+    status:'new',total:window._total||0,advance:window._payNow||0,
+    has_preorder:hasPreorder(),notes
+  }).select().single();
+  if(oErr) throw oErr;
+  const items=cart.map(c=>({order_id:order.id,product_id:c.id,product_name:c.name,brand:c.brand||'',qty:c.qty,pkr:c.pkr,is_preorder:!c.inStock}));
+  const {error:iErr}=await _supa.from('order_items').insert(items);
+  if(iErr) throw iErr;
+  return order;
+}
+
+async function saveOrderToSheet({name,phone,email,city,addr,notes}){
+  const sheetUrl=SHEET_URL||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetUrl||'');
+  if(!sheetUrl)return;
+  const items=cart.map(c=>`${c.name} x${c.qty} [${c.inStock?'In Stock':'PREORDER'}]`).join(', ');
+  try{
+    await fetch(sheetUrl,{method:'POST',mode:'no-cors',body:new URLSearchParams({payload:JSON.stringify({action:'addOrder',date:new Date().toLocaleDateString('en-PK'),name,phone,email,city,address:addr,items,total:fmtPKR(window._total),advance:fmtPKR(window._payNow),notes})})});
+  }catch(e){}
+}
+
+function sendWA(){
+  const name=document.getElementById('custName').value.trim();
+  const phone=document.getElementById('custPhone').value.trim();
+  const email=document.getElementById('custEmail').value.trim();
+  const city=document.getElementById('custCity').value.trim();
+  const addr=document.getElementById('custAddr').value.trim();
+  const notes=document.getElementById('custNotes').value.trim();
+  const items=cart.map(c=>`  - ${c.name} x${c.qty} [${c.inStock?'In Stock':'PREORDER'}] = ${fmtPKR(c.pkr*c.qty)}`).join('\n');
+  const msg=`🛍️ *New Order — Global Bestie*\n\n👤 *Name:* ${name}\n📱 *WhatsApp:* ${phone}\n📧 *Email:* ${email}\n🏙️ *City:* ${city}\n📍 *Address:* ${addr}${notes?'\n📝 Notes: '+notes:''}\n\n*Items:*\n${items}\n\n*Order Total:* ${fmtPKR(window._total)}\n${hasPreorder()?`*Advance Paid:* ${fmtPKR(window._payNow)}\n`:''}\n✅ Payment screenshot attached.\n\nPlease confirm my order!`;
+  window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copied!'));}
+function copyBankAmt(){navigator.clipboard.writeText(String(window._payNow||0)).then(()=>showToast('Amount copied!')).catch(()=>showToast('Copied!'));}
+function scrollToProducts(){document.getElementById('productsSection').scrollIntoView({behavior:'smooth'});}
+function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function showPolicy(){document.getElementById('policySection').scrollIntoView({behavior:'smooth'});}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';document.querySelector('.hamburger').classList.add('open');}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.body.style.overflow='';document.querySelector('.hamburger').classList.remove('open');}
+
+function toggleFAQ(el){
+  const item=el.parentElement;
+  const isOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!isOpen)item.classList.add('open');
+}
+
+function openProductDetail(id){
+  const p=getProducts().find(x=>x.id===id);
+  if(!p)return;
+  const isPreorder=!p.inStock;
+  const imgWrap=document.getElementById('detailImgWrap');
+  const emojiEl=document.getElementById('detailEmoji');
+  const existingImg=imgWrap.querySelector('img');
+  if(existingImg)existingImg.remove();
+  if(p.image){
+    const img=document.createElement('img');
+    img.src=p.image; img.alt=p.name;
+    imgWrap.style.background='#1a0808';
+    emojiEl.style.display='none';
+    imgWrap.appendChild(img);
+  } else {
+    imgWrap.style.background=bgs[p.cat]||'var(--pink-light)';
+    emojiEl.style.display='';
+    emojiEl.textContent=catIcons[p.cat]||'✨';
+  }
+  document.getElementById('detailCat').className='detail-cat'+(p.gender==='men'?' men-cat':'');
+  document.getElementById('detailCat').textContent=catLabels[p.cat]||p.cat;
+  document.getElementById('detailName').textContent=p.name;
+  document.getElementById('detailBrand').textContent=p.brand;
+  const avail=document.getElementById('detailAvail');
+  avail.className='availability-tag '+(isPreorder?'avail-preorder':'avail-stock');
+  avail.textContent=isPreorder?'Preorder':'In Stock';
+  const descEl=document.getElementById('detailDesc');
+  if(p.description){descEl.textContent=p.description;descEl.style.display='block';}
+  else descEl.style.display='none';
+  document.getElementById('detailPreorderNote').style.display=isPreorder?'block':'none';
+  document.getElementById('detailPrice').textContent=fmtPKR(p.pkr);
+  const btn=document.getElementById('detailAddBtn');
+  btn.textContent=isPreorder?'Preorder Now':'Add to Cart';
+  btn.style.background=isPreorder?'var(--pink-deep)':'var(--ink)';
+  btn.style.color='#fff';
+  btn.onclick=()=>{addToCart(id);closeDetail();};
+  document.getElementById('detailOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+loadCart();
+setGender(location.hash === '#men' ? 'men' : 'women');
+
+// ── INJECT STORED SETTINGS ──
+(function(){
+  try {
+    var cc = JSON.parse(localStorage.getItem('gb_content_contact')||'null');
+    if (cc && cc.wa_number) WA_NUMBER = cc.wa_number.replace(/\D/g,'');
+  } catch(e) {}
+  try {
+    var cp = JSON.parse(localStorage.getItem('gb_content_policy')||'null');
+    if (cp) {
+      if (cp.bank_name)        { var el=document.getElementById('co-bank-name');    if(el) el.textContent=cp.bank_name; }
+      if (cp.bank_account_name){ var el=document.getElementById('co-bank-acname');  if(el) el.textContent=cp.bank_account_name; }
+      if (cp.bank_account_no)  { var el=document.getElementById('co-bank-acno');    if(el) el.textContent=cp.bank_account_no; }
+      if (cp.bank_iban)        { var el=document.getElementById('co-bank-iban');    if(el) el.textContent=cp.bank_iban; }
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>

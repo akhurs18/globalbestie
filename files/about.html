@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About Us — Global Bestie | Authentic USA Products Pakistan</title>
+<meta name="description" content="Global Bestie sources 100% authentic American products for Pakistan. Real USA brands, PKR pricing, delivered to your door. Our story, our promise.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#FFD1D3;--pink-light:#FFF0F1;--pink-mid:#F4A0A5;--pink-deep:#C4525A;--pink-dark:#8B2E34;
+  --ink:#1A1015;--ink2:#2A1E20;--ink3:#3A2830;
+  --bg:#FFF8F9;--bg2:#FFF0F1;--card:#FFFFFF;
+  --muted:#8B6E72;--muted2:#BDA8AA;
+  --border:#FFE4E6;--border2:#F4CDD0;
+  --sage:#2E5E47;--sienna:#8B4513;--wa:#25D366;
+  --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ── ANNOUNCE BAR ── */
+.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
+.announce-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 28s linear infinite;padding:0 2rem;align-items:center}
+.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.15)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.35rem;font-weight:500;letter-spacing:0.5px;cursor:pointer;text-decoration:none}
+.logo span{color:var(--pink-mid)}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:#8A7474;font-size:0.67rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s;text-decoration:none}
+.nav-links a:hover,.nav-links a.active{color:var(--pink)}
+.nav-right{display:flex;gap:0.8rem;align-items:center}
+.wa-nav{background:transparent;color:var(--wa);font-size:0.65rem;font-weight:500;padding:5px 14px;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.wa-nav:hover{background:rgba(37,211,102,0.08)}
+.cart-link{color:var(--pink);font-size:0.67rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;transition:color 0.2s}
+.cart-link:hover{color:var(--pink-mid)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--pink);transition:all 0.3s}
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:200;flex-direction:column;padding:5rem 2rem 2rem;gap:0}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0;text-decoration:none}
+.mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
+
+/* ── PAGE HERO ── */
+.page-hero{background:var(--ink2);padding:4rem 2rem;text-align:center;border-bottom:1px solid rgba(196,82,90,0.12);position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 100% at 50% 100%,rgba(196,82,90,0.06) 0%,transparent 70%)}
+.page-eyebrow{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);display:block;margin-bottom:0.8rem;position:relative}
+.page-title{font-family:'Cormorant Garamond',serif;color:#fff;font-size:clamp(2.2rem,4vw,3.2rem);font-weight:400;line-height:1.15;letter-spacing:0.3px;position:relative}
+.page-sub{color:#5A4A4C;font-size:0.82rem;margin-top:0.8rem;letter-spacing:0.3px;position:relative}
+
+/* ── ABOUT CONTENT ── */
+.about-wrap{max-width:1100px;margin:0 auto;padding:5rem 2rem}
+.sec-divider{width:40px;height:1px;background:rgba(196,82,90,0.3);margin:0 auto 2rem}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:start}
+.about-copy p{font-size:0.88rem;color:var(--muted);line-height:1.95;margin-bottom:1rem}
+.about-copy em{color:var(--pink-deep);font-style:italic}
+.about-copy p:last-of-type{margin-bottom:1.5rem}
+.about-stats{display:grid;grid-template-columns:1fr;gap:1px;background:var(--border)}
+.astat{background:var(--card);padding:1.4rem 1.6rem;border-left:3px solid var(--pink-deep)}
+.astat-num{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:400;color:var(--pink-deep);line-height:1;margin-bottom:4px}
+.astat-label{font-size:0.68rem;font-weight:500;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.about-promise{background:var(--ink2);padding:4rem 2rem;border-top:1px solid rgba(196,82,90,0.12)}
+.about-promise-inner{max-width:1100px;margin:0 auto}
+.promise-eyebrow{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);display:block;text-align:center;margin-bottom:0.8rem}
+.promise-heading{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:400;text-align:center;color:#fff;margin-bottom:2.5rem;line-height:1.2}
+.promise-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(196,82,90,0.1)}
+.promise-card{background:#1E1318;padding:1.8rem 1.6rem;border-left:3px solid rgba(196,82,90,0.2)}
+.promise-card h4{color:var(--pink);font-size:0.72rem;font-weight:500;letter-spacing:0.3px;margin-bottom:0.6rem}
+.promise-card p{color:#5A4A4C;font-size:0.78rem;line-height:1.75}
+
+/* ── BUTTONS ── */
+.btn-primary{background:var(--pink-deep);color:#fff;padding:0.75rem 2.2rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;text-decoration:none;display:inline-block}
+.btn-primary:hover{background:var(--pink-dark)}
+
+/* ── FOOTER ── */
+.footer{background:var(--ink);padding:3.5rem 2rem 1.5rem}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
+.footer-logo span{color:var(--pink-mid)}
+.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem}
+.footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
+.footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
+.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
+.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px;text-decoration:none}
+.footer-col a:hover{color:var(--pink)}
+.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links,.wa-nav{display:none}
+  .hamburger{display:flex}
+  .about-grid{grid-template-columns:1fr;gap:2.5rem}
+  .promise-grid{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
+  .page-hero{padding:3rem 1.5rem}
+  .about-wrap{padding:3rem 1.5rem}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr}
+  nav{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<nav>
+  <a class="logo" href="index.html">Global <span>Bestie</span></a>
+  <div class="nav-links">
+    <a href="index.html">Women</a>
+    <a href="index.html">Men</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a href="policy.html">Policy</a>
+  </div>
+  <div class="nav-right">
+    <div class="wa-nav" onclick="openWA()">WhatsApp</div>
+    <a href="index.html" class="cart-link">Cart</a>
+    <div class="hamburger" onclick="openMobileNav()"><span></span><span></span><span></span></div>
+  </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <a href="index.html">Women's Collection</a>
+  <a href="index.html">Men's Collection</a>
+  <a href="about.html">About Us</a>
+  <a href="contact.html">Contact</a>
+  <a href="faq.html">FAQ</a>
+  <a href="policy.html">Policy</a>
+  <a onclick="openWA()">WhatsApp Us</a>
+</div>
+
+<div class="page-hero">
+  <span class="page-eyebrow">Our Story</span>
+  <h1 class="page-title">Born from a love of authentic American style</h1>
+  <p class="page-sub">Sourcing the real thing from the USA, delivered to Pakistan.</p>
+</div>
+
+<div class="about-wrap">
+  <div class="sec-divider"></div>
+  <div class="about-grid">
+    <div class="about-copy">
+      <p id="ab-p1">Global Bestie started with one simple frustration: why is it so hard to get real, authentic American products delivered to Pakistan? Not copies. Not knock-offs. The real thing — straight from US shelves to your door.</p>
+      <p id="ab-p2">We personally source every item — from Charlotte Tilbury lipsticks to Coach bags to Nike sneakers — from US retailers. Every product goes through our hands before it reaches yours. That's our promise, and it's why we say <em>no fakes, ever.</em></p>
+      <p id="ab-p3">Based in Pakistan, built for Pakistan. All prices are in PKR, all communication is on WhatsApp, and we're here every step of the way — from browsing to your doorstep.</p>
+      <p id="ab-p4">We started small — just a handful of products and a lot of passion. Today we carry 200+ curated items across makeup, skincare, bags, fashion, and more. Every single one sourced fresh from the USA.</p>
+      <a href="index.html" class="btn-primary">Shop the Collection →</a>
+    </div>
+    <div class="about-stats">
+      <div class="astat">
+        <div class="astat-num" id="ab-num1">200+</div>
+        <div class="astat-label" id="ab-lbl1">Products Curated</div>
+      </div>
+      <div class="astat">
+        <div class="astat-num" id="ab-num2">All Cities</div>
+        <div class="astat-label" id="ab-lbl2">Delivered Across Pakistan</div>
+      </div>
+      <div class="astat">
+        <div class="astat-num" id="ab-num3">100%</div>
+        <div class="astat-label" id="ab-lbl3">Authentic, No Exceptions</div>
+      </div>
+      <div class="astat">
+        <div class="astat-num" id="ab-num4">PKR Only</div>
+        <div class="astat-label" id="ab-lbl4">No Hidden Conversion Fees</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="about-promise">
+  <div class="about-promise-inner">
+    <span class="promise-eyebrow">Our Promise</span>
+    <h2 class="promise-heading">What we stand for</h2>
+    <div class="promise-grid">
+      <div class="promise-card">
+        <h4>100% Authentic</h4>
+        <p>Every product is sourced directly from US retailers. No grey market, no replicas, no exceptions. If we can't guarantee authenticity, we don't sell it.</p>
+      </div>
+      <div class="promise-card">
+        <h4>Honest Pricing</h4>
+        <p>All prices in PKR with everything included — import duties, shipping, and our fee. No surprise charges at checkout or delivery.</p>
+      </div>
+      <div class="promise-card">
+        <h4>Real Support</h4>
+        <p>We're not a faceless platform. Real people on WhatsApp, real updates on your order, and a real commitment to getting it right.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Global <span>Bestie</span></div>
+      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-socials">
+        <div class="footer-social" onclick="openWA()">WhatsApp</div>
+        <div class="footer-social">Instagram</div>
+      </div>
+      <div class="footer-copy">© 2026 Global Bestie</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Shop</div>
+      <a href="index.html">Women's Collection</a>
+      <a href="index.html">Men's Collection</a>
+      <a href="index.html">New Arrivals</a>
+      <a href="index.html">Bags &amp; Accessories</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Help</div>
+      <a href="faq.html">FAQs</a>
+      <a href="policy.html">Shipping &amp; Policy</a>
+      <a href="policy.html">Order Policy</a>
+      <a onclick="openWA()">WhatsApp Us</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">About</div>
+      <a href="about.html">Our Story</a>
+      <a href="about.html">Authenticity Promise</a>
+      <a href="contact.html">Contact Us</a>
+      <a href="policy.html">Terms &amp; Conditions</a>
+    </div>
+  </div>
+  <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WA_NUMBER = '03214992211';
+function openWA(){window.open('https://wa.me/'+WA_NUMBER,'_blank');}
+function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.body.style.overflow='';}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// Active nav link
+document.querySelectorAll('.nav-links a').forEach(a=>{
+  if(a.getAttribute('href')===location.pathname.split('/').pop()) a.classList.add('active');
+});
+
+(function(){
+  var d=localStorage.getItem('gb_content_about');
+  if(!d)return;
+  try{
+    var c=JSON.parse(d);
+    if(c.para1)document.getElementById('ab-p1').innerHTML=c.para1;
+    if(c.para2)document.getElementById('ab-p2').innerHTML=c.para2;
+    if(c.para3)document.getElementById('ab-p3').innerHTML=c.para3;
+    if(c.para4)document.getElementById('ab-p4').innerHTML=c.para4;
+    if(c.stat1_num)document.getElementById('ab-num1').textContent=c.stat1_num;
+    if(c.stat1_label)document.getElementById('ab-lbl1').textContent=c.stat1_label;
+    if(c.stat2_num)document.getElementById('ab-num2').textContent=c.stat2_num;
+    if(c.stat2_label)document.getElementById('ab-lbl2').textContent=c.stat2_label;
+    if(c.stat3_num)document.getElementById('ab-num3').textContent=c.stat3_num;
+    if(c.stat3_label)document.getElementById('ab-lbl3').textContent=c.stat3_label;
+    if(c.stat4_num)document.getElementById('ab-num4').textContent=c.stat4_num;
+    if(c.stat4_label)document.getElementById('ab-lbl4').textContent=c.stat4_label;
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

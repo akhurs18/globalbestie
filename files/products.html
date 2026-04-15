@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop — Global Bestie</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#FFD1D3;--pink-light:#FFF0F1;--pink-mid:#F4A0A5;--pink-deep:#C4525A;--pink-dark:#8B2E34;
+  --ink:#1A1015;--ink2:#2A1E20;--ink3:#3A2830;
+  --bg:#FFF8F9;--bg2:#FFF0F1;--card:#FFFFFF;
+  --muted:#8B6E72;--muted2:#BDA8AA;
+  --border:#FFE4E6;--border2:#F4CDD0;
+  --sage:#2E5E47;--sage-light:#E8F3ED;
+  --sienna:#8B4513;--sienna-light:#FAF0E6;
+  --wa:#25D366;
+  --shadow:0 1px 4px rgba(26,16,21,0.06);
+  --shadow-md:0 4px 20px rgba(26,16,21,0.10);
+  --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ── ANNOUNCEMENT BAR ── */
+.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
+.announce-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 28s linear infinite;padding:0 2rem;align-items:center}
+.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.15)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.35rem;font-weight:500;letter-spacing:0.5px;text-decoration:none}
+.logo span{color:var(--pink-mid)}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:#8A7474;font-size:0.67rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s;text-decoration:none}
+.nav-links a:hover,.nav-links a.active{color:var(--pink)}
+.nav-right{display:flex;gap:0.8rem;align-items:center}
+.wa-nav{background:transparent;color:var(--wa);font-size:0.65rem;font-weight:500;padding:5px 14px;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.wa-nav:hover{background:rgba(37,211,102,0.08)}
+.cart-wrap{position:relative;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--pink);font-size:0.67rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase}
+.cart-badge{background:var(--pink-deep);color:#fff;font-size:9px;font-weight:600;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--pink);transition:all 0.3s}
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:200;flex-direction:column;padding:5rem 2rem 2rem;gap:0}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0;text-decoration:none}
+.mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
+
+/* ── SHOP PAGE HEADER ── */
+.shop-hero{background:var(--ink2);padding:2.2rem 2rem;border-bottom:1px solid rgba(196,82,90,0.15)}
+.shop-hero-inner{max-width:1100px;margin:0 auto}
+.shop-hero-eye{font-size:0.58rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);display:block;margin-bottom:0.4rem}
+.shop-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:400;color:#fff;letter-spacing:0.3px;margin-bottom:0.25rem}
+.shop-hero-sub{font-size:0.7rem;color:#4A3C3E;letter-spacing:0.3px}
+
+/* ── BRAND FILTER BAR ── */
+.brand-filter-bar{background:var(--pink-light);border-bottom:2px solid var(--border2);padding:0.7rem 2rem;display:none}
+.brand-filter-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.brand-filter-inner span{font-size:0.78rem;color:var(--muted)}
+.brand-filter-inner strong{color:var(--ink);font-weight:600}
+.brand-filter-clear{font-size:0.65rem;font-weight:500;color:var(--pink-deep);letter-spacing:1px;text-decoration:none;padding:4px 10px;border:1px solid var(--pink-mid);transition:all 0.2s}
+.brand-filter-clear:hover{background:var(--pink-deep);color:#fff;border-color:var(--pink-deep)}
+
+/* ── PRICE BANNER ── */
+.price-banner{background:var(--ink);border-bottom:1px solid rgba(196,82,90,0.2);padding:0.65rem 2rem;display:flex;align-items:center;justify-content:center;gap:1.2rem;flex-wrap:wrap}
+.pb-item{font-size:0.62rem;font-weight:400;color:#4A3C3E;letter-spacing:1.5px;text-transform:uppercase}
+.pb-dot{width:3px;height:3px;background:rgba(196,82,90,0.35);border-radius:50%;display:inline-block}
+
+/* ── PREORDER BANNER ── */
+.preorder-banner{background:var(--sienna-light);border:1px solid #DFC4A8;padding:1rem 1.4rem;margin:1.2rem auto;max-width:1100px;display:flex;align-items:flex-start;gap:1rem}
+.pb-content h4{font-size:0.75rem;font-weight:600;color:var(--sienna);margin-bottom:0.3rem;letter-spacing:0.3px}
+.pb-content p{font-size:0.72rem;color:#7A3810;line-height:1.65}
+.pb-content p b{color:var(--sienna);font-weight:600}
+
+/* ── GENDER TABS ── */
+.gender-tabs{display:flex;max-width:1100px;margin:0 auto;padding:1.4rem 2rem 0;gap:0}
+.gtab{flex:1;padding:0.85rem;text-align:center;font-size:0.65rem;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);transition:all 0.2s;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
+.gtab.active-women{border-bottom:2px solid var(--pink-deep);color:var(--pink-dark);background:var(--pink-light)}
+.gtab.active-men{border-bottom:2px solid var(--ink);color:var(--ink);background:var(--bg2)}
+
+/* ── CATEGORY PILLS ── */
+.cats-row{display:flex;gap:0.5rem;padding:1rem 2rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
+.cats-row::-webkit-scrollbar{display:none}
+.cat-pill{display:flex;align-items:center;gap:5px;padding:0.38rem 1rem;background:var(--card);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:0.62rem;font-weight:500;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+.cat-pill:hover{background:var(--bg2);border-color:var(--border2);color:var(--ink)}
+.cat-pill.active{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(26,16,21,0.18)}
+
+/* ── PRODUCTS SECTION ── */
+.section{padding:0.5rem 2rem 2.5rem;max-width:1100px;margin:0 auto}
+.section-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.4rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;letter-spacing:0.3px}
+.section-sub{font-size:0.65rem;color:var(--muted2);margin-top:3px;letter-spacing:0.5px}
+
+/* ── PRODUCT GRID ── */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border)}
+@media(max-width:600px){.products-grid{grid-template-columns:repeat(2,1fr)}}
+.prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:box-shadow 0.2s,transform 0.2s}
+.prod-card:hover{box-shadow:0 8px 32px rgba(26,16,21,0.12);z-index:1;position:relative;transform:translateY(-3px)}
+.prod-img{height:190px;display:flex;align-items:center;justify-content:center;position:relative;font-size:2.8rem;overflow:hidden}
+.prod-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease}
+.prod-card:hover .prod-img img{transform:scale(1.04)}
+.prod-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.prod-img-placeholder::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 40%,rgba(255,255,255,0.18) 0%,transparent 70%)}
+.prod-body{padding:1rem}
+.prod-cat{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);margin-bottom:4px}
+.prod-cat.men-cat{color:var(--muted)}
+.prod-name{font-size:0.88rem;font-weight:500;margin-bottom:2px;color:var(--ink);line-height:1.35}
+.prod-brand{margin-bottom:8px}
+.prod-brand a{font-size:0.68rem;color:var(--muted2);letter-spacing:0.2px;text-decoration:none;transition:color 0.2s}
+.prod-brand a:hover{color:var(--pink-deep);text-decoration:underline}
+.availability-tag{display:inline-flex;align-items:center;gap:4px;font-size:0.58rem;font-weight:500;padding:2px 8px;margin-bottom:7px;letter-spacing:1px;text-transform:uppercase;border:1px solid}
+.avail-stock{background:var(--sage-light);color:var(--sage);border-color:#BDD9C8}
+.avail-preorder{background:var(--sienna-light);color:var(--sienna);border-color:#E8D0B8}
+.preorder-note{font-size:0.62rem;color:var(--sienna);background:var(--sienna-light);padding:3px 8px;margin-bottom:7px;border-left:2px solid #DFC4A8}
+.prod-pkr{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--ink);margin-bottom:10px;letter-spacing:0.2px}
+.add-btn{width:100%;background:var(--ink);color:#fff;padding:0.55rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:background 0.2s}
+.add-btn:hover{background:var(--ink3)}
+.add-btn.preorder-btn{background:var(--pink-deep)}
+.add-btn.preorder-btn:hover{background:var(--pink-dark)}
+
+/* ── TRUST BAR ── */
+.trust-row{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.trust-card{background:var(--card);padding:1.1rem;text-align:center;border-right:1px solid var(--border)}
+.trust-card:last-child{border-right:none}
+.trust-title{font-size:0.68rem;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:0.5px}
+.trust-desc{font-size:0.62rem;color:var(--muted2)}
+
+/* ── FOOTER ── */
+.footer{background:var(--ink);padding:3.5rem 2rem 1.5rem}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
+.footer-logo span{color:var(--pink-mid)}
+.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem;letter-spacing:0.3px}
+.footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
+.footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
+.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
+.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px;text-decoration:none}
+.footer-col a:hover{color:var(--pink)}
+.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+
+/* ── CART SIDEBAR ── */
+.cart-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.5);backdrop-filter:blur(4px);z-index:200}
+.cart-overlay.open{display:block}
+.cart-sidebar{position:fixed;top:0;right:0;width:340px;max-width:95vw;height:100%;background:var(--card);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.16,1,.3,1);border-left:1px solid var(--border)}
+.cart-sidebar.open{transform:translateX(0)}
+.cart-head{background:var(--ink);padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(196,82,90,0.2)}
+.cart-head h3{color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;letter-spacing:0.3px}
+.cart-close{color:#6A5460;font-size:1rem;cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.1);width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.cart-close:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+.cart-body{flex:1;overflow-y:auto;padding:1rem}
+.cart-empty{text-align:center;padding:3.5rem 1.5rem;color:var(--muted2);font-size:0.78rem;letter-spacing:0.3px}
+.cart-empty-icon{font-size:2.4rem;margin-bottom:1rem;opacity:0.5}
+.cart-empty h4{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--ink);font-weight:400;margin-bottom:0.4rem}
+.cart-empty p{font-size:0.72rem;color:var(--muted2);line-height:1.7;margin-bottom:1.2rem}
+.cart-empty-btn{display:inline-block;background:var(--ink);color:#fff;padding:0.55rem 1.6rem;font-size:0.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:background 0.2s;font-family:'Inter',sans-serif}
+.cart-empty-btn:hover{background:var(--ink3)}
+.cart-item{display:flex;gap:0.8rem;align-items:flex-start;padding:0.8rem 0;border-bottom:1px solid var(--border)}
+.ci-emoji{font-size:1.2rem;width:42px;height:42px;background:var(--pink-light);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ci-info{flex:1}
+.ci-name{font-size:0.78rem;font-weight:500;color:var(--ink);margin-bottom:2px}
+.ci-section-label{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;margin-top:6px;border-top:1px solid var(--border);color:var(--muted2)}
+.ci-section-label:first-child{border-top:none;margin-top:0}
+.ci-subtotal{display:flex;justify-content:space-between;align-items:center;padding:6px 0;margin-top:3px;border-top:1px solid var(--border)}
+.ci-subtotal-label{font-size:0.68rem;font-weight:500;color:var(--muted)}
+.ci-subtotal-val{font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:500}
+.ci-qty-row{display:flex;align-items:center;gap:7px;margin-top:5px}
+.ci-qty-btn{width:22px;height:22px;border:1px solid var(--border);background:var(--bg2);color:var(--ink);font-size:0.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;transition:all 0.15s}
+.ci-qty-btn:hover{border-color:var(--pink-deep);color:var(--pink-dark)}
+.ci-qty-num{font-size:0.8rem;font-weight:500;min-width:16px;text-align:center}
+.ci-price{font-family:'Cormorant Garamond',serif;font-size:0.95rem;font-weight:500;color:var(--pink-dark);margin-left:auto}
+.ci-remove{font-size:0.6rem;color:var(--muted2);cursor:pointer;margin-top:3px;display:inline-block;letter-spacing:0.5px}
+.ci-remove:hover{color:var(--sienna)}
+.cart-foot{padding:1rem;border-top:1px solid var(--border);background:var(--bg2)}
+.cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem}
+.cart-total span:first-child{font-size:0.62rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.cart-total span:last-child{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500}
+.cart-advance{background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.6rem 0.8rem;margin-bottom:0.8rem;font-size:0.7rem;color:var(--sienna);font-weight:400;letter-spacing:0.3px}
+.checkout-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.75rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:background 0.2s}
+.checkout-btn:hover{background:var(--pink-dark)}
+
+/* ── CHECKOUT MODAL ── */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.modal-wrap.open{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal-head{background:var(--ink);padding:1.2rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(196,82,90,0.2)}
+.modal-head h3{color:#fff;font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;letter-spacing:0.3px}
+.modal-close{color:#6A5460;font-size:1rem;cursor:pointer;background:none;border:1px solid rgba(255,255,255,0.1);width:28px;height:28px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.modal-close:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
+.modal-body{padding:1.5rem}
+.step-tabs{display:flex;margin-bottom:1.5rem;border:1px solid var(--border)}
+.step-tab{flex:1;padding:0.55rem;text-align:center;font-size:0.62rem;font-weight:500;cursor:pointer;background:var(--bg2);color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.step-tab.active{background:var(--ink);color:#fff}
+.form-group{margin-bottom:1rem}
+.form-label{font-size:0.62rem;font-weight:500;color:var(--muted);margin-bottom:6px;display:block;letter-spacing:1.5px;text-transform:uppercase}
+.form-input,.form-select,.form-input-email{width:100%;padding:0.62rem 0.9rem;border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.82rem;color:var(--ink);background:var(--bg);transition:all 0.2s;border-radius:0}
+.form-input:focus,.form-select:focus,.form-input-email:focus{outline:none;border-color:var(--pink-deep);background:#fff;box-shadow:inset 0 0 0 1px var(--pink-deep)}
+.checkbox-row{display:flex;align-items:flex-start;gap:10px;padding:0.8rem;background:var(--sienna-light);border:1px solid #DFC4A8;margin-bottom:1rem}
+.checkbox-row input{margin-top:3px;accent-color:var(--pink-deep)}
+.checkbox-row label{font-size:0.7rem;color:#7A3810;font-weight:400;line-height:1.65;cursor:pointer}
+.bank-box{background:var(--ink);padding:1.1rem 1.2rem;margin-bottom:1rem}
+.bank-box h4{color:var(--pink-mid);font-size:0.6rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.8rem}
+.bank-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.bank-row:last-child{border:none}
+.bank-label{font-size:0.65rem;color:#4A3C3E;font-weight:400;letter-spacing:0.3px}
+.bank-val{font-size:0.76rem;color:var(--pink);font-weight:400}
+.copy-btn{background:transparent;color:var(--pink-mid);border:1px solid rgba(196,82,90,0.3);padding:2px 8px;font-size:0.58rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
+.copy-btn:hover{background:rgba(196,82,90,0.1);border-color:var(--pink-deep)}
+.order-box{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.1rem;margin-bottom:1rem}
+.order-box h4{font-size:0.62rem;font-weight:500;color:var(--muted);margin-bottom:0.7rem;letter-spacing:1.5px;text-transform:uppercase}
+.os-row{display:flex;justify-content:space-between;font-size:0.75rem;padding:0.25rem 0;color:var(--ink3)}
+.os-row.total{font-weight:500;font-size:0.85rem;border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.4rem;color:var(--ink)}
+.advance-notice{background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.7rem 0.9rem;margin-bottom:1rem;font-size:0.7rem;color:var(--sienna);font-weight:400;line-height:1.65}
+.wa-box{background:#F0FBF5;border:1px solid #B8E0C8;padding:1rem 1.1rem;margin-bottom:1rem}
+.wa-box h4{color:#1A5E35;font-size:0.7rem;font-weight:500;margin-bottom:0.4rem;letter-spacing:0.3px}
+.wa-box p{font-size:0.7rem;color:#2A5A3A;line-height:1.65}
+.btn-wa-full{width:100%;background:var(--wa);color:#fff;padding:0.78rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.2s}
+.btn-wa-full:hover{opacity:0.9}
+.next-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.72rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;transition:background 0.2s}
+.next-btn:hover{background:var(--pink-dark)}
+.back-btn{width:100%;background:transparent;color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:400;border:1px solid var(--border);cursor:pointer;margin-top:0.5rem;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.back-btn:hover{border-color:var(--ink);color:var(--ink)}
+.step-panel{display:none}
+.step-panel.active{display:block}
+/* Screenshot upload */
+.upload-section{margin-top:1rem}
+.upload-label-text{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--ink);margin:0 0 0.3rem;display:block}
+.upload-hint{font-size:0.68rem;color:var(--muted);margin:0 0 0.8rem;line-height:1.6}
+.upload-box{display:block;border:1.5px dashed var(--border2);background:var(--bg2);cursor:pointer;text-align:center;padding:1.4rem 1rem;transition:border-color 0.2s,background 0.2s;margin-bottom:0.8rem;position:relative}
+.upload-box:hover,.upload-box.has-file{border-color:var(--pink-deep);background:var(--pink-light)}
+.upload-icon-big{font-size:1.8rem;margin-bottom:0.4rem}
+.upload-box-label{font-size:0.7rem;font-weight:500;color:var(--ink);margin-bottom:0.15rem}
+.upload-box-sub{font-size:0.6rem;color:var(--muted2)}
+.upload-preview{padding:0.2rem;text-align:center}
+.upload-preview img{max-height:120px;max-width:100%;object-fit:contain;border-radius:2px;border:1px solid var(--border)}
+.upload-remove-btn{display:inline-block;margin:0.45rem auto 0;background:transparent;border:1px solid var(--border2);color:var(--muted);font-size:0.6rem;padding:3px 10px;cursor:pointer;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s}
+.upload-remove-btn:hover{border-color:var(--pink-deep);color:var(--pink-deep)}
+.btn-confirm-full{width:100%;background:var(--pink-deep);color:#fff;padding:0.78rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-confirm-full:hover{opacity:0.88}
+.btn-confirm-full:disabled{opacity:0.55;cursor:not-allowed}
+.wa-alt-row{display:flex;align-items:center;gap:0.6rem;margin:0.7rem 0 0.3rem}
+.wa-alt-line{flex:1;height:1px;background:var(--border)}
+.wa-alt-or{font-size:0.6rem;color:var(--muted2);white-space:nowrap;letter-spacing:1px;text-transform:uppercase}
+.btn-wa-alt{width:100%;background:transparent;border:1px solid var(--border2);color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-wa-alt:hover{border-color:var(--wa);color:var(--wa)}
+/* Step 3 — success */
+.success-wrap{text-align:center;padding:1rem 0.5rem 0.5rem}
+.success-check{width:52px;height:52px;border-radius:50%;background:var(--pink-light);border:2px solid var(--pink-deep);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.3rem;color:var(--pink-deep)}
+.success-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--ink);margin-bottom:0.3rem;font-weight:400}
+.success-order-num{font-size:0.68rem;color:var(--muted);margin-bottom:1rem;letter-spacing:1.5px;text-transform:uppercase}
+.success-msg{font-size:0.73rem;color:var(--ink);line-height:1.75;margin-bottom:0.5rem}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;font-weight:400;letter-spacing:0.5px;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── PRODUCT DETAIL MODAL ── */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.7);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.detail-overlay.open{display:flex}
+.detail-modal{background:var(--card);border:1px solid var(--border);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.detail-img-wrap{height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;flex-shrink:0;background:var(--bg2)}
+.detail-img-wrap img{width:100%;height:100%;object-fit:cover}
+.detail-img-emoji{font-size:5rem;opacity:0.5}
+.detail-close-btn{position:absolute;top:12px;right:12px;background:rgba(26,16,21,0.5);color:#fff;border:none;width:30px;height:30px;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+.detail-close-btn:hover{background:rgba(26,16,21,0.8)}
+.detail-body{padding:1.4rem}
+.detail-cat{font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);margin-bottom:5px}
+.detail-cat.men-cat{color:var(--muted)}
+.detail-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:3px;line-height:1.3;letter-spacing:0.2px}
+.detail-brand{font-size:0.72rem;margin-bottom:12px;letter-spacing:0.3px}
+.detail-brand a{color:var(--muted2);text-decoration:none;transition:color 0.2s}
+.detail-brand a:hover{color:var(--pink-deep);text-decoration:underline}
+.detail-desc{font-size:0.8rem;color:var(--muted);line-height:1.75;margin-bottom:14px;padding:1rem;background:var(--bg2);border-left:2px solid var(--pink-deep)}
+.detail-preorder-note{font-size:0.7rem;color:var(--sienna);background:var(--sienna-light);padding:5px 10px;margin-bottom:14px;border-left:2px solid #DFC4A8}
+.detail-price{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;color:var(--ink);margin-bottom:14px;letter-spacing:0.3px}
+.detail-add-btn{width:100%;padding:0.8rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:opacity 0.2s}
+.detail-add-btn:hover{opacity:0.88}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links,.wa-nav{display:none}
+  .hamburger{display:flex}
+  .trust-row{grid-template-columns:repeat(3,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
+}
+@media(max-width:480px){
+  nav{padding:0 1rem}
+  .footer-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Global <span>Bestie</span></a>
+  <div class="nav-links">
+    <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
+    <a onclick="setGender('men')" id="nav-men">Men</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a onclick="showPolicy()">Policy</a>
+  </div>
+  <div class="nav-right">
+    <div class="wa-nav" onclick="openWA('')">WhatsApp</div>
+    <div class="cart-wrap" onclick="openCart()">
+      Cart <span class="cart-badge" id="cartBadge">0</span>
+    </div>
+    <div class="hamburger" onclick="openMobileNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
+  <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
+  <a href="about.html">About Us</a>
+  <a href="contact.html">Contact</a>
+  <a href="faq.html">FAQ</a>
+  <a onclick="showPolicy();closeMobileNav()">Policy</a>
+  <a onclick="openWA('');closeMobileNav()">WhatsApp Us</a>
+</div>
+
+<!-- SHOP HEADER -->
+<div class="shop-hero">
+  <div class="shop-hero-inner">
+    <span class="shop-hero-eye" id="shopHeroEye">Shop</span>
+    <div class="shop-hero-title" id="shopHeroTitle">Women's Collection</div>
+    <div class="shop-hero-sub" id="shopHeroSub">Authentic USA products · Pay via Bank Transfer · 50% advance for preorders</div>
+  </div>
+</div>
+
+<!-- BRAND FILTER BAR -->
+<div class="brand-filter-bar" id="brandFilterBar">
+  <div class="brand-filter-inner">
+    <span>Showing all <strong id="brandFilterName"></strong> products</span>
+    <a href="products.html" class="brand-filter-clear">× Clear filter</a>
+  </div>
+</div>
+
+<!-- PRICE BANNER -->
+<div class="price-banner">
+  <span class="pb-item">Makeup &amp; Beauty</span><span class="pb-dot"></span>
+  <span class="pb-item">Handbags &amp; Wallets</span><span class="pb-dot"></span>
+  <span class="pb-item">Skincare</span><span class="pb-dot"></span>
+  <span class="pb-item">Fashion &amp; Apparel</span><span class="pb-dot"></span>
+  <span class="pb-item">Home &amp; Living</span><span class="pb-dot"></span>
+  <span class="pb-item">Shoes &amp; Accessories</span>
+</div>
+
+<div style="padding:0.8rem 1.5rem 0;max-width:1100px;margin:0 auto">
+  <div class="preorder-banner">
+    <div class="pb-content">
+      <h4>A note from your bestie</h4>
+      <p>Your items are ordered fresh from the USA just for you · <b>50% advance</b> secures your order · Items arrive in <b>~4 weeks</b> · All taxes &amp; shipping are already included — no hidden costs</p>
+    </div>
+  </div>
+</div>
+
+<!-- GENDER TABS -->
+<div class="gender-tabs" id="genderTabs">
+  <div class="gtab active-women" id="gtab-women" onclick="setGender('women')">Women's Collection</div>
+  <div class="gtab" id="gtab-men" onclick="setGender('men')">Men's Collection</div>
+</div>
+
+<!-- CATEGORY PILLS -->
+<div class="cats-row" id="catsRow"></div>
+
+<!-- PRODUCTS -->
+<div class="section" id="productsSection">
+  <div class="section-header">
+    <div>
+      <div class="section-title" id="sectionTitle">Women's Collection</div>
+      <div class="section-sub">Sourced from USA · Pay via Bank Transfer · 50% advance for preorders</div>
+    </div>
+  </div>
+  <div class="products-grid" id="productsGrid"></div>
+</div>
+
+<!-- TRUST BAR -->
+<div class="trust-row">
+  <div class="trust-card"><div class="trust-title">USA Sourced</div><div class="trust-desc">Real US stores</div></div>
+  <div class="trust-card"><div class="trust-title">100% Authentic</div><div class="trust-desc">No fakes, ever</div></div>
+  <div class="trust-card"><div class="trust-title">Bank Transfer</div><div class="trust-desc">Safe PKR payments</div></div>
+  <div class="trust-card"><div class="trust-title">Home Delivery</div><div class="trust-desc">All across Pakistan</div></div>
+  <div class="trust-card"><div class="trust-title">WhatsApp Support</div><div class="trust-desc">Always here for you</div></div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Global <span>Bestie</span></div>
+      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-socials">
+        <div class="footer-social" onclick="openWA('')">WhatsApp</div>
+        <div class="footer-social">Instagram</div>
+      </div>
+      <div class="footer-copy">© 2026 Global Bestie</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Shop</div>
+      <a onclick="setGender('women')">Women's Collection</a>
+      <a onclick="setGender('men')">Men's Collection</a>
+      <a href="products.html">All Products</a>
+      <a onclick="setGender('women');filterCat('bags',null)">Bags &amp; Accessories</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Help</div>
+      <a href="faq.html">FAQs</a>
+      <a onclick="showPolicy()">Shipping &amp; Policy</a>
+      <a onclick="showPolicy()">Order Policy</a>
+      <a onclick="openWA('')">WhatsApp Us</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">About</div>
+      <a href="about.html">Our Story</a>
+      <a href="about.html">Authenticity Promise</a>
+      <a href="contact.html">Contact Us</a>
+      <a onclick="showPolicy()">Terms &amp; Conditions</a>
+    </div>
+  </div>
+  <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
+</div>
+
+<!-- CART SIDEBAR -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-head"><h3>Your Cart</h3><button class="cart-close" onclick="closeCart()">✕</button></div>
+  <div class="cart-body" id="cartBody"></div>
+  <div class="cart-foot" id="cartFoot" style="display:none">
+    <div class="cart-total"><span>Pay Now</span><span id="cartTotalDisplay">Rs 0</span></div>
+    <div class="cart-advance" id="cartAdvanceDisplay"></div>
+    <button class="checkout-btn" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="modal-wrap" id="modalWrap">
+  <div class="modal">
+    <div class="modal-head"><h3>Complete Your Order</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="step-tabs">
+        <div class="step-tab active" id="tab1">1. Details</div>
+        <div class="step-tab" id="tab2">2. Payment</div>
+      </div>
+      <div class="step-panel active" id="step1">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" type="text" id="custName" placeholder="e.g. Ayesha Khan"></div>
+        <div class="form-group"><label class="form-label">WhatsApp Number *</label><input class="form-input" type="tel" id="custPhone" placeholder="e.g. 0300-1234567"></div>
+        <div class="form-group"><label class="form-label">Email Address * <span style="font-size:0.68rem;color:var(--muted)">(for order updates)</span></label><input class="form-input-email form-input" type="email" id="custEmail" placeholder="e.g. ayesha@gmail.com"></div>
+        <div class="form-group"><label class="form-label">City *</label><input class="form-input" type="text" id="custCity" placeholder="e.g. Lahore"></div>
+        <div class="form-group"><label class="form-label">Full Delivery Address *</label><input class="form-input" type="text" id="custAddr" placeholder="House #, Street, Area"></div>
+        <div class="form-group"><label class="form-label">Order Notes (optional)</label><input class="form-input" type="text" id="custNotes" placeholder="Size, colour, special instructions..."></div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="policyAgree">
+          <label for="policyAgree">I have read and agree to the Preorder Policy. I understand delivery takes ~4 weeks, 50% advance is required, and prices are fixed with no discounts.</label>
+        </div>
+        <button class="next-btn" onclick="goStep2()">Continue to Payment →</button>
+      </div>
+      <div class="step-panel" id="step2">
+        <div class="order-box">
+          <h4>Order Summary</h4>
+          <div id="orderSummaryItems"></div>
+          <div class="os-row total"><span>Pay Now</span><span id="orderTotal"></span></div>
+          <div class="os-row" id="advanceRow" style="display:none"></div>
+        </div>
+        <div class="advance-notice" id="advanceNotice"></div>
+        <div class="bank-box">
+          <h4>Bank Transfer Details</h4>
+          <div class="bank-row"><span class="bank-label">Bank</span><span class="bank-val" id="co-bank-name">HBL</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Account Name</span><span class="bank-val" id="co-bank-acname">Hamna Yaqoob</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Account No.</span><span class="bank-val" id="co-bank-acno">22687106647203</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">IBAN</span><span class="bank-val" id="co-bank-iban" style="font-size:0.68rem">PK40HABB0022687106647203</span><button class="copy-btn" onclick="copyText(this.previousElementSibling.textContent)">Copy</button></div>
+          <div class="bank-row"><span class="bank-label">Amount to Pay</span><span class="bank-val" id="bankAmount" style="font-size:0.95rem"></span><button class="copy-btn" onclick="copyBankAmt()">Copy</button></div>
+        </div>
+        <div class="upload-section">
+          <span class="upload-label-text">Upload your payment screenshot</span>
+          <p class="upload-hint">We'll verify and confirm your order within 2 hours.</p>
+          <label class="upload-box" for="screenshotFile" id="uploadBox">
+            <div id="uploadBoxInner">
+              <div class="upload-icon-big">📷</div>
+              <div class="upload-box-label">Tap to choose screenshot</div>
+              <div class="upload-box-sub">JPG or PNG · max 10MB</div>
+            </div>
+            <div class="upload-preview" id="uploadPreview" style="display:none">
+              <img id="previewImg" src="" alt="Preview">
+              <button class="upload-remove-btn" type="button" onclick="removeScreenshot(event)">✕ Remove</button>
+            </div>
+          </label>
+          <input type="file" id="screenshotFile" accept="image/*" style="display:none" onchange="onScreenshotSelected(this)">
+        </div>
+        <button class="btn-confirm-full" id="btnConfirmOrder" onclick="confirmOrder()">Confirm Order →</button>
+        <div class="wa-alt-row"><div class="wa-alt-line"></div><span class="wa-alt-or">or</span><div class="wa-alt-line"></div></div>
+        <button class="btn-wa-alt" onclick="confirmAndSendWA()">📱 Send screenshot on WhatsApp instead</button>
+        <div id="co-wa-display" style="display:none">+92 321 4992211</div>
+        <button class="back-btn" onclick="goStep1()">← Back</button>
+      </div>
+      <!-- Step 3: Success -->
+      <div class="step-panel" id="step3">
+        <div class="success-wrap">
+          <div class="success-check">✓</div>
+          <div class="success-title">Order Placed!</div>
+          <div class="success-order-num" id="successOrderNum"></div>
+          <p class="success-msg" id="successMsgMain"></p>
+          <button class="next-btn" onclick="finishOrder()" style="margin-top:1.2rem">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- PRODUCT DETAIL MODAL -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal">
+    <div class="detail-img-wrap" id="detailImgWrap">
+      <button class="detail-close-btn" onclick="closeDetail()">✕</button>
+      <span class="detail-img-emoji" id="detailEmoji"></span>
+    </div>
+    <div class="detail-body">
+      <div class="detail-cat" id="detailCat"></div>
+      <div class="detail-name" id="detailName"></div>
+      <div class="detail-brand" id="detailBrand"></div>
+      <div class="availability-tag" id="detailAvail"></div>
+      <div class="detail-desc" id="detailDesc" style="display:none"></div>
+      <div class="detail-preorder-note" id="detailPreorderNote" style="display:none">50% advance required · ~4 weeks delivery from USA</div>
+      <div class="detail-price" id="detailPrice"></div>
+      <button class="detail-add-btn" id="detailAddBtn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUPABASE CONFIG — paste your values from Dashboard → Settings → API
+// ═══════════════════════════════════════════════════════════
+const SUPA_URL = '';  // e.g. 'https://abcxyz.supabase.co'
+const SUPA_KEY = '';  // anon/public key starting with eyJ...
+const _supa = (SUPA_URL && SUPA_KEY) ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let WA_NUMBER = '03214992211';
+const SHEET_URL = '';
+const SHEET_ID = '';
+
+// ── CATEGORY DEFAULTS ──
+const DEFAULT_WOMEN_CATS=[
+  {id:'makeup',label:'Makeup & Beauty',icon:'💄'},
+  {id:'skincare',label:'Skincare',icon:'🧴'},
+  {id:'bags',label:'Bags & Accessories',icon:'👜'},
+  {id:'accessories',label:'Accessories',icon:'💍'},
+  {id:'fashion',label:'Fashion',icon:'👗'},
+  {id:'home',label:'Home & Living',icon:'🕯️'},
+  {id:'hair',label:'Hair',icon:'💇'}
+];
+const DEFAULT_MEN_CATS=[
+  {id:'grooming',label:'Grooming',icon:'🧼'},
+  {id:'bags',label:'Bags',icon:'👜'},
+  {id:'fashion',label:'Fashion',icon:'👗'},
+  {id:'accessories',label:'Accessories',icon:'💍'},
+  {id:'shoes',label:'Shoes',icon:'👟'},
+  {id:'home',label:'Home',icon:'🕯️'}
+];
+
+// Fallback icon/label lookups for products with cats not in the saved list
+const _fallbackIcons={makeup:'💄',skincare:'🧴',bags:'👜',accessories:'💍',fashion:'👗',home:'🕯️',hair:'💇',grooming:'🧼',shoes:'👟'};
+const _fallbackLabels={makeup:'Makeup',skincare:'Skincare',bags:'Bags',accessories:'Accessories',fashion:'Fashion',home:'Home',hair:'Hair',grooming:'Grooming',shoes:'Shoes'};
+const bgs={makeup:'#FFF0F5',bags:'#FFF8EE',skincare:'#F0FFF8',accessories:'#F5F0FF',fashion:'#F0F5FF',home:'#FFF5F0',hair:'#FFFFF0',grooming:'#F0F8FF',shoes:'#FFF0EA'};
+
+function getCats(gender){
+  try{
+    const saved=JSON.parse(localStorage.getItem('gb_categories')||'null');
+    if(saved&&saved[gender]&&saved[gender].length) return saved[gender];
+  }catch(e){}
+  return gender==='women'?DEFAULT_WOMEN_CATS:DEFAULT_MEN_CATS;
+}
+
+function catLabel(id,gender){
+  const cat=(getCats(gender)||[]).find(c=>c.id===id);
+  return cat?cat.label:(_fallbackLabels[id]||id);
+}
+function catIcon(id,gender){
+  const cat=(getCats(gender||'women')||[]).find(c=>c.id===id);
+  return cat?cat.icon:(_fallbackIcons[id]||'✨');
+}
+
+function parseGviz(text){
+  try{
+    const match=text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
+    if(!match)return null;
+    const json=JSON.parse(match[1]);
+    const cols=json.table.cols.map(c=>c.label||c.id);
+    return(json.table.rows||[]).map(row=>{
+      const obj={};
+      (row.c||[]).forEach((cell,i)=>{obj[cols[i]]=(cell&&cell.v!=null)?String(cell.v):''});
+      return obj;
+    }).filter(row=>Object.values(row).some(v=>v!==''));
+  }catch(e){return null;}
+}
+
+let productsCache=null;
+function getProducts(){
+  if(productsCache)return productsCache;
+  const saved=localStorage.getItem('gb_products');
+  if(saved){productsCache=JSON.parse(saved);return productsCache;}
+  return getDefaultProducts();
+}
+function getDefaultProducts(){
+  return [
+    {id:1,gender:'women',cat:'makeup',name:'NYX Matte Lipstick Set (12 colors)',brand:'NYX Professional',pkr:9000,inStock:false,description:'',image:''},
+    {id:2,gender:'women',cat:'bags',name:'Coach Mini Crossbody Bag',brand:'Coach',pkr:70500,inStock:false,description:'',image:''},
+    {id:3,gender:'women',cat:'makeup',name:'e.l.f. Power Grip Primer',brand:'e.l.f. Cosmetics',pkr:6300,inStock:true,description:'',image:''},
+    {id:4,gender:'women',cat:'accessories',name:'Kendra Scott Gold Earrings',brand:'Kendra Scott',pkr:21900,inStock:false,description:'',image:''},
+    {id:5,gender:'women',cat:'skincare',name:'CeraVe Moisturizing Cream',brand:'CeraVe',pkr:9400,inStock:true,description:'',image:''},
+    {id:6,gender:'women',cat:'bags',name:'Kate Spade Tote Bag',brand:'Kate Spade',pkr:89000,inStock:false,description:'',image:''},
+    {id:7,gender:'women',cat:'makeup',name:'Fenty Beauty Gloss Bomb',brand:'Fenty Beauty',pkr:10400,inStock:false,description:'',image:''},
+    {id:8,gender:'women',cat:'hair',name:'Olaplex No.3 Hair Perfector',brand:'Olaplex',pkr:12500,inStock:true,description:'',image:''},
+    {id:9,gender:'women',cat:'fashion',name:'Free People Floral Dress',brand:'Free People',pkr:33400,inStock:false,description:'',image:''},
+    {id:10,gender:'women',cat:'skincare',name:'Tatcha The Water Cream',brand:'Tatcha',pkr:26400,inStock:false,description:'',image:''},
+    {id:11,gender:'women',cat:'home',name:'Capri Blue Volcano Candle',brand:'Anthropologie',pkr:13900,inStock:true,description:'',image:''},
+    {id:12,gender:'women',cat:'makeup',name:'Charlotte Tilbury Pillow Talk Lipstick',brand:'Charlotte Tilbury',pkr:14900,inStock:false,description:'',image:''},
+    {id:13,gender:'women',cat:'bags',name:'Fossil Leather Wallet',brand:'Fossil',pkr:18400,inStock:true,description:'',image:''},
+    {id:14,gender:'women',cat:'accessories',name:'BaubleBar Bracelet Stack',brand:'BaubleBar',pkr:16000,inStock:false,description:'',image:''},
+    {id:15,gender:'men',cat:'grooming',name:"Brickell Men's Face Wash",brand:'Brickell',pkr:10400,inStock:true,description:'',image:''},
+    {id:16,gender:'men',cat:'fashion',name:"Levi's 501 Original Jeans",brand:"Levi's",pkr:26800,inStock:false,description:'',image:''},
+    {id:17,gender:'men',cat:'bags',name:'Tumi Alpha Backpack',brand:'Tumi',pkr:105300,inStock:false,description:'',image:''},
+    {id:18,gender:'men',cat:'grooming',name:'Jack Black Beard Oil',brand:'Jack Black',pkr:11800,inStock:false,description:'',image:''},
+    {id:19,gender:'men',cat:'accessories',name:"Fossil Men's Leather Belt",brand:'Fossil',pkr:18400,inStock:true,description:'',image:''},
+    {id:20,gender:'men',cat:'shoes',name:'Nike Air Max 270',brand:'Nike',pkr:54900,inStock:false,description:'',image:''},
+    {id:21,gender:'men',cat:'fashion',name:'Ralph Lauren Polo Shirt',brand:'Ralph Lauren',pkr:33700,inStock:false,description:'',image:''},
+    {id:22,gender:'men',cat:'grooming',name:"Kiehl's Moisturizer SPF 50",brand:"Kiehl's",pkr:16000,inStock:true,description:'',image:''},
+    {id:23,gender:'men',cat:'bags',name:"Coach Men's Messenger Bag",brand:'Coach',pkr:67100,inStock:false,description:'',image:''},
+    {id:24,gender:'men',cat:'home',name:'Yankee Candle Man Town',brand:'Yankee Candle',pkr:13200,inStock:true,description:'',image:''},
+  ];
+}
+
+(async function loadProducts(){
+  // ── 1. Try Supabase ──
+  if(_supa){
+    try{
+      const {data,error}=await _supa.from('products').select('*').order('id');
+      if(error) throw error;
+      if(data&&data.length){
+        productsCache=data.map(p=>({
+          id:p.id,gender:p.gender,cat:p.cat,name:p.name,brand:p.brand||'',
+          pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||'',
+          qty:p.qty||0,sku:p.sku||'',cost:p.cost||0,lowStockThreshold:p.low_stock_threshold||3
+        }));
+        localStorage.setItem('gb_products',JSON.stringify(productsCache));
+        renderProducts(filterProds());
+        loadCart();
+        return;
+      }
+    }catch(e){console.warn('Supabase product load failed:',e.message);}
+  }
+  // ── 2. Fallback: Google Sheet ──
+  const sid=SHEET_ID||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetId||'');
+  if(!sid)return;
+  try{
+    const r=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:json&sheet=Products`);
+    const data=parseGviz(await r.text());
+    if(!data||!data.length||!data.some(p=>p.name))return;
+    const mapped=data.map(p=>({
+      id:parseInt(p.id)||p.id,gender:p.gender||'women',cat:p.cat||'accessories',
+      name:String(p.name||''),brand:String(p.brand||''),
+      pkr:parseFloat(p.pkr)||0,inStock:p.inStock==='true'||p.inStock===true,
+      description:p.description||'',image:p.image||''
+    })).filter(p=>p.name&&p.pkr>0);
+    if(!mapped.length)return;
+    productsCache=mapped;
+    localStorage.setItem('gb_products',JSON.stringify(productsCache));
+    renderProducts(filterProds());
+    loadCart();
+  }catch(e){}
+})();
+
+window.addEventListener('storage',e=>{
+  if(e.key==='gb_products'){productsCache=null;renderProducts(filterProds());}
+  if(e.key==='gb_categories'){renderCats(currentGender);}
+});
+
+const fmtPKR=n=>'Rs '+Math.round(n).toLocaleString();
+let cart=[], currentGender='women', currentCat='all', currentBrand=null;
+
+function setGender(g){
+  currentGender=g; currentCat='all'; currentBrand=null;
+  hideBrandFilter();
+  document.getElementById('nav-women').className=g==='women'?'active':'';
+  document.getElementById('nav-men').className=g==='men'?'active':'';
+  document.getElementById('gtab-women').className='gtab'+(g==='women'?' active-women':'');
+  document.getElementById('gtab-men').className='gtab'+(g==='men'?' active-men':'');
+  const title=g==='women'?"Women's Collection":"Men's Collection";
+  document.getElementById('sectionTitle').textContent=title;
+  document.getElementById('shopHeroTitle').textContent=title;
+  document.getElementById('shopHeroEye').textContent='Shop';
+  document.getElementById('shopHeroSub').textContent='Authentic USA products · Pay via Bank Transfer · 50% advance for preorders';
+  document.getElementById('genderTabs').style.display='';
+  document.getElementById('catsRow').style.display='';
+  renderCats(g);
+  renderProducts(filterProds());
+}
+
+function renderCats(g){
+  const cats=getCats(g);
+  document.getElementById('catsRow').innerHTML=
+    `<div class="cat-pill active" onclick="filterCat('all',this)">All</div>`+
+    cats.map(c=>`<div class="cat-pill" onclick="filterCat('${c.id}',this)">${c.icon} ${c.label}</div>`).join('');
+}
+
+function filterCat(cat,el){
+  currentCat=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  if(el)el.classList.add('active');
+  else{const pills=document.querySelectorAll('.cat-pill');if(cat==='all'&&pills[0])pills[0].classList.add('active');}
+  renderProducts(filterProds());
+}
+
+function filterProds(){
+  const all=getProducts();
+  if(currentBrand) return all.filter(p=>p.brand===currentBrand);
+  return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+}
+
+function showBrandFilter(brand){
+  currentBrand=brand;
+  document.getElementById('brandFilterBar').style.display='block';
+  document.getElementById('brandFilterName').textContent=brand;
+  document.getElementById('genderTabs').style.display='none';
+  document.getElementById('catsRow').style.display='none';
+  document.getElementById('sectionTitle').textContent='Brand: '+brand;
+  document.getElementById('shopHeroTitle').textContent=brand;
+  document.getElementById('shopHeroEye').textContent='Brand';
+  document.getElementById('shopHeroSub').textContent='All '+brand+' products · Authentic USA · Pay via Bank Transfer';
+  renderProducts(filterProds());
+}
+function hideBrandFilter(){
+  document.getElementById('brandFilterBar').style.display='none';
+  document.getElementById('genderTabs').style.display='';
+  document.getElementById('catsRow').style.display='';
+}
+
+function renderProducts(data){
+  document.getElementById('productsGrid').innerHTML=data.length?data.map(p=>{
+    const bg=bgs[p.cat]||'#f8f8ff';
+    const isPreorder=!p.inStock;
+    const isMen=p.gender==='men';
+    return `<div class="prod-card" onclick="openProductDetail(${p.id})">
+      <div class="prod-img" style="background:${p.image?'#100808':bg}">
+        ${p.image
+          ? `<img src="${p.image}" alt="${p.name}">`
+          : `<div class="prod-img-placeholder" style="background:linear-gradient(145deg,${bg},${bg}dd)"><span style="font-size:2.5rem;position:relative;z-index:1">${catIcon(p.cat,p.gender)}</span></div>`}
+      </div>
+      <div class="prod-body">
+        <div class="prod-cat${isMen?' men-cat':''}">${catLabel(p.cat,p.gender)}</div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-brand"><a href="products.html?brand=${encodeURIComponent(p.brand)}" onclick="event.stopPropagation()">${p.brand}</a></div>
+        <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
+        ${isPreorder?`<div class="preorder-note">50% advance · ~4 weeks delivery</div>`:''}
+        <div class="prod-pkr">${fmtPKR(p.pkr)}</div>
+        <button class="add-btn${isPreorder?' preorder-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
+      </div>
+    </div>`;
+  }).join(''):`<div style="grid-column:1/-1;text-align:center;padding:4rem 1rem">
+    <div style="font-size:2.2rem;margin-bottom:0.8rem">🛍️</div>
+    <div style="font-size:0.95rem;font-weight:500;color:var(--ink);margin-bottom:0.4rem">No products here yet</div>
+    <div style="font-size:0.78rem;color:var(--muted2);line-height:1.6">Check back soon — new arrivals coming.</div>
+  </div>`;
+}
+
+function saveCart(){localStorage.setItem('gb_cart',JSON.stringify(cart));}
+function loadCart(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('gb_cart')||'[]');
+    const prods=getProducts();
+    cart=saved.filter(c=>prods.some(p=>p.id===c.id)).map(c=>{const p=prods.find(p=>p.id===c.id);return{...c,pkr:p.pkr};});
+  }catch(e){cart=[];}
+  updateBadge();
+}
+function addToCart(id){
+  const p=getProducts().find(x=>x.id===id);
+  const ex=cart.find(x=>x.id===id);
+  if(ex){if(ex.qty>=5){showToast('Max 5 per item');return;}ex.qty++;}
+  else{cart.push({...p,qty:1,pkr:p.pkr});}
+  saveCart();updateBadge();
+  showToast(p.inStock?'Added to cart!':'Preorder added!');
+}
+function updateBadge(){document.getElementById('cartBadge').textContent=cart.reduce((a,c)=>a+c.qty,0);}
+function cartTotal(){return cart.reduce((a,c)=>a+c.pkr*c.qty,0);}
+function hasPreorder(){return cart.some(c=>!c.inStock);}
+
+function openCart(){
+  const body=document.getElementById('cartBody'),foot=document.getElementById('cartFoot');
+  if(!cart.length){
+    body.innerHTML=`<div class="cart-empty"><div class="cart-empty-icon">🛍️</div><h4>Your cart is empty</h4><p>Browse our collection of authentic<br>USA products delivered to Pakistan.</p><button class="cart-empty-btn" onclick="closeCart()">Start Shopping</button></div>`;
+    foot.style.display='none';
+  }else{
+    const sI=cart.filter(c=>c.inStock),pI=cart.filter(c=>!c.inStock);
+    const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5);
+    const ri=c=>`<div class="cart-item"><div class="ci-emoji">${_fallbackIcons[c.cat]||'✨'}</div><div class="ci-info"><div class="ci-name">${c.name}</div><div class="ci-qty-row"><button class="ci-qty-btn" onclick="changeQty(${c.id},-1)">−</button><span class="ci-qty-num">${c.qty}</span><button class="ci-qty-btn" onclick="changeQty(${c.id},1)">+</button><span class="ci-price">${fmtPKR(c.pkr*c.qty)}</span></div><span class="ci-remove" onclick="removeItem(${c.id})">Remove</span></div></div>`;
+    let h='';
+    if(sI.length){h+=`<div class="ci-section-label">In-Stock — Pay in Full</div>`;h+=sI.map(ri).join('');h+=`<div class="ci-subtotal"><span class="ci-subtotal-label">In-stock total</span><span class="ci-subtotal-val" style="color:var(--sage)">${fmtPKR(sS)}</span></div>`;}
+    if(pI.length){h+=`<div class="ci-section-label" style="margin-top:${sI.length?'8px':'0'}">Preorder — 50% Advance</div>`;h+=pI.map(ri).join('');h+=`<div class="ci-subtotal"><span class="ci-subtotal-label">Full price</span><span class="ci-subtotal-val" style="color:var(--muted);text-decoration:line-through">${fmtPKR(pS)}</span></div><div class="ci-subtotal" style="border-top:none;padding-top:2px"><span class="ci-subtotal-label">50% advance due now</span><span class="ci-subtotal-val" style="color:var(--pink-deep)">${fmtPKR(pA)}</span></div>`;}
+    body.innerHTML=h;
+    const payNow=sS+pA;
+    document.getElementById('cartTotalDisplay').textContent=fmtPKR(payNow);
+    document.getElementById('cartAdvanceDisplay').textContent=pI.length?`Remaining preorder balance (${fmtPKR(pS-pA)}) due before dispatch`:``;
+    foot.style.display='block';
+  }
+  document.getElementById('cartOverlay').classList.add('open');
+  document.getElementById('cartSidebar').classList.add('open');
+}
+function closeCart(){document.getElementById('cartOverlay').classList.remove('open');document.getElementById('cartSidebar').classList.remove('open');}
+function removeItem(id){cart=cart.filter(c=>c.id!==id);saveCart();updateBadge();openCart();}
+function changeQty(id,delta){
+  const item=cart.find(c=>c.id===id);if(!item)return;
+  const nq=item.qty+delta;
+  if(nq<=0)cart=cart.filter(c=>c.id!==id);
+  else if(nq>5){showToast('Max 5 per item');return;}
+  else item.qty=nq;
+  saveCart();updateBadge();openCart();
+}
+function openCheckout(){closeCart();goStep1();document.getElementById('modalWrap').classList.add('open');}
+function closeModal(){document.getElementById('modalWrap').classList.remove('open');}
+function setStep(n){
+  [1,2,3].forEach(i=>{
+    const panel=document.getElementById('step'+i);
+    if(panel)panel.classList.toggle('active',i===n);
+    const tab=document.getElementById('tab'+i);
+    if(tab)tab.classList.toggle('active',i===n);
+  });
+  const tabs=document.querySelector('.step-tabs');
+  if(tabs)tabs.style.display=n===3?'none':'';
+}
+function goStep1(){setStep(1);}
+
+function goStep2(){
+  const name=document.getElementById('custName').value.trim();
+  const phone=document.getElementById('custPhone').value.trim();
+  const email=document.getElementById('custEmail').value.trim();
+  const city=document.getElementById('custCity').value.trim();
+  const addr=document.getElementById('custAddr').value.trim();
+  if(!name||!phone||!email||!city||!addr){showToast('Please fill all required fields');return;}
+  if(!/^(\+92|0092|0)3[0-9]{9}$/.test(phone.replace(/[\s\-]/g,''))){showToast('Please enter a valid Pakistan mobile number');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showToast('Please enter a valid email address');return;}
+  if(!document.getElementById('policyAgree').checked){showToast('Please agree to our ordering policy');return;}
+  const sI=cart.filter(c=>c.inStock),pI=cart.filter(c=>!c.inStock);
+  const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5),payNow=sS+pA;
+  let sh='';
+  if(sI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:2px">In-Stock — Pay in Full</div>`;sh+=sI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>In-stock subtotal</span><span style="color:var(--sage)">${fmtPKR(sS)}</span></div>`;}
+  if(pI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sienna);text-transform:uppercase;letter-spacing:0.5px;padding:${sI.length?'10px':'0'} 0 2px">Preorder — 50% Advance</div>`;sh+=pI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="padding-top:4px;border-top:1px dashed var(--border2)"><span style="color:var(--muted)">Full price</span><span style="color:var(--muted);text-decoration:line-through">${fmtPKR(pS)}</span></div><div class="os-row" style="font-weight:600"><span>50% advance due now</span><span style="color:var(--pink-deep)">${fmtPKR(pA)}</span></div><div class="os-row" style="font-size:0.7rem;color:var(--muted)"><span>Remaining due before dispatch</span><span>${fmtPKR(pS-pA)}</span></div>`;}
+  document.getElementById('orderSummaryItems').innerHTML=sh;
+  document.getElementById('orderTotal').textContent=fmtPKR(payNow);
+  document.getElementById('advanceRow').style.display='none';
+  document.getElementById('advanceNotice').textContent=pI.length?`Transfer ${fmtPKR(payNow)} now to confirm your order.${sI.length?' In-stock items will ship immediately.':''} Preorder balance (${fmtPKR(pS-pA)}) due before dispatch.`:`Transfer ${fmtPKR(payNow)} in full — your items will be dispatched promptly.`;
+  document.getElementById('bankAmount').textContent=fmtPKR(payNow);
+  window._payNow=payNow; window._total=cartTotal();
+  setStep(2);
+}
+
+function _getCheckoutFields(){
+  return {
+    name:document.getElementById('custName').value.trim(),
+    phone:document.getElementById('custPhone').value.trim(),
+    email:document.getElementById('custEmail').value.trim(),
+    city:document.getElementById('custCity').value.trim(),
+    addr:document.getElementById('custAddr').value.trim(),
+    notes:document.getElementById('custNotes').value.trim()
+  };
+}
+
+async function confirmOrder(){
+  const btn=document.getElementById('btnConfirmOrder');
+  if(btn){btn.textContent='Placing order…';btn.disabled=true;}
+  const fields=_getCheckoutFields();
+  let orderNum='';
+  let uploaded=false;
+  try{
+    if(_supa){
+      const order=await saveOrderToSupabase(fields);
+      orderNum=order.order_number||'';
+      const file=document.getElementById('screenshotFile').files[0];
+      if(file){
+        try{
+          const url=await _uploadScreenshot(order.id,file);
+          await _supa.from('orders').update({screenshot_url:url}).eq('id',order.id);
+          uploaded=true;
+        }catch(e){console.warn('Screenshot upload failed:',e.message);}
+      }
+    } else {
+      await saveOrderToSheet(fields);
+    }
+  }catch(e){
+    console.error('Order failed:',e.message);
+    if(btn){btn.textContent='Confirm Order →';btn.disabled=false;}
+    showToast('Something went wrong — please try again.');
+    return;
+  }
+  if(btn){btn.textContent='Confirm Order →';btn.disabled=false;}
+  document.getElementById('successOrderNum').textContent=orderNum?'Order #'+orderNum:'';
+  document.getElementById('successMsgMain').textContent=uploaded
+    ?'Your payment screenshot has been received. We\'ll confirm your order on WhatsApp within 2 hours.'
+    :'Your order has been placed. Share your payment screenshot on WhatsApp to confirm.';
+  setStep(3);
+  cart=[];saveCart();updateBadge();
+}
+
+async function _uploadScreenshot(orderId,file){
+  const ext=file.name.split('.').pop()||'jpg';
+  const path=orderId+'/payment.'+ext;
+  const {error}=await _supa.storage.from('payment-screenshots').upload(path,file,{contentType:file.type,upsert:true});
+  if(error)throw error;
+  return _supa.storage.from('payment-screenshots').getPublicUrl(path).data.publicUrl;
+}
+
+function onScreenshotSelected(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  if(file.size>10*1024*1024){showToast('File too large — max 10MB');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    document.getElementById('previewImg').src=e.target.result;
+    document.getElementById('uploadPreview').style.display='block';
+    document.getElementById('uploadBoxInner').style.display='none';
+    document.getElementById('uploadBox').classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeScreenshot(e){
+  if(e){e.preventDefault();e.stopPropagation();}
+  document.getElementById('screenshotFile').value='';
+  document.getElementById('uploadPreview').style.display='none';
+  document.getElementById('uploadBoxInner').style.display='';
+  document.getElementById('uploadBox').classList.remove('has-file');
+}
+
+function finishOrder(){closeModal();}
+
+async function confirmAndSendWA(){
+  const btn=document.querySelector('.btn-wa-alt');
+  if(btn){btn.textContent='Saving…';btn.disabled=true;}
+  const fields=_getCheckoutFields();
+  if(_supa){
+    try{ await saveOrderToSupabase(fields); }
+    catch(e){ console.error('Order save failed:',e.message); }
+  } else {
+    await saveOrderToSheet(fields);
+  }
+  if(btn){btn.textContent='📱 Send screenshot on WhatsApp instead';btn.disabled=false;}
+  sendWA();
+  cart=[];saveCart();updateBadge();
+  closeModal();
+}
+
+async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
+  const orderNum='GB-'+Date.now().toString(36).toUpperCase();
+  const {data:order,error:oErr}=await _supa.from('orders').insert({
+    order_number:orderNum,customer_name:name,customer_phone:phone,
+    customer_email:email,customer_city:city,customer_address:addr,
+    status:'new',total:window._total||0,advance:window._payNow||0,
+    has_preorder:hasPreorder(),notes
+  }).select().single();
+  if(oErr) throw oErr;
+  const items=cart.map(c=>({
+    order_id:order.id,product_id:c.id,product_name:c.name,brand:c.brand||'',
+    qty:c.qty,pkr:c.pkr,is_preorder:!c.inStock
+  }));
+  const {error:iErr}=await _supa.from('order_items').insert(items);
+  if(iErr) throw iErr;
+  // Decrement qty for in-stock items
+  for(const c of cart.filter(x=>x.inStock)){
+    const p=getProducts().find(x=>x.id===c.id);
+    if(p&&p.qty>0) await _supa.from('products').update({qty:Math.max(0,p.qty-c.qty)}).eq('id',c.id);
+  }
+  return order;
+}
+
+async function saveOrderToSheet({name,phone,email,city,addr,notes}){
+  const sheetUrl=SHEET_URL||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetUrl||'');
+  if(!sheetUrl)return;
+  const items=cart.map(c=>`${c.name} x${c.qty} [${c.inStock?'In Stock':'PREORDER'}]`).join(', ');
+  try{await fetch(sheetUrl,{method:'POST',mode:'no-cors',body:new URLSearchParams({payload:JSON.stringify({action:'addOrder',date:new Date().toLocaleDateString('en-PK'),name,phone,email,city,address:addr,items,total:fmtPKR(window._total),advance:fmtPKR(window._payNow),notes})})});}catch(e){}
+}
+function sendWA(){
+  const name=document.getElementById('custName').value.trim(),phone=document.getElementById('custPhone').value.trim(),email=document.getElementById('custEmail').value.trim(),city=document.getElementById('custCity').value.trim(),addr=document.getElementById('custAddr').value.trim(),notes=document.getElementById('custNotes').value.trim();
+  const items=cart.map(c=>`  - ${c.name} x${c.qty} [${c.inStock?'In Stock':'PREORDER'}] = ${fmtPKR(c.pkr*c.qty)}`).join('\n');
+  const msg=`🛍️ *New Order — Global Bestie*\n\n👤 *Name:* ${name}\n📱 *WhatsApp:* ${phone}\n📧 *Email:* ${email}\n🏙️ *City:* ${city}\n📍 *Address:* ${addr}${notes?'\n📝 Notes: '+notes:''}\n\n*Items:*\n${items}\n\n*Order Total:* ${fmtPKR(window._total)}\n${hasPreorder()?`*Advance Paid:* ${fmtPKR(window._payNow)}\n`:''}\n✅ Payment screenshot attached.\n\nPlease confirm my order!`;
+  window.open('https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
+function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copied!'));}
+function copyBankAmt(){navigator.clipboard.writeText(String(window._payNow||0)).then(()=>showToast('Amount copied!')).catch(()=>showToast('Copied!'));}
+function showPolicy(){window.location='policy.html';}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.body.style.overflow='';}
+
+function openProductDetail(id){
+  const p=getProducts().find(x=>x.id===id);if(!p)return;
+  const isPreorder=!p.inStock;
+  const imgWrap=document.getElementById('detailImgWrap'),emojiEl=document.getElementById('detailEmoji');
+  const existingImg=imgWrap.querySelector('img');if(existingImg)existingImg.remove();
+  if(p.image){const img=document.createElement('img');img.src=p.image;img.alt=p.name;imgWrap.style.background='#1a0808';emojiEl.style.display='none';imgWrap.appendChild(img);}
+  else{imgWrap.style.background=bgs[p.cat]||'var(--pink-light)';emojiEl.style.display='';emojiEl.textContent=catIcon(p.cat,p.gender);}
+  document.getElementById('detailCat').className='detail-cat'+(p.gender==='men'?' men-cat':'');
+  document.getElementById('detailCat').textContent=catLabel(p.cat,p.gender);
+  document.getElementById('detailName').textContent=p.name;
+  document.getElementById('detailBrand').innerHTML=`<a href="products.html?brand=${encodeURIComponent(p.brand)}" onclick="event.stopPropagation()">${p.brand}</a>`;
+  const avail=document.getElementById('detailAvail');
+  avail.className='availability-tag '+(isPreorder?'avail-preorder':'avail-stock');
+  avail.textContent=isPreorder?'Preorder':'In Stock';
+  const descEl=document.getElementById('detailDesc');
+  if(p.description){descEl.textContent=p.description;descEl.style.display='block';}else descEl.style.display='none';
+  document.getElementById('detailPreorderNote').style.display=isPreorder?'block':'none';
+  document.getElementById('detailPrice').textContent=fmtPKR(p.pkr);
+  const btn=document.getElementById('detailAddBtn');
+  btn.textContent=isPreorder?'Preorder Now':'Add to Cart';
+  btn.style.background=isPreorder?'var(--pink-deep)':'var(--ink)';
+  btn.style.color='#fff';
+  btn.onclick=()=>{addToCart(id);closeDetail();};
+  document.getElementById('detailOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');document.body.style.overflow='';}
+
+// ── INIT: read URL params ──
+loadCart();
+const _p=new URLSearchParams(location.search);
+const _brand=_p.get('brand'),_cat=_p.get('cat'),_gender=_p.get('gender');
+if(_brand){
+  showBrandFilter(_brand);
+} else {
+  setGender(_gender==='men'?'men':'women');
+  if(_cat) filterCat(_cat, null);
+}
+
+// ── INJECT STORED SETTINGS ──
+(function(){
+  // WhatsApp number from Content → Contact
+  try {
+    var cc = JSON.parse(localStorage.getItem('gb_content_contact')||'null');
+    if (cc && cc.wa_number) {
+      WA_NUMBER = cc.wa_number.replace(/\D/g,'');
+      var disp = document.getElementById('co-wa-display');
+      if (disp) {
+        var n = cc.wa_number.replace(/\D/g,'');
+        disp.textContent = '+' + (n.startsWith('92') ? n : '92' + n.replace(/^0/,''));
+      }
+    }
+  } catch(e) {}
+
+  // Bank details from Content → Policy
+  try {
+    var cp = JSON.parse(localStorage.getItem('gb_content_policy')||'null');
+    if (cp) {
+      if (cp.bank_name)       { var el=document.getElementById('co-bank-name');    if(el) el.textContent=cp.bank_name; }
+      if (cp.bank_account_name){ var el=document.getElementById('co-bank-acname');  if(el) el.textContent=cp.bank_account_name; }
+      if (cp.bank_account_no)  { var el=document.getElementById('co-bank-acno');    if(el) el.textContent=cp.bank_account_no; }
+      if (cp.bank_iban)        { var el=document.getElementById('co-bank-iban');    if(el) el.textContent=cp.bank_iban; }
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>
