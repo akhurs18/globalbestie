@@ -266,6 +266,14 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .btn-wa-support{width:100%;background:transparent;border:1px solid rgba(37,211,102,0.4);color:var(--wa);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:500;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s;margin-top:0.3rem}
 .btn-wa-support:hover{background:rgba(37,211,102,0.08)}
 .success-msg{font-size:0.73rem;color:var(--ink);line-height:1.75;margin-bottom:0.5rem}
+/* Payment choice */
+.pco-opt{display:block;cursor:pointer}
+.pco-opt input{display:none}
+.pco-box{border:1.5px solid var(--border2);padding:0.75rem;background:var(--bg2);transition:all 0.2s;text-align:center}
+.pco-opt input:checked+.pco-box{border-color:var(--pink-deep);background:var(--pink-light);box-shadow:inset 0 0 0 1px var(--pink-deep)}
+.pco-name{font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);margin-bottom:3px}
+.pco-amt{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:500;color:var(--pink-dark);margin-bottom:2px}
+.pco-note{font-size:0.58rem;color:var(--muted2);letter-spacing:0.3px}
 /* Field validation */
 .form-input.field-error,.form-select.field-error{border-color:#C4525A;background:#FFF5F5;box-shadow:inset 0 0 0 1px #C4525A}
 .field-error-msg{font-size:0.62rem;color:#C4525A;margin-top:4px;display:none;letter-spacing:0.3px}
@@ -512,6 +520,28 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
           <div id="orderSummaryItems"></div>
           <div class="os-row total"><span>Pay Now</span><span id="orderTotal"></span></div>
           <div class="os-row" id="advanceRow" style="display:none"></div>
+        </div>
+        <!-- Payment choice for preorder items -->
+        <div id="preorder-pay-choice" style="display:none;margin-bottom:1rem">
+          <div style="font-size:0.62rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem">Payment Option</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <label class="pco-opt" id="pco-advance-label">
+              <input type="radio" name="payChoice" value="advance" checked onchange="updatePayChoice()">
+              <div class="pco-box">
+                <div class="pco-name">50% Advance</div>
+                <div class="pco-amt" id="pco-advance-amt"></div>
+                <div class="pco-note">Balance due before dispatch</div>
+              </div>
+            </label>
+            <label class="pco-opt" id="pco-full-label">
+              <input type="radio" name="payChoice" value="full" onchange="updatePayChoice()">
+              <div class="pco-box">
+                <div class="pco-name">Pay in Full</div>
+                <div class="pco-amt" id="pco-full-amt"></div>
+                <div class="pco-note">No remaining balance</div>
+              </div>
+            </label>
+          </div>
         </div>
         <div class="advance-notice" id="advanceNotice"></div>
         <div class="bank-box">
@@ -920,17 +950,46 @@ function goStep2(){
   if(!document.getElementById('policyAgree').checked){const pe=document.getElementById('err-policy');if(pe)pe.classList.add('visible');if(!firstErrId)firstErrId='policyAgree';hasError=true;}
   if(hasError){if(firstErrId){const el=document.getElementById(firstErrId);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}return;}
   const sI=cart.filter(c=>c.inStock),pI=cart.filter(c=>!c.inStock);
-  const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5),payNow=sS+pA;
+  const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5);
+  window._sS=sS;window._pS=pS;window._pA=pA;window._total=cartTotal();
   let sh='';
   if(sI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:2px">In-Stock — Pay in Full</div>`;sh+=sI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>In-stock subtotal</span><span style="color:var(--sage)">${fmtPKR(sS)}</span></div>`;}
-  if(pI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sienna);text-transform:uppercase;letter-spacing:0.5px;padding:${sI.length?'10px':'0'} 0 2px">Preorder — 50% Advance</div>`;sh+=pI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="padding-top:4px;border-top:1px dashed var(--border2)"><span style="color:var(--muted)">Full price</span><span style="color:var(--muted);text-decoration:line-through">${fmtPKR(pS)}</span></div><div class="os-row" style="font-weight:600"><span>50% advance due now</span><span style="color:var(--pink-deep)">${fmtPKR(pA)}</span></div><div class="os-row" style="font-size:0.7rem;color:var(--muted)"><span>Remaining due before dispatch</span><span>${fmtPKR(pS-pA)}</span></div>`;}
+  if(pI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sienna);text-transform:uppercase;letter-spacing:0.5px;padding:${sI.length?'10px':'0'} 0 2px">Preorder Items</div>`;sh+=pI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>Preorder subtotal</span><span style="color:var(--sienna)">${fmtPKR(pS)}</span></div>`;}
   document.getElementById('orderSummaryItems').innerHTML=sh;
-  document.getElementById('orderTotal').textContent=fmtPKR(payNow);
+  // Show payment choice only if there are preorder items
+  const choiceWrap=document.getElementById('preorder-pay-choice');
+  if(pI.length){
+    document.getElementById('pco-advance-amt').textContent=fmtPKR(sS+pA);
+    document.getElementById('pco-full-amt').textContent=fmtPKR(sS+pS);
+    choiceWrap.style.display='block';
+    // Reset to advance
+    const radios=document.querySelectorAll('input[name="payChoice"]');
+    if(radios[0])radios[0].checked=true;
+  } else {
+    choiceWrap.style.display='none';
+  }
   document.getElementById('advanceRow').style.display='none';
-  document.getElementById('advanceNotice').textContent=pI.length?`Transfer ${fmtPKR(payNow)} now to confirm your order.${sI.length?' In-stock items will ship immediately.':''} Preorder balance (${fmtPKR(pS-pA)}) due before dispatch.`:`Transfer ${fmtPKR(payNow)} in full — your items will be dispatched promptly.`;
-  document.getElementById('bankAmount').textContent=fmtPKR(payNow);
-  window._payNow=payNow; window._total=cartTotal();
+  updatePayChoice();
   setStep(2);
+}
+
+function updatePayChoice(){
+  const sS=window._sS||0,pS=window._pS||0,pA=window._pA||0;
+  const pI=cart.filter(c=>!c.inStock);
+  const radio=document.querySelector('input[name="payChoice"]:checked');
+  const isFull=radio&&radio.value==='full';
+  const payNow=isFull?(sS+pS):(sS+pA);
+  const remaining=isFull?0:(pS-pA);
+  window._payNow=payNow;window._payFull=isFull;
+  document.getElementById('orderTotal').textContent=fmtPKR(payNow);
+  document.getElementById('bankAmount').textContent=fmtPKR(payNow);
+  if(pI.length){
+    document.getElementById('advanceNotice').textContent=isFull
+      ?`Transfer ${fmtPKR(payNow)} in full — no remaining balance.`
+      :`Transfer ${fmtPKR(payNow)} now to confirm your order. Remaining balance (${fmtPKR(remaining)}) due before dispatch.`;
+  } else {
+    document.getElementById('advanceNotice').textContent=`Transfer ${fmtPKR(payNow)} in full — your items will be dispatched promptly.`;
+  }
 }
 
 function _getCheckoutFields(){
@@ -1044,7 +1103,7 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
   const {error:oErr}=await _supa.from('orders').insert({
     id:orderId,order_number:orderNum,customer_name:name,customer_phone:phone,
     customer_email:email,customer_city:city,customer_address:addr,
-    status:'new',total:window._total||0,advance:window._payNow||0,
+    status:'new',total:window._total||0,advance:window._payFull?window._total:window._payNow||0,
     has_preorder:hasPreorder(),notes
   });
   if(oErr) throw oErr;

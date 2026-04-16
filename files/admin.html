@@ -386,7 +386,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div style="overflow-x:auto">
           <table class="tbl" id="orders-table">
-            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Advance</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Payment</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="orders-body"><tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders from Google Sheets</td></tr></tbody>
           </table>
         </div>
@@ -1421,6 +1421,8 @@ async function loadOrders(silent = false) {
         City: o.customer_city || '',
         Address: o.customer_address || '',
         Items: (o.order_items || []).map(i => `${i.product_name} x${i.qty}`).join(', '),
+        _total: o.total || 0,
+        _advance: o.advance || 0,
         Total: 'Rs ' + (o.total || 0).toLocaleString(),
         Advance: o.advance ? 'Rs ' + o.advance.toLocaleString() : '',
         Status: _supaStatusToDisplay(o.status),
@@ -1517,7 +1519,14 @@ function renderOrdersTable(orders) {
       <td style="font-size:0.78rem">${o.City||''}</td>
       <td style="font-size:0.75rem;max-width:160px">${o.Items||''}</td>
       <td style="font-weight:700;font-size:0.82rem;white-space:nowrap">${o.Total||''}</td>
-      <td style="font-size:0.78rem;white-space:nowrap">${o.Advance||''}</td>
+      <td style="font-size:0.75rem;white-space:nowrap">${(()=>{
+        const paid=o._advance||0,total=o._total||0,remaining=total-paid;
+        if(!total) return '<span style="color:var(--muted2)">—</span>';
+        if(paid>=total) return `<span style="color:var(--sage);font-weight:600">Paid in Full</span>`;
+        return `<div style="color:var(--sienna);font-weight:600">Rs ${paid.toLocaleString()} paid</div>`+
+               `<div style="font-size:0.68rem;color:var(--muted)">Rs ${remaining.toLocaleString()} remaining</div>`+
+               `<button class="btn btn-sm" style="margin-top:3px;background:var(--sage);color:#fff;font-size:0.58rem;padding:2px 8px;letter-spacing:1px;border:none;cursor:pointer" onclick="markRemainingPaid(${i})">✓ Mark Paid</button>`;
+      })()}</td>
       <td style="text-align:center">${o.Screenshot ? `<a href="${o.Screenshot}" target="_blank" title="View payment screenshot" style="font-size:1rem;text-decoration:none;opacity:0.85;cursor:pointer" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85">📷</a>` : '<span style="font-size:0.6rem;color:var(--muted2)">—</span>'}</td>
       <td><span class="badge ${statusClass(o.Status)}">${o.Status||'New Order'}</span></td>
       <td>
@@ -3271,6 +3280,19 @@ function resetContent(page) {
 
 // Init
 loadSettings();
+
+// ── MARK REMAINING PAYMENT RECEIVED ──
+async function markRemainingPaid(idx){
+  const o=allOrders[idx];
+  if(!o||!o._id)return;
+  if(!confirm(`Mark remaining balance (Rs ${(o._total-o._advance).toLocaleString()}) as received for ${o.Name}?`))return;
+  if(_supa){
+    const{error}=await _supa.from('orders').update({advance:o._total}).eq('id',o._id);
+    if(error){toast('Error: '+error.message);return;}
+  }
+  toast('Payment marked as received for '+o.Name);
+  loadOrders();
+}
 
 // ── NEW ORDER MODAL ──
 function openNewOrderModal(){
