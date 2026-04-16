@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Track Your Order — Global Bestie</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pink:#FFD1D3;--pink-light:#FFF0F1;--pink-mid:#F4A0A5;--pink-deep:#C4525A;--pink-dark:#8B2E34;
+  --ink:#1A1015;--ink2:#2A1E20;--ink3:#3A2830;
+  --bg:#FFF8F9;--bg2:#FFF0F1;--card:#FFFFFF;
+  --muted:#8B6E72;--muted2:#BDA8AA;
+  --border:#FFE4E6;--border2:#F4CDD0;
+  --sage:#2E5E47;--sage-light:#E8F3ED;
+  --sienna:#8B4513;--sienna-light:#FAF0E6;
+  --wa:#25D366;
+  --shadow:0 1px 4px rgba(26,16,21,0.06);
+  --shadow-md:0 4px 20px rgba(26,16,21,0.10);
+  --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+
+/* ── ANNOUNCEMENT BAR ── */
+.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
+.announce-track{display:flex;gap:4rem;white-space:nowrap;animation:marquee 40s linear infinite;padding:0 2rem;align-items:center}
+.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
+.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── NAV ── */
+nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.15)}
+.logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.35rem;font-weight:500;letter-spacing:0.5px;text-decoration:none}
+.logo span{color:var(--pink-mid)}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:#8A7474;font-size:0.67rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:color 0.2s;text-decoration:none}
+.nav-links a:hover,.nav-links a.active{color:var(--pink)}
+.nav-right{display:flex;gap:0.8rem;align-items:center}
+.wa-nav{background:transparent;color:var(--wa);font-size:0.65rem;font-weight:500;padding:5px 14px;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s;text-decoration:none}
+.wa-nav:hover{background:rgba(37,211,102,0.08)}
+.hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
+.hamburger span{display:block;width:22px;height:2px;background:var(--pink);transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+.mobile-nav{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--ink);z-index:200;flex-direction:column;padding:5rem 2rem 2rem;gap:0}
+.mobile-nav.open{display:flex}
+.mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Cormorant Garamond',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0;text-decoration:none}
+.mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
+
+/* ── TRACK HERO ── */
+.track-hero{background:var(--ink2);padding:2.5rem 2rem;border-bottom:1px solid rgba(196,82,90,0.15)}
+.track-hero-inner{max-width:680px;margin:0 auto}
+.track-hero-eye{font-size:0.58rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);display:block;margin-bottom:0.4rem}
+.track-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:400;color:#fff;letter-spacing:0.3px;margin-bottom:0.3rem}
+.track-hero-sub{font-size:0.7rem;color:#4A3C3E;letter-spacing:0.3px}
+
+/* ── SEARCH SECTION ── */
+.track-section{max-width:680px;margin:2.5rem auto;padding:0 2rem}
+.track-input-row{display:flex;gap:0.6rem;margin-bottom:0.5rem}
+.track-input{flex:1;padding:0.72rem 1rem;border:1px solid var(--border2);font-family:'Inter',sans-serif;font-size:0.88rem;color:var(--ink);background:var(--card);transition:all 0.2s;border-radius:0}
+.track-input:focus{outline:none;border-color:var(--pink-deep);box-shadow:inset 0 0 0 1px var(--pink-deep)}
+.track-btn{background:var(--pink-deep);color:#fff;padding:0.72rem 1.5rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;white-space:nowrap;transition:background 0.2s}
+.track-btn:hover{background:var(--pink-dark)}
+.track-btn:disabled{opacity:0.55;cursor:not-allowed}
+.track-hint{font-size:0.62rem;color:var(--muted2);letter-spacing:0.3px}
+.track-error{font-size:0.72rem;color:var(--pink-deep);margin-top:0.7rem;padding:0.6rem 0.8rem;background:var(--pink-light);border:1px solid var(--border2);display:none}
+.track-error.visible{display:block}
+
+/* ── RESULT PANEL ── */
+.track-result{margin-top:2rem;display:none}
+.track-result.visible{display:block;animation:fadeUp 0.25s ease-out}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.result-meta{background:var(--card);border:1px solid var(--border);padding:1.2rem 1.4rem;margin-bottom:1.2rem}
+.meta-row{display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;font-size:0.75rem;color:var(--ink3)}
+.meta-row:not(:last-child){border-bottom:1px solid var(--border)}
+.meta-label{font-size:0.62rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.meta-val{font-weight:500}
+.status-chip{display:inline-flex;align-items:center;padding:3px 10px;font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;border:1px solid}
+.chip-new{background:var(--sienna-light);color:var(--sienna);border-color:#E8D0B8}
+.chip-confirmed{background:var(--sage-light);color:var(--sage);border-color:#BDD9C8}
+.chip-packed{background:#EEF5FF;color:#2B5FA8;border-color:#C0D8F8}
+.chip-shipped{background:#F5EEFF;color:#6A2FA8;border-color:#D8C0F8}
+.chip-delivered{background:var(--sage-light);color:var(--sage);border-color:#BDD9C8}
+.chip-cancelled{background:#FFF0F1;color:var(--pink-deep);border-color:var(--border2)}
+.est-delivery{font-size:0.68rem;color:var(--sage);font-weight:500}
+
+/* ── TIMELINE ── */
+.timeline-wrap{background:var(--card);border:1px solid var(--border);padding:1.4rem 1.6rem;margin-bottom:1.2rem}
+.tl-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:1.4rem}
+.tl-steps{display:flex;align-items:flex-start;gap:0}
+.tl-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.tl-step:not(:last-child)::after{content:'';position:absolute;top:11px;left:calc(50% + 12px);right:calc(-50% + 12px);height:2px;background:var(--border2)}
+.tl-step.done:not(:last-child)::after,.tl-step.current:not(:last-child)::after{background:var(--sage)}
+.tl-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;font-size:0.65rem;transition:all 0.3s;flex-shrink:0;position:relative;z-index:1}
+.tl-step.done .tl-dot{background:var(--sage);border-color:var(--sage);color:#fff}
+.tl-step.current .tl-dot{background:var(--pink-deep);border-color:var(--pink-deep);color:#fff;box-shadow:0 0 0 4px rgba(196,82,90,0.18)}
+.tl-label{font-size:0.58rem;font-weight:500;letter-spacing:0.5px;text-align:center;color:var(--muted2)}
+.tl-step.done .tl-label,.tl-step.current .tl-label{color:var(--ink);font-weight:600}
+
+/* ── ORDER ITEMS ── */
+.items-wrap{background:var(--card);border:1px solid var(--border);padding:1.2rem 1.4rem;margin-bottom:1.2rem}
+.items-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.item-row{display:flex;justify-content:space-between;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.78rem;gap:0.5rem}
+.item-row:last-child{border-bottom:none}
+.item-name{color:var(--ink);flex:1;line-height:1.4}
+.item-qty{font-size:0.65rem;color:var(--muted2);white-space:nowrap}
+.item-price{font-family:'Cormorant Garamond',serif;font-size:0.95rem;white-space:nowrap;font-weight:500;color:var(--pink-dark)}
+.items-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:0.7rem;margin-top:0.3rem;border-top:1px solid var(--border2)}
+.items-total-label{font-size:0.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.items-total-val{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500}
+
+/* ── CANCELLED ── */
+.cancelled-msg{background:var(--pink-light);border:1px solid var(--border2);padding:1.1rem 1.4rem;margin-bottom:1.2rem;font-size:0.78rem;color:var(--pink-deep);line-height:1.7}
+
+/* ── WA SUPPORT ── */
+.wa-support-btn{width:100%;background:transparent;border:1px solid rgba(37,211,102,0.4);color:var(--wa);padding:0.72rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:500;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.wa-support-btn:hover{background:rgba(37,211,102,0.08)}
+
+/* ── FOOTER ── */
+.footer{background:var(--ink);padding:3.5rem 2rem 1.5rem}
+.footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
+.footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
+.footer-logo span{color:var(--pink-mid)}
+.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem;letter-spacing:0.3px}
+.footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
+.footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
+.footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
+.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
+.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px;text-decoration:none}
+.footer-col a:hover{color:var(--pink)}
+.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;font-weight:400;letter-spacing:0.5px;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .nav-links,.wa-nav{display:none}
+  .hamburger{display:flex}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
+}
+@media(max-width:480px){
+  nav{padding:0 1rem}
+  .footer-grid{grid-template-columns:1fr}
+  .tl-label{font-size:0.52rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announce-bar">
+  <div class="announce-track">
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Global <span>Bestie</span></a>
+  <div class="nav-links">
+    <a href="products.html">Shop</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="faq.html">FAQ</a>
+    <a href="policy.html">Policy</a>
+    <a href="track.html" class="active">Track Order</a>
+  </div>
+  <div class="nav-right">
+    <a class="wa-nav" onclick="openWA('')">WhatsApp</a>
+    <div class="hamburger" id="hamburger" onclick="openMobileNav()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav" id="mobileNav">
+  <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
+  <a href="products.html" onclick="closeMobileNav()">Shop</a>
+  <a href="about.html">About Us</a>
+  <a href="contact.html">Contact</a>
+  <a href="faq.html">FAQ</a>
+  <a href="policy.html" onclick="closeMobileNav()">Policy</a>
+  <a href="track.html" onclick="closeMobileNav()">Track Order</a>
+  <a onclick="openWA('');closeMobileNav()">WhatsApp Us</a>
+</div>
+
+<!-- TRACK HERO -->
+<div class="track-hero">
+  <div class="track-hero-inner">
+    <span class="track-hero-eye">Order Tracking</span>
+    <div class="track-hero-title">Track Your Order</div>
+    <div class="track-hero-sub">Enter your order number to see live status and estimated delivery</div>
+  </div>
+</div>
+
+<!-- SEARCH + RESULT -->
+<div class="track-section">
+  <div class="track-input-row">
+    <input class="track-input" type="text" id="trackInput" placeholder="e.g. GB-1K3F2A9B" autocomplete="off" onkeydown="if(event.key==='Enter')trackOrder()">
+    <button class="track-btn" id="trackBtn" onclick="trackOrder()">Track</button>
+  </div>
+  <div class="track-hint">Your order number was emailed to you and shown on the confirmation screen</div>
+  <div class="track-error" id="trackError"></div>
+
+  <!-- RESULT -->
+  <div class="track-result" id="trackResult"></div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">Global <span>Bestie</span></div>
+      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-socials">
+        <div class="footer-social" onclick="openWA('')">WhatsApp</div>
+        <div class="footer-social">Instagram</div>
+      </div>
+      <div class="footer-copy">© 2026 Global Bestie</div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Shop</div>
+      <a href="products.html">Women's Collection</a>
+      <a href="products.html?gender=men">Men's Collection</a>
+      <a href="products.html">All Products</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Help</div>
+      <a href="faq.html">FAQs</a>
+      <a href="policy.html">Shipping &amp; Policy</a>
+      <a href="track.html">Track Order</a>
+      <a onclick="openWA('')">WhatsApp Us</a>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">About</div>
+      <a href="about.html">Our Story</a>
+      <a href="about.html">Authenticity Promise</a>
+      <a href="contact.html">Contact Us</a>
+    </div>
+  </div>
+  <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ═══════════════════════════════════════════════════════════
+const SUPA_URL = 'https://jfnmworzcpgwgqslvwhl.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impmbm13b3J6Y3Bnd2dxc2x2d2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNzU0MzgsImV4cCI6MjA5MTg1MTQzOH0.RFJCzqe6_kadSSHY3eDH0skL-hGSn-3KFvd7E9YjqVA';
+const _supa = (SUPA_URL && SUPA_KEY) ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let WA_NUMBER = '03214992211';
+
+const STATUS_ORDER = ['new','confirmed','packed','shipped','delivered'];
+const STATUS_LABELS = {new:'Placed',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered'};
+const TL_IDS = ['tl-placed','tl-confirmed','tl-packed','tl-shipped','tl-delivered'];
+const EST_MAP = {
+  new:'~4 weeks estimated delivery',
+  confirmed:'~4 weeks estimated delivery',
+  packed:'~2 weeks estimated delivery',
+  shipped:'~5–7 days estimated delivery',
+  delivered:'Delivered'
+};
+const CHIP_CLASS = {
+  new:'chip-new',confirmed:'chip-confirmed',packed:'chip-packed',
+  shipped:'chip-shipped',delivered:'chip-delivered',cancelled:'chip-cancelled'
+};
+const STATUS_DISPLAY = {new:'Pending',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled'};
+
+const fmtPKR = n => 'Rs ' + Math.round(n).toLocaleString();
+function fmtDate(d){
+  if(!d)return '—';
+  try{return new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});}
+  catch(e){return d;}
+}
+
+async function trackOrder(){
+  const raw = document.getElementById('trackInput').value.trim().toUpperCase();
+  const errEl = document.getElementById('trackError');
+  const resultEl = document.getElementById('trackResult');
+  const btn = document.getElementById('trackBtn');
+
+  errEl.classList.remove('visible');
+  resultEl.classList.remove('visible');
+
+  if(!raw){
+    errEl.textContent = 'Please enter your order number.';
+    errEl.classList.add('visible');
+    return;
+  }
+  if(!/^GB-[A-Z0-9]{5,12}$/.test(raw)){
+    errEl.textContent = 'Invalid order number format. It should look like GB-1K3F2A9B.';
+    errEl.classList.add('visible');
+    return;
+  }
+  if(!_supa){
+    errEl.textContent = 'Tracking is temporarily unavailable. Please contact us on WhatsApp.';
+    errEl.classList.add('visible');
+    return;
+  }
+
+  btn.textContent = 'Searching…';
+  btn.disabled = true;
+
+  try{
+    const {data:orders, error:oErr} = await _supa.from('orders').select('*').eq('order_number',raw).limit(1);
+    if(oErr) throw oErr;
+    if(!orders || !orders.length){
+      errEl.textContent = 'Order not found. Please check the order number and try again.';
+      errEl.classList.add('visible');
+      btn.textContent = 'Track';
+      btn.disabled = false;
+      return;
+    }
+    const order = orders[0];
+    const {data:items, error:iErr} = await _supa.from('order_items').select('*').eq('order_id', order.id);
+    if(iErr) throw iErr;
+    renderTrackResult(order, items||[]);
+  }catch(e){
+    errEl.textContent = 'Something went wrong. Please try again or contact us on WhatsApp.';
+    errEl.classList.add('visible');
+    console.error('Track error:',e.message);
+  }
+
+  btn.textContent = 'Track';
+  btn.disabled = false;
+}
+
+function renderTrackResult(order, items){
+  const resultEl = document.getElementById('trackResult');
+  const status = order.status || 'new';
+  const isCancelled = status === 'cancelled';
+  const chipClass = CHIP_CLASS[status] || 'chip-new';
+  const statusDisplay = STATUS_DISPLAY[status] || status;
+  const estText = EST_MAP[status] || '';
+
+  let html = '';
+
+  // Order meta
+  html += `<div class="result-meta">
+    <div class="meta-row"><span class="meta-label">Order Number</span><span class="meta-val">${order.order_number}</span></div>
+    <div class="meta-row"><span class="meta-label">Date Placed</span><span class="meta-val">${fmtDate(order.created_at)}</span></div>
+    <div class="meta-row"><span class="meta-label">Status</span><span><span class="status-chip ${chipClass}">${statusDisplay}</span></span></div>
+    ${!isCancelled && estText ? `<div class="meta-row"><span class="meta-label">Estimated Delivery</span><span class="est-delivery">${estText}</span></div>` : ''}
+    ${order.customer_name ? `<div class="meta-row"><span class="meta-label">Customer</span><span class="meta-val">${order.customer_name}</span></div>` : ''}
+    ${order.customer_city ? `<div class="meta-row"><span class="meta-label">City</span><span class="meta-val">${order.customer_city}</span></div>` : ''}
+  </div>`;
+
+  // Cancelled message
+  if(isCancelled){
+    html += `<div class="cancelled-msg">This order has been cancelled. Please WhatsApp us if you need assistance or want to re-order.</div>`;
+  } else {
+    // Timeline
+    const statusIdx = STATUS_ORDER.indexOf(status);
+    html += `<div class="timeline-wrap">
+      <div class="tl-title">Order Progress</div>
+      <div class="tl-steps">`;
+    STATUS_ORDER.forEach((s,i) => {
+      let cls = '';
+      if(i < statusIdx) cls = 'done';
+      else if(i === statusIdx) cls = 'current';
+      const icon = i < statusIdx ? '✓' : (i === statusIdx ? '●' : '');
+      const label = STATUS_LABELS[s] || s;
+      html += `<div class="tl-step ${cls}" id="tl-${s}">
+        <div class="tl-dot">${icon}</div>
+        <div class="tl-label">${label}</div>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Order items
+  if(items.length){
+    const total = items.reduce((a,it) => a + (it.pkr||0)*(it.qty||1), 0);
+    html += `<div class="items-wrap">
+      <div class="items-title">Items Ordered</div>`;
+    items.forEach(it => {
+      html += `<div class="item-row">
+        <span class="item-name">${it.product_name||''}${it.is_preorder?' <span style="font-size:0.6rem;color:var(--sienna)">[Preorder]</span>':''}</span>
+        <span class="item-qty">×${it.qty||1}</span>
+        <span class="item-price">${fmtPKR((it.pkr||0)*(it.qty||1))}</span>
+      </div>`;
+    });
+    html += `<div class="items-total">
+      <span class="items-total-label">Total</span>
+      <span class="items-total-val">${fmtPKR(order.total || total)}</span>
+    </div>`;
+    if(order.advance && order.advance > 0){
+      html += `<div style="font-size:0.7rem;color:var(--sienna);margin-top:0.4rem">Advance paid: ${fmtPKR(order.advance)}</div>`;
+    }
+    html += `</div>`;
+  }
+
+  // WA support
+  const waMsg = `Hi, I'm checking on my order ${order.order_number}. Can you give me an update?`;
+  html += `<button class="wa-support-btn" onclick="openWA('${waMsg.replace(/'/g,"\\'")}')">📱 WhatsApp Support</button>`;
+
+  resultEl.innerHTML = html;
+  resultEl.classList.add('visible');
+  resultEl.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.getElementById('hamburger').classList.add('open');document.body.style.overflow='hidden';}
+function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.getElementById('hamburger').classList.remove('open');document.body.style.overflow='';}
+
+// Pre-fill from URL params and auto-track
+(function(){
+  const params = new URLSearchParams(location.search);
+  const orderNum = params.get('order');
+  if(orderNum){
+    const inp = document.getElementById('trackInput');
+    if(inp) inp.value = orderNum.toUpperCase();
+    // Auto-trigger after short delay so page renders first
+    setTimeout(trackOrder, 300);
+  }
+
+  // WA number from stored settings
+  try{
+    const cc = JSON.parse(localStorage.getItem('gb_content_contact')||'null');
+    if(cc && cc.wa_number) WA_NUMBER = cc.wa_number.replace(/\D/g,'');
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

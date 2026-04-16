@@ -81,12 +81,21 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .gtab.active-women{border-bottom:2px solid var(--pink-deep);color:var(--pink-dark);background:var(--pink-light)}
 .gtab.active-men{border-bottom:2px solid var(--ink);color:var(--ink);background:var(--bg2)}
 
-/* ── CATEGORY PILLS ── */
-.cats-row{display:flex;gap:0.5rem;padding:1rem 2rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
+/* ── CATEGORY CARDS ── */
+.cats-row{display:flex;gap:0.7rem;padding:1.2rem 2rem 0.8rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
 .cats-row::-webkit-scrollbar{display:none}
-.cat-pill{display:flex;align-items:center;gap:5px;padding:0.38rem 1rem;background:var(--card);border:1px solid var(--border);cursor:pointer;white-space:nowrap;transition:all 0.2s;font-size:0.62rem;font-weight:500;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
-.cat-pill:hover{background:var(--bg2);border-color:var(--border2);color:var(--ink)}
-.cat-pill.active{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(26,16,21,0.18)}
+.cat-card{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex-shrink:0;width:110px;transition:transform 0.2s}
+.cat-card:hover{transform:translateY(-2px)}
+.cat-card-img{width:110px;height:140px;overflow:hidden;border:2px solid transparent;transition:border-color 0.2s,box-shadow 0.2s;position:relative}
+.cat-card-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.35s ease;filter:grayscale(15%)}
+.cat-card:hover .cat-card-img img{transform:scale(1.05);filter:grayscale(0%)}
+.cat-card.active .cat-card-img{border-color:var(--ink);box-shadow:0 4px 16px rgba(26,16,21,0.18)}
+.cat-card-label{font-size:0.58rem;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;text-align:center;transition:color 0.2s}
+.cat-card.active .cat-card-label{color:var(--ink);font-weight:600}
+.cat-card:hover .cat-card-label{color:var(--ink)}
+.cat-card-all .cat-card-img{background:var(--ink);display:flex;align-items:center;justify-content:center}
+.cat-card-all .cat-card-img::after{content:'All';font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--pink);font-style:italic;letter-spacing:0.5px}
+.cat-card-all.active .cat-card-img{background:var(--ink2);box-shadow:0 4px 16px rgba(26,16,21,0.18)}
 
 /* ── PRODUCTS SECTION ── */
 .section{padding:0.5rem 2rem 2.5rem;max-width:1100px;margin:0 auto}
@@ -225,7 +234,8 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .back-btn{width:100%;background:transparent;color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:400;border:1px solid var(--border);cursor:pointer;margin-top:0.5rem;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
 .back-btn:hover{border-color:var(--ink);color:var(--ink)}
 .step-panel{display:none}
-.step-panel.active{display:block}
+.step-panel.active{display:block;animation:stepFadeIn 0.22s ease-out}
+@keyframes stepFadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 /* Screenshot upload */
 .upload-section{margin-top:1rem}
 .upload-label-text{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:var(--ink);margin:0 0 0.3rem;display:block}
@@ -242,17 +252,28 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .btn-confirm-full{width:100%;background:var(--pink-deep);color:#fff;padding:0.78rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:opacity 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-confirm-full:hover{opacity:0.88}
 .btn-confirm-full:disabled{opacity:0.55;cursor:not-allowed}
-.wa-alt-row{display:flex;align-items:center;gap:0.6rem;margin:0.7rem 0 0.3rem}
-.wa-alt-line{flex:1;height:1px;background:var(--border)}
-.wa-alt-or{font-size:0.6rem;color:var(--muted2);white-space:nowrap;letter-spacing:1px;text-transform:uppercase}
-.btn-wa-alt{width:100%;background:transparent;border:1px solid var(--border2);color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px}
-.btn-wa-alt:hover{border-color:var(--wa);color:var(--wa)}
 /* Step 3 — success */
 .success-wrap{text-align:center;padding:1rem 0.5rem 0.5rem}
 .success-check{width:52px;height:52px;border-radius:50%;background:var(--pink-light);border:2px solid var(--pink-deep);display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;font-size:1.3rem;color:var(--pink-deep)}
 .success-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--ink);margin-bottom:0.3rem;font-weight:400}
-.success-order-num{font-size:0.68rem;color:var(--muted);margin-bottom:1rem;letter-spacing:1.5px;text-transform:uppercase}
+.success-order-num{font-size:0.78rem;color:var(--ink);font-weight:500;letter-spacing:1.5px;text-transform:uppercase}
+.success-order-num-wrap{display:flex;align-items:center;justify-content:center;gap:0.6rem;margin-bottom:1rem}
+.success-copy-btn{background:var(--bg2);border:1px solid var(--border2);color:var(--muted);padding:3px 10px;font-size:0.58rem;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
+.success-copy-btn:hover{background:var(--pink-light);border-color:var(--pink-deep)}
+.success-track-btn{display:block;text-align:center;background:var(--ink);color:var(--pink);padding:0.65rem 1.8rem;font-size:0.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-decoration:none;margin:0.8rem auto 0.5rem;width:fit-content}
+.success-track-btn:hover{background:var(--ink3)}
+.success-actions{margin-top:0.8rem;display:flex;flex-direction:column;gap:0}
+.btn-wa-support{width:100%;background:transparent;border:1px solid rgba(37,211,102,0.4);color:var(--wa);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:500;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s;margin-top:0.3rem}
+.btn-wa-support:hover{background:rgba(37,211,102,0.08)}
 .success-msg{font-size:0.73rem;color:var(--ink);line-height:1.75;margin-bottom:0.5rem}
+/* Field validation */
+.form-input.field-error,.form-select.field-error{border-color:#C4525A;background:#FFF5F5;box-shadow:inset 0 0 0 1px #C4525A}
+.field-error-msg{font-size:0.62rem;color:#C4525A;margin-top:4px;display:none;letter-spacing:0.3px}
+.field-error-msg.visible{display:block}
+/* City select arrow */
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238B6E72'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.9rem center;padding-right:2.2rem}
+/* Upload optional tag */
+.upload-optional-tag{font-size:0.58rem;color:var(--sage);background:var(--sage-light);padding:2px 7px;letter-spacing:1px;text-transform:uppercase;margin-left:6px;border:1px solid #BDD9C8;font-family:'Inter',sans-serif}
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;font-weight:400;letter-spacing:0.5px;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
@@ -321,6 +342,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
     <a onclick="showPolicy()">Policy</a>
+    <a href="track.html">Track Order</a>
   </div>
   <div class="nav-right">
     <div class="wa-nav" onclick="openWA('')">WhatsApp</div>
@@ -342,6 +364,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
   <a onclick="showPolicy();closeMobileNav()">Policy</a>
+  <a href="track.html" onclick="closeMobileNav()">Track Order</a>
   <a onclick="openWA('');closeMobileNav()">WhatsApp Us</a>
 </div>
 
@@ -434,6 +457,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
       <a href="faq.html">FAQs</a>
       <a onclick="showPolicy()">Shipping &amp; Policy</a>
       <a onclick="showPolicy()">Order Policy</a>
+      <a href="track.html">Track Order</a>
       <a onclick="openWA('')">WhatsApp Us</a>
     </div>
     <div class="footer-col">
@@ -469,16 +493,17 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
         <div class="step-tab" id="tab2">2. Payment</div>
       </div>
       <div class="step-panel active" id="step1">
-        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" type="text" id="custName" placeholder="e.g. Ayesha Khan"></div>
-        <div class="form-group"><label class="form-label">WhatsApp Number *</label><input class="form-input" type="tel" id="custPhone" placeholder="e.g. 0300-1234567"></div>
-        <div class="form-group"><label class="form-label">Email Address * <span style="font-size:0.68rem;color:var(--muted)">(for order updates)</span></label><input class="form-input-email form-input" type="email" id="custEmail" placeholder="e.g. ayesha@gmail.com"></div>
-        <div class="form-group"><label class="form-label">City *</label><input class="form-input" type="text" id="custCity" placeholder="e.g. Lahore"></div>
-        <div class="form-group"><label class="form-label">Full Delivery Address *</label><input class="form-input" type="text" id="custAddr" placeholder="House #, Street, Area"></div>
+        <div class="form-group" id="fg-name"><label class="form-label">Full Name *</label><input class="form-input" type="text" id="custName" placeholder="e.g. Ayesha Khan"><span class="field-error-msg" id="err-name">Please enter your full name</span></div>
+        <div class="form-group" id="fg-phone"><label class="form-label">WhatsApp Number *</label><input class="form-input" type="tel" id="custPhone" placeholder="e.g. 0300-1234567"><span class="field-error-msg" id="err-phone">Please enter a valid Pakistan mobile number</span></div>
+        <div class="form-group" id="fg-email"><label class="form-label">Email Address * <span style="font-size:0.68rem;color:var(--muted)">(for order updates)</span></label><input class="form-input-email form-input" type="email" id="custEmail" placeholder="e.g. ayesha@gmail.com"><span class="field-error-msg" id="err-email">Please enter a valid email address</span></div>
+        <div class="form-group" id="fg-city"><label class="form-label">City *</label><select class="form-input" id="custCity"><option value="">— Select your city —</option><option>Karachi</option><option>Lahore</option><option>Islamabad</option><option>Rawalpindi</option><option>Faisalabad</option><option>Multan</option><option>Peshawar</option><option>Quetta</option><option>Sialkot</option><option>Gujranwala</option><option>Hyderabad</option><option>Abbottabad</option><option>Bahawalpur</option><option>Sargodha</option><option>Sukkur</option><option>Larkana</option><option>Sheikhupura</option><option>Jhang</option><option>Rahim Yar Khan</option><option>Gujrat</option><option>Kasur</option><option>Mardan</option><option>Mingora</option><option>Nawabshah</option><option>Mirpur (AJK)</option><option>Muzaffarabad</option><option>Sahiwal</option><option>Okara</option><option>Wah Cantonment</option><option>Dera Ghazi Khan</option><option>Other</option></select><span class="field-error-msg" id="err-city">Please select your city</span></div>
+        <div class="form-group" id="fg-addr"><label class="form-label">Full Delivery Address *</label><input class="form-input" type="text" id="custAddr" placeholder="House #, Street, Area"><span class="field-error-msg" id="err-addr">Please enter your delivery address</span></div>
         <div class="form-group"><label class="form-label">Order Notes (optional)</label><input class="form-input" type="text" id="custNotes" placeholder="Size, colour, special instructions..."></div>
         <div class="checkbox-row">
           <input type="checkbox" id="policyAgree">
           <label for="policyAgree">I have read and agree to the Preorder Policy. I understand delivery takes ~4 weeks, 50% advance is required, and prices are fixed with no discounts.</label>
         </div>
+        <span class="field-error-msg" id="err-policy" style="margin-bottom:0.5rem">Please agree to the ordering policy</span>
         <button class="next-btn" onclick="goStep2()">Continue to Payment →</button>
       </div>
       <div class="step-panel" id="step2">
@@ -498,8 +523,8 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
           <div class="bank-row"><span class="bank-label">Amount to Pay</span><span class="bank-val" id="bankAmount" style="font-size:0.95rem"></span><button class="copy-btn" onclick="copyBankAmt()">Copy</button></div>
         </div>
         <div class="upload-section">
-          <span class="upload-label-text">Upload your payment screenshot</span>
-          <p class="upload-hint">We'll verify and confirm your order within 2 hours.</p>
+          <span class="upload-label-text">Upload Payment Screenshot <span class="upload-optional-tag">Speeds up confirmation</span></span>
+          <p class="upload-hint">Upload your bank transfer screenshot and we'll confirm within 2 hours. <strong>Your order is saved either way.</strong></p>
           <label class="upload-box" for="screenshotFile" id="uploadBox">
             <div id="uploadBoxInner">
               <div class="upload-icon-big">📷</div>
@@ -514,9 +539,6 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
           <input type="file" id="screenshotFile" accept="image/*" style="display:none" onchange="onScreenshotSelected(this)">
         </div>
         <button class="btn-confirm-full" id="btnConfirmOrder" onclick="confirmOrder()">Confirm Order →</button>
-        <div class="wa-alt-row"><div class="wa-alt-line"></div><span class="wa-alt-or">or</span><div class="wa-alt-line"></div></div>
-        <button class="btn-wa-alt" onclick="confirmAndSendWA()">📱 Send screenshot on WhatsApp instead</button>
-        <div id="co-wa-display" style="display:none">+92 321 4992211</div>
         <button class="back-btn" onclick="goStep1()">← Back</button>
       </div>
       <!-- Step 3: Success -->
@@ -524,9 +546,16 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
         <div class="success-wrap">
           <div class="success-check">✓</div>
           <div class="success-title">Order Placed!</div>
-          <div class="success-order-num" id="successOrderNum"></div>
+          <div class="success-order-num-wrap">
+            <span class="success-order-num" id="successOrderNum"></span>
+            <button class="copy-btn success-copy-btn" id="btnCopyOrderNum" onclick="copyOrderNum()" style="display:none">Copy</button>
+          </div>
           <p class="success-msg" id="successMsgMain"></p>
-          <button class="next-btn" onclick="finishOrder()" style="margin-top:1.2rem">Done</button>
+          <a class="success-track-btn" id="successTrackLink" href="#" style="display:none">Track Your Order →</a>
+          <div class="success-actions">
+            <button class="btn-wa-support" onclick="openWA('Hi, I just placed an order on Global Bestie and need help.')">WhatsApp Support</button>
+            <button class="next-btn" onclick="finishOrder()" style="margin-top:0.5rem">Done</button>
+          </div>
         </div>
       </div>
     </div>
@@ -569,21 +598,21 @@ const SHEET_ID = '';
 
 // ── CATEGORY DEFAULTS ──
 const DEFAULT_WOMEN_CATS=[
-  {id:'makeup',label:'Makeup & Beauty',icon:'💄'},
-  {id:'skincare',label:'Skincare',icon:'🧴'},
-  {id:'bags',label:'Bags & Accessories',icon:'👜'},
-  {id:'accessories',label:'Accessories',icon:'💍'},
-  {id:'fashion',label:'Fashion',icon:'👗'},
-  {id:'home',label:'Home & Living',icon:'🕯️'},
-  {id:'hair',label:'Hair',icon:'💇'}
+  {id:'makeup',      label:'Makeup',       img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=300&h=380&fit=crop&q=80'},
+  {id:'skincare',    label:'Skincare',     img:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=300&h=380&fit=crop&q=80'},
+  {id:'bags',        label:'Bags',         img:'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&h=380&fit=crop&q=80'},
+  {id:'accessories', label:'Accessories',  img:'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300&h=380&fit=crop&q=80'},
+  {id:'fashion',     label:'Fashion',      img:'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&h=380&fit=crop&q=80'},
+  {id:'home',        label:'Home & Living',img:'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=300&h=380&fit=crop&q=80'},
+  {id:'hair',        label:'Hair',         img:'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=300&h=380&fit=crop&q=80'},
 ];
 const DEFAULT_MEN_CATS=[
-  {id:'grooming',label:'Grooming',icon:'🧼'},
-  {id:'bags',label:'Bags',icon:'👜'},
-  {id:'fashion',label:'Fashion',icon:'👗'},
-  {id:'accessories',label:'Accessories',icon:'💍'},
-  {id:'shoes',label:'Shoes',icon:'👟'},
-  {id:'home',label:'Home',icon:'🕯️'}
+  {id:'grooming',    label:'Grooming',     img:'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=300&h=380&fit=crop&q=80'},
+  {id:'bags',        label:'Bags',         img:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=300&h=380&fit=crop&q=80'},
+  {id:'fashion',     label:'Fashion',      img:'https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=300&h=380&fit=crop&q=80'},
+  {id:'accessories', label:'Accessories',  img:'https://images.unsplash.com/photo-1614267157481-ca2b81ac6fcc?w=300&h=380&fit=crop&q=80'},
+  {id:'shoes',       label:'Shoes',        img:'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=380&fit=crop&q=80'},
+  {id:'home',        label:'Home',         img:'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&h=380&fit=crop&q=80'},
 ];
 
 // Fallback icon/label lookups for products with cats not in the saved list
@@ -727,15 +756,22 @@ function setGender(g){
 function renderCats(g){
   const cats=getCats(g);
   document.getElementById('catsRow').innerHTML=
-    `<div class="cat-pill active" onclick="filterCat('all',this)">All</div>`+
-    cats.map(c=>`<div class="cat-pill" onclick="filterCat('${c.id}',this)">${c.icon} ${c.label}</div>`).join('');
+    `<div class="cat-card cat-card-all active" onclick="filterCat('all',this)">
+       <div class="cat-card-img"></div>
+       <div class="cat-card-label">All</div>
+     </div>`+
+    cats.map(c=>`<div class="cat-card" onclick="filterCat('${c.id}',this)">
+       <div class="cat-card-img">${c.img?`<img src="${c.img}" alt="${c.label}" loading="lazy">`:''}
+       </div>
+       <div class="cat-card-label">${c.label}</div>
+     </div>`).join('');
 }
 
 function filterCat(cat,el){
   currentCat=cat;
-  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.cat-card').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
-  else{const pills=document.querySelectorAll('.cat-pill');if(cat==='all'&&pills[0])pills[0].classList.add('active');}
+  else{const cards=document.querySelectorAll('.cat-card');if(cat==='all'&&cards[0])cards[0].classList.add('active');}
   renderProducts(filterProds());
 }
 
@@ -772,7 +808,7 @@ function renderProducts(data){
       <div class="prod-img" style="background:${p.image?'#100808':bg}">
         ${p.image
           ? `<img src="${p.image}" alt="${p.name}">`
-          : `<div class="prod-img-placeholder" style="background:linear-gradient(145deg,${bg},${bg}dd)"><span style="font-size:2.5rem;position:relative;z-index:1">${catIcon(p.cat,p.gender)}</span></div>`}
+          : `<div class="prod-img-placeholder" style="background:linear-gradient(145deg,${bg},${bg}dd)"><span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--muted2);letter-spacing:3px;text-transform:uppercase;position:relative;z-index:1">${catLabel(p.cat,p.gender).substring(0,2).toUpperCase()}</span></div>`}
       </div>
       <div class="prod-body">
         <div class="prod-cat${isMen?' men-cat':''}">${catLabel(p.cat,p.gender)}</div>
@@ -857,16 +893,32 @@ function setStep(n){
 }
 function goStep1(){setStep(1);}
 
+function _setFieldError(fgId,errId,show){
+  const fg=document.getElementById(fgId),em=document.getElementById(errId);
+  if(fg)fg.classList.toggle('has-error',show);
+  if(em)em.classList.toggle('visible',show);
+  const inp=fg?fg.querySelector('input,select'):null;
+  if(inp)inp.classList.toggle('field-error',show);
+}
+function _clearAllErrors(){
+  ['name','phone','email','city','addr'].forEach(f=>_setFieldError('fg-'+f,'err-'+f,false));
+  const pe=document.getElementById('err-policy');if(pe)pe.classList.remove('visible');
+}
 function goStep2(){
+  _clearAllErrors();
   const name=document.getElementById('custName').value.trim();
   const phone=document.getElementById('custPhone').value.trim();
   const email=document.getElementById('custEmail').value.trim();
   const city=document.getElementById('custCity').value.trim();
   const addr=document.getElementById('custAddr').value.trim();
-  if(!name||!phone||!email||!city||!addr){showToast('Please fill all required fields');return;}
-  if(!/^(\+92|0092|0)3[0-9]{9}$/.test(phone.replace(/[\s\-]/g,''))){showToast('Please enter a valid Pakistan mobile number');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showToast('Please enter a valid email address');return;}
-  if(!document.getElementById('policyAgree').checked){showToast('Please agree to our ordering policy');return;}
+  let hasError=false,firstErrId=null;
+  if(!name){_setFieldError('fg-name','err-name',true);if(!firstErrId)firstErrId='custName';hasError=true;}
+  if(!phone||!/^(\+92|0092|0)3[0-9]{9}$/.test(phone.replace(/[\s\-]/g,''))){_setFieldError('fg-phone','err-phone',true);if(!firstErrId)firstErrId='custPhone';hasError=true;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){_setFieldError('fg-email','err-email',true);if(!firstErrId)firstErrId='custEmail';hasError=true;}
+  if(!city){_setFieldError('fg-city','err-city',true);if(!firstErrId)firstErrId='custCity';hasError=true;}
+  if(!addr){_setFieldError('fg-addr','err-addr',true);if(!firstErrId)firstErrId='custAddr';hasError=true;}
+  if(!document.getElementById('policyAgree').checked){const pe=document.getElementById('err-policy');if(pe)pe.classList.add('visible');if(!firstErrId)firstErrId='policyAgree';hasError=true;}
+  if(hasError){if(firstErrId){const el=document.getElementById(firstErrId);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}return;}
   const sI=cart.filter(c=>c.inStock),pI=cart.filter(c=>!c.inStock);
   const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5),payNow=sS+pA;
   let sh='';
@@ -922,10 +974,20 @@ async function confirmOrder(){
   if(btn){btn.textContent='Confirm Order →';btn.disabled=false;}
   document.getElementById('successOrderNum').textContent=orderNum?'Order #'+orderNum:'';
   document.getElementById('successMsgMain').textContent=uploaded
-    ?'Your payment screenshot has been received. We\'ll confirm your order on WhatsApp within 2 hours.'
-    :'Your order has been placed. Share your payment screenshot on WhatsApp to confirm.';
+    ?'Your payment screenshot has been received. We\'ll confirm your order within 2 hours.'
+    :'Your order has been saved. Upload your payment screenshot above or share it on WhatsApp to speed up confirmation.';
+  const copyBtn=document.getElementById('btnCopyOrderNum');
+  const trackLink=document.getElementById('successTrackLink');
+  window._lastOrderNum=orderNum;
+  if(orderNum){
+    if(copyBtn)copyBtn.style.display='inline-flex';
+    if(trackLink){trackLink.href='track.html?order='+encodeURIComponent(orderNum);trackLink.style.display='block';}
+  }
   setStep(3);
   cart=[];saveCart();updateBadge();
+  const cb=document.getElementById('cartBody'),cf=document.getElementById('cartFoot');
+  if(cb)cb.innerHTML='<div class="cart-empty"><div class="cart-empty-icon">🛍️</div><h4>Your cart is empty</h4><p>Your order has been placed!</p></div>';
+  if(cf)cf.style.display='none';
 }
 
 async function _uploadScreenshot(orderId,file){
@@ -1016,6 +1078,7 @@ function sendWA(){
 function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
 function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copied!'));}
 function copyBankAmt(){navigator.clipboard.writeText(String(window._payNow||0)).then(()=>showToast('Amount copied!')).catch(()=>showToast('Copied!'));}
+function copyOrderNum(){navigator.clipboard.writeText(window._lastOrderNum||'').then(()=>showToast('Order number copied!')).catch(()=>showToast('Order number copied!'));}
 function showPolicy(){window.location='policy.html';}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
@@ -1027,7 +1090,7 @@ function openProductDetail(id){
   const imgWrap=document.getElementById('detailImgWrap'),emojiEl=document.getElementById('detailEmoji');
   const existingImg=imgWrap.querySelector('img');if(existingImg)existingImg.remove();
   if(p.image){const img=document.createElement('img');img.src=p.image;img.alt=p.name;imgWrap.style.background='#1a0808';emojiEl.style.display='none';imgWrap.appendChild(img);}
-  else{imgWrap.style.background=bgs[p.cat]||'var(--pink-light)';emojiEl.style.display='';emojiEl.textContent=catIcon(p.cat,p.gender);}
+  else{imgWrap.style.background=bgs[p.cat]||'var(--pink-light)';emojiEl.style.display='';emojiEl.style.fontFamily="'Cormorant Garamond',serif";emojiEl.style.fontSize='2rem';emojiEl.style.opacity='0.35';emojiEl.style.letterSpacing='4px';emojiEl.textContent=catLabel(p.cat,p.gender).substring(0,2).toUpperCase();}
   document.getElementById('detailCat').className='detail-cat'+(p.gender==='men'?' men-cat':'');
   document.getElementById('detailCat').textContent=catLabel(p.cat,p.gender);
   document.getElementById('detailName').textContent=p.name;

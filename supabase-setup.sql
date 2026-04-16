@@ -125,6 +125,17 @@ create policy "admin_delete_screenshots" on storage.objects
 -- Only needed if you already ran this SQL before — skip if running fresh
 alter table orders add column if not exists screenshot_url text default '';
 
+-- ── PUBLIC ORDER TRACKING ──
+-- order_number acts as a security token — only someone with the number can look it up
+
+create policy if not exists "public_track_orders"
+  on orders for select using (true);
+
+create policy if not exists "public_track_order_items"
+  on order_items for select using (true);
+
+create index if not exists orders_number_idx on orders(order_number);
+
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
 -- 1. Go to Authentication → Users → Add user
