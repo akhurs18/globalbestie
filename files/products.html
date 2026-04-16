@@ -977,16 +977,17 @@ async function confirmAndSendWA(){
 }
 
 async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
+  const orderId=crypto.randomUUID();
   const orderNum='GB-'+Date.now().toString(36).toUpperCase();
-  const {data:order,error:oErr}=await _supa.from('orders').insert({
-    order_number:orderNum,customer_name:name,customer_phone:phone,
+  const {error:oErr}=await _supa.from('orders').insert({
+    id:orderId,order_number:orderNum,customer_name:name,customer_phone:phone,
     customer_email:email,customer_city:city,customer_address:addr,
     status:'new',total:window._total||0,advance:window._payNow||0,
     has_preorder:hasPreorder(),notes
-  }).select().single();
+  });
   if(oErr) throw oErr;
   const items=cart.map(c=>({
-    order_id:order.id,product_id:c.id,product_name:c.name,brand:c.brand||'',
+    order_id:orderId,product_id:c.id,product_name:c.name,brand:c.brand||'',
     qty:c.qty,pkr:c.pkr,is_preorder:!c.inStock
   }));
   const {error:iErr}=await _supa.from('order_items').insert(items);
@@ -996,7 +997,7 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
     const p=getProducts().find(x=>x.id===c.id);
     if(p&&p.qty>0) await _supa.from('products').update({qty:Math.max(0,p.qty-c.qty)}).eq('id',c.id);
   }
-  return order;
+  return {id:orderId,order_number:orderNum};
 }
 
 async function saveOrderToSheet({name,phone,email,city,addr,notes}){
