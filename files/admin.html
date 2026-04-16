@@ -368,7 +368,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       <div class="card">
         <div class="card-head">
           <span class="card-title">All Orders</span>
-          <button class="btn btn-dark btn-sm" onclick="loadOrders()">↻ Refresh</button>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-pink btn-sm" onclick="openNewOrderModal()">+ New Order</button>
+            <button class="btn btn-dark btn-sm" onclick="loadOrders()">↻ Refresh</button>
+          </div>
         </div>
         <div class="card-body" style="padding:1rem 1.3rem 0.5rem">
           <div class="search-bar">
@@ -3268,6 +3271,139 @@ function resetContent(page) {
 
 // Init
 loadSettings();
+
+// ── NEW ORDER MODAL ──
+function openNewOrderModal(){
+  document.getElementById('new-order-modal').classList.add('open');
+  document.getElementById('no-name').value='';
+  document.getElementById('no-phone').value='';
+  document.getElementById('no-email').value='';
+  document.getElementById('no-city').value='';
+  document.getElementById('no-addr').value='';
+  document.getElementById('no-notes').value='';
+  document.getElementById('no-items').value='';
+  document.getElementById('no-total').value='';
+  document.getElementById('no-advance').value='';
+  document.getElementById('no-status').value='New Order';
+  document.getElementById('no-error').textContent='';
+}
+
+async function saveNewOrder(){
+  const name=document.getElementById('no-name').value.trim();
+  const phone=document.getElementById('no-phone').value.trim();
+  const items=document.getElementById('no-items').value.trim();
+  const total=document.getElementById('no-total').value.trim();
+  const errEl=document.getElementById('no-error');
+  if(!name||!phone||!items||!total){errEl.textContent='Name, phone, items and total are required.';return;}
+  const btn=document.getElementById('no-save-btn');
+  btn.textContent='Saving…';btn.disabled=true;errEl.textContent='';
+
+  const orderId=crypto.randomUUID();
+  const orderNum='GB-'+Date.now().toString(36).toUpperCase();
+  const status=document.getElementById('no-status').value;
+  const supaStatus={
+    'New Order':'new','Confirmed':'confirmed','Packed':'packed',
+    'Shipped':'shipped','Delivered':'delivered','Cancelled':'cancelled'
+  }[status]||'new';
+
+  if(_supa){
+    try{
+      const {error}=await _supa.from('orders').insert({
+        id:orderId,
+        order_number:orderNum,
+        customer_name:name,
+        customer_phone:phone,
+        customer_email:document.getElementById('no-email').value.trim(),
+        customer_city:document.getElementById('no-city').value.trim(),
+        customer_address:document.getElementById('no-addr').value.trim(),
+        notes:document.getElementById('no-notes').value.trim(),
+        status:supaStatus,
+        total:parseInt(String(total).replace(/[^0-9]/g,''))||0,
+        advance:parseInt(String(document.getElementById('no-advance').value).replace(/[^0-9]/g,''))||0,
+        has_preorder:false
+      });
+      if(error)throw error;
+      // Save items as a single order_item row with product_name as free text
+      await _supa.from('order_items').insert({
+        order_id:orderId,
+        product_id:null,
+        product_name:items,
+        brand:'',qty:1,
+        pkr:parseInt(String(total).replace(/[^0-9]/g,''))||0,
+        is_preorder:false
+      });
+    }catch(e){
+      errEl.textContent='Error: '+e.message;
+      btn.textContent='Save Order';btn.disabled=false;
+      return;
+    }
+  }
+
+  btn.textContent='Save Order';btn.disabled=false;
+  closeModal('new-order-modal');
+  toast('Order '+orderNum+' created');
+  loadOrders();
+}
 </script>
+<!-- NEW ORDER MODAL -->
+<div class="modal-wrap" id="new-order-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-head"><h3>New Order</h3><button class="modal-close" onclick="closeModal('new-order-modal')">✕</button></div>
+    <div class="modal-body" style="padding:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:0.9rem">
+      <div style="grid-column:1/-1">
+        <label class="form-label">Customer Name *</label>
+        <input class="form-input" type="text" id="no-name" placeholder="Ayesha Khan">
+      </div>
+      <div>
+        <label class="form-label">WhatsApp Number *</label>
+        <input class="form-input" type="tel" id="no-phone" placeholder="0300-1234567">
+      </div>
+      <div>
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="no-email" placeholder="optional">
+      </div>
+      <div>
+        <label class="form-label">City</label>
+        <input class="form-input" type="text" id="no-city" placeholder="Lahore">
+      </div>
+      <div>
+        <label class="form-label">Status</label>
+        <select class="form-select" id="no-status">
+          <option>New Order</option>
+          <option>Confirmed</option>
+          <option>Packed</option>
+          <option>Shipped</option>
+          <option>Delivered</option>
+          <option>Cancelled</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="form-label">Delivery Address</label>
+        <input class="form-input" type="text" id="no-addr" placeholder="House #, Street, Area">
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="form-label">Items Ordered *</label>
+        <input class="form-input" type="text" id="no-items" placeholder="e.g. Fenty Gloss Bomb x1, CeraVe Cream x2">
+      </div>
+      <div>
+        <label class="form-label">Total (PKR) *</label>
+        <input class="form-input" type="number" id="no-total" placeholder="18400">
+      </div>
+      <div>
+        <label class="form-label">Advance Paid (PKR)</label>
+        <input class="form-input" type="number" id="no-advance" placeholder="9200">
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="form-label">Notes</label>
+        <input class="form-input" type="text" id="no-notes" placeholder="Size, colour, special instructions...">
+      </div>
+      <div style="grid-column:1/-1;color:var(--rose);font-size:0.72rem;min-height:1rem" id="no-error"></div>
+      <div style="grid-column:1/-1;display:flex;gap:0.6rem">
+        <button class="btn btn-pink" id="no-save-btn" onclick="saveNewOrder()" style="flex:1">Save Order</button>
+        <button class="btn btn-ghost" onclick="closeModal('new-order-modal')" style="flex:1">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
