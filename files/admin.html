@@ -707,13 +707,39 @@ function doPost(e) {
           <div style="display:flex;gap:1rem;margin-bottom:1.4rem;align-items:flex-start">
             <div style="min-width:26px;height:26px;background:var(--ink);color:#fff;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
             <div style="width:100%">
-              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Create 2 email templates</div>
-              <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.8rem">In EmailJS → <b>Email Templates</b> → Create New Template. Make one for shipping, one for promos. Copy-paste the content below:</div>
+              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Create 3 email templates</div>
+              <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.8rem">In EmailJS → <b>Email Templates</b> → Create New Template. Use the plain-text bodies below, or use the HTML versions from the setup guide. Set <b>To Email</b> to <code style="background:#f0f0f0;padding:1px 4px">{{to_email}}</code> on each.</div>
+
+              <!-- Order confirmation template -->
+              <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem;margin-bottom:0.6rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 1 — Order Confirmation</span>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('confirm-tpl')">Copy</button>
+                </div>
+                <pre id="confirm-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: Your Global Bestie Order is Confirmed ✓ — #{{order_number}}
+
+Hi {{customer_name}},
+
+Thank you for your order! We've received it and will confirm within 2 hours once payment is verified.
+
+Order #: {{order_number}}
+
+Items:
+{{order_items}}
+
+Order Total: {{order_total}}
+Amount Due Now: {{pay_now}}
+
+Track your order:
+https://globalbestiepk.com/track.html?order={{order_number}}
+
+— Global Bestie 🛍️</pre>
+              </div>
 
               <!-- Shipping template -->
               <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem;margin-bottom:0.6rem">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 1 — Shipping Notification</span>
+                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 2 — Shipping Notification</span>
                   <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('ship-tpl')">Copy</button>
                 </div>
                 <pre id="ship-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: Your Global Bestie order is on its way! ✈️
@@ -724,7 +750,7 @@ Great news — your order {{order_number}} has been shipped!
 
 {{message}}
 
-You can track your order at:
+Track your order:
 https://globalbestiepk.com/track.html?order={{order_number}}
 
 Questions? WhatsApp us any time.
@@ -735,7 +761,7 @@ Questions? WhatsApp us any time.
               <!-- Promo template -->
               <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 2 — Promo Blast</span>
+                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 3 — Promo Blast</span>
                   <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('promo-tpl')">Copy</button>
                 </div>
                 <pre id="promo-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: {{subject}}
@@ -779,13 +805,10 @@ Shop now → https://globalbestiepk.com/products.html
                   <label class="form-label">Shipping Template ID</label>
                   <input class="form-input" type="text" id="ejs-ship-template" placeholder="e.g. template_ship01">
                 </div>
-              </div>
-              <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Promo Template ID</label>
                   <input class="form-input" type="text" id="ejs-promo-template" placeholder="e.g. template_promo01">
                 </div>
-                <div class="form-group"></div>
               </div>
             </div>
           </div>
