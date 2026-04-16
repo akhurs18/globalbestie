@@ -641,31 +641,116 @@ function doPost(e) {
       </div>
 
       <div class="card">
-        <div class="card-head"><span class="card-title">EmailJS Settings</span></div>
+        <div class="card-head" style="justify-content:space-between">
+          <span class="card-title">📧 EmailJS Setup</span>
+          <span style="font-size:0.65rem;color:var(--muted);letter-spacing:0.5px">Free · No backend needed</span>
+        </div>
         <div class="card-body">
-          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.7">
-            Sign up free at <b>emailjs.com</b>. Create two templates: one for shipping notifications, one for promos. Use template variables: <code style="background:#f0f0f0;padding:1px 5px;border-radius:4px;font-family:monospace">{{to_email}}</code> <code style="background:#f0f0f0;padding:1px 5px;border-radius:4px;font-family:monospace">{{customer_name}}</code> <code style="background:#f0f0f0;padding:1px 5px;border-radius:4px;font-family:monospace">{{message}}</code>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">EmailJS Public Key</label>
-              <input class="form-input" type="text" id="ejs-public-key" placeholder="your_public_key">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Service ID</label>
-              <input class="form-input" type="text" id="ejs-service-id" placeholder="service_xxxxxxx">
+
+          <!-- Step 1 -->
+          <div style="display:flex;gap:1rem;margin-bottom:1.4rem;align-items:flex-start">
+            <div style="min-width:26px;height:26px;background:var(--ink);color:#fff;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+            <div>
+              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Create a free account &amp; connect your email</div>
+              <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.5rem">Go to <b>emailjs.com</b> → Sign up free → <b>Email Services</b> → Add New Service → choose Gmail (or any provider) → connect your email address.</div>
+              <a href="https://www.emailjs.com" target="_blank" style="display:inline-block;font-size:0.65rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--gold);border:1px solid var(--border2);padding:4px 12px;text-decoration:none;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)'">Open EmailJS →</a>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Shipping Template ID</label>
-              <input class="form-input" type="text" id="ejs-ship-template" placeholder="template_shipping">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Promo Template ID</label>
-              <input class="form-input" type="text" id="ejs-promo-template" placeholder="template_promo">
+
+          <!-- Step 2 -->
+          <div style="display:flex;gap:1rem;margin-bottom:1.4rem;align-items:flex-start">
+            <div style="min-width:26px;height:26px;background:var(--ink);color:#fff;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+            <div style="width:100%">
+              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Create 2 email templates</div>
+              <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.8rem">In EmailJS → <b>Email Templates</b> → Create New Template. Make one for shipping, one for promos. Copy-paste the content below:</div>
+
+              <!-- Shipping template -->
+              <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem;margin-bottom:0.6rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 1 — Shipping Notification</span>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('ship-tpl')">Copy</button>
+                </div>
+                <pre id="ship-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: Your Global Bestie order is on its way! ✈️
+
+Hi {{customer_name}},
+
+Great news — your order {{order_number}} has been shipped!
+
+{{message}}
+
+You can track your order at:
+https://globalbestiepk.com/track.html?order={{order_number}}
+
+Questions? WhatsApp us any time.
+
+— Global Bestie 🛍️</pre>
+              </div>
+
+              <!-- Promo template -->
+              <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 2 — Promo Blast</span>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('promo-tpl')">Copy</button>
+                </div>
+                <pre id="promo-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: {{subject}}
+
+Hi {{customer_name}},
+
+{{message}}
+
+{{promo_code}}
+
+Shop now → https://globalbestiepk.com/products.html
+
+— Global Bestie 🛍️</pre>
+              </div>
+              <div style="font-size:0.65rem;color:var(--muted);margin-top:0.5rem">Note the Template ID shown in EmailJS after saving (e.g. <code style="background:#f0f0f0;padding:1px 5px">template_abc123</code>)</div>
             </div>
           </div>
+
+          <!-- Step 3 -->
+          <div style="display:flex;gap:1rem;margin-bottom:1.2rem;align-items:flex-start">
+            <div style="min-width:26px;height:26px;background:var(--ink);color:#fff;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+            <div style="width:100%">
+              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:6px">Paste your keys below</div>
+              <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.8rem">Find these in EmailJS: <b>Public Key</b> → Account → API Keys · <b>Service ID</b> → Email Services · <b>Template IDs</b> → Email Templates</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Public Key</label>
+                  <input class="form-input" type="text" id="ejs-public-key" placeholder="e.g. AbCdEfGhIjKlMnOp">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Service ID</label>
+                  <input class="form-input" type="text" id="ejs-service-id" placeholder="e.g. service_abc123">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Shipping Template ID</label>
+                  <input class="form-input" type="text" id="ejs-ship-template" placeholder="e.g. template_ship01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Promo Template ID</label>
+                  <input class="form-input" type="text" id="ejs-promo-template" placeholder="e.g. template_promo01">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4 Test -->
+          <div style="display:flex;gap:1rem;align-items:flex-start">
+            <div style="min-width:26px;height:26px;background:var(--ink);color:#fff;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+            <div>
+              <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Save &amp; test</div>
+              <div style="font-size:0.73rem;color:var(--muted);margin-bottom:0.7rem">Click Save Settings below, then send yourself a test email to confirm everything works.</div>
+              <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">
+                <input class="form-input" type="email" id="ejs-test-email" placeholder="your@email.com" style="width:220px">
+                <button class="btn btn-ghost btn-sm" onclick="sendTestEmail()">Send Test Email</button>
+                <span id="ejs-test-status" style="font-size:0.72rem;color:var(--muted)"></span>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -3280,6 +3365,40 @@ function resetContent(page) {
 
 // Init
 loadSettings();
+
+// ── EMAILJS HELPERS ──
+function copyTemplateText(elId){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  navigator.clipboard.writeText(el.textContent.trim())
+    .then(()=>toast('Template copied!'))
+    .catch(()=>toast('Template copied!'));
+}
+
+async function sendTestEmail(){
+  const toEmail=document.getElementById('ejs-test-email').value.trim();
+  const statusEl=document.getElementById('ejs-test-status');
+  if(!toEmail){statusEl.textContent='Enter an email address first.';return;}
+  const s=JSON.parse(localStorage.getItem('gb_settings')||'{}');
+  if(!s.ejsKey||!s.ejsService||!s.ejsShipTemplate){
+    statusEl.textContent='Save your EmailJS keys first, then test.';return;
+  }
+  statusEl.textContent='Sending…';
+  try{
+    emailjs.init(s.ejsKey);
+    await emailjs.send(s.ejsService,s.ejsShipTemplate,{
+      to_email:toEmail,
+      customer_name:'Test Customer',
+      order_number:'GB-TEST01',
+      message:'This is a test email from your Global Bestie admin panel. If you received this, EmailJS is set up correctly!'
+    });
+    statusEl.textContent='✓ Test email sent! Check your inbox.';
+    statusEl.style.color='var(--sage)';
+  }catch(e){
+    statusEl.textContent='✗ Failed: '+e.text;
+    statusEl.style.color='var(--rose)';
+  }
+}
 
 // ── MARK REMAINING PAYMENT RECEIVED ──
 async function markRemainingPaid(idx){
