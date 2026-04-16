@@ -383,7 +383,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div style="overflow-x:auto">
           <table class="tbl" id="orders-table">
-            <thead><tr><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Advance</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Advance</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody id="orders-body"><tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders from Google Sheets</td></tr></tbody>
           </table>
         </div>
@@ -1410,6 +1410,7 @@ async function loadOrders(silent = false) {
       if (error) throw error;
       allOrders = (data || []).map(o => ({
         _id: o.id,
+        OrderNum: o.order_number || '',
         Date: new Date(o.created_at).toLocaleDateString('en-PK'),
         Name: o.customer_name,
         Phone: o.customer_phone,
@@ -1501,11 +1502,12 @@ function getDemoOrders() {
 function renderOrdersTable(orders) {
   const body = document.getElementById('orders-body');
   if (!orders.length) {
-    body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
+    body.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
     return;
   }
   body.innerHTML = orders.map((o, i) => `
     <tr class="order-row" data-id="${o._id||''}" data-phone="${o.Phone||''}" data-date="${o.Date||''}">
+      <td style="white-space:nowrap;font-size:0.72rem;font-weight:600;color:var(--ink);letter-spacing:0.3px">${o.OrderNum||'—'}</td>
       <td style="white-space:nowrap;font-size:0.75rem">${o.Date||''}</td>
       <td><div style="font-weight:700;font-size:0.82rem">${o.Name||''}</div><div style="font-size:0.68rem;color:var(--muted)">${o.Email||''}</div></td>
       <td style="font-size:0.78rem">${o.Phone||''}</td>
