@@ -159,6 +159,35 @@ create policy "admin_manage_promos" on promo_codes for all using (auth.role() = 
 alter table orders add column if not exists promo_code text default '';
 alter table orders add column if not exists discount integer default 0;
 
+-- ── SHIPMENTS ──
+-- A "shipment" is a batch USA import trip. Orders are assigned to a shipment.
+
+create table if not exists shipments (
+  id           uuid default gen_random_uuid() primary key,
+  name         text not null,
+  cutoff_date  date not null,
+  arrival_date date not null,
+  status       text default 'open'
+    check (status in ('open','closed','in_transit','arrived','complete')),
+  notes        text default '',
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
+);
+
+alter table shipments enable row level security;
+-- Storefront can read shipments (for announcement bar)
+create policy "public_read_shipments"  on shipments for select using (true);
+-- Admin can create/update/delete shipments
+create policy "admin_manage_shipments" on shipments for all    using (auth.role() = 'authenticated');
+
+create trigger shipments_updated_at before update on shipments
+  for each row execute function update_updated_at();
+
+-- Link orders to shipments
+alter table orders add column if not exists shipment_id uuid references shipments(id) on delete set null;
+alter table orders add column if not exists tracking_number text default '';
+create index if not exists orders_shipment_idx on orders(shipment_id);
+
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
 -- 1. Go to Authentication → Users → Add user

@@ -24,6 +24,15 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 
+/* ── SHIPMENT ANNOUNCEMENT BAR ── */
+.shipment-bar{background:var(--sienna-light);border-bottom:2px solid #DFC4A8}
+.shipment-bar-inner{display:flex;align-items:center;justify-content:center;gap:0.7rem;padding:0.6rem 1.4rem;max-width:1100px;margin:0 auto;flex-wrap:wrap}
+.shipment-bar-text{font-size:0.7rem;color:var(--sienna);font-weight:500;letter-spacing:0.3px}
+.shipment-bar-cta{font-size:0.6rem;font-weight:600;color:var(--sienna);border:1px solid #DFC4A8;padding:2px 10px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;background:rgba(139,69,19,0.05)}
+.shipment-bar.in-transit{background:var(--sage-light);border-bottom-color:#BDD9C8}
+.shipment-bar.in-transit .shipment-bar-text,.shipment-bar.in-transit .shipment-bar-cta{color:var(--sage)}
+.shipment-bar.in-transit .shipment-bar-cta{border-color:#BDD9C8;background:rgba(46,94,71,0.05)}
+
 /* ── ANNOUNCEMENT BAR ── */
 .announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
 .announce-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 28s linear infinite;padding:0 2rem;align-items:center}
@@ -103,8 +112,45 @@ body.gender-men .cat-card-all .cat-card-img::after{color:#C8C0B8}
 body.gender-men .checkout-btn{background:#1A1015}
 body.gender-men .checkout-btn:hover{background:#000}
 
+/* ── SEARCH BAR ── */
+.shop-search-wrap{padding:0.85rem 2rem;background:var(--bg);border-bottom:1px solid var(--border2)}
+.shop-search-inner{position:relative;max-width:520px;margin:0 auto}
+.shop-search-input{width:100%;padding:0.72rem 2.6rem 0.72rem 2.4rem;border:1.5px solid var(--border2);font-family:'Inter',sans-serif;font-size:0.85rem;color:var(--ink);background:#fff;border-radius:0;transition:all 0.2s}
+.shop-search-input:focus{outline:none;border-color:var(--pink-deep);box-shadow:inset 0 0 0 1px var(--pink-deep)}
+.shop-search-input::placeholder{color:var(--muted2);font-size:0.8rem}
+.shop-search-icon{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:1.05rem;pointer-events:none;line-height:1}
+.shop-search-clear{position:absolute;right:0.65rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted2);font-size:0.85rem;display:flex;align-items:center;padding:2px;transition:color 0.2s}
+.shop-search-clear:hover{color:var(--pink-deep)}
+
+/* ── FILTER TOOLBAR ── */
+.shop-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:0.6rem;padding:0.7rem 2rem;background:var(--bg2);border-bottom:1px solid var(--border)}
+.shop-result-count{font-size:0.7rem;color:var(--muted);letter-spacing:0.5px;min-width:80px}
+.shop-controls{display:flex;align-items:center;gap:0.8rem;margin-left:auto;flex-wrap:wrap}
+.shop-sort-select{padding:0.38rem 0.7rem;border:1px solid var(--border2);font-family:'Inter',sans-serif;font-size:0.73rem;background:#fff;color:var(--ink);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238B6E72'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.6rem center;padding-right:1.8rem;transition:border-color 0.2s}
+.shop-sort-select:focus{outline:none;border-color:var(--pink-deep)}
+.shop-toggle-wrap{display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;padding:0.3rem 0.7rem;border:1px solid var(--border2);background:#fff;transition:all 0.2s}
+.shop-toggle-wrap:hover{border-color:var(--pink-mid)}
+.shop-toggle-wrap input[type=checkbox]{accent-color:var(--pink-deep);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.shop-toggle-label{font-size:0.72rem;color:var(--ink3);font-weight:500;white-space:nowrap}
+
+/* ── ACTIVE FILTER CHIPS ── */
+.shop-active-filters{display:flex;flex-wrap:wrap;gap:0.4rem;width:100%;padding-top:0.3rem}
+.shop-active-filters:empty{display:none;padding:0}
+.shop-filter-chip{display:inline-flex;align-items:center;gap:5px;background:var(--pink-light);border:1px solid var(--pink-mid);color:var(--pink-dark);font-size:0.62rem;font-weight:500;padding:3px 10px;letter-spacing:0.3px;cursor:pointer;transition:background 0.15s}
+.shop-filter-chip:hover{background:var(--pink-mid);color:#fff}
+.shop-filter-chip-clear{background:transparent;border:1px solid var(--border2);color:var(--muted);font-weight:400}
+.shop-filter-chip-clear:hover{border-color:var(--ink3);color:var(--ink);background:var(--bg2)}
+
+/* ── EMPTY STATE ── */
+.shop-empty{grid-column:1/-1;text-align:center;padding:4rem 1rem}
+.shop-empty-icon{font-size:2.2rem;margin-bottom:0.8rem;opacity:0.7}
+.shop-empty-title{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:0.35rem;font-family:'Cormorant Garamond',serif;letter-spacing:0.3px}
+.shop-empty-sub{font-size:0.78rem;color:var(--muted2);margin-bottom:1.2rem;line-height:1.6}
+.shop-empty-btn{padding:0.55rem 1.6rem;background:var(--pink-deep);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:opacity 0.2s}
+.shop-empty-btn:hover{opacity:0.88}
+
 /* ── CATEGORY CARDS ── */
-.cats-row{display:flex;gap:0.7rem;padding:1.2rem 2rem 0.8rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
+.cats-row{display:flex;gap:0.7rem;padding:1.2rem 2rem 0.8rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none;position:sticky;top:60px;z-index:50;background:var(--bg);box-shadow:0 2px 8px rgba(26,16,21,0.05)}
 .cats-row::-webkit-scrollbar{display:none}
 .cat-card{display:flex;flex-direction:column;align-items:center;cursor:pointer;flex-shrink:0;width:110px;transition:transform 0.2s}
 .cat-card:hover{transform:translateY(-2px)}
@@ -358,6 +404,15 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 </head>
 <body>
 
+<!-- SHIPMENT ANNOUNCEMENT BAR -->
+<div class="shipment-bar" id="shipmentBar" style="display:none">
+  <div class="shipment-bar-inner">
+    <span>📦</span>
+    <span class="shipment-bar-text" id="shipmentBarText"></span>
+    <span class="shipment-bar-cta" id="shipmentBarCta" style="display:none"></span>
+  </div>
+</div>
+
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
   <div class="announce-track">
@@ -450,6 +505,35 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <div class="gs-sub">Grooming · Bags · Shoes · Fashion</div>
     </div>
   </div>
+</div>
+
+<!-- SEARCH BAR -->
+<div class="shop-search-wrap" id="shopSearchWrap">
+  <div class="shop-search-inner">
+    <span class="shop-search-icon">⌕</span>
+    <input type="text" class="shop-search-input" id="shopSearch"
+      placeholder="Search products, brands, categories..."
+      oninput="applyFilters()" autocomplete="off">
+    <button class="shop-search-clear" id="searchClear" onclick="clearSearch()" style="display:none" title="Clear search">✕</button>
+  </div>
+</div>
+
+<!-- FILTER TOOLBAR -->
+<div class="shop-toolbar" id="shopToolbar">
+  <div class="shop-result-count" id="shopResultCount">Loading...</div>
+  <div class="shop-controls">
+    <select class="shop-sort-select" id="shopSort" onchange="applyFilters()">
+      <option value="default">Sort: Default</option>
+      <option value="price-asc">Price: Low → High</option>
+      <option value="price-desc">Price: High → Low</option>
+      <option value="name-asc">Name: A → Z</option>
+    </select>
+    <label class="shop-toggle-wrap" title="Show only in-stock items">
+      <input type="checkbox" id="inStockOnly" onchange="applyFilters()">
+      <span class="shop-toggle-label">In Stock Only</span>
+    </label>
+  </div>
+  <div class="shop-active-filters" id="shopActiveFilters"></div>
 </div>
 
 <!-- CATEGORY PILLS -->
@@ -777,7 +861,7 @@ function getDefaultProducts(){
           qty:p.qty||0,sku:p.sku||'',cost:p.cost||0,lowStockThreshold:p.low_stock_threshold||3
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
-        renderProducts(filterProds());
+        applyFilters();
         loadCart();
         return;
       }
@@ -799,13 +883,13 @@ function getDefaultProducts(){
     if(!mapped.length)return;
     productsCache=mapped;
     localStorage.setItem('gb_products',JSON.stringify(productsCache));
-    renderProducts(filterProds());
+    applyFilters();
     loadCart();
   }catch(e){}
 })();
 
 window.addEventListener('storage',e=>{
-  if(e.key==='gb_products'){productsCache=null;renderProducts(filterProds());}
+  if(e.key==='gb_products'){productsCache=null;applyFilters();}
   if(e.key==='gb_categories'){renderCats(currentGender);}
 });
 
@@ -828,7 +912,7 @@ function setGender(g){
   document.getElementById('genderTabs').style.display='';
   document.getElementById('catsRow').style.display='';
   renderCats(g);
-  renderProducts(filterProds());
+  applyFilters();
 }
 
 function renderCats(g){
@@ -850,13 +934,83 @@ function filterCat(cat,el){
   document.querySelectorAll('.cat-card').forEach(p=>p.classList.remove('active'));
   if(el)el.classList.add('active');
   else{const cards=document.querySelectorAll('.cat-card');if(cat==='all'&&cards[0])cards[0].classList.add('active');}
-  renderProducts(filterProds());
+  applyFilters();
 }
 
 function filterProds(){
   const all=getProducts();
   if(currentBrand) return all.filter(p=>p.brand===currentBrand);
   return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+}
+
+function applyFilters(){
+  let products=getProducts();
+  if(currentBrand){
+    products=products.filter(p=>p.brand===currentBrand);
+  } else {
+    products=products.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+  }
+  // Search
+  const q=(document.getElementById('shopSearch')?.value||'').trim().toLowerCase();
+  if(q) products=products.filter(p=>
+    p.name.toLowerCase().includes(q)||
+    p.brand.toLowerCase().includes(q)||
+    (p.cat||'').toLowerCase().includes(q)
+  );
+  // In-stock only
+  const inStockOnly=document.getElementById('inStockOnly')?.checked;
+  if(inStockOnly) products=products.filter(p=>p.inStock);
+  // Sort
+  const sort=document.getElementById('shopSort')?.value||'default';
+  if(sort==='price-asc') products=[...products].sort((a,b)=>a.pkr-b.pkr);
+  else if(sort==='price-desc') products=[...products].sort((a,b)=>b.pkr-a.pkr);
+  else if(sort==='name-asc') products=[...products].sort((a,b)=>a.name.localeCompare(b.name));
+
+  updateResultCount(products.length);
+  renderActiveFilters(q,inStockOnly,sort);
+  renderProducts(products);
+
+  const clearBtn=document.getElementById('searchClear');
+  if(clearBtn) clearBtn.style.display=q?'flex':'none';
+}
+
+function updateResultCount(count){
+  const el=document.getElementById('shopResultCount');
+  if(el) el.textContent=count===0?'No products found':count===1?'1 product':`${count} products`;
+}
+
+function renderActiveFilters(q,inStockOnly,sort){
+  const el=document.getElementById('shopActiveFilters');
+  if(!el) return;
+  let chips='';
+  if(q) chips+=`<span class="shop-filter-chip" onclick="clearSearch()">🔍 "${q}" ✕</span>`;
+  if(inStockOnly) chips+=`<span class="shop-filter-chip" onclick="document.getElementById('inStockOnly').checked=false;applyFilters()">In Stock Only ✕</span>`;
+  if(sort&&sort!=='default'){
+    const labels={'price-asc':'Price: Low → High','price-desc':'Price: High → Low','name-asc':'Name: A → Z'};
+    chips+=`<span class="shop-filter-chip" onclick="document.getElementById('shopSort').value='default';applyFilters()">${labels[sort]||sort} ✕</span>`;
+  }
+  if(chips) chips+=`<span class="shop-filter-chip shop-filter-chip-clear" onclick="clearAllFilters()">Clear All</span>`;
+  el.innerHTML=chips;
+}
+
+function clearSearch(){
+  const inp=document.getElementById('shopSearch');
+  if(inp) inp.value='';
+  applyFilters();
+}
+
+function clearAllFilters(){
+  const inp=document.getElementById('shopSearch');
+  if(inp) inp.value='';
+  const tog=document.getElementById('inStockOnly');
+  if(tog) tog.checked=false;
+  const sort=document.getElementById('shopSort');
+  if(sort) sort.value='default';
+  currentCat='all';
+  const cards=document.querySelectorAll('.cat-card');
+  cards.forEach(c=>c.classList.remove('active'));
+  if(cards[0]) cards[0].classList.add('active');
+  applyFilters();
 }
 
 function showBrandFilter(brand){
@@ -869,7 +1023,7 @@ function showBrandFilter(brand){
   document.getElementById('shopHeroTitle').textContent=brand;
   document.getElementById('shopHeroEye').textContent='Brand';
   document.getElementById('shopHeroSub').textContent='All '+brand+' products · Authentic USA · Pay via Bank Transfer';
-  renderProducts(filterProds());
+  applyFilters();
 }
 function hideBrandFilter(){
   document.getElementById('brandFilterBar').style.display='none';
@@ -878,6 +1032,9 @@ function hideBrandFilter(){
 }
 
 function renderProducts(data){
+  const isFiltered=(document.getElementById('shopSearch')?.value||'').trim()||
+    document.getElementById('inStockOnly')?.checked||
+    (document.getElementById('shopSort')?.value||'default')!=='default';
   document.getElementById('productsGrid').innerHTML=data.length?data.map(p=>{
     const bg=bgs[p.cat]||'#f8f8ff';
     const isPreorder=!p.inStock;
@@ -898,10 +1055,11 @@ function renderProducts(data){
         <button class="add-btn${isPreorder?' preorder-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
       </div>
     </div>`;
-  }).join(''):`<div style="grid-column:1/-1;text-align:center;padding:4rem 1rem">
-    <div style="font-size:2.2rem;margin-bottom:0.8rem">🛍️</div>
-    <div style="font-size:0.95rem;font-weight:500;color:var(--ink);margin-bottom:0.4rem">No products here yet</div>
-    <div style="font-size:0.78rem;color:var(--muted2);line-height:1.6">Check back soon — new arrivals coming.</div>
+  }).join(''):`<div class="shop-empty">
+    <div class="shop-empty-icon">${isFiltered?'🔍':'🛍️'}</div>
+    <div class="shop-empty-title">${isFiltered?'No products found':'Nothing here yet'}</div>
+    <div class="shop-empty-sub">${isFiltered?'Try adjusting your search or filters':'Check back soon — new arrivals coming.'}</div>
+    ${isFiltered?`<button class="shop-empty-btn" onclick="clearAllFilters()">Clear All Filters</button>`:''}
   </div>`;
 }
 
@@ -1317,6 +1475,49 @@ if(_brand){
       if (cp.bank_account_name){ var el=document.getElementById('co-bank-acname');  if(el) el.textContent=cp.bank_account_name; }
       if (cp.bank_account_no)  { var el=document.getElementById('co-bank-acno');    if(el) el.textContent=cp.bank_account_no; }
       if (cp.bank_iban)        { var el=document.getElementById('co-bank-iban');    if(el) el.textContent=cp.bank_iban; }
+    }
+  } catch(e) {}
+
+  // Shipment announcement bar
+  try {
+    var sa = JSON.parse(localStorage.getItem('gb_shipment_active')||'null');
+    if (sa && sa.show) {
+      var bar = document.getElementById('shipmentBar');
+      var textEl = document.getElementById('shipmentBarText');
+      var ctaEl = document.getElementById('shipmentBarCta');
+      var today = new Date(); today.setHours(0,0,0,0);
+      var cutoff = new Date(sa.cutoff_date);
+      var arrival = new Date(sa.arrival_date);
+      var text = '', cta = '', cls = '';
+      var fmtD = function(d) {
+        return new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
+      };
+      if (sa.status === 'open') {
+        var daysLeft = Math.ceil((cutoff - today) / 86400000);
+        if (daysLeft > 3) {
+          text = 'Next fulfillment: ' + fmtD(arrival) + ' \u00b7 Order by ' + fmtD(cutoff) + ' to join this batch';
+          cta = daysLeft + ' days left';
+        } else if (daysLeft > 0) {
+          text = 'Closing soon \u2014 order by ' + fmtD(cutoff) + ' to be included in the next fulfillment (' + fmtD(arrival) + ')';
+          cta = daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' left';
+        } else {
+          text = 'Order window closing soon \u00b7 Orders placed now may be in the next batch';
+        }
+      } else if (sa.status === 'closed') {
+        text = 'This batch is now closed \u00b7 Fulfillment date: ' + fmtD(arrival);
+      } else if (sa.status === 'in_transit') {
+        text = 'Your items are on their way! Orders being prepared for fulfillment on ' + fmtD(arrival);
+        cls = 'in-transit'; cta = 'Coming Soon';
+      } else if (sa.status === 'arrived') {
+        text = 'Great news \u2014 items have arrived! Your order is being packed and shipped.';
+        cls = 'in-transit'; cta = 'Fulfilling Now';
+      }
+      if (text) {
+        bar.style.display = '';
+        if (cls) bar.classList.add(cls);
+        textEl.textContent = text;
+        if (cta) { ctaEl.textContent = cta; ctaEl.style.display = ''; }
+      }
     }
   } catch(e) {}
 })();

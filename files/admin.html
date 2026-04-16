@@ -290,6 +290,59 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .log-op-set{background:var(--sky-light);color:var(--sky);border-color:#C4D5EE}
 .log-delta{font-weight:600;font-family:'Cormorant Garamond',serif;font-size:1.05rem}
 .log-meta{font-size:0.7rem;color:var(--muted2);margin-top:2px}
+
+/* ── SHIPMENT CARDS ── */
+.shipment-card{border:1px solid var(--border);background:var(--card);margin-bottom:1.2rem;box-shadow:var(--shadow)}
+.shipment-card-head{display:flex;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+.shipment-card-name{font-size:0.88rem;font-weight:600;color:var(--ink);flex:1;min-width:160px}
+.shipment-card-dates{font-size:0.7rem;color:var(--muted);letter-spacing:0.3px}
+.shipment-card-body{padding:1rem 1.4rem}
+.shipment-stats{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:0.9rem}
+.shipment-stat-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);line-height:1}
+.shipment-stat-label{font-size:0.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.shipment-progress-wrap{margin:0.6rem 0 0.9rem}
+.shipment-progress-label{font-size:0.62rem;color:var(--muted);margin-bottom:5px}
+.shipment-progress{height:5px;background:var(--border);border-radius:0}
+.shipment-progress-fill{height:100%;background:var(--sage);transition:width 0.4s}
+.shipment-card-actions{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.8rem}
+.shipment-orders-panel{display:none;border-top:1px solid var(--border);padding:1rem 1.4rem}
+.shipment-orders-panel.open{display:block}
+/* ── UNASSIGNED ALERT ── */
+.unassigned-alert{display:none;background:var(--rose-light);border:1px solid rgba(181,54,90,0.25);padding:0.9rem 1.2rem;margin-bottom:1.3rem;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap}
+.unassigned-alert.visible{display:flex}
+.unassigned-alert-text{font-size:0.78rem;color:var(--rose);font-weight:500}
+
+/* ── ORDER STATS BAR ── */
+.order-stats-row{display:flex;gap:1px;margin-bottom:1.4rem;background:var(--border);border:1px solid var(--border)}
+.ostat{flex:1;background:var(--card);padding:0.9rem 1rem;text-align:center;cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent;min-width:70px}
+.ostat:hover{background:var(--bg2)}
+.ostat.active{border-bottom-color:var(--gold);background:var(--gold-light)}
+.ostat-val{font-family:'Cormorant Garamond',serif;font-size:1.55rem;font-weight:400;color:var(--ink);line-height:1}
+.ostat-label{font-size:0.58rem;font-weight:500;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.ostat.ostat-new .ostat-val{color:var(--sky)}
+.ostat.ostat-packed .ostat-val{color:var(--sienna)}
+.ostat.ostat-pending .ostat-val{color:var(--rose)}
+.ostat.ostat-pending{border-bottom:2px solid transparent}
+.ostat.ostat-pending.active{border-bottom-color:var(--rose);background:rgba(181,54,90,0.06)}
+/* Order detail modal */
+.order-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem 1.6rem}
+.odg-full{grid-column:1/-1}
+.odg-label{font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.odg-val{font-size:0.82rem;color:var(--ink);line-height:1.4}
+.odg-divider{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:0.1rem 0}
+.odm-item-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.78rem}
+.odm-item-row:last-child{border-bottom:none}
+.order-row{cursor:pointer}
+.order-row:hover td{background:var(--bg2)}
+
+/* ── PACKED QUEUE BANNER ── */
+.packed-queue-banner{display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.85rem 1.2rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.packed-queue-banner.visible{display:flex}
+.packed-queue-text{font-size:0.78rem;font-weight:500;color:var(--sienna)}
+.packed-queue-text span{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600}
+
+/* ── ORDER NOTES INLINE ── */
+.order-notes{font-size:0.68rem;color:var(--muted);font-style:italic;margin-top:3px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -322,6 +375,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-section-label">Overview</div>
     <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">◈</span><span class="nav-label">Dashboard</span></div>
     <div class="nav-item" onclick="showPage('orders')"><span class="nav-icon">◻</span><span class="nav-label">Orders</span></div>
+    <div class="nav-item" onclick="showPage('shipments')"><span class="nav-icon">◻</span><span class="nav-label">Batches</span></div>
     <div class="nav-section-label">Catalogue</div>
     <div class="nav-item" onclick="showPage('products')"><span class="nav-icon">◈</span><span class="nav-label">Products</span></div>
     <div class="nav-item" onclick="showPage('inventory')"><span class="nav-icon">◻</span><span class="nav-label">Inventory</span></div>
@@ -366,6 +420,45 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <!-- ORDERS -->
     <div class="page" id="page-orders">
       <div class="page-header"><div class="page-title">Orders</div><div class="page-sub">Manage and fulfil customer orders</div></div>
+
+      <!-- Order Stats Bar -->
+      <div class="order-stats-row" id="order-stats-bar">
+        <div class="ostat ostat-pending" onclick="setStatusFilter('__pending__')" title="New + Confirmed + Packed — everything needing action">
+          <div class="ostat-val" id="ostat-pending">—</div>
+          <div class="ostat-label">Needs Action</div>
+        </div>
+        <div class="ostat ostat-new" onclick="setStatusFilter('New Order')" title="New orders awaiting confirmation">
+          <div class="ostat-val" id="ostat-new">—</div>
+          <div class="ostat-label">New</div>
+        </div>
+        <div class="ostat" onclick="setStatusFilter('Confirmed')" title="Confirmed, advance paid">
+          <div class="ostat-val" id="ostat-confirmed">—</div>
+          <div class="ostat-label">Confirmed</div>
+        </div>
+        <div class="ostat ostat-packed" onclick="setStatusFilter('Packed')" title="Packed and ready to ship">
+          <div class="ostat-val" id="ostat-packed">—</div>
+          <div class="ostat-label">Packed</div>
+        </div>
+        <div class="ostat" onclick="setStatusFilter('Shipped')" title="Shipped">
+          <div class="ostat-val" id="ostat-shipped">—</div>
+          <div class="ostat-label">Shipped</div>
+        </div>
+        <div class="ostat" onclick="setStatusFilter('Delivered')" title="Delivered to customer">
+          <div class="ostat-val" id="ostat-delivered">—</div>
+          <div class="ostat-label">Delivered</div>
+        </div>
+        <div class="ostat" onclick="setStatusFilter('')" title="Show all orders">
+          <div class="ostat-val" id="ostat-all">—</div>
+          <div class="ostat-label">All</div>
+        </div>
+      </div>
+
+      <!-- Packed Queue Banner -->
+      <div class="packed-queue-banner" id="packed-queue-banner">
+        <div class="packed-queue-text">📦 <span id="packed-queue-count">0</span> orders packed and ready to ship</div>
+        <button class="btn btn-amber btn-sm" onclick="setStatusFilter('Packed')">View Ship Queue</button>
+      </div>
+
       <div class="card">
         <div class="card-head">
           <span class="card-title">All Orders</span>
@@ -376,19 +469,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div class="card-body" style="padding:1rem 1.3rem 0.5rem">
           <div class="search-bar">
-            <input class="search-input" type="text" id="order-search" placeholder="Search by name, phone, city..." oninput="filterOrders()">
+            <input class="search-input" type="text" id="order-search" placeholder="Search by name, phone, city, order #..." oninput="filterOrders()">
             <select class="filter-select" id="order-status-filter" onchange="filterOrders()">
               <option value="">All Statuses</option>
+              <option value="__pending__">⚡ Needs Action</option>
               <option value="New Order">New Order</option>
               <option value="Confirmed">Confirmed</option>
+              <option value="Packed">Packed</option>
               <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         </div>
         <div style="overflow-x:auto">
           <table class="tbl" id="orders-table">
             <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Payment</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="orders-body"><tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders from Google Sheets</td></tr></tbody>
+            <tbody id="orders-body"><tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1105,20 +1202,156 @@ Shop now → https://globalbestiepk.com/products.html
       </div>
     </div>
 
+    <!-- SHIPMENTS -->
+    <div class="page" id="page-shipments">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <div class="page-title">Fulfillment Batches</div>
+          <div class="page-sub">Each batch collects orders for ~4 weeks · set a soft cutoff · fulfill when items arrive</div>
+        </div>
+        <button class="btn btn-pink btn-sm" onclick="openNewShipmentModal()">+ New Batch</button>
+      </div>
+
+      <!-- Unassigned orders alert -->
+      <div class="unassigned-alert" id="unassigned-alert">
+        <div class="unassigned-alert-text" id="unassigned-alert-text">⚠ Some orders have no batch assigned</div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:var(--rose);color:#fff;border:none" id="assign-all-btn">Assign All to Active Batch</button>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('orders')">View in Orders</button>
+        </div>
+      </div>
+
+      <!-- Shipments list -->
+      <div id="shipments-list">
+        <div style="text-align:center;padding:3rem;color:var(--muted);font-size:0.8rem">Loading batches...</div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="order-detail-modal">
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div>
+        <h3 id="odm-title">Order Details</h3>
+        <div id="odm-date" style="font-size:0.7rem;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal('order-detail-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="order-detail-grid">
+        <div>
+          <div class="odg-label">Customer</div>
+          <div class="odg-val" id="odm-name" style="font-weight:600;font-size:0.9rem"></div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:2px" id="odm-email"></div>
+        </div>
+        <div>
+          <div class="odg-label">Phone</div>
+          <div class="odg-val" id="odm-phone"></div>
+        </div>
+        <div>
+          <div class="odg-label">City</div>
+          <div class="odg-val" id="odm-city"></div>
+        </div>
+        <div>
+          <div class="odg-label">Status</div>
+          <div id="odm-status"></div>
+        </div>
+        <div class="odg-full">
+          <div class="odg-label">Delivery Address</div>
+          <div class="odg-val" id="odm-address" style="color:var(--ink);background:var(--bg2);padding:8px 12px;border:1px solid var(--border);font-size:0.8rem"></div>
+        </div>
+        <hr class="odg-divider">
+        <div class="odg-full">
+          <div class="odg-label">Items Ordered</div>
+          <div id="odm-items" style="margin-top:6px"></div>
+        </div>
+        <hr class="odg-divider">
+        <div>
+          <div class="odg-label">Order Total</div>
+          <div class="odg-val" id="odm-total" style="font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400"></div>
+        </div>
+        <div>
+          <div class="odg-label">Advance Paid</div>
+          <div class="odg-val" id="odm-advance"></div>
+        </div>
+        <div class="odg-full">
+          <div class="odg-label">Remaining Balance</div>
+          <div class="odg-val" id="odm-remaining" style="font-weight:700;font-size:0.88rem"></div>
+        </div>
+        <div id="odm-notes-wrap" class="odg-full" style="display:none">
+          <div class="odg-label">Notes from Customer</div>
+          <div class="odg-val" id="odm-notes" style="color:var(--sienna);background:var(--sienna-light);padding:7px 10px;border-left:3px solid #DFC4A8"></div>
+        </div>
+        <div id="odm-batch-wrap" class="odg-full" style="display:none">
+          <div class="odg-label">Fulfillment Batch</div>
+          <div class="odg-val" id="odm-batch"></div>
+        </div>
+        <div id="odm-tracking-wrap" class="odg-full" style="display:none">
+          <div class="odg-label">Tracking Number</div>
+          <div class="odg-val" id="odm-tracking"></div>
+        </div>
+        <div id="odm-ss-wrap" class="odg-full" style="display:none">
+          <div class="odg-label">Payment Screenshot</div>
+          <a id="odm-ss" href="#" target="_blank" style="font-size:0.78rem;color:var(--gold);text-decoration:underline;font-weight:500">View Screenshot →</a>
+        </div>
+      </div>
+      <div id="odm-actions" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)"></div>
+    </div>
+  </div>
+</div>
 
 <!-- SHIP ORDER MODAL (confirm) -->
 <div class="modal-overlay" id="ship-modal">
   <div class="modal-box">
-    <div class="modal-head"><h3>✈️ Confirm Shipping Email</h3><button class="modal-close" onclick="closeModal('ship-modal')">✕</button></div>
+    <div class="modal-head"><h3>✈️ Confirm Shipping</h3><button class="modal-close" onclick="closeModal('ship-modal')">✕</button></div>
     <div class="modal-body">
       <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">Sending shipping notification to:</p>
       <div class="ship-preview" id="modal-ship-preview" style="margin-bottom:1.2rem"></div>
-      <div style="display:flex;gap:0.7rem">
-        <button class="btn btn-green" onclick="confirmSendShipping()">Send Email Now</button>
+      <div class="form-group" style="margin-bottom:1.2rem">
+        <label class="form-label">Tracking Number <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional)</span></label>
+        <input class="form-input" type="text" id="ship-tracking-number" placeholder="e.g. TCS-123456789">
+      </div>
+      <div style="display:flex;gap:0.7rem;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="confirmSendShipping()">Send Email + Mark Shipped</button>
+        <button class="btn btn-ghost" onclick="markShippedNoEmail()">Mark Shipped Only</button>
         <button class="btn btn-ghost" onclick="closeModal('ship-modal')">Cancel</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW SHIPMENT MODAL -->
+<div class="modal-overlay" id="new-shipment-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h3>New Fulfillment Batch</h3><button class="modal-close" onclick="closeModal('new-shipment-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Batch Name</label>
+        <input class="form-input" type="text" id="ns-name" placeholder="e.g. May 2026 Batch">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Order Cutoff <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(soft)</span></label>
+          <input class="form-input" type="date" id="ns-cutoff">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Fulfillment Date</label>
+          <input class="form-input" type="date" id="ns-arrival">
+        </div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:-0.8rem;margin-bottom:1rem">Typically ~4 weeks from batch start. Cutoff is soft — you decide when to close.</div>
+      <div class="form-group">
+        <label class="form-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional)</span></label>
+        <textarea class="form-input" id="ns-notes" rows="2" placeholder="e.g. Ordering from Sephora + Ulta..."></textarea>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:0.75rem;background:var(--gold-light);border:1px solid var(--border2);margin-bottom:1.2rem">
+        <input type="checkbox" id="ns-announce" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer">
+        <label for="ns-announce" style="font-size:0.75rem;color:var(--ink3);cursor:pointer;font-weight:500">Show announcement bar to customers on the shop page</label>
+      </div>
+      <button class="btn btn-pink" style="width:100%" onclick="createShipment()">Create Batch</button>
     </div>
   </div>
 </div>
@@ -1437,6 +1670,7 @@ function showPage(p) {
   document.getElementById('page-' + p).classList.add('active');
   event.currentTarget.classList.add('active');
   if (p === 'orders') loadOrders();
+  if (p === 'shipments') loadShipments();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
   if (p === 'promos') loadPromoCodes();
   if (p === 'trends') initTrendsPage();
@@ -1571,7 +1805,7 @@ async function loadOrders(silent = false) {
     try {
       const { data, error } = await _supa
         .from('orders')
-        .select('*, order_items(product_name, qty, pkr, is_preorder)')
+        .select('*, order_items(product_name, qty, pkr, is_preorder), shipments(name)')
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -1591,7 +1825,11 @@ async function loadOrders(silent = false) {
         Advance: o.advance ? 'Rs ' + o.advance.toLocaleString() : '',
         Status: _supaStatusToDisplay(o.status),
         Notes: o.notes || '',
-        Screenshot: o.screenshot_url || ''
+        Screenshot: o.screenshot_url || '',
+        _tracking: o.tracking_number || '',
+        _shipmentId: o.shipment_id || null,
+        _shipmentName: o.shipments?.name || '',
+        _items: o.order_items || []
       }));
 
       const newOrders = allOrders.filter(o => o.Status === 'New Order');
@@ -1668,6 +1906,78 @@ function getDemoOrders() {
   ];
 }
 
+let _odmIdx = null;
+
+function openOrderDetail(idx) {
+  const o = allOrders[idx];
+  if (!o) return;
+  _odmIdx = idx;
+  document.getElementById('odm-title').textContent = o.OrderNum ? 'Order ' + o.OrderNum : 'Order Details';
+  document.getElementById('odm-date').textContent = 'Placed: ' + (o.Date || '');
+  document.getElementById('odm-name').textContent = o.Name || '';
+  document.getElementById('odm-email').textContent = o.Email || '';
+  document.getElementById('odm-phone').textContent = o.Phone || '';
+  document.getElementById('odm-city').textContent = o.City || '—';
+  document.getElementById('odm-address').textContent = o.Address || '—';
+  document.getElementById('odm-status').innerHTML = '<span class="badge ' + statusClass(o.Status) + '">' + (o.Status || '') + '</span>';
+  // Items
+  const itemsEl = document.getElementById('odm-items');
+  if (o._items && o._items.length) {
+    itemsEl.innerHTML = o._items.map(it =>
+      '<div class="odm-item-row">' +
+      '<span>' + (it.product_name || '') + ' &times; ' + it.qty + (it.is_preorder ? ' <span style="font-size:0.62rem;color:var(--sky);font-weight:600;margin-left:4px">PREORDER</span>' : '') + '</span>' +
+      '<span style="font-weight:600">Rs ' + ((it.pkr || 0) * it.qty).toLocaleString() + '</span>' +
+      '</div>'
+    ).join('');
+  } else {
+    itemsEl.innerHTML = '<div style="font-size:0.78rem;color:var(--muted)">' + (o.Items || '—') + '</div>';
+  }
+  // Payment
+  const paid = o._advance || 0, total = o._total || 0, remaining = total - paid;
+  document.getElementById('odm-total').textContent = 'Rs ' + total.toLocaleString();
+  document.getElementById('odm-advance').textContent = paid ? 'Rs ' + paid.toLocaleString() : '—';
+  const remEl = document.getElementById('odm-remaining');
+  if (remaining <= 0) { remEl.textContent = 'Paid in Full ✓'; remEl.style.color = 'var(--sage)'; }
+  else { remEl.textContent = 'Rs ' + remaining.toLocaleString() + ' due on delivery'; remEl.style.color = 'var(--rose)'; }
+  // Notes
+  const notesWrap = document.getElementById('odm-notes-wrap');
+  notesWrap.style.display = o.Notes ? '' : 'none';
+  if (o.Notes) document.getElementById('odm-notes').textContent = o.Notes;
+  // Batch
+  const batchWrap = document.getElementById('odm-batch-wrap');
+  batchWrap.style.display = o._shipmentName ? '' : 'none';
+  if (o._shipmentName) document.getElementById('odm-batch').textContent = o._shipmentName;
+  // Tracking
+  const trackWrap = document.getElementById('odm-tracking-wrap');
+  trackWrap.style.display = o._tracking ? '' : 'none';
+  if (o._tracking) document.getElementById('odm-tracking').textContent = o._tracking;
+  // Screenshot
+  const ssWrap = document.getElementById('odm-ss-wrap');
+  ssWrap.style.display = o.Screenshot ? '' : 'none';
+  if (o.Screenshot) document.getElementById('odm-ss').href = o.Screenshot;
+  // Actions
+  const actEl = document.getElementById('odm-actions');
+  let btns = '';
+  if (o.Status === 'New Order') {
+    btns = '<button class="btn btn-amber" onclick="updateOrderStatusFromModal(' + idx + ',\'Confirmed\')">✓ Confirm Order</button>' +
+           '<button class="btn btn-ghost" style="color:var(--rose);border-color:rgba(181,54,90,0.3)" onclick="updateOrderStatusFromModal(' + idx + ',\'Cancelled\')">✗ Cancel</button>';
+  } else if (o.Status === 'Confirmed') {
+    btns = '<button class="btn btn-ghost" onclick="updateOrderStatusFromModal(' + idx + ',\'Packed\')">📦 Mark Packed</button>';
+  } else if (o.Status === 'Packed') {
+    btns = '<button class="btn btn-green" onclick="quickShip(' + idx + ');closeModal(\'order-detail-modal\')">✈️ Ship Order</button>';
+  } else if (o.Status === 'Shipped') {
+    btns = '<button class="btn btn-ghost" style="color:var(--sage);border-color:var(--sage)" onclick="updateOrderStatusFromModal(' + idx + ',\'Delivered\')">✅ Mark Delivered</button>';
+  }
+  btns += '<button class="btn btn-ghost" onclick="closeModal(\'order-detail-modal\')" style="margin-left:auto">Close</button>';
+  actEl.innerHTML = btns;
+  document.getElementById('order-detail-modal').classList.add('open');
+}
+
+async function updateOrderStatusFromModal(idx, status) {
+  await updateOrderStatus(idx, status);
+  closeModal('order-detail-modal');
+}
+
 function renderOrdersTable(orders) {
   const body = document.getElementById('orders-body');
   if (!orders.length) {
@@ -1681,7 +1991,7 @@ function renderOrdersTable(orders) {
       <td><div style="font-weight:700;font-size:0.82rem">${o.Name||''}</div><div style="font-size:0.68rem;color:var(--muted)">${o.Email||''}</div></td>
       <td style="font-size:0.78rem">${o.Phone||''}</td>
       <td style="font-size:0.78rem">${o.City||''}</td>
-      <td style="font-size:0.75rem;max-width:160px">${o.Items||''}</td>
+      <td style="font-size:0.75rem;max-width:160px">${o.Items||''}${o.Notes ? `<div class="order-notes" title="${(o.Notes||'').replace(/"/g,'&quot;')}">${o.Notes}</div>` : ''}</td>
       <td style="font-weight:700;font-size:0.82rem;white-space:nowrap">${o.Total||''}</td>
       <td style="font-size:0.75rem;white-space:nowrap">${(()=>{
         const paid=o._advance||0,total=o._total||0,remaining=total-paid;
@@ -1692,12 +2002,31 @@ function renderOrdersTable(orders) {
                `<button class="btn btn-sm" style="margin-top:3px;background:var(--sage);color:#fff;font-size:0.58rem;padding:2px 8px;letter-spacing:1px;border:none;cursor:pointer" onclick="markRemainingPaid(${i})">✓ Mark Paid</button>`;
       })()}</td>
       <td style="text-align:center">${o.Screenshot ? `<a href="${o.Screenshot}" target="_blank" title="View payment screenshot" style="font-size:1rem;text-decoration:none;opacity:0.85;cursor:pointer" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.85">📷</a>` : '<span style="font-size:0.6rem;color:var(--muted2)">—</span>'}</td>
-      <td><span class="badge ${statusClass(o.Status)}">${o.Status||'New Order'}</span></td>
       <td>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-          ${o.Status !== 'Shipped' && o.Status !== 'Delivered' ? `<button class="btn btn-green btn-sm" onclick="quickShip(${i})">✈️ Ship</button>` : '<span style="font-size:0.7rem;color:var(--green)">✅ Done</span>'}
-          ${o.Status === 'New Order' ? `<button class="btn btn-amber btn-sm" onclick="updateOrderStatus(${i},'Confirmed')">✓ Confirm</button>` : ''}
-          ${o.Status === 'Confirmed' ? `<button class="btn btn-ghost btn-sm" onclick="updateOrderStatus(${i},'Packed')">📦 Packed</button>` : ''}
+        <span class="badge ${statusClass(o.Status)}">${o.Status||'New Order'}</span>
+        ${o._tracking ? `<div style="font-size:0.65rem;color:var(--muted);margin-top:3px;letter-spacing:0.3px">📦 ${o._tracking}</div>` : ''}
+        ${o._shipmentName ? `<div style="font-size:0.6rem;color:var(--muted2);margin-top:3px">📦 ${o._shipmentName}</div>` :
+          (o.Status !== 'Delivered' && o.Status !== 'Cancelled') ? `<div style="font-size:0.6rem;color:var(--rose);margin-top:3px;font-weight:600">⚠ No batch</div>` : ''}
+      </td>
+      <td>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-ghost btn-sm" style="color:var(--muted2);padding:2px 7px;font-size:0.7rem" onclick="openOrderDetail(${i})" title="View full details">👁</button>
+          ${o.Status === 'New Order' ? `
+            <button class="btn btn-amber btn-sm" onclick="updateOrderStatus(${i},'Confirmed')">✓ Confirm</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--rose);border-color:rgba(181,54,90,0.3)" onclick="updateOrderStatus(${i},'Cancelled')">✗</button>
+          ` : ''}
+          ${o.Status === 'Confirmed' ? `
+            <button class="btn btn-ghost btn-sm" onclick="updateOrderStatus(${i},'Packed')">📦 Pack</button>
+          ` : ''}
+          ${o.Status === 'Packed' ? `
+            <button class="btn btn-green btn-sm" onclick="quickShip(${i})">✈️ Ship</button>
+          ` : ''}
+          ${o.Status === 'Shipped' ? `
+            <button class="btn btn-ghost btn-sm" style="color:var(--sage);border-color:var(--sage)" onclick="updateOrderStatus(${i},'Delivered')">✅ Delivered</button>
+          ` : ''}
+          ${o.Status === 'Delivered' || o.Status === 'Cancelled' ? `
+            <span style="font-size:0.68rem;color:var(--muted2)">${o.Status === 'Delivered' ? 'Complete' : 'Cancelled'}</span>
+          ` : ''}
         </div>
       </td>
     </tr>`).join('');
@@ -1727,6 +2056,44 @@ function updateStats(orders) {
   document.getElementById('stat-shipped').textContent = orders.filter(o => o.Status === 'Shipped').length;
   const emails = [...new Set(orders.map(o => o.Email).filter(Boolean))];
   document.getElementById('stat-customers').textContent = emails.length;
+  updateOrderStats(orders);
+}
+
+function updateOrderStats(orders) {
+  const counts = {
+    'New Order': 0, 'Confirmed': 0, 'Packed': 0,
+    'Shipped': 0, 'Delivered': 0
+  };
+  orders.forEach(o => { if (counts[o.Status] !== undefined) counts[o.Status]++; });
+  const pendingCount = counts['New Order'] + counts['Confirmed'] + counts['Packed'];
+  document.getElementById('ostat-pending').textContent = pendingCount;
+  document.getElementById('ostat-new').textContent = counts['New Order'];
+  document.getElementById('ostat-confirmed').textContent = counts['Confirmed'];
+  document.getElementById('ostat-packed').textContent = counts['Packed'];
+  document.getElementById('ostat-shipped').textContent = counts['Shipped'];
+  document.getElementById('ostat-delivered').textContent = counts['Delivered'];
+  document.getElementById('ostat-all').textContent = orders.length;
+  // Packed queue banner
+  const packedBanner = document.getElementById('packed-queue-banner');
+  const packedCount = counts['Packed'];
+  document.getElementById('packed-queue-count').textContent = packedCount;
+  packedBanner.classList.toggle('visible', packedCount > 0);
+}
+
+function setStatusFilter(status) {
+  const sel = document.getElementById('order-status-filter');
+  if (sel) sel.value = status;
+  document.querySelectorAll('.ostat').forEach(el => el.classList.remove('active'));
+  const map = {'New Order':'ostat-new','Confirmed':'ostat-confirmed','Packed':'ostat-packed','Shipped':'ostat-shipped','Delivered':'ostat-delivered','__pending__':'ostat-pending'};
+  const targetId = map[status];
+  if (targetId) {
+    const pill = document.getElementById(targetId);
+    if (pill) pill.closest('.ostat').classList.add('active');
+  } else {
+    const allPill = document.getElementById('ostat-all');
+    if (allPill) allPill.closest('.ostat').classList.add('active');
+  }
+  filterOrders();
 }
 
 function updateNewOrdersBadge(orders) {
@@ -1750,15 +2117,16 @@ function statusClass(s) {
   if (s === 'Shipped' || s === 'Delivered') return 'badge-shipped';
   if (s === 'Confirmed' || s === 'Packed') return 'badge-confirmed';
   if (s === 'Cancelled') return 'badge-new-order';
-  return 'badge-new-order';
+  return 'badge-new-order'; // New Order
 }
 
 function filterOrders() {
   const q = document.getElementById('order-search').value.toLowerCase();
   const sf = document.getElementById('order-status-filter').value;
+  const pendingStatuses = ['New Order', 'Confirmed', 'Packed'];
   const filtered = allOrders.filter(o => {
-    const matchQ = !q || [o.Name, o.Phone, o.City, o.Email].some(v => (v||'').toLowerCase().includes(q));
-    const matchS = !sf || o.Status === sf;
+    const matchQ = !q || [o.Name, o.Phone, o.City, o.Email, o.OrderNum].some(v => (v||'').toLowerCase().includes(q));
+    const matchS = !sf ? true : sf === '__pending__' ? pendingStatuses.includes(o.Status) : o.Status === sf;
     return matchQ && matchS;
   });
   renderOrdersTable(filtered);
@@ -1802,8 +2170,9 @@ function previewShipEmail() {
   document.getElementById('ship-preview-wrap').style.display = 'block';
 }
 
-function buildShipMessage(o) {
-  return `Hi ${o.Name||'bestie'} 💕\n\nGreat news — your Global Bestie order has been shipped! 🚀\n\nOrder: ${o.Items||'your items'}\nTotal: ${o.Total||''}\n\nYour package is now with the courier. Please allow a few days for delivery. Patience is key! 🗝️\n\nThank you for shopping with Global Bestie 🌍\nQuestions? WhatsApp us anytime!\n\n— Global Bestie Team 💕`;
+function buildShipMessage(o, trackingNum) {
+  const trackingLine = trackingNum ? `\nTracking #: ${trackingNum}` : '';
+  return `Hi ${o.Name||'bestie'} 💕\n\nGreat news — your Global Bestie order has been shipped! 🚀\n\nOrder: ${o.Items||'your items'}\nTotal: ${o.Total||''}${trackingLine}\n\nYour package is now with the courier. Please allow a few days for delivery. Patience is key! 🗝️\n\nThank you for shopping with Global Bestie 🌍\nQuestions? WhatsApp us anytime!\n\n— Global Bestie Team 💕`;
 }
 
 let pendingShipIdx = null;
@@ -1813,14 +2182,25 @@ function sendShippingEmail() {
   if (idx === '') { toast('Please select an order'); return; }
   pendingShipIdx = idx;
   const o = allOrders[idx];
+  document.getElementById('ship-tracking-number').value = '';
   document.getElementById('modal-ship-preview').innerHTML = `<b>${o.Name}</b> · ${o.Email||'(no email)'}<br><br>${buildShipMessage(o).replace(/\n/g,'<br>')}`;
   document.getElementById('ship-modal').classList.add('open');
+}
+
+async function _saveTrackingNumber(idx, trackingNum) {
+  if (!trackingNum) return;
+  const order = allOrders[idx];
+  allOrders[idx]._tracking = trackingNum;
+  if (_supa && order._id) {
+    await _supa.from('orders').update({ tracking_number: trackingNum }).eq('id', order._id);
+  }
 }
 
 async function confirmSendShipping() {
   const idx = pendingShipIdx;
   const o = allOrders[idx];
   const s = getSettings();
+  const trackingNum = (document.getElementById('ship-tracking-number').value || '').trim();
   closeModal('ship-modal');
   if (!o.Email) { toast('❌ No email on this order'); return; }
   if (!s.ejsKey || !s.ejsService || !s.ejsShipTemplate) {
@@ -1830,16 +2210,27 @@ async function confirmSendShipping() {
     await emailjs.send(s.ejsService, s.ejsShipTemplate, {
       to_email: o.Email,
       customer_name: o.Name || 'Bestie',
-      message: buildShipMessage(o),
+      message: buildShipMessage(o, trackingNum),
       order_items: o.Items || '',
       order_total: o.Total || ''
     });
+    await _saveTrackingNumber(parseInt(idx), trackingNum);
     await updateOrderStatus(parseInt(idx), 'Shipped');
     loadOrdersForShipping();
     toast('✅ Shipping email sent to ' + o.Email);
   } catch(e) {
     toast('❌ Email failed: ' + (e.text || 'Check EmailJS settings'));
   }
+}
+
+async function markShippedNoEmail() {
+  const idx = pendingShipIdx;
+  if (idx === null) return;
+  const trackingNum = (document.getElementById('ship-tracking-number').value || '').trim();
+  closeModal('ship-modal');
+  await _saveTrackingNumber(parseInt(idx), trackingNum);
+  await updateOrderStatus(parseInt(idx), 'Shipped');
+  loadOrdersForShipping();
 }
 
 async function markShippedOnly() {
@@ -1852,6 +2243,7 @@ async function markShippedOnly() {
 async function quickShip(idx) {
   pendingShipIdx = idx;
   const o = allOrders[idx];
+  document.getElementById('ship-tracking-number').value = o._tracking || '';
   document.getElementById('modal-ship-preview').innerHTML = `<b>${o.Name}</b> · ${o.Email||'(no email)'}<br><br>${buildShipMessage(o).replace(/\n/g,'<br>')}`;
   document.getElementById('ship-modal').classList.add('open');
 }
@@ -2762,6 +3154,208 @@ function toast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── SHIPMENTS ──
+let allShipments = [];
+
+function openNewShipmentModal() {
+  document.getElementById('ns-name').value = '';
+  document.getElementById('ns-cutoff').value = '';
+  document.getElementById('ns-arrival').value = '';
+  document.getElementById('ns-notes').value = '';
+  document.getElementById('ns-announce').checked = true;
+  document.getElementById('new-shipment-modal').classList.add('open');
+}
+
+async function createShipment() {
+  const name = document.getElementById('ns-name').value.trim();
+  const cutoff = document.getElementById('ns-cutoff').value;
+  const arrival = document.getElementById('ns-arrival').value;
+  const notes = document.getElementById('ns-notes').value.trim();
+  const announce = document.getElementById('ns-announce').checked;
+  if (!name) { toast('Enter a batch name'); return; }
+  if (!cutoff || !arrival) { toast('Set both cutoff and arrival dates'); return; }
+  if (!_supa) { toast('⚠ Connect Supabase in Settings first'); return; }
+  const { data, error } = await _supa.from('shipments').insert({ name, cutoff_date: cutoff, arrival_date: arrival, notes, status: 'open' }).select().single();
+  if (error) { toast('❌ ' + error.message); return; }
+  if (announce) syncShipmentAnnouncement({ ...data, show: true });
+  closeModal('new-shipment-modal');
+  toast('✅ Batch created');
+  loadShipments();
+}
+
+async function loadShipments() {
+  const el = document.getElementById('shipments-list');
+  if (!_supa) { el.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);padding:2rem">Supabase not connected — configure in Settings first.</div>'; return; }
+  const [{ data: shipments, error: se }, { data: orders, error: oe }] = await Promise.all([
+    _supa.from('shipments').select('*').order('created_at', { ascending: false }),
+    _supa.from('orders').select('id,status,total,shipment_id').limit(1000)
+  ]);
+  if (se) { toast('❌ ' + se.message); return; }
+  allShipments = shipments || [];
+  const allOrd = orders || [];
+  // Unassigned orders (active statuses, no shipment)
+  const unassigned = allOrd.filter(o => !o.shipment_id && !['delivered','cancelled'].includes(o.status));
+  renderUnassignedAlert(unassigned);
+  // Sync active open/in_transit shipment to localStorage for storefront
+  const active = allShipments.find(s => s.status === 'in_transit') || allShipments.find(s => s.status === 'open');
+  if (active) syncShipmentAnnouncement({ ...active, show: true });
+  renderShipmentCards(allShipments, allOrd);
+}
+
+function renderUnassignedAlert(unassigned) {
+  const el = document.getElementById('unassigned-alert');
+  const btn = document.getElementById('assign-all-btn');
+  if (!unassigned.length) { el.classList.remove('visible'); return; }
+  el.classList.add('visible');
+  document.getElementById('unassigned-alert-text').textContent = `⚠ ${unassigned.length} order${unassigned.length !== 1 ? 's' : ''} have no batch assigned`;
+  const openShipment = allShipments.find(s => s.status === 'open');
+  btn.textContent = openShipment ? `Assign All to "${openShipment.name}"` : 'No open batch — create one first';
+  btn.onclick = openShipment ? () => assignUnassignedOrders(openShipment.id) : null;
+  btn.disabled = !openShipment;
+}
+
+function renderShipmentCards(shipments, allOrders) {
+  const el = document.getElementById('shipments-list');
+  if (!shipments.length) {
+    el.innerHTML = `<div style="text-align:center;padding:3.5rem 1rem;color:var(--muted2)">
+      <div style="font-size:2rem;margin-bottom:0.8rem">📦</div>
+      <div style="font-size:0.9rem;font-weight:500;color:var(--ink);margin-bottom:0.4rem">No batches yet</div>
+      <div style="font-size:0.75rem">Create your first fulfillment batch to start organising orders.</div>
+    </div>`;
+    return;
+  }
+  const statusLabel = { open:'Accepting Orders', closed:'Orders Closed', in_transit:'Items En Route', arrived:'Fulfilling Now', complete:'Complete' };
+  const statusCls = { open:'badge-new-order', closed:'badge-confirmed', in_transit:'badge-confirmed', arrived:'badge-shipped', complete:'badge-shipped' };
+  el.innerHTML = shipments.map(s => {
+    const sOrders = allOrders.filter(o => o.shipment_id === s.id);
+    const total = sOrders.reduce((a, o) => a + (o.total || 0), 0);
+    const confirmed = sOrders.filter(o => ['confirmed','packed','shipped','delivered'].includes(o.status)).length;
+    const shipped = sOrders.filter(o => ['shipped','delivered'].includes(o.status)).length;
+    const pct = sOrders.length ? Math.round((shipped / sOrders.length) * 100) : 0;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const cutoff = new Date(s.cutoff_date);
+    const daysLeft = Math.ceil((cutoff - today) / 86400000);
+    const fmtD = d => new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
+    // Cutoff urgency indicator (only while open)
+    let cutoffNote = '';
+    if (s.status === 'open') {
+      if (daysLeft <= 0) cutoffNote = `<span style="color:var(--rose);font-weight:700;font-size:0.68rem"> · ⚠ Cutoff passed — close when ready</span>`;
+      else if (daysLeft <= 3) cutoffNote = `<span style="color:var(--rose);font-weight:700;font-size:0.68rem"> · 🔴 ${daysLeft} day${daysLeft!==1?'s':''} to cutoff</span>`;
+      else if (daysLeft <= 7) cutoffNote = `<span style="color:var(--sienna);font-weight:600;font-size:0.68rem"> · 🟡 ${daysLeft} days to cutoff</span>`;
+      else cutoffNote = `<span style="color:var(--muted);font-size:0.68rem"> · ${daysLeft} days left</span>`;
+    }
+    return `<div class="shipment-card">
+      <div class="shipment-card-head">
+        <div style="flex:1">
+          <div class="shipment-card-name">${s.name}</div>
+          <div class="shipment-card-dates">
+            Cutoff: <b>${fmtD(s.cutoff_date)}</b>${cutoffNote}
+            &nbsp;·&nbsp; Fulfillment: <b>${fmtD(s.arrival_date)}</b>
+          </div>
+        </div>
+        <span class="badge ${statusCls[s.status]||'badge-new-order'}">${statusLabel[s.status]||s.status}</span>
+      </div>
+      <div class="shipment-card-body">
+        <div class="shipment-stats">
+          <div><div class="shipment-stat-val">${sOrders.length}</div><div class="shipment-stat-label">Orders</div></div>
+          <div><div class="shipment-stat-val">Rs ${total.toLocaleString()}</div><div class="shipment-stat-label">Total Value</div></div>
+          <div><div class="shipment-stat-val">${confirmed}</div><div class="shipment-stat-label">Confirmed</div></div>
+          <div><div class="shipment-stat-val">${shipped}</div><div class="shipment-stat-label">Fulfilled</div></div>
+        </div>
+        <div class="shipment-progress-wrap">
+          <div class="shipment-progress-label">${shipped}/${sOrders.length} orders fulfilled · ${pct}% complete</div>
+          <div class="shipment-progress"><div class="shipment-progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        ${s.notes ? `<div style="font-size:0.73rem;color:var(--muted);margin-bottom:0.7rem;font-style:italic">${s.notes}</div>` : ''}
+        <div class="shipment-card-actions">
+          <button class="btn btn-ghost btn-sm" onclick="toggleShipmentOrders('${s.id}')">📋 View Orders (${sOrders.length})</button>
+          ${s.status==='open'?`<button class="btn btn-ghost btn-sm" onclick="setShipmentStatus('${s.id}','closed')">🔒 Stop Taking Orders</button>`:''}
+          ${s.status==='closed'?`<button class="btn btn-amber btn-sm" onclick="setShipmentStatus('${s.id}','in_transit')">✈ Items Ordered from USA</button>`:''}
+          ${s.status==='in_transit'?`<button class="btn btn-green btn-sm" onclick="setShipmentStatus('${s.id}','arrived')">📦 Items Arrived — Start Fulfilling</button>`:''}
+          ${s.status==='arrived'?`<button class="btn btn-ghost btn-sm" onclick="setShipmentStatus('${s.id}','complete')">✅ All Orders Fulfilled</button>`:''}
+          <button class="btn btn-ghost btn-sm" style="color:var(--muted2)" onclick="announceShipment('${s.id}')">📢 Update Announcement</button>
+        </div>
+        <div class="shipment-orders-panel" id="sop-${s.id}">
+          ${renderShipmentOrderTable(sOrders)}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderShipmentOrderTable(orders) {
+  if (!orders.length) return '<div style="font-size:0.75rem;color:var(--muted);padding:0.8rem 0">No orders assigned to this shipment yet.</div>';
+  return `<table class="tbl" style="margin-top:0.8rem">
+    <thead><tr><th>Order #</th><th>Customer</th><th>City</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>${orders.map(o => {
+      const ord = allOrders.find(a => a._id === o.id);
+      if (!ord) return '';
+      return `<tr>
+        <td style="font-size:0.72rem;font-weight:600">${ord.OrderNum||'—'}</td>
+        <td style="font-size:0.78rem">${ord.Name||''}</td>
+        <td style="font-size:0.75rem">${ord.City||''}</td>
+        <td style="font-weight:600;font-size:0.78rem">${ord.Total||''}</td>
+        <td><span class="badge ${statusClass(ord.Status)}">${ord.Status||''}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function toggleShipmentOrders(id) {
+  const panel = document.getElementById('sop-' + id);
+  if (panel) panel.classList.toggle('open');
+}
+
+async function setShipmentStatus(id, status) {
+  if (!_supa) return;
+  const { error } = await _supa.from('shipments').update({ status }).eq('id', id);
+  if (error) { toast('❌ ' + error.message); return; }
+  const shipment = allShipments.find(s => s.id === id);
+  if (shipment && ['open','in_transit','arrived'].includes(status)) {
+    syncShipmentAnnouncement({ ...shipment, status, show: true });
+  }
+  if (status === 'complete') {
+    // Clear announcement if this was the active one
+    try {
+      const sa = JSON.parse(localStorage.getItem('gb_shipment_active') || '{}');
+      if (sa.id === id) localStorage.removeItem('gb_shipment_active');
+    } catch(e) {}
+  }
+  const statusMsg = { closed:'Orders closed for this batch', in_transit:'Marked as items ordered from USA', arrived:'Marked as arrived — start fulfilling orders', complete:'Batch complete' };
+  toast('✅ ' + (statusMsg[status] || status));
+  loadShipments();
+}
+
+async function assignUnassignedOrders(shipmentId) {
+  if (!_supa) return;
+  const { error } = await _supa.from('orders')
+    .update({ shipment_id: shipmentId })
+    .is('shipment_id', null)
+    .not('status', 'in', '("delivered","cancelled")');
+  if (error) { toast('❌ ' + error.message); return; }
+  toast('✅ All unassigned orders assigned to shipment');
+  loadShipments();
+  // Refresh orders tab data too if it's been loaded
+  if (allOrders.length) loadOrders(true);
+}
+
+function announceShipment(id) {
+  const s = allShipments.find(x => x.id === id);
+  if (!s) return;
+  syncShipmentAnnouncement({ ...s, show: true });
+  toast('✅ Announcement updated — visible on shop page');
+}
+
+function syncShipmentAnnouncement(s) {
+  try {
+    localStorage.setItem('gb_shipment_active', JSON.stringify({
+      id: s.id, name: s.name,
+      cutoff_date: s.cutoff_date, arrival_date: s.arrival_date,
+      status: s.status, show: s.show !== false
+    }));
+  } catch(e) {}
 }
 
 // ── IMPORT ──
