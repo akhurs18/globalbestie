@@ -327,6 +327,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-item" onclick="showPage('inventory')"><span class="nav-icon">◻</span><span class="nav-label">Inventory</span></div>
     <div class="nav-item" onclick="showPage('categories')"><span class="nav-icon">◻</span><span class="nav-label">Categories</span></div>
     <div class="nav-item" onclick="showPage('trends')"><span class="nav-icon">◻</span><span class="nav-label">Trends</span></div>
+    <div class="nav-item" onclick="showPage('promos')"><span class="nav-icon">◻</span><span class="nav-label">Promo Codes</span></div>
     <div class="nav-section-label">Communications</div>
     <div class="nav-item" onclick="showPage('emails')"><span class="nav-icon">◻</span><span class="nav-label">Emails</span></div>
     <div class="nav-section-label">Site Pages</div>
@@ -445,6 +446,51 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div class="card-body">
           <div id="products-edit-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMO CODES -->
+    <div class="page" id="page-promos">
+      <div class="page-header"><div class="page-title">Promo Codes</div><div class="page-sub">Create discount codes customers can use at checkout</div></div>
+
+      <!-- Create new code -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">New Promo Code</span></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Code</label>
+              <input class="form-input" type="text" id="new-promo-code" placeholder="e.g. BESTIE20" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Discount Type</label>
+              <select class="form-select" id="new-promo-type">
+                <option value="percent">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (Rs)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Value</label>
+              <input class="form-input" type="number" id="new-promo-value" placeholder="e.g. 10" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Min Order (Rs, optional)</label>
+              <input class="form-input" type="number" id="new-promo-min" placeholder="0" min="0">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="createPromoCode()">Create Code</button>
+        </div>
+      </div>
+
+      <!-- Active codes list -->
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">All Codes</span>
+          <button class="btn btn-ghost btn-sm" onclick="loadPromoCodes()">Refresh</button>
+        </div>
+        <div class="card-body" id="promo-codes-list">
+          <div style="font-size:0.78rem;color:var(--muted)">Loading...</div>
         </div>
       </div>
     </div>
@@ -726,13 +772,20 @@ Shop now → https://globalbestiepk.com/products.html
               </div>
               <div class="form-row">
                 <div class="form-group">
+                  <label class="form-label">Order Confirmation Template ID</label>
+                  <input class="form-input" type="text" id="ejs-confirm-template" placeholder="e.g. template_confirm01">
+                </div>
+                <div class="form-group">
                   <label class="form-label">Shipping Template ID</label>
                   <input class="form-input" type="text" id="ejs-ship-template" placeholder="e.g. template_ship01">
                 </div>
+              </div>
+              <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Promo Template ID</label>
                   <input class="form-input" type="text" id="ejs-promo-template" placeholder="e.g. template_promo01">
                 </div>
+                <div class="form-group"></div>
               </div>
             </div>
           </div>
@@ -1362,6 +1415,7 @@ function showPage(p) {
   event.currentTarget.classList.add('active');
   if (p === 'orders') loadOrders();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
+  if (p === 'promos') loadPromoCodes();
   if (p === 'trends') initTrendsPage();
   if (p === 'inventory') initInventoryPage();
   if (p === 'categories') initCategoriesPage();
@@ -1377,6 +1431,7 @@ function loadSettings() {
   document.getElementById('sheet-url').value = s.sheetUrl || '';
   document.getElementById('ejs-public-key').value = s.ejsKey || '';
   document.getElementById('ejs-service-id').value = s.ejsService || '';
+  document.getElementById('ejs-confirm-template').value = s.ejsConfirmTemplate || '';
   document.getElementById('ejs-ship-template').value = s.ejsShipTemplate || '';
   document.getElementById('ejs-promo-template').value = s.ejsPromoTemplate || '';
   document.getElementById('anthropic-key').value = s.anthropicKey || '';
@@ -1419,6 +1474,7 @@ function saveSettings() {
     sheetUrl: document.getElementById('sheet-url').value.trim(),
     ejsKey: document.getElementById('ejs-public-key').value.trim(),
     ejsService: document.getElementById('ejs-service-id').value.trim(),
+    ejsConfirmTemplate: document.getElementById('ejs-confirm-template').value.trim(),
     ejsShipTemplate: document.getElementById('ejs-ship-template').value.trim(),
     ejsPromoTemplate: document.getElementById('ejs-promo-template').value.trim(),
     anthropicKey: document.getElementById('anthropic-key').value.trim()
@@ -1781,6 +1837,62 @@ async function quickShip(idx) {
 function updateRecipientCount() {
   const emails = [...new Set(allOrders.map(o => o.Email).filter(Boolean))];
   document.getElementById('recipient-count').textContent = emails.length + ' customers in your list';
+}
+
+// ── PROMO CODES ──
+async function loadPromoCodes(){
+  const el=document.getElementById('promo-codes-list');
+  if(!el)return;
+  if(!_supa){el.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">Supabase not connected — configure it in Settings first.</div>';return;}
+  const {data,error}=await _supa.from('promo_codes').select('*').order('created_at',{ascending:false});
+  if(error){el.innerHTML=`<div style="color:var(--red);font-size:0.78rem">${error.message}</div>`;return;}
+  if(!data||!data.length){el.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">No codes yet. Create one above.</div>';return;}
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Code</th>
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Discount</th>
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Min Order</th>
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Status</th>
+      <th style="padding:6px 8px"></th>
+    </tr></thead>
+    <tbody>${data.map(c=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px;font-weight:600;letter-spacing:1px;font-size:0.82rem">${c.code}</td>
+      <td style="padding:8px">${c.type==='percent'?c.value+'%':'Rs '+c.value.toLocaleString()}</td>
+      <td style="padding:8px">${c.min_order?'Rs '+c.min_order.toLocaleString():'None'}</td>
+      <td style="padding:8px"><span style="display:inline-block;font-size:0.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border:1px solid ${c.active?'#BDD9C8':'var(--border)'};background:${c.active?'var(--sage-light)':'var(--bg2)'};color:${c.active?'var(--sage)':'var(--muted)'}">${c.active?'Active':'Inactive'}</span></td>
+      <td style="padding:8px;text-align:right;white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="togglePromoCode(${c.id},${!c.active})" style="margin-right:4px">${c.active?'Disable':'Enable'}</button>
+        <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="deletePromoCode(${c.id})">Delete</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+async function createPromoCode(){
+  const code=document.getElementById('new-promo-code').value.trim().toUpperCase();
+  const type=document.getElementById('new-promo-type').value;
+  const value=parseInt(document.getElementById('new-promo-value').value)||0;
+  const minOrder=parseInt(document.getElementById('new-promo-min').value)||0;
+  if(!code||!value){toast('Enter a code and discount value');return;}
+  if(type==='percent'&&(value<1||value>100)){toast('Percentage must be 1–100');return;}
+  if(!_supa){toast('Supabase not connected');return;}
+  const {error}=await _supa.from('promo_codes').insert({code,type,value,min_order:minOrder,active:true});
+  if(error){toast('Error: '+(error.message.includes('unique')?'Code already exists':error.message));return;}
+  document.getElementById('new-promo-code').value='';
+  document.getElementById('new-promo-value').value='';
+  document.getElementById('new-promo-min').value='';
+  toast('✅ Promo code created');
+  loadPromoCodes();
+}
+async function togglePromoCode(id,active){
+  if(!_supa)return;
+  await _supa.from('promo_codes').update({active}).eq('id',id);
+  loadPromoCodes();
+}
+async function deletePromoCode(id){
+  if(!confirm('Delete this promo code?'))return;
+  if(!_supa)return;
+  await _supa.from('promo_codes').delete().eq('id',id);
+  loadPromoCodes();
 }
 
 function updatePromoPreview() {

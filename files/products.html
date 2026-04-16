@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop — Global Bestie</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -125,10 +126,10 @@ body.gender-men .checkout-btn:hover{background:#000}
 .section-sub{font-size:0.65rem;color:var(--muted2);margin-top:3px;letter-spacing:0.5px}
 
 /* ── PRODUCT GRID ── */
-.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border)}
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.2rem;background:transparent}
 @media(max-width:600px){.products-grid{grid-template-columns:repeat(2,1fr)}}
-.prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:box-shadow 0.2s,transform 0.2s}
-.prod-card:hover{box-shadow:0 8px 32px rgba(26,16,21,0.12);z-index:1;position:relative;transform:translateY(-3px)}
+.prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:box-shadow 0.25s,transform 0.25s;box-shadow:0 1px 6px rgba(26,16,21,0.06),0 0 0 1px rgba(26,16,21,0.04)}
+.prod-card:hover{box-shadow:0 8px 32px rgba(26,16,21,0.14),0 0 0 1px rgba(26,16,21,0.06);z-index:1;position:relative;transform:translateY(-4px)}
 .prod-img{height:220px;display:flex;align-items:center;justify-content:center;position:relative;font-size:2.8rem;overflow:hidden}
 .prod-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease}
 .prod-card:hover .prod-img img{transform:scale(1.04)}
@@ -146,15 +147,14 @@ body.gender-men .checkout-btn:hover{background:#000}
 .avail-preorder{background:var(--sienna-light);color:var(--sienna);border-color:#E8D0B8}
 .preorder-note{font-size:0.62rem;color:var(--sienna);background:var(--sienna-light);padding:3px 8px;margin-bottom:7px;border-left:2px solid #DFC4A8}
 .prod-pkr{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--ink);margin-bottom:10px;letter-spacing:0.2px}
-.add-btn{width:100%;background:var(--ink);color:#fff;padding:0.55rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:background 0.2s}
-.add-btn:hover{background:var(--ink3)}
+.add-btn{width:100%;background:var(--ink);color:#fff;padding:0.55rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:background 0.2s,box-shadow 0.15s,transform 0.15s}
+.add-btn:hover{background:var(--ink3);box-shadow:0 2px 10px rgba(26,16,21,0.2);transform:translateY(-1px)}
 .add-btn.preorder-btn{background:var(--pink-deep)}
 .add-btn.preorder-btn:hover{background:var(--pink-dark)}
 
 /* ── TRUST BAR ── */
-.trust-row{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.trust-card{background:var(--card);padding:1.1rem;text-align:center;border-right:1px solid var(--border)}
-.trust-card:last-child{border-right:none}
+.trust-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.trust-card{background:var(--card);padding:1.2rem 1rem;text-align:center}
 .trust-title{font-size:0.68rem;font-weight:600;color:var(--ink);margin-bottom:3px;letter-spacing:0.5px}
 .trust-desc{font-size:0.62rem;color:var(--muted2)}
 
@@ -163,15 +163,15 @@ body.gender-men .checkout-btn:hover{background:#000}
 .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:2.5rem;max-width:1100px;margin:0 auto;padding-bottom:2.5rem;border-bottom:1px solid rgba(196,82,90,0.12)}
 .footer-logo{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.3rem;font-weight:400;letter-spacing:0.3px;margin-bottom:0.5rem}
 .footer-logo span{color:var(--pink-mid)}
-.footer-tagline{color:#3A2A2C;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem;letter-spacing:0.3px}
+.footer-tagline{color:#7A6264;font-size:0.72rem;line-height:1.7;margin-bottom:1.2rem;letter-spacing:0.3px}
 .footer-socials{display:flex;gap:0.7rem;margin-bottom:1.2rem}
 .footer-social{background:rgba(255,255,255,0.04);border:1px solid rgba(196,82,90,0.15);padding:5px 12px;font-size:0.6rem;font-weight:500;color:#4A3C3E;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
 .footer-social:hover{border-color:rgba(196,82,90,0.4);color:var(--pink)}
-.footer-copy{color:#2A2020;font-size:0.62rem;letter-spacing:0.5px}
+.footer-copy{color:#5A4A4C;font-size:0.62rem;letter-spacing:0.5px}
 .footer-col-title{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem}
-.footer-col a{display:block;color:#3A2A2C;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px;text-decoration:none}
+.footer-col a{display:block;color:#6A5254;font-size:0.68rem;margin-bottom:0.7rem;cursor:pointer;transition:color 0.2s;letter-spacing:0.3px;text-decoration:none}
 .footer-col a:hover{color:var(--pink)}
-.footer-bottom{text-align:center;color:#221A1C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
+.footer-bottom{text-align:center;color:#4A3A3C;font-size:0.62rem;padding-top:1.2rem;max-width:1100px;margin:0 auto;letter-spacing:0.5px}
 
 /* ── CART SIDEBAR ── */
 .cart-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.5);backdrop-filter:blur(4px);z-index:200}
@@ -210,8 +210,8 @@ body.gender-men .checkout-btn:hover{background:#000}
 .cart-total span:first-child{font-size:0.62rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
 .cart-total span:last-child{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500}
 .cart-advance{background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.6rem 0.8rem;margin-bottom:0.8rem;font-size:0.7rem;color:var(--sienna);font-weight:400;letter-spacing:0.3px}
-.checkout-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.75rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:background 0.2s}
-.checkout-btn:hover{background:var(--pink-dark)}
+.checkout-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.75rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2.5px;text-transform:uppercase;transition:background 0.2s,box-shadow 0.2s,transform 0.15s;box-shadow:0 2px 12px rgba(196,82,90,0.28)}
+.checkout-btn:hover{background:var(--pink-dark);box-shadow:0 4px 20px rgba(196,82,90,0.38);transform:translateY(-1px)}
 
 /* ── CHECKOUT MODAL ── */
 .modal-wrap{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.6);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:1rem}
@@ -237,7 +237,7 @@ body.gender-men .checkout-btn:hover{background:#000}
 .bank-row{display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.05)}
 .bank-row:last-child{border:none}
 .bank-label{font-size:0.65rem;color:#4A3C3E;font-weight:400;letter-spacing:0.3px}
-.bank-val{font-size:0.76rem;color:var(--pink);font-weight:400}
+.bank-val{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--pink);font-weight:400;letter-spacing:0.5px}
 .copy-btn{background:transparent;color:var(--pink-mid);border:1px solid rgba(196,82,90,0.3);padding:2px 8px;font-size:0.58rem;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:1px;text-transform:uppercase;transition:all 0.2s}
 .copy-btn:hover{background:rgba(196,82,90,0.1);border-color:var(--pink-deep)}
 .order-box{background:var(--bg2);border:1px solid var(--border);padding:1rem 1.1rem;margin-bottom:1rem}
@@ -250,8 +250,8 @@ body.gender-men .checkout-btn:hover{background:#000}
 .wa-box p{font-size:0.7rem;color:#2A5A3A;line-height:1.65}
 .btn-wa-full{width:100%;background:var(--wa);color:#fff;padding:0.78rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity 0.2s}
 .btn-wa-full:hover{opacity:0.9}
-.next-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.72rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;transition:background 0.2s}
-.next-btn:hover{background:var(--pink-dark)}
+.next-btn{width:100%;background:var(--pink-deep);color:#fff;padding:0.72rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;margin-top:0.5rem;transition:background 0.2s,box-shadow 0.2s,transform 0.15s;box-shadow:0 2px 12px rgba(196,82,90,0.28)}
+.next-btn:hover{background:var(--pink-dark);box-shadow:0 4px 20px rgba(196,82,90,0.38);transform:translateY(-1px)}
 .back-btn{width:100%;background:transparent;color:var(--muted);padding:0.62rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:400;border:1px solid var(--border);cursor:pointer;margin-top:0.5rem;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
 .back-btn:hover{border-color:var(--ink);color:var(--ink)}
 .step-panel{display:none}
@@ -303,6 +303,19 @@ body.gender-men .checkout-btn:hover{background:#000}
 select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238B6E72'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.9rem center;padding-right:2.2rem}
 /* Upload optional tag */
 .upload-optional-tag{font-size:0.58rem;color:var(--sage);background:var(--sage-light);padding:2px 7px;letter-spacing:1px;text-transform:uppercase;margin-left:6px;border:1px solid #BDD9C8;font-family:'Inter',sans-serif}
+/* ── PROMO CODE ── */
+.promo-wrap{display:flex;gap:0.5rem}
+.promo-input{flex:1;padding:0.62rem 0.9rem;border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--ink);background:var(--bg);transition:all 0.2s;border-radius:0;text-transform:uppercase;letter-spacing:2px}
+.promo-input:focus{outline:none;border-color:var(--pink-deep);background:#fff}
+.promo-input::placeholder{text-transform:none;letter-spacing:0.5px;font-size:0.72rem;color:var(--muted2)}
+.promo-apply-btn{background:var(--ink);color:#fff;padding:0.62rem 1rem;font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:500;border:none;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap;transition:background 0.2s}
+.promo-apply-btn:hover{background:var(--ink3)}
+.promo-applied{background:var(--sage-light);border:1px solid #BDD9C8;padding:0.6rem 0.8rem;display:flex;justify-content:space-between;align-items:center}
+.promo-applied-text{font-size:0.7rem;color:var(--sage);font-weight:500;letter-spacing:0.3px}
+.promo-remove{font-size:0.6rem;color:var(--muted2);cursor:pointer;background:none;border:none;font-family:'Inter',sans-serif;padding:0;letter-spacing:0.5px}
+.promo-remove:hover{color:var(--sienna)}
+.promo-err{font-size:0.68rem;color:#C4525A;margin-top:5px}
+.os-row.discount{color:var(--sage);font-weight:500}
 
 /* ── TOAST ── */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(80px);opacity:0;background:var(--ink);color:var(--pink);padding:0.7rem 1.4rem;font-size:0.72rem;font-weight:400;letter-spacing:0.5px;border-left:2px solid var(--pink-deep);box-shadow:var(--shadow-lg);transition:all 0.3s cubic-bezier(.16,1,.3,1);z-index:999;white-space:nowrap}
@@ -541,6 +554,19 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
           <div id="orderSummaryItems"></div>
           <div class="os-row total"><span>Pay Now</span><span id="orderTotal"></span></div>
           <div class="os-row" id="advanceRow" style="display:none"></div>
+        </div>
+        <!-- Promo code -->
+        <div style="margin-bottom:1rem">
+          <div style="font-size:0.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem">Promo Code <span style="font-weight:400;color:var(--muted2);letter-spacing:0;text-transform:none;font-size:0.6rem">(optional)</span></div>
+          <div id="promo-input-wrap" class="promo-wrap">
+            <input class="promo-input" type="text" id="promoCodeInput" placeholder="Enter code" maxlength="20" onkeydown="if(event.key==='Enter')applyPromo()">
+            <button class="promo-apply-btn" onclick="applyPromo()">Apply</button>
+          </div>
+          <div id="promo-applied" class="promo-applied" style="display:none">
+            <span class="promo-applied-text" id="promoAppliedText"></span>
+            <button class="promo-remove" onclick="removePromo()">✕ Remove</button>
+          </div>
+          <div id="promo-err" class="promo-err" style="display:none"></div>
         </div>
         <!-- Payment choice for preorder items -->
         <div id="preorder-pay-choice" style="display:none;margin-bottom:1rem">
@@ -973,10 +999,18 @@ function goStep2(){
   if(hasError){if(firstErrId){const el=document.getElementById(firstErrId);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}return;}
   const sI=cart.filter(c=>c.inStock),pI=cart.filter(c=>!c.inStock);
   const sS=sI.reduce((a,c)=>a+c.pkr*c.qty,0),pS=pI.reduce((a,c)=>a+c.pkr*c.qty,0),pA=Math.round(pS*0.5);
-  window._sS=sS;window._pS=pS;window._pA=pA;window._total=cartTotal();
+  window._sS=sS;window._pS=pS;window._pA=pA;
+  window._baseTotal=cartTotal();window._total=window._baseTotal;
+  window._discount=0;window._promoCode='';
+  // Reset promo UI
+  document.getElementById('promoCodeInput').value='';
+  document.getElementById('promo-input-wrap').style.display='flex';
+  document.getElementById('promo-applied').style.display='none';
+  document.getElementById('promo-err').style.display='none';
   let sh='';
   if(sI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:0.5px;padding-bottom:2px">In-Stock — Pay in Full</div>`;sh+=sI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>In-stock subtotal</span><span style="color:var(--sage)">${fmtPKR(sS)}</span></div>`;}
   if(pI.length){sh+=`<div class="os-row" style="font-size:0.68rem;font-weight:700;color:var(--sienna);text-transform:uppercase;letter-spacing:0.5px;padding:${sI.length?'10px':'0'} 0 2px">Preorder Items</div>`;sh+=pI.map(c=>`<div class="os-row"><span>${c.name} ×${c.qty}</span><span>${fmtPKR(c.pkr*c.qty)}</span></div>`).join('');sh+=`<div class="os-row" style="font-weight:600;padding-top:4px;border-top:1px dashed var(--border2)"><span>Preorder subtotal</span><span style="color:var(--sienna)">${fmtPKR(pS)}</span></div>`;}
+  sh+=`<div class="os-row discount" id="discountRow" style="display:none"><span id="discountLabel">Promo</span><span id="discountAmt"></span></div>`;
   document.getElementById('orderSummaryItems').innerHTML=sh;
   // Show payment choice only if there are preorder items
   const choiceWrap=document.getElementById('preorder-pay-choice');
@@ -997,12 +1031,19 @@ function goStep2(){
 
 function updatePayChoice(){
   const sS=window._sS||0,pS=window._pS||0,pA=window._pA||0;
+  const disc=window._discount||0;
   const pI=cart.filter(c=>!c.inStock);
   const radio=document.querySelector('input[name="payChoice"]:checked');
   const isFull=radio&&radio.value==='full';
-  const payNow=isFull?(sS+pS):(sS+pA);
-  const remaining=isFull?0:(pS-pA);
+  const rawPayNow=isFull?(sS+pS):(sS+pA);
+  const payNow=Math.max(0,rawPayNow-disc);
+  const remaining=isFull?0:Math.max(0,pS-pA);
   window._payNow=payNow;window._payFull=isFull;
+  // Update payment choice box amounts to reflect discount
+  if(pI.length){
+    document.getElementById('pco-advance-amt').textContent=fmtPKR(Math.max(0,sS+pA-disc));
+    document.getElementById('pco-full-amt').textContent=fmtPKR(Math.max(0,sS+pS-disc));
+  }
   document.getElementById('orderTotal').textContent=fmtPKR(payNow);
   document.getElementById('bankAmount').textContent=fmtPKR(payNow);
   if(pI.length){
@@ -1012,6 +1053,35 @@ function updatePayChoice(){
   } else {
     document.getElementById('advanceNotice').textContent=`Transfer ${fmtPKR(payNow)} in full — your items will be dispatched promptly.`;
   }
+}
+
+async function applyPromo(){
+  const code=document.getElementById('promoCodeInput').value.trim().toUpperCase();
+  const errEl=document.getElementById('promo-err');
+  errEl.style.display='none';
+  if(!code)return;
+  if(!_supa){errEl.textContent='Promo codes require Supabase to be connected.';errEl.style.display='block';return;}
+  const {data,error}=await _supa.from('promo_codes').select('*').eq('code',code).eq('active',true).maybeSingle();
+  if(error||!data){errEl.textContent='Invalid or expired promo code.';errEl.style.display='block';return;}
+  const base=window._baseTotal||0;
+  if(data.min_order&&base<data.min_order){errEl.textContent=`Minimum order of ${fmtPKR(data.min_order)} required for this code.`;errEl.style.display='block';return;}
+  const disc=data.type==='percent'?Math.round(base*data.value/100):Math.min(data.value,base);
+  window._discount=disc;window._promoCode=code;window._total=Math.max(0,base-disc);
+  document.getElementById('promo-input-wrap').style.display='none';
+  document.getElementById('promoAppliedText').textContent=`${code} — ${data.type==='percent'?data.value+'% off':fmtPKR(data.value)+' off'} (−${fmtPKR(disc)})`;
+  document.getElementById('promo-applied').style.display='flex';
+  const dr=document.getElementById('discountRow');
+  if(dr){dr.style.display='flex';document.getElementById('discountLabel').textContent=`Promo (${code})`;document.getElementById('discountAmt').textContent=`−${fmtPKR(disc)}`;}
+  updatePayChoice();
+}
+function removePromo(){
+  window._discount=0;window._promoCode='';window._total=window._baseTotal||0;
+  document.getElementById('promoCodeInput').value='';
+  document.getElementById('promo-input-wrap').style.display='flex';
+  document.getElementById('promo-applied').style.display='none';
+  document.getElementById('promo-err').style.display='none';
+  const dr=document.getElementById('discountRow');if(dr)dr.style.display='none';
+  updatePayChoice();
 }
 
 function _getCheckoutFields(){
@@ -1065,6 +1135,25 @@ async function confirmOrder(){
     if(trackLink){trackLink.href='track.html?order='+encodeURIComponent(orderNum);trackLink.style.display='block';}
   }
   setStep(3);
+  // Send order confirmation email if customer provided email
+  if(fields.email){
+    try{
+      const _s=JSON.parse(localStorage.getItem('gb_settings')||'{}');
+      if(_s.ejsKey&&_s.ejsService&&_s.ejsConfirmTemplate){
+        emailjs.init(_s.ejsKey);
+        const itemLines=cart.map(c=>`${c.name}${c.brand?' ('+c.brand+')':''} × ${c.qty}  —  ${fmtPKR(c.pkr*c.qty)}`).join('\n');
+        emailjs.send(_s.ejsService,_s.ejsConfirmTemplate,{
+          to_email:fields.email,
+          customer_name:fields.name,
+          order_number:orderNum||'',
+          order_items:itemLines,
+          order_total:fmtPKR(window._total||0),
+          pay_now:fmtPKR(window._payNow||window._total||0),
+          customer_city:fields.city||''
+        }).catch(e=>console.warn('Confirmation email:',e));
+      }
+    }catch(e){console.warn('Confirmation email:',e);}
+  }
   cart=[];saveCart();updateBadge();
   const cb=document.getElementById('cartBody'),cf=document.getElementById('cartFoot');
   if(cb)cb.innerHTML='<div class="cart-empty"><div class="cart-empty-icon">🛍️</div><h4>Your cart is empty</h4><p>Your order has been placed!</p></div>';
@@ -1126,7 +1215,8 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
     id:orderId,order_number:orderNum,customer_name:name,customer_phone:phone,
     customer_email:email,customer_city:city,customer_address:addr,
     status:'new',total:window._total||0,advance:window._payFull?window._total:window._payNow||0,
-    has_preorder:hasPreorder(),notes
+    has_preorder:hasPreorder(),notes,
+    promo_code:window._promoCode||'',discount:window._discount||0
   });
   if(oErr) throw oErr;
   const items=cart.map(c=>({

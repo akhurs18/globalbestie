@@ -136,6 +136,29 @@ create policy if not exists "public_track_order_items"
 
 create index if not exists orders_number_idx on orders(order_number);
 
+-- ── PROMO CODES ──
+
+create table if not exists promo_codes (
+  id           bigserial primary key,
+  code         text unique not null,
+  type         text default 'percent' check (type in ('percent','fixed')),
+  value        integer not null,
+  min_order    integer default 0,
+  active       boolean default true,
+  created_at   timestamptz default now()
+);
+
+alter table promo_codes enable row level security;
+
+-- Anyone can read active codes (needed for client-side validation at checkout)
+create policy "public_read_promos" on promo_codes for select using (active = true);
+-- Admin can manage all codes
+create policy "admin_manage_promos" on promo_codes for all using (auth.role() = 'authenticated');
+
+-- ── MIGRATION: add promo/discount columns to orders ──
+alter table orders add column if not exists promo_code text default '';
+alter table orders add column if not exists discount integer default 0;
+
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
 -- 1. Go to Authentication → Users → Add user
