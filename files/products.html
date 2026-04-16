@@ -64,22 +64,43 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .brand-filter-clear{font-size:0.65rem;font-weight:500;color:var(--pink-deep);letter-spacing:1px;text-decoration:none;padding:4px 10px;border:1px solid var(--pink-mid);transition:all 0.2s}
 .brand-filter-clear:hover{background:var(--pink-deep);color:#fff;border-color:var(--pink-deep)}
 
-/* ── PRICE BANNER ── */
-.price-banner{background:var(--ink);border-bottom:1px solid rgba(196,82,90,0.2);padding:0.65rem 2rem;display:flex;align-items:center;justify-content:center;gap:1.2rem;flex-wrap:wrap}
-.pb-item{font-size:0.62rem;font-weight:400;color:#4A3C3E;letter-spacing:1.5px;text-transform:uppercase}
-.pb-dot{width:3px;height:3px;background:rgba(196,82,90,0.35);border-radius:50%;display:inline-block}
+/* ── PREORDER NOTICE STRIP ── */
+.preorder-strip{background:var(--sienna-light);border-top:1px solid #DFC4A8;border-bottom:1px solid #DFC4A8;padding:0.5rem 2rem;text-align:center;font-size:0.65rem;color:#7A3810;letter-spacing:0.3px}
+.preorder-strip b{font-weight:600;color:var(--sienna)}
 
-/* ── PREORDER BANNER ── */
-.preorder-banner{background:var(--sienna-light);border:1px solid #DFC4A8;padding:1rem 1.4rem;margin:1.2rem auto;max-width:1100px;display:flex;align-items:flex-start;gap:1rem}
-.pb-content h4{font-size:0.75rem;font-weight:600;color:var(--sienna);margin-bottom:0.3rem;letter-spacing:0.3px}
-.pb-content p{font-size:0.72rem;color:#7A3810;line-height:1.65}
-.pb-content p b{color:var(--sienna);font-weight:600}
+/* ── GENDER SPLIT ── */
+.gender-split{display:grid;grid-template-columns:1fr 1fr;max-width:1100px;margin:1.4rem auto 0;padding:0 2rem;gap:0.5rem}
+.gs-panel{position:relative;height:150px;overflow:hidden;cursor:pointer;transition:opacity 0.3s}
+.gs-bg{position:absolute;inset:0;background-size:cover;background-position:center top;transition:transform 0.5s ease,filter 0.3s}
+.gs-overlay{position:absolute;inset:0;transition:background 0.3s}
+.gs-content{position:relative;z-index:1;padding:1.1rem 1.3rem;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.gs-eye{font-size:0.52rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:3px}
+.gs-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:#fff;letter-spacing:0.3px;margin-bottom:2px;transition:font-size 0.2s}
+.gs-sub{font-size:0.58rem;color:rgba(255,255,255,0.5);letter-spacing:0.5px;transition:color 0.2s}
+.gs-panel.active .gs-bg{transform:scale(1.03)}
+.gs-panel.active .gs-overlay{background:rgba(26,16,21,0.38)}
+.gs-panel.active .gs-title{font-size:1.4rem}
+.gs-panel.active .gs-sub{color:rgba(255,255,255,0.75)}
+.gs-panel:not(.active){opacity:0.55}
+.gs-panel:not(.active):hover{opacity:0.75}
+.gs-panel:not(.active) .gs-overlay{background:rgba(26,16,21,0.65)}
+.gs-panel.gs-women.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--pink-deep)}
+.gs-panel.gs-men.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:#C8C0B8}
+@media(max-width:600px){.gender-split{padding:0 1rem;gap:0.4rem}.gs-panel{height:110px}.gs-title{font-size:1rem!important}}
 
-/* ── GENDER TABS ── */
-.gender-tabs{display:flex;max-width:1100px;margin:0 auto;padding:1.4rem 2rem 0;gap:0}
-.gtab{flex:1;padding:0.85rem;text-align:center;font-size:0.65rem;font-weight:500;cursor:pointer;border-bottom:1px solid var(--border);transition:all 0.2s;letter-spacing:2px;text-transform:uppercase;color:var(--muted2)}
-.gtab.active-women{border-bottom:2px solid var(--pink-deep);color:var(--pink-dark);background:var(--pink-light)}
-.gtab.active-men{border-bottom:2px solid var(--ink);color:var(--ink);background:var(--bg2)}
+/* ── MEN'S ACCENT OVERRIDES ── */
+body.gender-men .prod-cat{color:var(--muted)}
+body.gender-men .add-btn{background:#1A1015}
+body.gender-men .add-btn:hover{background:#000}
+body.gender-men .add-btn.preorder-btn{background:#5A3E3A}
+body.gender-men .add-btn.preorder-btn:hover{background:#3A2420}
+body.gender-men .cat-card.active .cat-card-img{border-color:#1A1015}
+body.gender-men .cat-card.active .cat-card-label{color:#1A1015}
+body.gender-men .cat-card:hover .cat-card-label{color:#1A1015}
+body.gender-men .cat-card-all .cat-card-img{background:#1A1015}
+body.gender-men .cat-card-all .cat-card-img::after{color:#C8C0B8}
+body.gender-men .checkout-btn{background:#1A1015}
+body.gender-men .checkout-btn:hover{background:#000}
 
 /* ── CATEGORY CARDS ── */
 .cats-row{display:flex;gap:0.7rem;padding:1.2rem 2rem 0.8rem;overflow-x:auto;max-width:1100px;margin:0 auto;scrollbar-width:none}
@@ -108,7 +129,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 @media(max-width:600px){.products-grid{grid-template-columns:repeat(2,1fr)}}
 .prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:box-shadow 0.2s,transform 0.2s}
 .prod-card:hover{box-shadow:0 8px 32px rgba(26,16,21,0.12);z-index:1;position:relative;transform:translateY(-3px)}
-.prod-img{height:190px;display:flex;align-items:center;justify-content:center;position:relative;font-size:2.8rem;overflow:hidden}
+.prod-img{height:220px;display:flex;align-items:center;justify-content:center;position:relative;font-size:2.8rem;overflow:hidden}
 .prod-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease}
 .prod-card:hover .prod-img img{transform:scale(1.04)}
 .prod-img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
@@ -393,29 +414,29 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   </div>
 </div>
 
-<!-- PRICE BANNER -->
-<div class="price-banner">
-  <span class="pb-item">Makeup &amp; Beauty</span><span class="pb-dot"></span>
-  <span class="pb-item">Handbags &amp; Wallets</span><span class="pb-dot"></span>
-  <span class="pb-item">Skincare</span><span class="pb-dot"></span>
-  <span class="pb-item">Fashion &amp; Apparel</span><span class="pb-dot"></span>
-  <span class="pb-item">Home &amp; Living</span><span class="pb-dot"></span>
-  <span class="pb-item">Shoes &amp; Accessories</span>
-</div>
+<!-- PREORDER STRIP -->
+<div class="preorder-strip">Ordered fresh from the USA · <b>50% advance</b> secures your order · Arrives in <b>~4 weeks</b> · All taxes &amp; shipping included</div>
 
-<div style="padding:0.8rem 1.5rem 0;max-width:1100px;margin:0 auto">
-  <div class="preorder-banner">
-    <div class="pb-content">
-      <h4>A note from your bestie</h4>
-      <p>Your items are ordered fresh from the USA just for you · <b>50% advance</b> secures your order · Items arrive in <b>~4 weeks</b> · All taxes &amp; shipping are already included — no hidden costs</p>
+<!-- GENDER SPLIT -->
+<div class="gender-split" id="genderTabs">
+  <div class="gs-panel gs-women active" id="gtab-women" onclick="setGender('women')">
+    <div class="gs-bg" style="background-image:url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=900&h=300&fit=crop&q=80')"></div>
+    <div class="gs-overlay"></div>
+    <div class="gs-content">
+      <div class="gs-eye">For Her</div>
+      <div class="gs-title">Women's Collection</div>
+      <div class="gs-sub">Makeup · Skincare · Bags · Fashion</div>
     </div>
   </div>
-</div>
-
-<!-- GENDER TABS -->
-<div class="gender-tabs" id="genderTabs">
-  <div class="gtab active-women" id="gtab-women" onclick="setGender('women')">Women's Collection</div>
-  <div class="gtab" id="gtab-men" onclick="setGender('men')">Men's Collection</div>
+  <div class="gs-panel gs-men" id="gtab-men" onclick="setGender('men')">
+    <div class="gs-bg" style="background-image:url('https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=900&h=300&fit=crop&q=80')"></div>
+    <div class="gs-overlay"></div>
+    <div class="gs-content">
+      <div class="gs-eye">For Him</div>
+      <div class="gs-title">Men's Collection</div>
+      <div class="gs-sub">Grooming · Bags · Shoes · Fashion</div>
+    </div>
+  </div>
 </div>
 
 <!-- CATEGORY PILLS -->
@@ -770,8 +791,9 @@ function setGender(g){
   hideBrandFilter();
   document.getElementById('nav-women').className=g==='women'?'active':'';
   document.getElementById('nav-men').className=g==='men'?'active':'';
-  document.getElementById('gtab-women').className='gtab'+(g==='women'?' active-women':'');
-  document.getElementById('gtab-men').className='gtab'+(g==='men'?' active-men':'');
+  document.getElementById('gtab-women').classList.toggle('active',g==='women');
+  document.getElementById('gtab-men').classList.toggle('active',g==='men');
+  document.body.classList.toggle('gender-men',g==='men');
   const title=g==='women'?"Women's Collection":"Men's Collection";
   document.getElementById('sectionTitle').textContent=title;
   document.getElementById('shopHeroTitle').textContent=title;
