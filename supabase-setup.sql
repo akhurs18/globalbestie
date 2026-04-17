@@ -164,6 +164,11 @@ alter table orders add column if not exists batch text default '';
 alter table orders add column if not exists payment_confirmed boolean default false;
 create index if not exists orders_batch_idx on orders(batch);
 
+-- ── SALE PRICING ──
+alter table products add column if not exists on_sale boolean default false;
+alter table products add column if not exists sale_price integer default null;
+create index if not exists products_on_sale_idx on products(on_sale) where on_sale = true;
+
 
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:

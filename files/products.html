@@ -189,6 +189,15 @@ body.gender-men .checkout-btn:hover{background:#000}
 .add-btn:hover{background:var(--ink3);box-shadow:0 2px 10px rgba(26,16,21,0.2);transform:translateY(-1px)}
 .add-btn.preorder-btn{background:var(--pink-deep)}
 .add-btn.preorder-btn:hover{background:var(--pink-dark)}
+.add-btn.sale-btn{background:var(--pink-deep)}
+.add-btn.sale-btn:hover{background:var(--pink-dark)}
+/* ── SALE ── */
+.sale-badge{position:absolute;top:8px;left:8px;background:var(--pink-deep);color:#fff;font-size:0.55rem;font-weight:700;letter-spacing:1px;padding:3px 8px;text-transform:uppercase;z-index:2}
+.price-original{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--muted2);text-decoration:line-through;margin-right:6px;font-weight:400}
+.price-sale{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--pink-deep)}
+.cat-card-sale .cat-card-img{border-color:var(--pink-deep);background:linear-gradient(135deg,var(--pink-light),#FFECEC);display:flex;align-items:center;justify-content:center}
+.cat-sale-label{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-style:italic;color:var(--pink-deep);letter-spacing:2px;font-weight:500}
+.cat-card-sale.active .cat-card-img{box-shadow:0 4px 16px rgba(196,82,90,0.25)}
 
 /* ── TRUST BAR ── */
 .trust-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -419,6 +428,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <div class="nav-links">
     <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
     <a onclick="setGender('men')" id="nav-men">Men</a>
+    <a onclick="filterCat('sale',null);document.getElementById('catsRow').scrollIntoView({behavior:'smooth'})" style="color:var(--pink-deep);font-weight:600" id="nav-sale">Sale</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
@@ -441,6 +451,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
   <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
   <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
+  <a onclick="filterCat('sale',null);closeMobileNav()" style="color:var(--pink-deep);font-weight:600">Sale</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
@@ -842,7 +853,8 @@ function getDefaultProducts(){
         productsCache=data.map(p=>({
           id:p.id,gender:p.gender,cat:p.cat,name:p.name,brand:p.brand||'',
           pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||'',
-          qty:p.qty||0,sku:p.sku||'',cost:p.cost||0,lowStockThreshold:p.low_stock_threshold||3
+          qty:p.qty||0,sku:p.sku||'',cost:p.cost||0,lowStockThreshold:p.low_stock_threshold||3,
+          on_sale:p.on_sale||false,sale_price:p.sale_price||null
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
         applyFilters();
@@ -901,8 +913,14 @@ function setGender(g){
 
 function renderCats(g){
   const cats=getCats(g);
+  const saleCount=getProducts().filter(p=>p.on_sale&&p.sale_price).length;
+  const saleActive=currentCat==='sale';
   document.getElementById('catsRow').innerHTML=
-    `<div class="cat-card cat-card-all active" onclick="filterCat('all',this)">
+    (saleCount>0?`<div class="cat-card cat-card-sale${saleActive?' active':''}" onclick="filterCat('sale',this)">
+       <div class="cat-card-img cat-card-sale-img"><span class="cat-sale-label">SALE</span></div>
+       <div class="cat-card-label" style="color:var(--pink-deep);font-weight:700">${saleCount} items</div>
+     </div>`:'') +
+    `<div class="cat-card cat-card-all${saleActive?'':' active'}" onclick="filterCat('all',this)">
        <div class="cat-card-img"></div>
        <div class="cat-card-label">All</div>
      </div>`+
@@ -924,6 +942,7 @@ function filterCat(cat,el){
 function filterProds(){
   const all=getProducts();
   if(currentBrand) return all.filter(p=>p.brand===currentBrand);
+  if(currentCat==='sale') return all.filter(p=>p.on_sale&&p.sale_price);
   return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
 }
 
@@ -931,6 +950,8 @@ function applyFilters(){
   let products=getProducts();
   if(currentBrand){
     products=products.filter(p=>p.brand===currentBrand);
+  } else if(currentCat==='sale'){
+    products=products.filter(p=>p.on_sale&&p.sale_price);
   } else {
     products=products.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
   }
@@ -1023,11 +1044,14 @@ function renderProducts(data){
     const bg=bgs[p.cat]||'#f8f8ff';
     const isPreorder=!p.inStock;
     const isMen=p.gender==='men';
+    const isSale=p.on_sale&&p.sale_price;
+    const pctOff=isSale?Math.round((1-p.sale_price/p.pkr)*100):0;
     return `<div class="prod-card" onclick="openProductDetail(${p.id})">
       <div class="prod-img" style="background:${p.image?'#100808':bg}">
         ${p.image
           ? `<img src="${p.image}" alt="${p.name}">`
           : `<div class="prod-img-placeholder" style="background:linear-gradient(145deg,${bg},${bg}dd)"><span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--muted2);letter-spacing:3px;text-transform:uppercase;position:relative;z-index:1">${catLabel(p.cat,p.gender).substring(0,2).toUpperCase()}</span></div>`}
+        ${isSale?`<span class="sale-badge">−${pctOff}%</span>`:''}
       </div>
       <div class="prod-body">
         <div class="prod-cat${isMen?' men-cat':''}">${catLabel(p.cat,p.gender)}</div>
@@ -1035,8 +1059,10 @@ function renderProducts(data){
         <div class="prod-brand"><a href="products.html?brand=${encodeURIComponent(p.brand)}" onclick="event.stopPropagation()">${p.brand}</a></div>
         <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
         ${isPreorder?`<div class="preorder-note">50% advance · ~4 weeks delivery</div>`:''}
-        <div class="prod-pkr">${fmtPKR(p.pkr)}</div>
-        <button class="add-btn${isPreorder?' preorder-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
+        ${isSale
+          ?`<div class="prod-pkr"><span class="price-original">${fmtPKR(p.pkr)}</span><span class="price-sale">${fmtPKR(p.sale_price)}</span></div>`
+          :`<div class="prod-pkr">${fmtPKR(p.pkr)}</div>`}
+        <button class="add-btn${isPreorder?' preorder-btn':''}${isSale?' sale-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
       </div>
     </div>`;
   }).join(''):`<div class="shop-empty">
@@ -1052,15 +1078,20 @@ function loadCart(){
   try{
     const saved=JSON.parse(localStorage.getItem('gb_cart')||'[]');
     const prods=getProducts();
-    cart=saved.filter(c=>prods.some(p=>p.id===c.id)).map(c=>{const p=prods.find(p=>p.id===c.id);return{...c,pkr:p.pkr};});
+    cart=saved.filter(c=>prods.some(p=>p.id===c.id)).map(c=>{
+      const p=prods.find(p=>p.id===c.id);
+      const effectivePkr=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
+      return{...c,pkr:effectivePkr,originalPkr:p.pkr};
+    });
   }catch(e){cart=[];}
   updateBadge();
 }
 function addToCart(id){
   const p=getProducts().find(x=>x.id===id);
+  const effectivePkr=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
   const ex=cart.find(x=>x.id===id);
   if(ex){if(ex.qty>=5){showToast('Max 5 per item');return;}ex.qty++;}
-  else{cart.push({...p,qty:1,pkr:p.pkr});}
+  else{cart.push({...p,qty:1,pkr:effectivePkr,originalPkr:p.pkr});}
   saveCart();updateBadge();
   showToast(p.inStock?'Added to cart!':'Preorder added!');
 }
@@ -1429,8 +1460,12 @@ function closeDetail(){document.getElementById('detailOverlay').classList.remove
 loadCart();
 const _p=new URLSearchParams(location.search);
 const _brand=_p.get('brand'),_cat=_p.get('cat'),_gender=_p.get('gender');
+const _hashSale=location.hash==='#sale';
 if(_brand){
   showBrandFilter(_brand);
+} else if(_hashSale){
+  currentCat='sale';
+  setGender('women'); // loads products, renderCats will show sale pill active
 } else {
   setGender(_gender==='men'?'men':'women');
   if(_cat) filterCat(_cat, null);

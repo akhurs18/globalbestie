@@ -323,6 +323,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .pay-verified{font-size:0.62rem;color:var(--sage);font-weight:600;letter-spacing:0.3px}
 .pay-unverified{font-size:0.62rem;color:var(--rose);font-weight:600;letter-spacing:0.3px;cursor:pointer}
 .pay-unverified:hover{text-decoration:underline}
+/* Sale toggle button */
+.stock-toggle{font-size:0.62rem;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:3px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s}
+.stock-toggle.sale-on{background:var(--rose-light);border-color:var(--rose);color:var(--rose)}
 
 /* ── PACKED QUEUE BANNER ── */
 .packed-queue-banner{display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.85rem 1.2rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
@@ -2393,7 +2396,8 @@ async function loadProductsFromSheet() {
         products = data.map(p => ({
           id: p.id, gender: p.gender, cat: p.cat, name: p.name, brand: p.brand || '',
           pkr: p.pkr || 0, inStock: p.in_stock, description: p.description || '', image: p.image || '',
-          qty: p.qty || 0, sku: p.sku || '', cost: p.cost || 0, lowStockThreshold: p.low_stock_threshold || 3
+          qty: p.qty || 0, sku: p.sku || '', cost: p.cost || 0, lowStockThreshold: p.low_stock_threshold || 3,
+          on_sale: p.on_sale || false, sale_price: p.sale_price || null
         }));
         localStorage.setItem('gb_products', JSON.stringify(products));
         renderProducts();
@@ -2559,6 +2563,14 @@ function productRow(p) {
       <input class="price-input" type="number" id="pkr-${p.id}" value="${p.pkr}" min="1" style="width:110px">
     </div>
     <div>
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:3px">Sale Price</div>
+      <input class="price-input sale-price-input" type="number" id="sale-${p.id}" value="${p.sale_price || ''}" placeholder="—" onchange="saveSalePrice(${p.id})" style="width:110px;${p.on_sale ? 'border-color:var(--rose);color:var(--rose)' : 'opacity:0.5'}">
+    </div>
+    <div>
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">On Sale</div>
+      <button class="stock-toggle${p.on_sale ? ' sale-on' : ''}" id="sale-toggle-${p.id}" onclick="toggleSale(${p.id})">${p.on_sale ? 'On Sale' : 'Off'}</button>
+    </div>
+    <div>
       <div style="font-size:0.68rem;color:var(--muted);margin-bottom:6px">Stock Status</div>
       <button class="toggle ${p.inStock ? 'on' : ''}" id="toggle-${p.id}" onclick="toggleStock(${p.id})"></button>
       <div style="font-size:0.7rem;margin-top:4px" id="stock-label-${p.id}">${p.inStock ? '<span style="color:var(--green)">In Stock</span>' : '<span style="color:var(--amber)">Preorder</span>'}</div>
@@ -2577,6 +2589,43 @@ function toggleStock(id) {
   p.inStock = !p.inStock;
   btn.classList.toggle('on', p.inStock);
   lbl.innerHTML = p.inStock ? '<span style="color:var(--green)">In Stock</span>' : '<span style="color:var(--amber)">Preorder</span>';
+}
+
+async function saveSalePrice(id) {
+  const input = document.getElementById('sale-' + id);
+  const val = input ? input.value.trim() : '';
+  const salePrice = val ? parseInt(val) : null;
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  p.sale_price = salePrice;
+  if (_supa) {
+    const { error } = await _supa.from('products').update({ sale_price: salePrice }).eq('id', id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  // Update input styling
+  if (input) {
+    input.style.borderColor = (p.on_sale && salePrice) ? 'var(--rose)' : '';
+    input.style.color = (p.on_sale && salePrice) ? 'var(--rose)' : '';
+    input.style.opacity = p.on_sale ? '1' : '0.5';
+  }
+}
+
+async function toggleSale(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  if (!p.on_sale && !p.sale_price) { toast('⚠ Set a sale price first'); return; }
+  if (!p.on_sale && p.sale_price && p.sale_price >= p.pkr) { toast('⚠ Sale price must be less than regular price'); return; }
+  const newVal = !p.on_sale;
+  if (_supa) {
+    const { error } = await _supa.from('products').update({ on_sale: newVal }).eq('id', id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  p.on_sale = newVal;
+  const btn = document.getElementById('sale-toggle-' + id);
+  const input = document.getElementById('sale-' + id);
+  if (btn) { btn.textContent = newVal ? 'On Sale' : 'Off'; btn.className = 'stock-toggle' + (newVal ? ' sale-on' : ''); }
+  if (input) { input.style.borderColor = newVal ? 'var(--rose)' : ''; input.style.color = newVal ? 'var(--rose)' : ''; input.style.opacity = newVal ? '1' : '0.5'; }
+  toast(newVal ? '🏷 Sale activated' : 'Sale turned off');
 }
 
 async function deleteProduct(id) {

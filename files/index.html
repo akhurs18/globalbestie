@@ -141,6 +141,14 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .add-btn:hover{background:var(--ink3);box-shadow:0 2px 10px rgba(26,16,21,0.2);transform:translateY(-1px)}
 .add-btn.preorder-btn{background:var(--pink-deep)}
 .add-btn.preorder-btn:hover{background:var(--pink-dark)}
+.add-btn.sale-btn{background:var(--pink-deep)}
+.add-btn.sale-btn:hover{background:var(--pink-dark)}
+/* ── SALE ── */
+.sale-badge{position:absolute;top:8px;left:8px;background:var(--pink-deep);color:#fff;font-size:0.55rem;font-weight:700;letter-spacing:1px;padding:3px 8px;text-transform:uppercase;z-index:2}
+.price-original{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--muted2);text-decoration:line-through;margin-right:6px;font-weight:400}
+.price-sale{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:400;color:var(--pink-deep)}
+.sale-pill,.sale-pill:hover,.sale-pill.active{color:#fff;background:var(--pink-deep);border-color:var(--pink-deep)}
+.sale-pill-ct{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.25);color:#fff;font-size:0.5rem;font-weight:700;padding:1px 5px;border-radius:20px;margin-left:3px}
 
 /* ── TESTIMONIALS ── */
 .testimonials{background:var(--ink2);padding:5rem 2rem;border-top:1px solid rgba(196,82,90,0.12)}
@@ -348,6 +356,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   <div class="nav-links">
     <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
     <a onclick="setGender('men')" id="nav-men">Men</a>
+    <a onclick="filterCat('sale',null);document.getElementById('catsRow').scrollIntoView({behavior:'smooth'})" style="color:var(--pink-deep);font-weight:600">Sale</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
@@ -370,6 +379,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
   <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
   <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
+  <a onclick="filterCat('sale',null);closeMobileNav()" style="color:var(--pink-deep);font-weight:600">Sale</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
@@ -734,7 +744,8 @@ function getDefaultProducts() {
       if(data&&data.length){
         productsCache=data.map(p=>({
           id:p.id,gender:p.gender,cat:p.cat,name:p.name,brand:p.brand||'',
-          pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||''
+          pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||'',
+          on_sale:p.on_sale||false,sale_price:p.sale_price||null
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
         renderProducts(filterProds());
@@ -803,8 +814,11 @@ function setGender(g){
 
 function renderCats(g){
   const cats=g==='women'?womenCats:menCats;
+  const saleCount=getProducts().filter(p=>p.on_sale&&p.sale_price).length;
+  const saleActive=currentCat==='sale';
   document.getElementById('catsRow').innerHTML=
-    `<div class="cat-pill active" onclick="filterCat('all',this)">All</div>`+
+    (saleCount>0?`<div class="cat-pill sale-pill${saleActive?' active':''}" onclick="filterCat('sale',this)">Sale <span class="sale-pill-ct">${saleCount}</span></div>`:'') +
+    `<div class="cat-pill${saleActive?'':' active'}" onclick="filterCat('all',this)">All</div>`+
     cats.map(c=>`<div class="cat-pill" onclick="filterCat('${c}',this)">${catLabels[c]||c}</div>`).join('');
 }
 
@@ -816,6 +830,7 @@ function filterCat(cat,el){
 }
 
 function filterProds(){
+  if(currentCat==='sale') return getProducts().filter(p=>p.on_sale&&p.sale_price);
   return getProducts().filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
 }
 
@@ -823,9 +838,12 @@ function renderProducts(data){
   document.getElementById('productsGrid').innerHTML=data.map(p=>{
     const bg=bgs[p.cat]||'#f8f8ff';
     const isPreorder=!p.inStock;
+    const isSale=p.on_sale&&p.sale_price;
+    const pctOff=isSale?Math.round((1-p.sale_price/p.pkr)*100):0;
     return `<div class="prod-card" onclick="openProductDetail(${p.id})">
       <div class="prod-img" style="background:${p.image?'#100808':bg}">
         ${p.image?`<img src="${p.image}" alt="${p.name}">`:`<span style="font-size:2.5rem">${catIcons[p.cat]||'✨'}</span>`}
+        ${isSale?`<span class="sale-badge">−${pctOff}%</span>`:''}
       </div>
       <div class="prod-body">
         <div class="prod-cat${currentGender==='men'?' men-cat':''}">${catLabels[p.cat]||p.cat}</div>
@@ -833,8 +851,10 @@ function renderProducts(data){
         <div class="prod-brand">${p.brand}</div>
         <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
         ${isPreorder?`<div class="preorder-note">50% advance · ~4 weeks delivery</div>`:''}
-        <div class="prod-pkr">${fmtPKR(p.pkr)}</div>
-        <button class="add-btn${isPreorder?' preorder-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
+        ${isSale
+          ?`<div class="prod-pkr"><span class="price-original">${fmtPKR(p.pkr)}</span><span class="price-sale">${fmtPKR(p.sale_price)}</span></div>`
+          :`<div class="prod-pkr">${fmtPKR(p.pkr)}</div>`}
+        <button class="add-btn${isPreorder?' preorder-btn':''}${isSale?' sale-btn':''}" onclick="event.stopPropagation();addToCart(${p.id})">${isPreorder?'Preorder Now':'Add to Cart'}</button>
       </div>
     </div>`;
   }).join('');
@@ -842,9 +862,10 @@ function renderProducts(data){
 
 function addToCart(id){
   const p=getProducts().find(x=>x.id===id);
+  const effectivePkr=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
   const ex=cart.find(x=>x.id===id);
   if(ex){if(ex.qty>=5){showToast('Max 5 per item');return;}ex.qty++;}
-  else{cart.push({...p,qty:1,pkr:p.pkr});}
+  else{cart.push({...p,qty:1,pkr:effectivePkr,originalPkr:p.pkr});}
   saveCart(); updateBadge();
   showToast(p.inStock?'Added to cart!':'Preorder added!');
 }
