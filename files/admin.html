@@ -1803,11 +1803,21 @@ async function loadOrders(silent = false) {
   // ── 1. Supabase ──
   if (_supa) {
     try {
-      const { data, error } = await _supa
+      // Try with shipments join; fall back if migration hasn't been run yet
+      let { data, error } = await _supa
         .from('orders')
         .select('*, order_items(product_name, qty, pkr, is_preorder), shipments(name)')
         .order('created_at', { ascending: false })
         .limit(500);
+      if (error) {
+        // Shipments table/column missing — load without the join
+        const res = await _supa
+          .from('orders')
+          .select('*, order_items(product_name, qty, pkr, is_preorder)')
+          .order('created_at', { ascending: false })
+          .limit(500);
+        data = res.data; error = res.error;
+      }
       if (error) throw error;
       allOrders = (data || []).map(o => ({
         _id: o.id,
