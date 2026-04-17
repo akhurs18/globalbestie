@@ -314,6 +314,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .odm-item-row:last-child{border-bottom:none}
 .order-row{cursor:pointer}
 .order-row:hover td{background:var(--bg2)}
+/* Batch tag */
+.batch-tag{font-size:0.62rem;font-weight:500;color:var(--ink);background:var(--bg2);border:1px solid var(--border);padding:2px 8px;cursor:pointer;white-space:nowrap;display:inline-block;transition:all 0.15s}
+.batch-tag:hover{border-color:var(--gold);color:var(--gold)}
+.batch-empty{font-size:0.62rem;color:var(--muted2);cursor:pointer;border:1px dashed var(--border);padding:2px 8px;display:inline-block;transition:all 0.15s}
+.batch-empty:hover{border-color:var(--gold);color:var(--gold)}
+/* Payment verification */
+.pay-verified{font-size:0.62rem;color:var(--sage);font-weight:600;letter-spacing:0.3px}
+.pay-unverified{font-size:0.62rem;color:var(--rose);font-weight:600;letter-spacing:0.3px;cursor:pointer}
+.pay-unverified:hover{text-decoration:underline}
 
 /* ── PACKED QUEUE BANNER ── */
 .packed-queue-banner{display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.85rem 1.2rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
@@ -406,6 +415,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
           <div class="ostat-val" id="ostat-pending">—</div>
           <div class="ostat-label">Needs Action</div>
         </div>
+        <div class="ostat" onclick="setStatusFilter('__unverified__')" title="New orders where payment has not been verified yet" style="border-left:1px solid var(--border)">
+          <div class="ostat-val" id="ostat-unverified" style="color:var(--rose)">—</div>
+          <div class="ostat-label">Unverified</div>
+        </div>
         <div class="ostat ostat-new" onclick="setStatusFilter('New Order')" title="New orders awaiting confirmation">
           <div class="ostat-val" id="ostat-new">—</div>
           <div class="ostat-label">New</div>
@@ -452,6 +465,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
             <select class="filter-select" id="order-status-filter" onchange="filterOrders()">
               <option value="">All Statuses</option>
               <option value="__pending__">⚡ Needs Action</option>
+              <option value="__unverified__">⚠ Unverified Payment</option>
               <option value="New Order">New Order</option>
               <option value="Confirmed">Confirmed</option>
               <option value="Packed">Packed</option>
@@ -463,8 +477,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div style="overflow-x:auto">
           <table class="tbl" id="orders-table">
-            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Items</th><th>Total</th><th>Payment</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="orders-body"><tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders</td></tr></tbody>
+            <thead><tr><th>Order #</th><th>Date</th><th>Customer</th><th>Phone</th><th>City</th><th>Batch</th><th>Items</th><th>Total</th><th>Payment</th><th>📷</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="orders-body"><tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -1240,6 +1254,17 @@ Shop now → https://globalbestiepk.com/products.html
           <div class="odg-label">Notes from Customer</div>
           <div class="odg-val" id="odm-notes" style="color:var(--sienna);background:var(--sienna-light);padding:7px 10px;border-left:3px solid #DFC4A8"></div>
         </div>
+        <div class="odg-full">
+          <div class="odg-label">Fulfillment Batch <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional tag)</span></div>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <input class="form-input" id="odm-batch-input" style="flex:1;font-size:0.78rem" placeholder="e.g. April 2026, Batch 3...">
+            <button class="btn btn-ghost btn-sm" onclick="saveBatchFromModal()">Save</button>
+          </div>
+        </div>
+        <div class="odg-full" id="odm-pay-confirm-wrap">
+          <div class="odg-label">Payment Verification</div>
+          <div id="odm-pay-confirm-status"></div>
+        </div>
         <div id="odm-tracking-wrap" class="odg-full" style="display:none">
           <div class="odg-label">Tracking Number</div>
           <div class="odg-val" id="odm-tracking"></div>
@@ -1745,6 +1770,8 @@ async function loadOrders(silent = false) {
         Notes: o.notes || '',
         Screenshot: o.screenshot_url || '',
         _tracking: o.tracking_number || '',
+        _batch: o.batch || '',
+        _paymentConfirmed: o.payment_confirmed || false,
         _items: o.order_items || []
       }));
 
@@ -1859,6 +1886,15 @@ function openOrderDetail(idx) {
   const notesWrap = document.getElementById('odm-notes-wrap');
   notesWrap.style.display = o.Notes ? '' : 'none';
   if (o.Notes) document.getElementById('odm-notes').textContent = o.Notes;
+  // Batch
+  document.getElementById('odm-batch-input').value = o._batch || '';
+  // Payment confirmed
+  const payConfirmEl = document.getElementById('odm-pay-confirm-status');
+  if (o._paymentConfirmed) {
+    payConfirmEl.innerHTML = '<span class="pay-verified" style="font-size:0.78rem">✓ Payment has been verified</span>';
+  } else {
+    payConfirmEl.innerHTML = '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap"><span style="font-size:0.75rem;color:var(--rose)">⚠ Payment not yet verified</span><button class="btn btn-sm" style="background:var(--sage);color:#fff;border:none;font-size:0.62rem;padding:3px 10px;letter-spacing:1px" onclick="confirmPaymentFromModal()">✓ Mark as Verified</button></div>';
+  }
   // Tracking
   const trackWrap = document.getElementById('odm-tracking-wrap');
   trackWrap.style.display = o._tracking ? '' : 'none';
@@ -1890,10 +1926,58 @@ async function updateOrderStatusFromModal(idx, status) {
   closeModal('order-detail-modal');
 }
 
+async function editBatch(idx) {
+  const o = allOrders[idx];
+  if (!o) return;
+  const current = o._batch || '';
+  const val = window.prompt('Enter batch name (leave blank to remove):', current);
+  if (val === null) return;
+  await saveBatch(idx, val.trim());
+}
+
+async function saveBatch(idx, name) {
+  const o = allOrders[idx];
+  if (!o) return;
+  if (_supa && o._id) {
+    const { error } = await _supa.from('orders').update({ batch: name }).eq('id', o._id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  allOrders[idx]._batch = name;
+  filterOrders();
+  toast(name ? '✅ Batch tagged' : 'Batch tag removed');
+}
+
+async function saveBatchFromModal() {
+  if (_odmIdx === null) return;
+  const val = document.getElementById('odm-batch-input').value.trim();
+  await saveBatch(_odmIdx, val);
+}
+
+async function confirmPayment(idx) {
+  const o = allOrders[idx];
+  if (!o) return;
+  if (_supa && o._id) {
+    const { error } = await _supa.from('orders').update({ payment_confirmed: true }).eq('id', o._id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  allOrders[idx]._paymentConfirmed = true;
+  filterOrders();
+  updateOrderStats(allOrders);
+  toast('✅ Payment verified');
+}
+
+async function confirmPaymentFromModal() {
+  if (_odmIdx === null) return;
+  await confirmPayment(_odmIdx);
+  // Refresh the modal's payment status display
+  const payConfirmEl = document.getElementById('odm-pay-confirm-status');
+  if (payConfirmEl) payConfirmEl.innerHTML = '<span class="pay-verified" style="font-size:0.78rem">✓ Payment has been verified</span>';
+}
+
 function renderOrdersTable(orders) {
   const body = document.getElementById('orders-body');
   if (!orders.length) {
-    body.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
+    body.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
     return;
   }
   body.innerHTML = orders.map((o, i) => `
@@ -1903,13 +1987,22 @@ function renderOrdersTable(orders) {
       <td><div style="font-weight:700;font-size:0.82rem">${o.Name||''}</div><div style="font-size:0.68rem;color:var(--muted)">${o.Email||''}</div></td>
       <td style="font-size:0.78rem">${o.Phone||''}</td>
       <td style="font-size:0.78rem">${o.City||''}</td>
+      <td style="white-space:nowrap">
+        ${o._batch
+          ? `<span class="batch-tag" onclick="editBatch(${i})" title="Click to change">${o._batch}</span>`
+          : `<span class="batch-empty" onclick="editBatch(${i})">+ tag</span>`}
+      </td>
       <td style="font-size:0.75rem;max-width:160px">${o.Items||''}${o.Notes ? `<div class="order-notes" title="${(o.Notes||'').replace(/"/g,'&quot;')}">${o.Notes}</div>` : ''}</td>
       <td style="font-weight:700;font-size:0.82rem;white-space:nowrap">${o.Total||''}</td>
       <td style="font-size:0.75rem;white-space:nowrap">${(()=>{
         const paid=o._advance||0,total=o._total||0,remaining=total-paid;
-        if(!total) return '<span style="color:var(--muted2)">—</span>';
-        if(paid>=total) return `<span style="color:var(--sage);font-weight:600">Paid in Full</span>`;
-        return `<div style="color:var(--sienna);font-weight:600">Rs ${paid.toLocaleString()} paid</div>`+
+        const payLine = o._paymentConfirmed
+          ? '<div class="pay-verified">✓ Payment Verified</div>'
+          : `<div class="pay-unverified" onclick="confirmPayment(${i})" title="Click to mark payment verified">⚠ Unverified — click to verify</div>`;
+        if(!total) return payLine+'<div style="color:var(--muted2);font-size:0.68rem">No advance</div>';
+        if(paid>=total) return payLine+`<div style="color:var(--sage);font-weight:600">Paid in Full</div>`;
+        return payLine+
+               `<div style="color:var(--sienna);font-weight:600">Rs ${paid.toLocaleString()} paid</div>`+
                `<div style="font-size:0.68rem;color:var(--muted)">Rs ${remaining.toLocaleString()} remaining</div>`+
                `<button class="btn btn-sm" style="margin-top:3px;background:var(--sage);color:#fff;font-size:0.58rem;padding:2px 8px;letter-spacing:1px;border:none;cursor:pointer" onclick="markRemainingPaid(${i})">✓ Mark Paid</button>`;
       })()}</td>
@@ -1976,7 +2069,9 @@ function updateOrderStats(orders) {
   };
   orders.forEach(o => { if (counts[o.Status] !== undefined) counts[o.Status]++; });
   const pendingCount = counts['New Order'] + counts['Confirmed'] + counts['Packed'];
+  const unverifiedCount = orders.filter(o => !o._paymentConfirmed).length;
   document.getElementById('ostat-pending').textContent = pendingCount;
+  document.getElementById('ostat-unverified').textContent = unverifiedCount;
   document.getElementById('ostat-new').textContent = counts['New Order'];
   document.getElementById('ostat-confirmed').textContent = counts['Confirmed'];
   document.getElementById('ostat-packed').textContent = counts['Packed'];
@@ -1994,7 +2089,7 @@ function setStatusFilter(status) {
   const sel = document.getElementById('order-status-filter');
   if (sel) sel.value = status;
   document.querySelectorAll('.ostat').forEach(el => el.classList.remove('active'));
-  const map = {'New Order':'ostat-new','Confirmed':'ostat-confirmed','Packed':'ostat-packed','Shipped':'ostat-shipped','Delivered':'ostat-delivered','__pending__':'ostat-pending'};
+  const map = {'New Order':'ostat-new','Confirmed':'ostat-confirmed','Packed':'ostat-packed','Shipped':'ostat-shipped','Delivered':'ostat-delivered','__pending__':'ostat-pending','__unverified__':'ostat-unverified'};
   const targetId = map[status];
   if (targetId) {
     const pill = document.getElementById(targetId);
@@ -2035,8 +2130,11 @@ function filterOrders() {
   const sf = document.getElementById('order-status-filter').value;
   const pendingStatuses = ['New Order', 'Confirmed', 'Packed'];
   const filtered = allOrders.filter(o => {
-    const matchQ = !q || [o.Name, o.Phone, o.City, o.Email, o.OrderNum].some(v => (v||'').toLowerCase().includes(q));
-    const matchS = !sf ? true : sf === '__pending__' ? pendingStatuses.includes(o.Status) : o.Status === sf;
+    const matchQ = !q || [o.Name, o.Phone, o.City, o.Email, o.OrderNum, o._batch].some(v => (v||'').toLowerCase().includes(q));
+    let matchS = true;
+    if (sf === '__pending__') matchS = pendingStatuses.includes(o.Status);
+    else if (sf === '__unverified__') matchS = !o._paymentConfirmed;
+    else if (sf) matchS = o.Status === sf;
     return matchQ && matchS;
   });
   renderOrdersTable(filtered);

@@ -159,6 +159,11 @@ create policy "admin_manage_promos" on promo_codes for all using (auth.role() = 
 alter table orders add column if not exists promo_code text default '';
 alter table orders add column if not exists discount integer default 0;
 
+-- ── MIGRATION: batch tagging + payment verification ──
+alter table orders add column if not exists batch text default '';
+alter table orders add column if not exists payment_confirmed boolean default false;
+create index if not exists orders_batch_idx on orders(batch);
+
 
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
