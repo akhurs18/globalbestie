@@ -24,14 +24,6 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 
-/* ── SHIPMENT ANNOUNCEMENT BAR ── */
-.shipment-bar{background:var(--sienna-light);border-bottom:2px solid #DFC4A8}
-.shipment-bar-inner{display:flex;align-items:center;justify-content:center;gap:0.7rem;padding:0.6rem 1.4rem;max-width:1100px;margin:0 auto;flex-wrap:wrap}
-.shipment-bar-text{font-size:0.7rem;color:var(--sienna);font-weight:500;letter-spacing:0.3px}
-.shipment-bar-cta{font-size:0.6rem;font-weight:600;color:var(--sienna);border:1px solid #DFC4A8;padding:2px 10px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;background:rgba(139,69,19,0.05)}
-.shipment-bar.in-transit{background:var(--sage-light);border-bottom-color:#BDD9C8}
-.shipment-bar.in-transit .shipment-bar-text,.shipment-bar.in-transit .shipment-bar-cta{color:var(--sage)}
-.shipment-bar.in-transit .shipment-bar-cta{border-color:#BDD9C8;background:rgba(46,94,71,0.05)}
 
 /* ── ANNOUNCEMENT BAR ── */
 .announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
@@ -404,14 +396,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 </head>
 <body>
 
-<!-- SHIPMENT ANNOUNCEMENT BAR -->
-<div class="shipment-bar" id="shipmentBar" style="display:none">
-  <div class="shipment-bar-inner">
-    <span>📦</span>
-    <span class="shipment-bar-text" id="shipmentBarText"></span>
-    <span class="shipment-bar-cta" id="shipmentBarCta" style="display:none"></span>
-  </div>
-</div>
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
@@ -1478,48 +1462,6 @@ if(_brand){
     }
   } catch(e) {}
 
-  // Shipment announcement bar
-  try {
-    var sa = JSON.parse(localStorage.getItem('gb_shipment_active')||'null');
-    if (sa && sa.show) {
-      var bar = document.getElementById('shipmentBar');
-      var textEl = document.getElementById('shipmentBarText');
-      var ctaEl = document.getElementById('shipmentBarCta');
-      var today = new Date(); today.setHours(0,0,0,0);
-      var cutoff = new Date(sa.cutoff_date);
-      var arrival = new Date(sa.arrival_date);
-      var text = '', cta = '', cls = '';
-      var fmtD = function(d) {
-        return new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
-      };
-      if (sa.status === 'open') {
-        var daysLeft = Math.ceil((cutoff - today) / 86400000);
-        if (daysLeft > 3) {
-          text = 'Next fulfillment: ' + fmtD(arrival) + ' \u00b7 Order by ' + fmtD(cutoff) + ' to join this batch';
-          cta = daysLeft + ' days left';
-        } else if (daysLeft > 0) {
-          text = 'Closing soon \u2014 order by ' + fmtD(cutoff) + ' to be included in the next fulfillment (' + fmtD(arrival) + ')';
-          cta = daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' left';
-        } else {
-          text = 'Order window closing soon \u00b7 Orders placed now may be in the next batch';
-        }
-      } else if (sa.status === 'closed') {
-        text = 'This batch is now closed \u00b7 Fulfillment date: ' + fmtD(arrival);
-      } else if (sa.status === 'in_transit') {
-        text = 'Your items are on their way! Orders being prepared for fulfillment on ' + fmtD(arrival);
-        cls = 'in-transit'; cta = 'Coming Soon';
-      } else if (sa.status === 'arrived') {
-        text = 'Great news \u2014 items have arrived! Your order is being packed and shipped.';
-        cls = 'in-transit'; cta = 'Fulfilling Now';
-      }
-      if (text) {
-        bar.style.display = '';
-        if (cls) bar.classList.add(cls);
-        textEl.textContent = text;
-        if (cta) { ctaEl.textContent = cta; ctaEl.style.display = ''; }
-      }
-    }
-  } catch(e) {}
 })();
 </script>
 </body>

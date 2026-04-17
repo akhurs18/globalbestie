@@ -291,26 +291,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .log-delta{font-weight:600;font-family:'Cormorant Garamond',serif;font-size:1.05rem}
 .log-meta{font-size:0.7rem;color:var(--muted2);margin-top:2px}
 
-/* ── SHIPMENT CARDS ── */
-.shipment-card{border:1px solid var(--border);background:var(--card);margin-bottom:1.2rem;box-shadow:var(--shadow)}
-.shipment-card-head{display:flex;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
-.shipment-card-name{font-size:0.88rem;font-weight:600;color:var(--ink);flex:1;min-width:160px}
-.shipment-card-dates{font-size:0.7rem;color:var(--muted);letter-spacing:0.3px}
-.shipment-card-body{padding:1rem 1.4rem}
-.shipment-stats{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:0.9rem}
-.shipment-stat-val{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);line-height:1}
-.shipment-stat-label{font-size:0.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
-.shipment-progress-wrap{margin:0.6rem 0 0.9rem}
-.shipment-progress-label{font-size:0.62rem;color:var(--muted);margin-bottom:5px}
-.shipment-progress{height:5px;background:var(--border);border-radius:0}
-.shipment-progress-fill{height:100%;background:var(--sage);transition:width 0.4s}
-.shipment-card-actions{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.8rem}
-.shipment-orders-panel{display:none;border-top:1px solid var(--border);padding:1rem 1.4rem}
-.shipment-orders-panel.open{display:block}
-/* ── UNASSIGNED ALERT ── */
-.unassigned-alert{display:none;background:var(--rose-light);border:1px solid rgba(181,54,90,0.25);padding:0.9rem 1.2rem;margin-bottom:1.3rem;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap}
-.unassigned-alert.visible{display:flex}
-.unassigned-alert-text{font-size:0.78rem;color:var(--rose);font-weight:500}
 
 /* ── ORDER STATS BAR ── */
 .order-stats-row{display:flex;gap:1px;margin-bottom:1.4rem;background:var(--border);border:1px solid var(--border)}
@@ -375,7 +355,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-section-label">Overview</div>
     <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">◈</span><span class="nav-label">Dashboard</span></div>
     <div class="nav-item" onclick="showPage('orders')"><span class="nav-icon">◻</span><span class="nav-label">Orders</span></div>
-    <div class="nav-item" onclick="showPage('shipments')"><span class="nav-icon">◻</span><span class="nav-label">Batches</span></div>
     <div class="nav-section-label">Catalogue</div>
     <div class="nav-item" onclick="showPage('products')"><span class="nav-icon">◈</span><span class="nav-label">Products</span></div>
     <div class="nav-item" onclick="showPage('inventory')"><span class="nav-icon">◻</span><span class="nav-label">Inventory</span></div>
@@ -1202,30 +1181,6 @@ Shop now → https://globalbestiepk.com/products.html
       </div>
     </div>
 
-    <!-- SHIPMENTS -->
-    <div class="page" id="page-shipments">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
-        <div>
-          <div class="page-title">Fulfillment Batches</div>
-          <div class="page-sub">Each batch collects orders for ~4 weeks · set a soft cutoff · fulfill when items arrive</div>
-        </div>
-        <button class="btn btn-pink btn-sm" onclick="openNewShipmentModal()">+ New Batch</button>
-      </div>
-
-      <!-- Unassigned orders alert -->
-      <div class="unassigned-alert" id="unassigned-alert">
-        <div class="unassigned-alert-text" id="unassigned-alert-text">⚠ Some orders have no batch assigned</div>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
-          <button class="btn btn-sm" style="background:var(--rose);color:#fff;border:none" id="assign-all-btn">Assign All to Active Batch</button>
-          <button class="btn btn-ghost btn-sm" onclick="showPage('orders')">View in Orders</button>
-        </div>
-      </div>
-
-      <!-- Shipments list -->
-      <div id="shipments-list">
-        <div style="text-align:center;padding:3rem;color:var(--muted);font-size:0.8rem">Loading batches...</div>
-      </div>
-    </div>
 
   </div><!-- /main -->
 </div><!-- /app -->
@@ -1285,10 +1240,6 @@ Shop now → https://globalbestiepk.com/products.html
           <div class="odg-label">Notes from Customer</div>
           <div class="odg-val" id="odm-notes" style="color:var(--sienna);background:var(--sienna-light);padding:7px 10px;border-left:3px solid #DFC4A8"></div>
         </div>
-        <div id="odm-batch-wrap" class="odg-full" style="display:none">
-          <div class="odg-label">Fulfillment Batch</div>
-          <div class="odg-val" id="odm-batch"></div>
-        </div>
         <div id="odm-tracking-wrap" class="odg-full" style="display:none">
           <div class="odg-label">Tracking Number</div>
           <div class="odg-val" id="odm-tracking"></div>
@@ -1323,38 +1274,6 @@ Shop now → https://globalbestiepk.com/products.html
   </div>
 </div>
 
-<!-- NEW SHIPMENT MODAL -->
-<div class="modal-overlay" id="new-shipment-modal">
-  <div class="modal-box">
-    <div class="modal-head"><h3>New Fulfillment Batch</h3><button class="modal-close" onclick="closeModal('new-shipment-modal')">✕</button></div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Batch Name</label>
-        <input class="form-input" type="text" id="ns-name" placeholder="e.g. May 2026 Batch">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.2rem">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Order Cutoff <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(soft)</span></label>
-          <input class="form-input" type="date" id="ns-cutoff">
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label">Fulfillment Date</label>
-          <input class="form-input" type="date" id="ns-arrival">
-        </div>
-      </div>
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:-0.8rem;margin-bottom:1rem">Typically ~4 weeks from batch start. Cutoff is soft — you decide when to close.</div>
-      <div class="form-group">
-        <label class="form-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(optional)</span></label>
-        <textarea class="form-input" id="ns-notes" rows="2" placeholder="e.g. Ordering from Sephora + Ulta..."></textarea>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;padding:0.75rem;background:var(--gold-light);border:1px solid var(--border2);margin-bottom:1.2rem">
-        <input type="checkbox" id="ns-announce" style="accent-color:var(--gold);width:15px;height:15px;cursor:pointer">
-        <label for="ns-announce" style="font-size:0.75rem;color:var(--ink3);cursor:pointer;font-weight:500">Show announcement bar to customers on the shop page</label>
-      </div>
-      <button class="btn btn-pink" style="width:100%" onclick="createShipment()">Create Batch</button>
-    </div>
-  </div>
-</div>
 
 <!-- ADD PRODUCT MODAL -->
 <div class="modal-overlay" id="add-product-modal">
@@ -1670,7 +1589,6 @@ function showPage(p) {
   document.getElementById('page-' + p).classList.add('active');
   event.currentTarget.classList.add('active');
   if (p === 'orders') loadOrders();
-  if (p === 'shipments') loadShipments();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
   if (p === 'promos') loadPromoCodes();
   if (p === 'trends') initTrendsPage();
@@ -1803,21 +1721,11 @@ async function loadOrders(silent = false) {
   // ── 1. Supabase ──
   if (_supa) {
     try {
-      // Try with shipments join; fall back if migration hasn't been run yet
-      let { data, error } = await _supa
+      const { data, error } = await _supa
         .from('orders')
-        .select('*, order_items(product_name, qty, pkr, is_preorder), shipments(name)')
+        .select('*, order_items(product_name, qty, pkr, is_preorder)')
         .order('created_at', { ascending: false })
         .limit(500);
-      if (error) {
-        // Shipments table/column missing — load without the join
-        const res = await _supa
-          .from('orders')
-          .select('*, order_items(product_name, qty, pkr, is_preorder)')
-          .order('created_at', { ascending: false })
-          .limit(500);
-        data = res.data; error = res.error;
-      }
       if (error) throw error;
       allOrders = (data || []).map(o => ({
         _id: o.id,
@@ -1837,8 +1745,6 @@ async function loadOrders(silent = false) {
         Notes: o.notes || '',
         Screenshot: o.screenshot_url || '',
         _tracking: o.tracking_number || '',
-        _shipmentId: o.shipment_id || null,
-        _shipmentName: o.shipments?.name || '',
         _items: o.order_items || []
       }));
 
@@ -1953,10 +1859,6 @@ function openOrderDetail(idx) {
   const notesWrap = document.getElementById('odm-notes-wrap');
   notesWrap.style.display = o.Notes ? '' : 'none';
   if (o.Notes) document.getElementById('odm-notes').textContent = o.Notes;
-  // Batch
-  const batchWrap = document.getElementById('odm-batch-wrap');
-  batchWrap.style.display = o._shipmentName ? '' : 'none';
-  if (o._shipmentName) document.getElementById('odm-batch').textContent = o._shipmentName;
   // Tracking
   const trackWrap = document.getElementById('odm-tracking-wrap');
   trackWrap.style.display = o._tracking ? '' : 'none';
@@ -2015,8 +1917,6 @@ function renderOrdersTable(orders) {
       <td>
         <span class="badge ${statusClass(o.Status)}">${o.Status||'New Order'}</span>
         ${o._tracking ? `<div style="font-size:0.65rem;color:var(--muted);margin-top:3px;letter-spacing:0.3px">📦 ${o._tracking}</div>` : ''}
-        ${o._shipmentName ? `<div style="font-size:0.6rem;color:var(--muted2);margin-top:3px">📦 ${o._shipmentName}</div>` :
-          (o.Status !== 'Delivered' && o.Status !== 'Cancelled') ? `<div style="font-size:0.6rem;color:var(--rose);margin-top:3px;font-weight:600">⚠ No batch</div>` : ''}
       </td>
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
@@ -3166,207 +3066,6 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── SHIPMENTS ──
-let allShipments = [];
-
-function openNewShipmentModal() {
-  document.getElementById('ns-name').value = '';
-  document.getElementById('ns-cutoff').value = '';
-  document.getElementById('ns-arrival').value = '';
-  document.getElementById('ns-notes').value = '';
-  document.getElementById('ns-announce').checked = true;
-  document.getElementById('new-shipment-modal').classList.add('open');
-}
-
-async function createShipment() {
-  const name = document.getElementById('ns-name').value.trim();
-  const cutoff = document.getElementById('ns-cutoff').value;
-  const arrival = document.getElementById('ns-arrival').value;
-  const notes = document.getElementById('ns-notes').value.trim();
-  const announce = document.getElementById('ns-announce').checked;
-  if (!name) { toast('Enter a batch name'); return; }
-  if (!cutoff || !arrival) { toast('Set both cutoff and arrival dates'); return; }
-  if (!_supa) { toast('⚠ Connect Supabase in Settings first'); return; }
-  const { data, error } = await _supa.from('shipments').insert({ name, cutoff_date: cutoff, arrival_date: arrival, notes, status: 'open' }).select().single();
-  if (error) { toast('❌ ' + error.message); return; }
-  if (announce) syncShipmentAnnouncement({ ...data, show: true });
-  closeModal('new-shipment-modal');
-  toast('✅ Batch created');
-  loadShipments();
-}
-
-async function loadShipments() {
-  const el = document.getElementById('shipments-list');
-  if (!_supa) { el.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);padding:2rem">Supabase not connected — configure in Settings first.</div>'; return; }
-  const [{ data: shipments, error: se }, { data: orders, error: oe }] = await Promise.all([
-    _supa.from('shipments').select('*').order('created_at', { ascending: false }),
-    _supa.from('orders').select('id,status,total,shipment_id').limit(1000)
-  ]);
-  if (se) { toast('❌ ' + se.message); return; }
-  allShipments = shipments || [];
-  const allOrd = orders || [];
-  // Unassigned orders (active statuses, no shipment)
-  const unassigned = allOrd.filter(o => !o.shipment_id && !['delivered','cancelled'].includes(o.status));
-  renderUnassignedAlert(unassigned);
-  // Sync active open/in_transit shipment to localStorage for storefront
-  const active = allShipments.find(s => s.status === 'in_transit') || allShipments.find(s => s.status === 'open');
-  if (active) syncShipmentAnnouncement({ ...active, show: true });
-  renderShipmentCards(allShipments, allOrd);
-}
-
-function renderUnassignedAlert(unassigned) {
-  const el = document.getElementById('unassigned-alert');
-  const btn = document.getElementById('assign-all-btn');
-  if (!unassigned.length) { el.classList.remove('visible'); return; }
-  el.classList.add('visible');
-  document.getElementById('unassigned-alert-text').textContent = `⚠ ${unassigned.length} order${unassigned.length !== 1 ? 's' : ''} have no batch assigned`;
-  const openShipment = allShipments.find(s => s.status === 'open');
-  btn.textContent = openShipment ? `Assign All to "${openShipment.name}"` : 'No open batch — create one first';
-  btn.onclick = openShipment ? () => assignUnassignedOrders(openShipment.id) : null;
-  btn.disabled = !openShipment;
-}
-
-function renderShipmentCards(shipments, allOrders) {
-  const el = document.getElementById('shipments-list');
-  if (!shipments.length) {
-    el.innerHTML = `<div style="text-align:center;padding:3.5rem 1rem;color:var(--muted2)">
-      <div style="font-size:2rem;margin-bottom:0.8rem">📦</div>
-      <div style="font-size:0.9rem;font-weight:500;color:var(--ink);margin-bottom:0.4rem">No batches yet</div>
-      <div style="font-size:0.75rem">Create your first fulfillment batch to start organising orders.</div>
-    </div>`;
-    return;
-  }
-  const statusLabel = { open:'Accepting Orders', closed:'Orders Closed', in_transit:'Items En Route', arrived:'Fulfilling Now', complete:'Complete' };
-  const statusCls = { open:'badge-new-order', closed:'badge-confirmed', in_transit:'badge-confirmed', arrived:'badge-shipped', complete:'badge-shipped' };
-  el.innerHTML = shipments.map(s => {
-    const sOrders = allOrders.filter(o => o.shipment_id === s.id);
-    const total = sOrders.reduce((a, o) => a + (o.total || 0), 0);
-    const confirmed = sOrders.filter(o => ['confirmed','packed','shipped','delivered'].includes(o.status)).length;
-    const shipped = sOrders.filter(o => ['shipped','delivered'].includes(o.status)).length;
-    const pct = sOrders.length ? Math.round((shipped / sOrders.length) * 100) : 0;
-    const today = new Date(); today.setHours(0,0,0,0);
-    const cutoff = new Date(s.cutoff_date);
-    const daysLeft = Math.ceil((cutoff - today) / 86400000);
-    const fmtD = d => new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
-    // Cutoff urgency indicator (only while open)
-    let cutoffNote = '';
-    if (s.status === 'open') {
-      if (daysLeft <= 0) cutoffNote = `<span style="color:var(--rose);font-weight:700;font-size:0.68rem"> · ⚠ Cutoff passed — close when ready</span>`;
-      else if (daysLeft <= 3) cutoffNote = `<span style="color:var(--rose);font-weight:700;font-size:0.68rem"> · 🔴 ${daysLeft} day${daysLeft!==1?'s':''} to cutoff</span>`;
-      else if (daysLeft <= 7) cutoffNote = `<span style="color:var(--sienna);font-weight:600;font-size:0.68rem"> · 🟡 ${daysLeft} days to cutoff</span>`;
-      else cutoffNote = `<span style="color:var(--muted);font-size:0.68rem"> · ${daysLeft} days left</span>`;
-    }
-    return `<div class="shipment-card">
-      <div class="shipment-card-head">
-        <div style="flex:1">
-          <div class="shipment-card-name">${s.name}</div>
-          <div class="shipment-card-dates">
-            Cutoff: <b>${fmtD(s.cutoff_date)}</b>${cutoffNote}
-            &nbsp;·&nbsp; Fulfillment: <b>${fmtD(s.arrival_date)}</b>
-          </div>
-        </div>
-        <span class="badge ${statusCls[s.status]||'badge-new-order'}">${statusLabel[s.status]||s.status}</span>
-      </div>
-      <div class="shipment-card-body">
-        <div class="shipment-stats">
-          <div><div class="shipment-stat-val">${sOrders.length}</div><div class="shipment-stat-label">Orders</div></div>
-          <div><div class="shipment-stat-val">Rs ${total.toLocaleString()}</div><div class="shipment-stat-label">Total Value</div></div>
-          <div><div class="shipment-stat-val">${confirmed}</div><div class="shipment-stat-label">Confirmed</div></div>
-          <div><div class="shipment-stat-val">${shipped}</div><div class="shipment-stat-label">Fulfilled</div></div>
-        </div>
-        <div class="shipment-progress-wrap">
-          <div class="shipment-progress-label">${shipped}/${sOrders.length} orders fulfilled · ${pct}% complete</div>
-          <div class="shipment-progress"><div class="shipment-progress-fill" style="width:${pct}%"></div></div>
-        </div>
-        ${s.notes ? `<div style="font-size:0.73rem;color:var(--muted);margin-bottom:0.7rem;font-style:italic">${s.notes}</div>` : ''}
-        <div class="shipment-card-actions">
-          <button class="btn btn-ghost btn-sm" onclick="toggleShipmentOrders('${s.id}')">📋 View Orders (${sOrders.length})</button>
-          ${s.status==='open'?`<button class="btn btn-ghost btn-sm" onclick="setShipmentStatus('${s.id}','closed')">🔒 Stop Taking Orders</button>`:''}
-          ${s.status==='closed'?`<button class="btn btn-amber btn-sm" onclick="setShipmentStatus('${s.id}','in_transit')">✈ Items Ordered from USA</button>`:''}
-          ${s.status==='in_transit'?`<button class="btn btn-green btn-sm" onclick="setShipmentStatus('${s.id}','arrived')">📦 Items Arrived — Start Fulfilling</button>`:''}
-          ${s.status==='arrived'?`<button class="btn btn-ghost btn-sm" onclick="setShipmentStatus('${s.id}','complete')">✅ All Orders Fulfilled</button>`:''}
-          <button class="btn btn-ghost btn-sm" style="color:var(--muted2)" onclick="announceShipment('${s.id}')">📢 Update Announcement</button>
-        </div>
-        <div class="shipment-orders-panel" id="sop-${s.id}">
-          ${renderShipmentOrderTable(sOrders)}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderShipmentOrderTable(orders) {
-  if (!orders.length) return '<div style="font-size:0.75rem;color:var(--muted);padding:0.8rem 0">No orders assigned to this shipment yet.</div>';
-  return `<table class="tbl" style="margin-top:0.8rem">
-    <thead><tr><th>Order #</th><th>Customer</th><th>City</th><th>Total</th><th>Status</th></tr></thead>
-    <tbody>${orders.map(o => {
-      const ord = allOrders.find(a => a._id === o.id);
-      if (!ord) return '';
-      return `<tr>
-        <td style="font-size:0.72rem;font-weight:600">${ord.OrderNum||'—'}</td>
-        <td style="font-size:0.78rem">${ord.Name||''}</td>
-        <td style="font-size:0.75rem">${ord.City||''}</td>
-        <td style="font-weight:600;font-size:0.78rem">${ord.Total||''}</td>
-        <td><span class="badge ${statusClass(ord.Status)}">${ord.Status||''}</span></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
-}
-
-function toggleShipmentOrders(id) {
-  const panel = document.getElementById('sop-' + id);
-  if (panel) panel.classList.toggle('open');
-}
-
-async function setShipmentStatus(id, status) {
-  if (!_supa) return;
-  const { error } = await _supa.from('shipments').update({ status }).eq('id', id);
-  if (error) { toast('❌ ' + error.message); return; }
-  const shipment = allShipments.find(s => s.id === id);
-  if (shipment && ['open','in_transit','arrived'].includes(status)) {
-    syncShipmentAnnouncement({ ...shipment, status, show: true });
-  }
-  if (status === 'complete') {
-    // Clear announcement if this was the active one
-    try {
-      const sa = JSON.parse(localStorage.getItem('gb_shipment_active') || '{}');
-      if (sa.id === id) localStorage.removeItem('gb_shipment_active');
-    } catch(e) {}
-  }
-  const statusMsg = { closed:'Orders closed for this batch', in_transit:'Marked as items ordered from USA', arrived:'Marked as arrived — start fulfilling orders', complete:'Batch complete' };
-  toast('✅ ' + (statusMsg[status] || status));
-  loadShipments();
-}
-
-async function assignUnassignedOrders(shipmentId) {
-  if (!_supa) return;
-  const { error } = await _supa.from('orders')
-    .update({ shipment_id: shipmentId })
-    .is('shipment_id', null)
-    .not('status', 'in', '("delivered","cancelled")');
-  if (error) { toast('❌ ' + error.message); return; }
-  toast('✅ All unassigned orders assigned to shipment');
-  loadShipments();
-  // Refresh orders tab data too if it's been loaded
-  if (allOrders.length) loadOrders(true);
-}
-
-function announceShipment(id) {
-  const s = allShipments.find(x => x.id === id);
-  if (!s) return;
-  syncShipmentAnnouncement({ ...s, show: true });
-  toast('✅ Announcement updated — visible on shop page');
-}
-
-function syncShipmentAnnouncement(s) {
-  try {
-    localStorage.setItem('gb_shipment_active', JSON.stringify({
-      id: s.id, name: s.name,
-      cutoff_date: s.cutoff_date, arrival_date: s.arrival_date,
-      status: s.status, show: s.show !== false
-    }));
-  } catch(e) {}
-}
 
 // ── IMPORT ──
 let _importParsed = [];
