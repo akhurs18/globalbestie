@@ -155,17 +155,14 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .testi-quote{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:#E0CCCE;line-height:1.75;margin-bottom:1.2rem}
 .testi-author{font-size:0.65rem;font-weight:500;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
 
-/* ── POLICY ── */
-.policy-section{background:var(--ink2);padding:4.5rem 2rem}
-.policy-inner{max-width:1100px;margin:0 auto}
-.policy-title{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.9rem;font-weight:400;text-align:center;margin-bottom:0.4rem;letter-spacing:0.3px}
-.policy-title span{color:var(--pink-mid);font-style:italic}
-.policy-title-sub{font-size:0.72rem;color:#4A3A3C;text-align:center;margin-bottom:2rem;letter-spacing:0.5px}
-.policy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;background:transparent}
-.policy-card{background:#1E1318;padding:1.5rem 1.6rem;box-shadow:0 2px 12px rgba(0,0,0,0.15)}
-.policy-card h4{color:var(--pink);font-size:0.72rem;font-weight:500;margin-bottom:0.5rem;letter-spacing:0.3px}
-.policy-card p{color:#5A4A4C;font-size:0.72rem;line-height:1.7}
-.policy-card p b{color:#A88090;font-weight:500}
+/* ── POLICY STRIP ── */
+.policy-strip{background:var(--ink2);padding:1rem 2rem;border-top:1px solid rgba(196,82,90,0.15)}
+.policy-strip-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap}
+.policy-strip-item{font-size:0.65rem;color:#7A6668;letter-spacing:0.5px;white-space:nowrap}
+.policy-strip-item b{color:#A88090;font-weight:500}
+.policy-strip-sep{color:#3A2830;font-size:0.6rem}
+.policy-strip-link{font-size:0.62rem;color:var(--pink-mid);letter-spacing:1px;text-transform:uppercase;font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none;border-bottom:1px solid transparent;transition:border-color 0.2s}
+.policy-strip-link:hover{border-bottom-color:var(--pink-mid)}
 
 /* ── HOW IT WORKS ── */
 .hiw{background:var(--bg2);padding:4rem 2rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -504,19 +501,18 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   </div>
 </div>
 
-<!-- POLICY -->
-<div class="policy-section" id="policySection">
-  <div class="policy-inner">
-    <div class="policy-title">Our <span>Preorder Policy</span></div>
-    <div class="policy-title-sub">Please read before placing your order — we want no surprises.</div>
-    <div class="policy-grid">
-      <div class="policy-card"><h4>50% Advance Required</h4><p>Pay <b>50% of the total</b> to confirm your order. Remaining 50% due before dispatch.</p></div>
-      <div class="policy-card"><h4>4 Weeks Delivery</h4><p>Preorder delivery takes approximately <b>4 weeks</b> from order confirmation.</p></div>
-      <div class="policy-card"><h4>Shoes Without Box</h4><p>Shoes are shipped without the original box by default to keep costs low for you.</p></div>
-      <div class="policy-card"><h4>Fixed Prices</h4><p>All prices are <b>fixed</b>. No discounts. Prices include all taxes, customs &amp; shipping.</p></div>
-      <div class="policy-card"><h4>No Google Rates</h4><p>We cannot provide Google conversion prices. Our prices are final — please understand.</p></div>
-      <div class="policy-card"><h4>Third-Party Courier</h4><p>Courier companies are <b>not under our control</b>. Dispatch does not mean immediate delivery.</p></div>
-    </div>
+<!-- POLICY STRIP -->
+<div class="policy-strip">
+  <div class="policy-strip-inner">
+    <span class="policy-strip-item"><b>50% advance</b> to confirm</span>
+    <span class="policy-strip-sep">·</span>
+    <span class="policy-strip-item"><b>~4 weeks</b> delivery</span>
+    <span class="policy-strip-sep">·</span>
+    <span class="policy-strip-item"><b>Fixed prices</b> — no discounts</span>
+    <span class="policy-strip-sep">·</span>
+    <span class="policy-strip-item">All taxes &amp; shipping included</span>
+    <span class="policy-strip-sep">·</span>
+    <a class="policy-strip-link" href="policy.html">Full Policy →</a>
   </div>
 </div>
 
