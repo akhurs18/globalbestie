@@ -221,6 +221,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .pd-img-preview img{width:100%;height:100%;object-fit:cover}
 .pd-img-emoji{font-size:3rem;opacity:0.6}
 .pd-upload-row{display:flex;gap:0.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1.1rem}
+/* Extra images + color variant editor */
+.pd-img-extra-row{display:flex;gap:6px;align-items:center}
+.pd-extra-thumb{width:40px;height:40px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.pd-color-row{display:flex;gap:6px;align-items:center;padding:4px 0}
+.pd-color-swatch-preview{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;cursor:default}
 .pd-img-url{flex:1;min-width:160px;padding:0.45rem 0.75rem;border:1px solid var(--border);font-family:'Inter',sans-serif;font-size:0.78rem;color:var(--ink);background:var(--bg);border-radius:0}
 .pd-img-url:focus{outline:none;border-color:var(--gold);background:#fff}
 .modal-box.wide{max-width:560px}
@@ -323,9 +328,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .pay-verified{font-size:0.62rem;color:var(--sage);font-weight:600;letter-spacing:0.3px}
 .pay-unverified{font-size:0.62rem;color:var(--rose);font-weight:600;letter-spacing:0.3px;cursor:pointer}
 .pay-unverified:hover{text-decoration:underline}
-/* Sale toggle button */
+/* Sale / Outlet toggle buttons */
 .stock-toggle{font-size:0.62rem;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:3px 10px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all 0.15s}
 .stock-toggle.sale-on{background:var(--rose-light);border-color:var(--rose);color:var(--rose)}
+.stock-toggle.outlet-on{background:#FFF4E0;border-color:#B07D2A;color:#8A6020}
 
 /* ── PACKED QUEUE BANNER ── */
 .packed-queue-banner{display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:0.85rem 1.2rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
@@ -803,71 +809,44 @@ function doPost(e) {
               <div style="font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:3px">Create 3 email templates</div>
               <div style="font-size:0.73rem;color:var(--muted);line-height:1.65;margin-bottom:0.8rem">In EmailJS → <b>Email Templates</b> → Create New Template. Use the plain-text bodies below, or use the HTML versions from the setup guide. Set <b>To Email</b> to <code style="background:#f0f0f0;padding:1px 4px">{{to_email}}</code> on each.</div>
 
+              <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:0.8rem;background:var(--bg2);border:1px solid var(--border);padding:0.7rem 0.9rem">
+                These are <b>HTML email templates</b>. In EmailJS → Email Templates → select your template → click the <b>"&lt;/&gt; Code"</b> tab → paste the HTML below into the body. Set subject &amp; To Email (<code style="background:#f0f0f0;padding:1px 4px">{{to_email}}</code>) in the settings tab.
+              </div>
+
               <!-- Order confirmation template -->
               <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem;margin-bottom:0.6rem">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 1 — Order Confirmation</span>
-                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('confirm-tpl')">Copy</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
+                  <div>
+                    <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 1 — Order Confirmation</span>
+                    <span style="font-size:0.62rem;color:var(--muted);margin-left:8px">Subject: <i>Your Global Bestie Order is Confirmed ✓ — #{{order_number}}</i></span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px;flex-shrink:0" onclick="copyTemplateText('confirm-tpl')">Copy HTML</button>
                 </div>
-                <pre id="confirm-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: Your Global Bestie Order is Confirmed ✓ — #{{order_number}}
-
-Hi {{customer_name}},
-
-Thank you for your order! We've received it and will confirm within 2 hours once payment is verified.
-
-Order #: {{order_number}}
-
-Items:
-{{order_items}}
-
-Order Total: {{order_total}}
-Amount Due Now: {{pay_now}}
-
-Track your order:
-https://globalbestiepk.com/track.html?order={{order_number}}
-
-— Global Bestie 🛍️</pre>
+                <textarea id="confirm-tpl" readonly style="width:100%;height:120px;font-size:0.67rem;color:var(--ink3);line-height:1.5;font-family:monospace;background:#fff;border:1px solid var(--border);padding:8px;resize:vertical;box-sizing:border-box"><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#F5F0EB;font-family:Georgia,serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0EB;padding:40px 20px"><tr><td align="center"><table width="580" cellpadding="0" cellspacing="0" style="background:#FFFFFF;max-width:580px;width:100%"><tr><td style="background:#1A1412;padding:28px 40px;text-align:center"><div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#FFFFFF;letter-spacing:3px;text-transform:uppercase">GLOBAL BESTIE</div><div style="font-size:11px;color:#B5365A;letter-spacing:2px;text-transform:uppercase;margin-top:5px">USA · Authentic · Pakistan</div></td></tr><tr><td style="background:#B5365A;height:3px;font-size:1px">&nbsp;</td></tr><tr><td style="padding:36px 40px"><div style="font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#B5365A;margin-bottom:10px">Order Confirmed</div><div style="font-size:22px;color:#1A1412;font-family:Georgia,serif;margin-bottom:18px">Thank you, {{customer_name}} ✓</div><div style="font-size:14px;color:#5C5050;line-height:1.8;margin-bottom:24px">We've received your order and will confirm within <strong>2 hours</strong> once payment is verified.</div><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px"><tr><td style="background:#FAF7F4;border:1px solid #E8DDD8;padding:16px 20px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9E8A8A;margin-bottom:4px">Order Reference</div><div style="font-size:20px;font-family:Georgia,serif;color:#1A1412">#{{order_number}}</div></td></tr></table><div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#9E8A8A;margin-bottom:8px;border-bottom:1px solid #E8DDD8;padding-bottom:8px">Your Items</div><div style="font-size:14px;color:#3A2E2E;line-height:2;margin-bottom:20px;white-space:pre-line">{{order_items}}</div><table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8DDD8;margin-bottom:28px"><tr><td style="padding:10px 0;font-size:13px;color:#5C5050">Order Total</td><td style="padding:10px 0;font-size:13px;color:#1A1412;font-weight:600;text-align:right">{{order_total}}</td></tr><tr><td style="padding:10px 0;font-size:13px;color:#5C5050;border-top:1px solid #E8DDD8">Amount Due Now</td><td style="padding:10px 0;font-size:16px;color:#B5365A;font-weight:700;text-align:right;border-top:1px solid #E8DDD8">{{pay_now}}</td></tr></table><table cellpadding="0" cellspacing="0" style="margin-bottom:28px"><tr><td style="background:#1A1412;padding:13px 30px"><a href="https://globalbestiepk.com/track.html?order={{order_number}}" style="color:#FFFFFF;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-decoration:none">Track My Order →</a></td></tr></table><div style="font-size:13px;color:#9E8A8A;line-height:1.8">Questions? WhatsApp us anytime — we're here for you.</div></td></tr><tr><td style="background:#FAF7F4;border-top:1px solid #E8DDD8;padding:20px 40px;text-align:center"><div style="font-size:11px;color:#9E8A8A;letter-spacing:0.5px">© Global Bestie · Authentic American Brands · Delivered to Pakistan</div></td></tr></table></td></tr></table></body></html></textarea>
               </div>
 
               <!-- Shipping template -->
               <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem;margin-bottom:0.6rem">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 2 — Shipping Notification</span>
-                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('ship-tpl')">Copy</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
+                  <div>
+                    <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 2 — Shipping Notification</span>
+                    <span style="font-size:0.62rem;color:var(--muted);margin-left:8px">Subject: <i>Your Global Bestie order is on its way! ✈️</i></span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px;flex-shrink:0" onclick="copyTemplateText('ship-tpl')">Copy HTML</button>
                 </div>
-                <pre id="ship-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: Your Global Bestie order is on its way! ✈️
-
-Hi {{customer_name}},
-
-Great news — your order {{order_number}} has been shipped!
-
-{{message}}
-
-Track your order:
-https://globalbestiepk.com/track.html?order={{order_number}}
-
-Questions? WhatsApp us any time.
-
-— Global Bestie 🛍️</pre>
+                <textarea id="ship-tpl" readonly style="width:100%;height:120px;font-size:0.67rem;color:var(--ink3);line-height:1.5;font-family:monospace;background:#fff;border:1px solid var(--border);padding:8px;resize:vertical;box-sizing:border-box"><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#F5F0EB;font-family:Georgia,serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0EB;padding:40px 20px"><tr><td align="center"><table width="580" cellpadding="0" cellspacing="0" style="background:#FFFFFF;max-width:580px;width:100%"><tr><td style="background:#1A1412;padding:28px 40px;text-align:center"><div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#FFFFFF;letter-spacing:3px;text-transform:uppercase">GLOBAL BESTIE</div><div style="font-size:11px;color:#B5365A;letter-spacing:2px;text-transform:uppercase;margin-top:5px">USA · Authentic · Pakistan</div></td></tr><tr><td style="background:#B5365A;height:3px;font-size:1px">&nbsp;</td></tr><tr><td style="padding:36px 40px"><div style="font-size:11px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:#B5365A;margin-bottom:10px">Your Order is On Its Way</div><div style="font-size:22px;color:#1A1412;font-family:Georgia,serif;margin-bottom:20px">It's shipped, {{customer_name}}! ✈️</div><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px"><tr><td style="background:#FAF7F4;border:1px solid #E8DDD8;padding:16px 20px"><div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9E8A8A;margin-bottom:4px">Order Reference</div><div style="font-size:20px;font-family:Georgia,serif;color:#1A1412">#{{order_number}}</div></td></tr></table><div style="font-size:14px;color:#5C5050;line-height:1.9;margin-bottom:28px;white-space:pre-line">{{message}}</div><table cellpadding="0" cellspacing="0" style="margin-bottom:28px"><tr><td style="background:#1A1412;padding:13px 30px"><a href="https://globalbestiepk.com/track.html?order={{order_number}}" style="color:#FFFFFF;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-decoration:none">Track My Order →</a></td></tr></table><div style="font-size:13px;color:#9E8A8A;line-height:1.8">Questions? WhatsApp us anytime — we're here for you.</div></td></tr><tr><td style="background:#FAF7F4;border-top:1px solid #E8DDD8;padding:20px 40px;text-align:center"><div style="font-size:11px;color:#9E8A8A;letter-spacing:0.5px">© Global Bestie · Authentic American Brands · Delivered to Pakistan</div></td></tr></table></td></tr></table></body></html></textarea>
               </div>
 
               <!-- Promo template -->
               <div style="background:var(--bg2);border:1px solid var(--border);padding:0.9rem 1rem">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
-                  <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 3 — Promo Blast</span>
-                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px" onclick="copyTemplateText('promo-tpl')">Copy</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem">
+                  <div>
+                    <span style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink)">Template 3 — Promo Blast</span>
+                    <span style="font-size:0.62rem;color:var(--muted);margin-left:8px">Subject: <i>{{subject}}</i></span>
+                  </div>
+                  <button class="btn btn-ghost btn-sm" style="font-size:0.58rem;padding:2px 8px;flex-shrink:0" onclick="copyTemplateText('promo-tpl')">Copy HTML</button>
                 </div>
-                <pre id="promo-tpl" style="font-size:0.7rem;color:var(--ink3);line-height:1.7;white-space:pre-wrap;font-family:monospace;margin:0">Subject: {{subject}}
-
-Hi {{customer_name}},
-
-{{message}}
-
-{{promo_code}}
-
-Shop now → https://globalbestiepk.com/products.html
-
-— Global Bestie 🛍️</pre>
+                <textarea id="promo-tpl" readonly style="width:100%;height:120px;font-size:0.67rem;color:var(--ink3);line-height:1.5;font-family:monospace;background:#fff;border:1px solid var(--border);padding:8px;resize:vertical;box-sizing:border-box"><!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#F5F0EB;font-family:Georgia,serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F0EB;padding:40px 20px"><tr><td align="center"><table width="580" cellpadding="0" cellspacing="0" style="background:#FFFFFF;max-width:580px;width:100%"><tr><td style="background:#1A1412;padding:28px 40px;text-align:center"><div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#FFFFFF;letter-spacing:3px;text-transform:uppercase">GLOBAL BESTIE</div><div style="font-size:11px;color:#B5365A;letter-spacing:2px;text-transform:uppercase;margin-top:5px">USA · Authentic · Pakistan</div></td></tr><tr><td style="background:#B5365A;height:3px;font-size:1px">&nbsp;</td></tr><tr><td style="padding:36px 40px"><div style="font-size:22px;color:#1A1412;font-family:Georgia,serif;margin-bottom:20px">Hi {{customer_name}},</div><div style="font-size:14px;color:#5C5050;line-height:1.9;margin-bottom:28px;white-space:pre-line">{{message}}</div><table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px"><tr><td style="background:#1A1412;padding:22px;text-align:center"><div style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#9E8A8A;margin-bottom:8px">Your Exclusive Code</div><div style="font-size:24px;font-family:Georgia,serif;color:#B5365A;letter-spacing:5px">{{promo_code}}</div></td></tr></table><table cellpadding="0" cellspacing="0" style="margin-bottom:28px"><tr><td style="background:#B5365A;padding:13px 30px"><a href="https://globalbestiepk.com/products.html" style="color:#FFFFFF;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;text-decoration:none">Shop Now →</a></td></tr></table><div style="font-size:12px;color:#9E8A8A;line-height:1.8">Questions? WhatsApp us anytime.</div></td></tr><tr><td style="background:#FAF7F4;border-top:1px solid #E8DDD8;padding:20px 40px;text-align:center"><div style="font-size:11px;color:#9E8A8A;letter-spacing:0.5px">© Global Bestie · Authentic American Brands · Delivered to Pakistan</div><div style="font-size:10px;color:#C0B5B5;margin-top:4px">You're receiving this because you're a Global Bestie customer.</div></td></tr></table></td></tr></table></body></html></textarea>
               </div>
               <div style="font-size:0.65rem;color:var(--muted);margin-top:0.5rem">Note the Template ID shown in EmailJS after saving (e.g. <code style="background:#f0f0f0;padding:1px 5px">template_abc123</code>)</div>
             </div>
@@ -948,6 +927,32 @@ Shop now → https://globalbestiepk.com/products.html
               <label class="form-label">New Password</label>
               <input class="form-input" type="password" id="new-pass" placeholder="••••••••">
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDER FEES -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Order Fees</span></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Delivery Fee (PKR)</label>
+              <input class="form-input" type="number" id="delivery-fee" placeholder="500" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Free Delivery Threshold (PKR)</label>
+              <input class="form-input" type="number" id="free-delivery-threshold" placeholder="20000" min="0">
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:4px">Orders at or above this total get free delivery</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Shoe Box Add-on Fee (PKR)</label>
+              <input class="form-input" type="number" id="shoe-box-fee" placeholder="2500" min="0">
+              <div style="font-size:0.68rem;color:var(--muted);margin-top:4px">Shown as optional checkbox on shoes &amp; sandals in the cart</div>
+            </div>
+            <div class="form-group"></div>
           </div>
         </div>
       </div>
@@ -1084,14 +1089,134 @@ Shop now → https://globalbestiepk.com/products.html
         <div class="page-sub">Edit text on About, FAQ, Contact and Policy pages. Changes take effect immediately on same browser (localStorage). <span style="color:var(--sienna)">Note: pages must be served from the same origin (not bare file://) to share storage.</span></div>
       </div>
       <div class="content-tabs">
-        <button class="content-tab-btn active" onclick="showContentTab('about',this)">About</button>
+        <button class="content-tab-btn active" onclick="showContentTab('home',this)">Home Page</button>
+        <button class="content-tab-btn" onclick="showContentTab('about',this)">About</button>
         <button class="content-tab-btn" onclick="showContentTab('faq',this)">FAQ</button>
         <button class="content-tab-btn" onclick="showContentTab('contact',this)">Contact</button>
         <button class="content-tab-btn" onclick="showContentTab('policy',this)">Policy</button>
       </div>
 
+      <!-- HOME panel -->
+      <div class="content-panel active" id="cpanel-home">
+        <div class="content-panel-head">
+          <span id="cbadge-home" class="badge-default">Using Defaults</span>
+          <div style="display:flex;gap:0.6rem">
+            <button class="btn btn-ghost btn-sm" onclick="resetContent('home')">Reset to Defaults</button>
+            <button class="btn btn-dark btn-sm" onclick="saveContent('home')">Save Home Page</button>
+          </div>
+        </div>
+
+        <!-- Batch Announcement -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Batch Announcement Bar</span>
+            <span style="font-size:0.68rem;color:var(--muted2)">Shown below the nav on the home page</span>
+          </div>
+          <div class="card-body">
+            <div class="form-group" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.78rem;font-weight:500;color:var(--ink)">
+                <input type="checkbox" id="ch-batch-active" style="accent-color:var(--sage);width:15px;height:15px">
+                Show announcement bar to visitors
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Announcement Text <span style="color:var(--muted2)">(HTML allowed — use &lt;b&gt; for bold, e.g. "Next batch arriving &lt;b&gt;15 May 2026&lt;/b&gt;")</span></label>
+              <input class="form-input" type="text" id="ch-batch-text" placeholder="Next batch arriving 15 May 2026 — order by 1 May to be included">
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Section -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Hero Section</span></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Tag Line (small text above headline)</label><input class="form-input" type="text" id="ch-hero-tag" placeholder="USA · Authentic · Delivered to Pakistan"></div>
+            <div class="form-group"><label class="form-label">Subtext (paragraph below headline)</label><textarea class="form-input" id="ch-hero-sub" rows="3" style="resize:vertical"></textarea></div>
+          </div>
+        </div>
+
+        <!-- Preorder Banner -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Preorder Banner ("Note from your bestie")</span></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-pre-title" placeholder="A note from your bestie"></div>
+            <div class="form-group"><label class="form-label">Body Text <span style="color:var(--muted2)">(HTML allowed)</span></label><textarea class="form-input" id="ch-pre-text" rows="3" style="resize:vertical"></textarea></div>
+          </div>
+        </div>
+
+        <!-- Testimonials -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Testimonials</span></div>
+          <div class="card-body">
+            <div style="padding:0.7rem 0;">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Review 1</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Quote (without quotes)</label><textarea class="form-input" id="ch-testi1-q" rows="2" style="resize:vertical"></textarea></div>
+                <div class="form-group"><label class="form-label">Author</label><input class="form-input" type="text" id="ch-testi1-a" placeholder="Name · City"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Review 2</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Quote (without quotes)</label><textarea class="form-input" id="ch-testi2-q" rows="2" style="resize:vertical"></textarea></div>
+                <div class="form-group"><label class="form-label">Author</label><input class="form-input" type="text" id="ch-testi2-a" placeholder="Name · City"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Review 3</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Quote (without quotes)</label><textarea class="form-input" id="ch-testi3-q" rows="2" style="resize:vertical"></textarea></div>
+                <div class="form-group"><label class="form-label">Author</label><input class="form-input" type="text" id="ch-testi3-a" placeholder="Name · City"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">How It Works — 5 Steps</span></div>
+          <div class="card-body">
+            <div style="padding:0.7rem 0;">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 1</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-hiw1-t" placeholder="Step 1 title"></div>
+                <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw1-d" placeholder="Short description"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 2</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-hiw2-t" placeholder="Step 2 title"></div>
+                <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw2-d" placeholder="Short description"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 3</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-hiw3-t" placeholder="Step 3 title"></div>
+                <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw3-d" placeholder="Short description"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 4</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-hiw4-t" placeholder="Step 4 title"></div>
+                <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw4-d" placeholder="Short description"></div>
+              </div>
+            </div>
+            <div style="padding:0.7rem 0;border-top:1px solid var(--border)">
+              <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 5</div>
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-hiw5-t" placeholder="Step 5 title"></div>
+                <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw5-d" placeholder="Short description"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ABOUT panel -->
-      <div class="content-panel active" id="cpanel-about">
+      <div class="content-panel" id="cpanel-about">
         <div class="content-panel-head">
           <span id="cbadge-about" class="badge-default">Using Defaults</span>
           <div style="display:flex;gap:0.6rem">
@@ -1419,6 +1544,27 @@ Shop now → https://globalbestiepk.com/products.html
         <span id="pd-ai-status" style="font-size:0.72rem;color:var(--muted)"></span>
       </div>
 
+      <!-- Additional Images -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Additional Images
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — shown as a gallery in the product page</span>
+        </div>
+        <div id="pd-extra-images" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="pdAddImage()">+ Add Image URL</button>
+      </div>
+
+      <!-- Color Variants -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Color Variants
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — shown as swatches; click a swatch to swap the image</span>
+        </div>
+        <div style="font-size:0.63rem;color:var(--muted);margin-bottom:8px">Name · Hex color · Optional per-color image URL</div>
+        <div id="pd-colors" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="pdAddColor()">+ Add Color</button>
+      </div>
+
       <div style="display:flex;gap:0.7rem">
         <button class="btn btn-dark" onclick="saveProdDetails()">Save Details</button>
         <button class="btn btn-ghost" onclick="closeModal('prod-details-modal')">Cancel</button>
@@ -1638,6 +1784,9 @@ function loadSettings() {
   document.getElementById('ejs-ship-template').value = s.ejsShipTemplate || '';
   document.getElementById('ejs-promo-template').value = s.ejsPromoTemplate || '';
   document.getElementById('anthropic-key').value = s.anthropicKey || '';
+  document.getElementById('delivery-fee').value = s.deliveryFee !== undefined ? s.deliveryFee : 500;
+  document.getElementById('free-delivery-threshold').value = s.freeDeliveryThreshold !== undefined ? s.freeDeliveryThreshold : 20000;
+  document.getElementById('shoe-box-fee').value = s.shoeBoxFee !== undefined ? s.shoeBoxFee : 2500;
   if (s.ejsKey) emailjs.init(s.ejsKey);
 }
 
@@ -1680,7 +1829,10 @@ function saveSettings() {
     ejsConfirmTemplate: document.getElementById('ejs-confirm-template').value.trim(),
     ejsShipTemplate: document.getElementById('ejs-ship-template').value.trim(),
     ejsPromoTemplate: document.getElementById('ejs-promo-template').value.trim(),
-    anthropicKey: document.getElementById('anthropic-key').value.trim()
+    anthropicKey: document.getElementById('anthropic-key').value.trim(),
+    deliveryFee: parseInt(document.getElementById('delivery-fee').value) || 500,
+    freeDeliveryThreshold: parseInt(document.getElementById('free-delivery-threshold').value) || 20000,
+    shoeBoxFee: parseInt(document.getElementById('shoe-box-fee').value) || 2500
   };
   localStorage.setItem('gb_settings', JSON.stringify(s));
   if (s.ejsKey) emailjs.init(s.ejsKey);
@@ -2397,7 +2549,10 @@ async function loadProductsFromSheet() {
           id: p.id, gender: p.gender, cat: p.cat, name: p.name, brand: p.brand || '',
           pkr: p.pkr || 0, inStock: p.in_stock, description: p.description || '', image: p.image || '',
           qty: p.qty || 0, sku: p.sku || '', cost: p.cost || 0, lowStockThreshold: p.low_stock_threshold || 3,
-          on_sale: p.on_sale || false, sale_price: p.sale_price || null
+          on_sale: p.on_sale || false, sale_price: p.sale_price || null,
+          is_outlet: p.is_outlet || false,
+          images: Array.isArray(p.images) ? p.images : [],
+          colors: Array.isArray(p.colors) ? p.colors : []
         }));
         localStorage.setItem('gb_products', JSON.stringify(products));
         renderProducts();
@@ -2571,6 +2726,10 @@ function productRow(p) {
       <button class="stock-toggle${p.on_sale ? ' sale-on' : ''}" id="sale-toggle-${p.id}" onclick="toggleSale(${p.id})">${p.on_sale ? 'On Sale' : 'Off'}</button>
     </div>
     <div>
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">Outlet</div>
+      <button class="stock-toggle${p.is_outlet ? ' outlet-on' : ''}" id="outlet-toggle-${p.id}" onclick="toggleOutlet(${p.id})">${p.is_outlet ? 'Outlet' : 'Off'}</button>
+    </div>
+    <div>
       <div style="font-size:0.68rem;color:var(--muted);margin-bottom:6px">Stock Status</div>
       <button class="toggle ${p.inStock ? 'on' : ''}" id="toggle-${p.id}" onclick="toggleStock(${p.id})"></button>
       <div style="font-size:0.7rem;margin-top:4px" id="stock-label-${p.id}">${p.inStock ? '<span style="color:var(--green)">In Stock</span>' : '<span style="color:var(--amber)">Preorder</span>'}</div>
@@ -2626,6 +2785,20 @@ async function toggleSale(id) {
   if (btn) { btn.textContent = newVal ? 'On Sale' : 'Off'; btn.className = 'stock-toggle' + (newVal ? ' sale-on' : ''); }
   if (input) { input.style.borderColor = newVal ? 'var(--rose)' : ''; input.style.color = newVal ? 'var(--rose)' : ''; input.style.opacity = newVal ? '1' : '0.5'; }
   toast(newVal ? '🏷 Sale activated' : 'Sale turned off');
+}
+
+async function toggleOutlet(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const newVal = !p.is_outlet;
+  if (_supa) {
+    const { error } = await _supa.from('products').update({ is_outlet: newVal }).eq('id', id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  p.is_outlet = newVal;
+  const btn = document.getElementById('outlet-toggle-' + id);
+  if (btn) { btn.textContent = newVal ? 'Outlet' : 'Off'; btn.className = 'stock-toggle' + (newVal ? ' outlet-on' : ''); }
+  toast(newVal ? '🏬 Marked as Outlet' : 'Removed from Outlet');
 }
 
 async function deleteProduct(id) {
@@ -3095,6 +3268,16 @@ function openProdDetails(id) {
     emojiEl.style.display = '';
   }
 
+  // Extra images
+  const imgsContainer = document.getElementById('pd-extra-images');
+  imgsContainer.innerHTML = '';
+  (p.images || []).forEach(url => pdAddImage(url));
+
+  // Color variants
+  const colorsContainer = document.getElementById('pd-colors');
+  colorsContainer.innerHTML = '';
+  (p.colors || []).forEach(c => pdAddColor(c.name || '', c.hex || '', c.image || ''));
+
   document.getElementById('prod-details-modal').classList.add('open');
 }
 
@@ -3148,6 +3331,51 @@ function clearPdImage() {
   document.getElementById('pd-img-url').value = '';
 }
 
+function pdAddImage(url='') {
+  const container = document.getElementById('pd-extra-images');
+  const row = document.createElement('div');
+  row.className = 'pd-img-extra-row';
+  const thumb = document.createElement('img');
+  thumb.className = 'pd-extra-thumb';
+  thumb.src = url || '';
+  thumb.style.display = url ? 'block' : 'none';
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'pd-img-url'; input.value = url;
+  input.placeholder = 'https://... image URL';
+  input.style.flex = '1';
+  input.addEventListener('input', () => { thumb.src = input.value; thumb.style.display = input.value ? 'block' : 'none'; });
+  const rm = document.createElement('button');
+  rm.className = 'btn btn-ghost btn-sm'; rm.textContent = '✕'; rm.title = 'Remove';
+  rm.onclick = () => row.remove();
+  row.appendChild(thumb); row.appendChild(input); row.appendChild(rm);
+  container.appendChild(row);
+}
+
+function pdAddColor(name='', hex='', img='') {
+  const container = document.getElementById('pd-colors');
+  const row = document.createElement('div');
+  row.className = 'pd-color-row';
+  const swatch = document.createElement('div');
+  swatch.className = 'pd-color-swatch-preview';
+  swatch.style.background = hex || '#cccccc';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.className = 'form-input'; nameInput.value = name;
+  nameInput.placeholder = 'Color name (e.g. Pillow Talk)'; nameInput.style.cssText = 'flex:2;font-size:0.75rem';
+  const hexInput = document.createElement('input');
+  hexInput.type = 'color'; hexInput.value = hex || '#cccccc';
+  hexInput.style.cssText = 'width:38px;height:32px;padding:2px;cursor:pointer;border:1px solid var(--border);flex-shrink:0';
+  hexInput.addEventListener('input', () => { swatch.style.background = hexInput.value; });
+  const imgInput = document.createElement('input');
+  imgInput.type = 'text'; imgInput.className = 'pd-img-url'; imgInput.value = img;
+  imgInput.placeholder = 'Image URL (optional)'; imgInput.style.cssText = 'flex:2;font-size:0.75rem';
+  const rm = document.createElement('button');
+  rm.className = 'btn btn-ghost btn-sm'; rm.textContent = '✕'; rm.title = 'Remove';
+  rm.onclick = () => row.remove();
+  row.appendChild(swatch); row.appendChild(nameInput); row.appendChild(hexInput);
+  row.appendChild(imgInput); row.appendChild(rm);
+  container.appendChild(row);
+}
+
 async function generatePdDescription() {
   const s = getSettings();
   if (!s.anthropicKey) { toast('⚠️ Add Anthropic API key in Settings first'); return; }
@@ -3187,10 +3415,21 @@ async function saveProdDetails() {
   const urlInput = document.getElementById('pd-img-url').value.trim();
   const previewImg = document.getElementById('pd-preview').querySelector('img');
   p.image = urlInput || (previewImg ? previewImg.src : '');
+
+  // Gather extra images
+  p.images = Array.from(document.querySelectorAll('#pd-extra-images .pd-img-url'))
+    .map(i => i.value.trim()).filter(Boolean);
+
+  // Gather color variants
+  p.colors = Array.from(document.querySelectorAll('#pd-colors .pd-color-row')).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { name: (inputs[0]?.value||'').trim(), hex: inputs[1]?.value||'', image: (inputs[2]?.value||'').trim() };
+  }).filter(c => c.name);
+
   localStorage.setItem('gb_products', JSON.stringify(products));
   if (_supa) {
     const { error } = await _supa.from('products')
-      .update({ description: p.description, image: p.image })
+      .update({ description: p.description, image: p.image, images: p.images, colors: p.colors })
       .eq('id', p.id);
     if (error) { toast('❌ ' + error.message); return; }
     toast('✅ Details saved!');
@@ -3289,7 +3528,9 @@ function parseImportJson() {
     const key = (brand + '|' + name).toLowerCase();
     const isDupe = existingNames.has(key);
 
-    _importParsed.push({ name, brand, usd, pkr, gender, cat, desc, image, inStock, isDupe });
+    const images = Array.isArray(item.images) ? item.images : [];
+    const colors = Array.isArray(item.colors) ? item.colors : [];
+    _importParsed.push({ name, brand, usd, pkr, gender, cat, desc, image, images, colors, inStock, isDupe });
   });
 
   const dupes = _importParsed.filter(p => p.isDupe).length;
@@ -3344,7 +3585,9 @@ async function confirmImport() {
       pkr: p.pkr,
       inStock: p.inStock,
       description: p.desc,
-      image: p.image
+      image: p.image,
+      images: p.images || [],
+      colors: p.colors || []
     });
   });
   localStorage.setItem('gb_products', JSON.stringify(products));
@@ -3751,6 +3994,26 @@ function saveCategories(gender) {
 
 // ── CONTENT ──
 const CONTENT_DEFAULTS = {
+  home: {
+    batch_active: false,
+    batch_text: 'Next batch arriving <b>15 May 2026</b> — order by 1 May to be included',
+    hero_tag: 'USA · Authentic · Delivered to Pakistan',
+    hero_sub: 'Your favourite American brands — Charlotte Tilbury, Coach, Nike and more — sourced fresh from the US and delivered straight to your door. All prices in PKR. No conversion fees. No fakes. Ever.',
+    preorder_title: 'A note from your bestie',
+    preorder_text: 'Some items are available for <strong>preorder</strong>. Pay a 50% advance to lock your spot, and we\'ll ship your order with the next batch arriving in approximately <strong>4 weeks</strong>.',
+    testimonials: [
+      {quote: 'The Charlotte Tilbury blush I\'ve been hunting for — it arrived exactly as shown. No customs drama, no fake. Worth every rupee.', author: 'Mahnoor · Lahore'},
+      {quote: 'I was sceptical about ordering online but Global Bestie was so transparent throughout. WhatsApp updates every step of the way.', author: 'Zara · Karachi'},
+      {quote: 'Coach bag, 100% authentic, PKR price. I\'ve ordered three times now and every experience has been flawless.', author: 'Aisha · Islamabad'}
+    ],
+    hiw_steps: [
+      {title: 'Browse & Add to Cart', desc: 'Explore our curated US collection and add your picks to the cart.'},
+      {title: 'Checkout & Pay Advance', desc: 'Fill in your details and transfer the advance via bank transfer.'},
+      {title: 'Send Payment Screenshot', desc: 'WhatsApp us your transfer proof — we confirm your order instantly.'},
+      {title: 'We Source from the USA', desc: 'Your items are freshly sourced from US retailers and shipped to Pakistan.'},
+      {title: 'Delivered to Your Door', desc: 'We deliver to all cities across Pakistan with real-time WhatsApp updates.'}
+    ]
+  },
   about: {
     para1: "Global Bestie started with one simple frustration: why is it so hard to get real, authentic American products delivered to Pakistan? Not copies. Not knock-offs. The real thing — straight from US shelves to your door.",
     para2: "We personally source every item — from Charlotte Tilbury lipsticks to Coach bags to Nike sneakers — from US retailers. Every product goes through our hands before it reaches yours. That's our promise, and it's why we say <em>no fakes, ever.</em>",
@@ -3798,7 +4061,7 @@ const CONTENT_DEFAULTS = {
 };
 
 function initContentPage() {
-  ['about','faq','contact','policy'].forEach(p => {
+  ['home','about','faq','contact','policy'].forEach(p => {
     updateContentBadge(p);
     loadContentForm(p);
   });
@@ -3827,6 +4090,29 @@ function updateContentBadge(page) {
 function loadContentForm(page) {
   const saved = localStorage.getItem('gb_content_' + page);
   const c = saved ? JSON.parse(saved) : CONTENT_DEFAULTS[page];
+
+  if (page === 'home') {
+    document.getElementById('ch-batch-active').checked = !!c.batch_active;
+    document.getElementById('ch-batch-text').value = c.batch_text || '';
+    document.getElementById('ch-hero-tag').value = c.hero_tag || '';
+    document.getElementById('ch-hero-sub').value = c.hero_sub || '';
+    document.getElementById('ch-pre-title').value = c.preorder_title || '';
+    document.getElementById('ch-pre-text').value = c.preorder_text || '';
+    const testis = c.testimonials || CONTENT_DEFAULTS.home.testimonials;
+    testis.forEach((t,i) => {
+      const qi = document.getElementById('ch-testi'+(i+1)+'-q');
+      const ai = document.getElementById('ch-testi'+(i+1)+'-a');
+      if (qi) qi.value = t.quote || '';
+      if (ai) ai.value = t.author || '';
+    });
+    const steps = c.hiw_steps || CONTENT_DEFAULTS.home.hiw_steps;
+    steps.forEach((s,i) => {
+      const ti = document.getElementById('ch-hiw'+(i+1)+'-t');
+      const di = document.getElementById('ch-hiw'+(i+1)+'-d');
+      if (ti) ti.value = s.title || '';
+      if (di) di.value = s.desc || '';
+    });
+  }
 
   if (page === 'about') {
     document.getElementById('ca-p1').value = c.para1 || '';
@@ -3884,6 +4170,24 @@ function loadContentForm(page) {
 }
 
 function gatherContentData(page) {
+  if (page === 'home') {
+    return {
+      batch_active: document.getElementById('ch-batch-active').checked,
+      batch_text: document.getElementById('ch-batch-text').value,
+      hero_tag: document.getElementById('ch-hero-tag').value,
+      hero_sub: document.getElementById('ch-hero-sub').value,
+      preorder_title: document.getElementById('ch-pre-title').value,
+      preorder_text: document.getElementById('ch-pre-text').value,
+      testimonials: [1,2,3].map(n => ({
+        quote: (document.getElementById('ch-testi'+n+'-q')||{}).value || '',
+        author: (document.getElementById('ch-testi'+n+'-a')||{}).value || ''
+      })),
+      hiw_steps: [1,2,3,4,5].map(n => ({
+        title: (document.getElementById('ch-hiw'+n+'-t')||{}).value || '',
+        desc: (document.getElementById('ch-hiw'+n+'-d')||{}).value || ''
+      }))
+    };
+  }
   if (page === 'about') {
     return {
       para1: document.getElementById('ca-p1').value,
@@ -3936,7 +4240,7 @@ function saveContent(page) {
   const data = gatherContentData(page);
   localStorage.setItem('gb_content_' + page, JSON.stringify(data));
   updateContentBadge(page);
-  const labels = {about:'About',faq:'FAQ',contact:'Contact',policy:'Policy'};
+  const labels = {home:'Home',about:'About',faq:'FAQ',contact:'Contact',policy:'Policy'};
   toast(`✅ ${labels[page]} page content saved`);
 }
 
@@ -3944,7 +4248,7 @@ function resetContent(page) {
   localStorage.removeItem('gb_content_' + page);
   updateContentBadge(page);
   loadContentForm(page);
-  const labels = {about:'About',faq:'FAQ',contact:'Contact',policy:'Policy'};
+  const labels = {home:'Home',about:'About',faq:'FAQ',contact:'Contact',policy:'Policy'};
   toast(`↺ ${labels[page]} reset to defaults`);
 }
 
@@ -3955,7 +4259,8 @@ loadSettings();
 function copyTemplateText(elId){
   const el=document.getElementById(elId);
   if(!el)return;
-  navigator.clipboard.writeText(el.textContent.trim())
+  const text = el.tagName==='TEXTAREA' ? el.value.trim() : el.textContent.trim();
+  navigator.clipboard.writeText(text)
     .then(()=>toast('Template copied!'))
     .catch(()=>toast('Template copied!'));
 }

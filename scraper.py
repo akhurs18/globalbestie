@@ -84,7 +84,7 @@ seen = set()
 products = []
 
 def add(name, brand, usd, cat="makeup", gender="women",
-        description="", image="", in_stock=False, source=""):
+        description="", image="", images=None, colors=None, in_stock=False, source=""):
     key = f"{brand.lower().strip()}|{name.lower().strip()}"
     if key in seen or not name or not brand or usd <= 0:
         return False
@@ -98,6 +98,8 @@ def add(name, brand, usd, cat="makeup", gender="women",
         "cat":         cat,
         "description": description.strip(),
         "image":       image.strip(),
+        "images":      images or [],
+        "colors":      colors or [],
         "inStock":     in_stock,
         "source":      source,
     })
@@ -513,7 +515,176 @@ def load_curated():
     added = len(products) - n
     print(f"   ✓  Curated: +{added} products ({len(products)} total)")
 
-# ── 4. Output ─────────────────────────────────────────────────────────────────
+# ── 4. Image enrichment ───────────────────────────────────────────────────────
+
+def _sephora_image(name, brand):
+    """Try Sephora's search API for a product image URL."""
+    try:
+        q = f"{brand} {name}"
+        url = f"https://www.sephora.com/api/catalog/search?q={requests.utils.quote(q)}&currentPage=0&pageSize=3&includeContent=false"
+        r = requests.get(url, headers=HEADERS, timeout=8)
+        if r.status_code == 200:
+            data = r.json()
+            prods = (data.get("products") or data.get("data", {}).get("products") or
+                     data.get("result", {}).get("products") or [])
+            for p in prods:
+                img = (p.get("heroImage") or p.get("image") or p.get("imageUrl") or
+                       p.get("heroImageAltText") or "")
+                # heroImage on Sephora is usually a relative path
+                if img and not img.startswith("http"):
+                    img = "https://www.sephora.com" + img
+                if img and img.startswith("http"):
+                    return img
+    except Exception:
+        pass
+    return ""
+
+def _sephora_variants(name, brand):
+    """
+    Fetch additional images and color variants for a product from Sephora's search API.
+    Returns (extra_images: list[str], colors: list[dict])
+    Each color dict: {"name": str, "hex": str, "image": str}
+    """
+    try:
+        q = f"{brand} {name}"
+        url = (f"https://www.sephora.com/api/catalog/search?"
+               f"q={requests.utils.quote(q)}&currentPage=0&pageSize=3&includeContent=false")
+        r = requests.get(url, headers=HEADERS, timeout=8)
+        if r.status_code != 200:
+            return [], []
+        data = r.json()
+        prods = (data.get("products") or
+                 data.get("data", {}).get("products") or
+                 data.get("result", {}).get("products") or [])
+        if not prods:
+            return [], []
+
+        p = prods[0]
+
+        def _fix_url(u):
+            if u and isinstance(u, str):
+                return u if u.startswith("http") else "https://www.sephora.com" + u
+            return ""
+
+        # Extra images (alt angles / swatch)
+        extra_imgs = []
+        for field in ["squareImage", "altImages", "swatch", "imageUrl"]:
+            v = p.get(field, "")
+            if isinstance(v, str):
+                u = _fix_url(v)
+                if u and u not in extra_imgs:
+                    extra_imgs.append(u)
+            elif isinstance(v, list):
+                for item in v[:4]:
+                    u = _fix_url(item) if isinstance(item, str) else _fix_url(item.get("imageUrl", ""))
+                    if u and u not in extra_imgs:
+                        extra_imgs.append(u)
+
+        # Color variants from skus array
+        colors = []
+        skus = p.get("skus") or p.get("regularChildSkus") or p.get("currentSku") or []
+        if isinstance(skus, dict):
+            skus = [skus]
+        for sku in (skus or [])[:15]:
+            cname = (sku.get("skuExtension") or sku.get("variationType") or
+                     sku.get("skuShade") or sku.get("displayName") or "").strip()
+            hex_c = sku.get("hexCode") or sku.get("skuSwatchColorCode") or ""
+            sku_img = ""
+            sku_imgs = sku.get("skuImages") or sku.get("images") or {}
+            if isinstance(sku_imgs, dict):
+                sku_img = sku_imgs.get("imageUrl") or sku_imgs.get("image") or ""
+            elif isinstance(sku_imgs, str):
+                sku_img = sku_imgs
+            sku_img = _fix_url(sku_img)
+            if cname:
+                colors.append({"name": cname, "hex": hex_c, "image": sku_img})
+
+        return extra_imgs[:4], colors[:12]
+    except Exception:
+        return [], []
+
+
+def _ddg_image(name, brand):
+    """DuckDuckGo image search fallback — returns first image URL."""
+    try:
+        q = requests.utils.quote(f"{brand} {name} product official")
+        # DDG vqd token fetch
+        r = requests.get(f"https://duckduckgo.com/?q={q}&iax=images&ia=images",
+                         headers=HEADERS, timeout=8)
+        vqd = re.search(r'vqd=([\'"])([^\'"]+)\1', r.text)
+        if not vqd:
+            vqd = re.search(r'vqd=([\d-]+)', r.text)
+            token = vqd.group(1) if vqd else None
+        else:
+            token = vqd.group(2)
+        if not token:
+            return ""
+        api = (f"https://duckduckgo.com/i.js?q={q}&vqd={token}"
+               f"&o=json&p=1&s=0&u=bing&f=,,,&l=us-en")
+        r2 = requests.get(api, headers={**HEADERS, "Referer": "https://duckduckgo.com/"},
+                          timeout=8)
+        if r2.status_code == 200:
+            results = r2.json().get("results", [])
+            for res in results[:3]:
+                img = res.get("image", "")
+                # prefer images from known brand / beauty CDNs
+                if img and any(cdn in img for cdn in ["sephora","ulta","nars","charlottetilbury",
+                                                       "benefitcosmetics","toofaced","rarebeauty",
+                                                       "fentybeauty","olaplex","tatcha","drunk",
+                                                       "cerave","laroche","moroccanoil","dyson",
+                                                       "tomford","kiehl","patmcgrath"]):
+                    return img
+            # fallback: just take first result
+            if results:
+                return results[0].get("image", "")
+    except Exception:
+        pass
+    return ""
+
+def enrich_images():
+    """Fill in missing images, extra images, and color variants for curated products."""
+    to_enrich = [p for p in products if not p.get("image") or not p.get("colors")]
+    if not to_enrich:
+        return
+    print(f"\n🖼️   Enriching {len(to_enrich)} products (images + variants)…")
+    imgs_ok = 0
+    variants_ok = 0
+    for p in to_enrich:
+        # Try Sephora API for variants + extra images
+        extra_imgs, colors = _sephora_variants(p["name"], p["brand"])
+
+        # Primary image
+        if not p.get("image"):
+            # Try main image first from _sephora_image, then DDG
+            img = _sephora_image(p["name"], p["brand"])
+            src = "sephora-api"
+            if not img:
+                img = _ddg_image(p["name"], p["brand"])
+                src = "ddg"
+            if img:
+                p["image"] = img
+                imgs_ok += 1
+                print(f"   ✓  [{src}] {p['brand']} — {p['name'][:40]}")
+            else:
+                print(f"   ○  (no image)  {p['brand']} — {p['name'][:40]}")
+        else:
+            imgs_ok += 1
+
+        # Extra images
+        if extra_imgs and not p.get("images"):
+            p["images"] = extra_imgs
+
+        # Color variants
+        if colors and not p.get("colors"):
+            p["colors"] = colors
+            variants_ok += 1
+
+        time.sleep(random.uniform(0.6, 1.4))
+
+    color_total = sum(1 for p in products if p.get("colors"))
+    print(f"   → Images: {imgs_ok}/{len(to_enrich)}  |  Products with variants: {color_total}")
+
+# ── 5. Output ─────────────────────────────────────────────────────────────────
 
 def save_output():
     # Re-assign sequential IDs
@@ -545,6 +716,9 @@ if __name__ == "__main__":
 
     # Always load curated first (instant, guaranteed)
     load_curated()
+
+    # Enrich curated products with images
+    enrich_images()
 
     # Then try live scrapers — these add more / fresher data on top
     try:

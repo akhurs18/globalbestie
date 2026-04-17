@@ -169,6 +169,16 @@ alter table products add column if not exists on_sale boolean default false;
 alter table products add column if not exists sale_price integer default null;
 create index if not exists products_on_sale_idx on products(on_sale) where on_sale = true;
 
+-- ── OUTLET ──
+alter table products add column if not exists is_outlet boolean default false;
+create index if not exists products_outlet_idx on products(is_outlet) where is_outlet = true;
+
+-- ── MULTI-IMAGE + COLOR VARIANTS ──
+-- images: JSON array of additional image URL strings e.g. ["https://...","https://..."]
+-- colors: JSON array of {name, hex, image} objects e.g. [{"name":"Pillow Talk","hex":"#E8B8C2","image":""}]
+alter table products add column if not exists images jsonb default '[]';
+alter table products add column if not exists colors jsonb default '[]';
+
 
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
