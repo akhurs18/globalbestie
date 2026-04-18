@@ -599,8 +599,8 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
       <div class="footer-logo">Global <span>Bestie</span></div>
       <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
       <div class="footer-socials">
-        <div class="footer-social" onclick="openWA('')">WhatsApp</div>
-        <div class="footer-social">Instagram</div>
+        <a class="footer-social" id="footerWaLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="footer-social" id="footerInstaLink" href="#" target="_blank" rel="noopener" style="display:none">Instagram</a>
       </div>
       <div class="footer-copy">© 2026 Global Bestie</div>
     </div>
@@ -614,17 +614,17 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
     <div class="footer-col">
       <div class="footer-col-title">Help</div>
       <a href="faq.html">FAQs</a>
-      <a onclick="showPolicy()">Shipping &amp; Policy</a>
-      <a onclick="showPolicy()">Order Policy</a>
+      <a href="policy.html">Shipping &amp; Policy</a>
+      <a href="policy.html">Order Policy</a>
       <a href="track.html">Track Order</a>
-      <a onclick="openWA('')">WhatsApp Us</a>
+      <a id="footerWaHelpLink" href="#" target="_blank" rel="noopener">WhatsApp Us</a>
     </div>
     <div class="footer-col">
       <div class="footer-col-title">About</div>
       <a href="about.html">Our Story</a>
       <a href="about.html">Authenticity Promise</a>
       <a href="contact.html">Contact Us</a>
-      <a onclick="showPolicy()">Terms &amp; Conditions</a>
+      <a href="policy.html">Terms &amp; Conditions</a>
     </div>
   </div>
   <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
@@ -1280,6 +1280,16 @@ renderCatGrid();
   try {
     var cc = JSON.parse(localStorage.getItem('gb_content_contact')||'null');
     if (cc && cc.wa_number) WA_NUMBER = cc.wa_number.replace(/\D/g,'');
+    var _waNum = WA_NUMBER.startsWith('92') ? WA_NUMBER : '92' + WA_NUMBER.replace(/^0/,'');
+    var _waUrl = 'https://wa.me/' + _waNum;
+    var _wl = document.getElementById('footerWaLink');
+    if (_wl) _wl.href = _waUrl;
+    var _whl = document.getElementById('footerWaHelpLink');
+    if (_whl) _whl.href = _waUrl;
+    if (cc && cc.instagram_url) {
+      var _il = document.getElementById('footerInstaLink');
+      if (_il) { _il.href = cc.instagram_url; _il.style.display = ''; }
+    }
   } catch(e) {}
   try {
     var cp = JSON.parse(localStorage.getItem('gb_content_policy')||'null');

@@ -1401,9 +1401,10 @@ function doPost(e) {
           </div>
         </div>
         <div class="card">
-          <div class="card-head"><span class="card-title">Contact Details</span></div>
+          <div class="card-head"><span class="card-title">Social &amp; Contact Links</span></div>
           <div class="card-body">
-            <div class="form-group"><label class="form-label">WhatsApp Number (digits only, e.g. 03214992211)</label><input class="form-input" type="text" id="cc-wa" placeholder="03214992211"></div>
+            <div class="form-group"><label class="form-label">WhatsApp Number <span style="color:var(--muted2)">(digits only, e.g. 03214992211)</span></label><input class="form-input" type="text" id="cc-wa" placeholder="03214992211"></div>
+            <div class="form-group"><label class="form-label">Instagram Profile URL</label><input class="form-input" type="text" id="cc-instagram" placeholder="https://www.instagram.com/globalbestiepk"></div>
             <div class="form-group"><label class="form-label">Email Address</label><input class="form-input" type="email" id="cc-email" placeholder="orders@globalbestiepk.com"></div>
             <div class="form-group"><label class="form-label">Business Hours</label><input class="form-input" type="text" id="cc-hours" placeholder="Mon–Sat · 10am–10pm PKT"></div>
           </div>
@@ -4417,6 +4418,7 @@ const CONTENT_DEFAULTS = {
   ]},
   contact: {
     wa_number: '03214992211',
+    instagram_url: '',
     email: 'orders@globalbestiepk.com',
     hours: 'Mon–Sat · 10am–10pm PKT'
   },
@@ -4540,6 +4542,7 @@ function loadContentForm(page) {
 
   if (page === 'contact') {
     document.getElementById('cc-wa').value = c.wa_number || '';
+    document.getElementById('cc-instagram').value = c.instagram_url || '';
     document.getElementById('cc-email').value = c.email || '';
     document.getElementById('cc-hours').value = c.hours || '';
   }
@@ -4621,6 +4624,7 @@ function gatherContentData(page) {
   if (page === 'contact') {
     return {
       wa_number: document.getElementById('cc-wa').value.trim(),
+      instagram_url: document.getElementById('cc-instagram').value.trim(),
       email: document.getElementById('cc-email').value.trim(),
       hours: document.getElementById('cc-hours').value.trim()
     };
