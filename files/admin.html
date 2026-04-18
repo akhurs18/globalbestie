@@ -202,6 +202,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .trend-pill{font-size:0.6rem;font-weight:500;padding:2px 8px;background:var(--bg2);border:1px solid var(--border);letter-spacing:0.5px;text-transform:uppercase;color:var(--muted)}
 .trend-pill.cat{color:var(--gold-dark);background:var(--gold-light);border-color:var(--border2)}
 .trend-pill.platform{color:var(--sky);background:var(--sky-light)}
+.trend-pill.platform.amazon{color:#b36b00;background:#fff8ee;border-color:#FF990055}
+.trend-pill.platform.pinterest{color:#c0001c;background:#fff0f2;border-color:#E6002355}
+.trend-pill.platform.tiktok{color:#111;background:#f5f5f5;border-color:#55555566}
 .trend-pill.reason{color:var(--sage);background:var(--sage-light)}
 .trend-pkr{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:500;color:var(--ink);margin-bottom:6px}
 .trend-usd{font-size:0.65rem;color:var(--muted2)}
@@ -1025,18 +1028,21 @@ function doPost(e) {
 
     <!-- TRENDS -->
     <div class="page" id="page-trends">
-      <div class="page-header"><div class="page-title">Trends</div><div class="page-sub">Discover and import trending USA products</div></div>
+      <div class="page-header"><div class="page-title">Trends</div><div class="page-sub">Trending products from Amazon, Pinterest &amp; TikTok</div></div>
       <div class="card" style="margin-bottom:1.2rem">
         <div class="card-head">
-          <span class="card-title">Weekly USA Trending Products</span>
+          <span class="card-title">Trending Products</span>
           <span class="trends-last-run" id="trends-last-run"></span>
         </div>
         <div class="card-body">
-          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.7">
-            AI scans trending products across US retail and beauty platforms weekly. Review the results, adjust prices if needed, tick the ones you want, and add them to your store in one click.
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+            <span style="font-size:0.75rem;font-weight:500;background:#FF9900;color:#fff;padding:3px 10px;letter-spacing:0.5px">Amazon Best Sellers</span>
+            <span style="font-size:0.75rem;font-weight:500;background:#E60023;color:#fff;padding:3px 10px;letter-spacing:0.5px">Pinterest Trending</span>
+            <span style="font-size:0.75rem;font-weight:500;background:#010101;color:#fff;padding:3px 10px;letter-spacing:0.5px">TikTok Viral</span>
+            <span style="font-size:0.73rem;color:var(--muted);margin-left:4px">AI analyses all three sources to find what's hot right now</span>
           </div>
           <div style="margin-bottom:0.8rem;font-size:0.75rem;color:var(--muted)">Filter by category:</div>
-          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.2rem">
+          <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.8rem">
             <button class="trend-cat-btn active" onclick="filterTrends('all',this)">All</button>
             <button class="trend-cat-btn" onclick="filterTrends('makeup',this)">💄 Makeup</button>
             <button class="trend-cat-btn" onclick="filterTrends('skincare',this)">🧴 Skincare</button>
@@ -1046,6 +1052,12 @@ function doPost(e) {
             <button class="trend-cat-btn" onclick="filterTrends('home',this)">🕯️ Home</button>
             <button class="trend-cat-btn" onclick="filterTrends('hair',this)">💇 Hair</button>
             <button class="trend-cat-btn" onclick="filterTrends('grooming',this)">🧼 Grooming</button>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem">
+            <button class="trend-cat-btn" id="src-all-btn" onclick="filterTrendsBySource('all',this)" style="background:var(--ink);color:#fff;border-color:var(--ink)">All Sources</button>
+            <button class="trend-cat-btn" id="src-amazon-btn" onclick="filterTrendsBySource('Amazon',this)" style="border-color:#FF9900;color:#b36b00">Amazon</button>
+            <button class="trend-cat-btn" id="src-pinterest-btn" onclick="filterTrendsBySource('Pinterest',this)" style="border-color:#E60023;color:#E60023">Pinterest</button>
+            <button class="trend-cat-btn" id="src-tiktok-btn" onclick="filterTrendsBySource('TikTok',this)" style="border-color:#555;color:#111">TikTok</button>
           </div>
           <div style="display:flex;gap:0.7rem;flex-wrap:wrap;align-items:center">
             <button class="btn btn-pink" onclick="fetchTrends()" id="fetch-btn">🔥 Fetch This Week's Trends</button>
@@ -3138,6 +3150,7 @@ function clearAllProducts() {
 let trendResults = [];
 let trendSelected = new Set();
 let trendCatFilter = 'all';
+let trendSourceFilter = 'all';
 
 const TREND_EMOJIS = {
   makeup:'💄', skincare:'🧴', bags:'👜', fashion:'👗',
@@ -3169,24 +3182,37 @@ async function fetchTrends() {
   btn.disabled = true;
   btn.textContent = '⏳ Fetching trends...';
   trendSelected.clear();
+  trendCatFilter = 'all';
+  trendSourceFilter = 'all';
+  document.querySelectorAll('.trend-cat-btn:not([id^="src-"])').forEach(b => b.classList.remove('active'));
+  const allCatBtn = document.querySelector('.trend-cat-btn:not([id^="src-"])');
+  if (allCatBtn) allCatBtn.classList.add('active');
+  document.querySelectorAll('[id^="src-"]').forEach(b => b.classList.remove('active'));
+  const srcAllBtn = document.getElementById('src-all-btn');
+  if (srcAllBtn) srcAllBtn.classList.add('active');
   updateBulkBar();
 
   document.getElementById('trends-results').innerHTML = `
     <div class="ai-loading">
       <div class="ai-spinner"></div>
-      <p>AI is scanning USA trending products...</p>
-      <div class="ai-sub">Checking TikTok Shop, Amazon, Sephora, Ulta, Target &amp; more</div>
+      <p>Scanning Amazon, Pinterest &amp; TikTok...</p>
+      <div class="ai-sub">Finding what's trending right now across all three platforms</div>
     </div>`;
 
   const today = new Date();
 
-  const prompt = `You are a US retail trend analyst. Today is ${today.toDateString()}.
+  const prompt = `You are a product trend analyst specialising in Amazon Best Sellers, Pinterest Trending, and TikTok viral products. Today is ${today.toDateString()}.
 
-Return a JSON array of exactly 40 trending products currently popular in the USA across retail and beauty/makeup. Focus on products that are:
-- Trending on TikTok Shop, Amazon Best Sellers, Sephora, Ulta, Target, Walmart
-- Viral or rapidly growing in sales right now
+Return a JSON array of exactly 45 trending products currently popular, sourced specifically from:
+- Amazon Best Sellers in Beauty, Fashion, and Home (amazon.com/best-sellers)
+- Pinterest Trending searches and viral pins in beauty, fashion, accessories
+- TikTok Shop bestsellers and #TikTokMadeMeBuyIt viral products
+
+Rules:
+- Roughly split: ~15 from Amazon, ~15 from Pinterest, ~15 from TikTok
 - Mix of: makeup, skincare, bags/handbags, fashion, accessories, home, hair care, grooming (men)
-- Realistic mid-range prices ($8–$300 USD) that Pakistani customers would want
+- Realistic prices ($8–$300 USD) that Pakistani customers would want to buy
+- Only real, currently available products with real brand names
 - NOT electronics, NOT medicine/supplements
 
 For each product return ONLY this JSON structure, nothing else:
@@ -3198,8 +3224,8 @@ For each product return ONLY this JSON structure, nothing else:
   "gender": "women|men|unisex",
   "usdPrice": 25,
   "trendReason": "Why it's trending (max 6 words)",
-  "platform": "TikTok|Amazon|Sephora|Target|Ulta|Walmart",
-  "badge": "hot|new|us"
+  "platform": "Amazon|Pinterest|TikTok",
+  "badge": "hot|new|viral"
 }
 
 Return ONLY a valid JSON array. No markdown, no explanation, no backticks. Start with [ and end with ].`;
@@ -3259,12 +3285,26 @@ Return ONLY a valid JSON array. No markdown, no explanation, no backticks. Start
   btn.textContent = '🔄 Refresh Trends';
 }
 
+function getFilteredTrends() {
+  return trendResults.filter(p =>
+    (trendCatFilter === 'all' || p.category === trendCatFilter) &&
+    (trendSourceFilter === 'all' || (p.platform || '').toLowerCase() === trendSourceFilter.toLowerCase())
+  );
+}
+
 function filterTrends(cat, el) {
   trendCatFilter = cat;
-  document.querySelectorAll('.trend-cat-btn').forEach(b => b.classList.remove('active'));
+  // only deactivate category buttons (first row), not source buttons
+  document.querySelectorAll('.trend-cat-btn:not([id^="src-"])').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
-  const filtered = cat === 'all' ? trendResults : trendResults.filter(p => p.category === cat);
-  renderTrends(filtered);
+  renderTrends(getFilteredTrends());
+}
+
+function filterTrendsBySource(source, el) {
+  trendSourceFilter = source;
+  document.querySelectorAll('[id^="src-"]').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderTrends(getFilteredTrends());
 }
 
 function renderTrends(data) {
@@ -3293,7 +3333,7 @@ function renderTrends(data) {
         <div class="trend-brand">${p.brand}</div>
         <div class="trend-meta">
           <span class="trend-pill cat">${p.category}</span>
-          <span class="trend-pill platform">${p.platform || 'USA'}</span>
+          <span class="trend-pill platform ${(p.platform||'').toLowerCase()}">${p.platform || 'Trending'}</span>
           <span class="trend-pill reason">${p.trendReason || 'Trending'}</span>
         </div>
         <div class="trend-pkr" id="tpkr-display-${p.id}">${fmtPKR(pkr)}</div>
@@ -3334,7 +3374,7 @@ function toggleTrendSelect(id) {
 }
 
 function selectAllTrends() {
-  const visible = trendCatFilter === 'all' ? trendResults : trendResults.filter(p => p.category === trendCatFilter);
+  const visible = getFilteredTrends();
   visible.forEach(p => trendSelected.add(p.id));
   renderTrends(visible.length ? visible : trendResults);
   updateBulkBar();
@@ -3342,7 +3382,7 @@ function selectAllTrends() {
 
 function clearSelection() {
   trendSelected.clear();
-  const visible = trendCatFilter === 'all' ? trendResults : trendResults.filter(p => p.category === trendCatFilter);
+  const visible = getFilteredTrends();
   renderTrends(visible.length ? visible : trendResults);
   updateBulkBar();
 }
