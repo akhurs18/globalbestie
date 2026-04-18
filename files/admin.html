@@ -430,6 +430,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         <div class="stat-card"><div class="stat-label">Confirmed</div><div class="stat-val" id="stat-confirmed">—</div><div class="stat-sub">Advance paid</div></div>
         <div class="stat-card"><div class="stat-label">Shipped</div><div class="stat-val" id="stat-shipped">—</div><div class="stat-sub">Email sent</div></div>
         <div class="stat-card"><div class="stat-label">Customers</div><div class="stat-val" id="stat-customers">—</div><div class="stat-sub">Unique emails</div></div>
+        <div class="stat-card inv-stat-alert" style="cursor:pointer" onclick="showPage('inventory',document.querySelector('.nav-item[onclick*=\'inventory\']'))"><div class="stat-label">Low Stock</div><div class="stat-val" id="stat-low-stock">—</div><div class="stat-sub">Items below threshold</div></div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title">Recent Orders</span><button class="btn btn-ghost btn-sm" onclick="showPage('orders',document.querySelector('.nav-item[onclick*=\'orders\']'))">View All</button></div>
@@ -526,6 +527,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       <div class="page-header">
         <div class="page-title">Analytics</div>
         <div class="page-sub">Revenue, orders, and performance insights</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+        <button class="btn btn-ghost btn-sm" onclick="sendWeeklySummary()" title="Send a weekly revenue digest email to yourself">📧 Weekly Summary Email</button>
       </div>
       <div class="analytics-range-row">
         <button class="arange-btn active" onclick="setAnalyticsRange(7,this)">7 Days</button>
@@ -1108,6 +1112,7 @@ function doPost(e) {
         </div>
         <div style="display:flex;gap:0.6rem;margin-top:4px">
           <button class="btn btn-ghost btn-sm" onclick="openLogDrawer(null)">View Log</button>
+          <button class="btn btn-ghost btn-sm" onclick="bulkSaveQtyToSupabase()" title="Push all qty changes to Supabase in one batch">☁ Sync to Supabase</button>
           <button class="btn btn-dark btn-sm" onclick="saveInventoryChanges()">Save Changes</button>
         </div>
       </div>
@@ -1578,6 +1583,13 @@ function doPost(e) {
           <div class="odg-label">Payment Screenshot</div>
           <a id="odm-ss" href="#" target="_blank" style="font-size:0.78rem;color:var(--gold);text-decoration:underline;font-weight:500">View Screenshot →</a>
         </div>
+        <div class="odg-full">
+          <div class="odg-label">Admin Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(internal — not shown to customer)</span></div>
+          <div style="display:flex;gap:0.5rem;align-items:flex-start">
+            <textarea class="form-input" id="odm-admin-notes" style="flex:1;font-size:0.78rem;min-height:60px;resize:vertical" placeholder="Packing notes, supplier info, follow-up reminders…"></textarea>
+            <button class="btn btn-ghost btn-sm" style="flex-shrink:0;margin-top:2px" onclick="saveAdminNotes()">Save</button>
+          </div>
+        </div>
       </div>
       <div id="odm-actions" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)"></div>
     </div>
@@ -1598,6 +1610,7 @@ function doPost(e) {
       <div style="display:flex;gap:0.7rem;flex-wrap:wrap">
         <button class="btn btn-green" onclick="confirmSendShipping()">Send Email + Mark Shipped</button>
         <button class="btn btn-ghost" onclick="markShippedNoEmail()">Mark Shipped Only</button>
+        <button class="btn btn-ghost" style="color:var(--wa);border-color:rgba(37,211,102,0.4)" onclick="sendShipWA()">📱 WhatsApp Customer</button>
         <button class="btn btn-ghost" onclick="closeModal('ship-modal')">Cancel</button>
       </div>
     </div>
@@ -1749,6 +1762,25 @@ function doPost(e) {
         <div style="font-size:0.63rem;color:var(--muted);margin-bottom:8px">Name · Hex color · Optional per-color image URL</div>
         <div id="pd-colors" style="display:flex;flex-direction:column;gap:4px;margin-bottom:6px"></div>
         <button class="btn btn-ghost btn-sm" onclick="pdAddColor()">+ Add Color</button>
+      </div>
+
+      <!-- Review Display -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:8px">
+          Review Display
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — shown on product card (admin-set, not customer reviews)</span>
+        </div>
+        <div style="display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)">Rating (1–5)</label>
+            <input class="form-input" type="number" id="pd-review-rating" min="1" max="5" step="0.1" placeholder="e.g. 4.5" style="width:100px;font-size:0.78rem">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="font-size:0.62rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)">Review Count</label>
+            <input class="form-input" type="number" id="pd-review-count" min="0" placeholder="e.g. 127" style="width:100px;font-size:0.78rem">
+          </div>
+          <div style="font-size:0.68rem;color:var(--muted);align-self:flex-end;padding-bottom:6px" id="pd-review-preview"></div>
+        </div>
       </div>
 
       <div style="display:flex;gap:0.7rem">
@@ -2129,7 +2161,8 @@ async function loadOrders(silent = false) {
         _tracking: o.tracking_number || '',
         _batch: o.batch || '',
         _paymentConfirmed: o.payment_confirmed || false,
-        _items: o.order_items || []
+        _items: o.order_items || [],
+        _admin_notes: o.admin_notes || ''
       }));
 
       const newOrders = allOrders.filter(o => o.Status === 'New Order');
@@ -2260,6 +2293,8 @@ function openOrderDetail(idx) {
   const ssWrap = document.getElementById('odm-ss-wrap');
   ssWrap.style.display = o.Screenshot ? '' : 'none';
   if (o.Screenshot) document.getElementById('odm-ss').href = o.Screenshot;
+  // Admin notes
+  document.getElementById('odm-admin-notes').value = o._admin_notes || '';
   // Actions
   const actEl = document.getElementById('odm-actions');
   let btns = '';
@@ -2414,6 +2449,12 @@ function updateStats(orders) {
   document.getElementById('stat-shipped').textContent = orders.filter(o => o.Status === 'Shipped').length;
   const emails = [...new Set(orders.map(o => o.Email).filter(Boolean))];
   document.getElementById('stat-customers').textContent = emails.length;
+  const lowStockEl = document.getElementById('stat-low-stock');
+  if (lowStockEl) {
+    const lowCount = products.filter(p => p.qty > 0 && p.qty <= (p.lowStockThreshold || 3)).length;
+    lowStockEl.textContent = lowCount;
+    lowStockEl.style.color = lowCount > 0 ? 'var(--rose)' : '';
+  }
   updateOrderStats(orders);
 }
 
@@ -3772,6 +3813,12 @@ function openProdDetails(id) {
   colorsContainer.innerHTML = '';
   (p.colors || []).forEach(c => pdAddColor(c.name || '', c.hex || '', c.image || ''));
 
+  // Review display
+  document.getElementById('pd-review-rating').value = p.review_rating != null ? p.review_rating : '';
+  document.getElementById('pd-review-count').value = p.review_count || '';
+  const prev = document.getElementById('pd-review-preview');
+  if (prev) prev.textContent = p.review_rating ? '★'.repeat(Math.round(p.review_rating)) + ' ' + p.review_rating + ' (' + (p.review_count||0) + ' reviews)' : '';
+
   document.getElementById('prod-details-modal').classList.add('open');
 }
 
@@ -3923,10 +3970,15 @@ async function saveProdDetails() {
     return { name: (inputs[0]?.value||'').trim(), hex: inputs[1]?.value||'', image: (inputs[2]?.value||'').trim() };
   }).filter(c => c.name);
 
+  // Review fields
+  const ratingVal = parseFloat(document.getElementById('pd-review-rating').value);
+  p.review_rating = isNaN(ratingVal) ? null : Math.min(5, Math.max(1, ratingVal));
+  p.review_count = parseInt(document.getElementById('pd-review-count').value) || 0;
+
   localStorage.setItem('gb_products', JSON.stringify(products));
   if (_supa) {
     const { error } = await _supa.from('products')
-      .update({ description: p.description, image: p.image, images: p.images, colors: p.colors, sizes: p.sizes })
+      .update({ description: p.description, image: p.image, images: p.images, colors: p.colors, sizes: p.sizes, review_rating: p.review_rating, review_count: p.review_count })
       .eq('id', p.id);
     if (error) { toast('❌ ' + error.message); return; }
     toast('✅ Details saved!');
@@ -3936,6 +3988,82 @@ async function saveProdDetails() {
   }
   closeModal('prod-details-modal');
   renderProducts();
+}
+
+// ── ADMIN NOTES ──
+async function saveAdminNotes() {
+  const o = allOrders[_odmIdx];
+  if (!o) return;
+  const notes = document.getElementById('odm-admin-notes').value.trim();
+  o._admin_notes = notes;
+  if (_supa && o._id) {
+    const { error } = await _supa.from('orders').update({ admin_notes: notes }).eq('id', o._id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  toast('✅ Notes saved');
+}
+
+// ── WA SHIP NOTIFICATION ──
+function sendShipWA() {
+  const o = allOrders[pendingShipIdx];
+  if (!o) return;
+  const tracking = (document.getElementById('ship-tracking-number').value || '').trim();
+  const waNum = (o.Phone||'').replace(/\D/g,'').replace(/^0/,'92');
+  const msg = `Hi ${o.Name||'Bestie'} 👋\n\nGreat news — your Global Bestie order *${o.OrderNum||''}* has been shipped! 🎉\n\nOrder: ${o.Items||''}\nTotal: ${o.Total||''}\n${tracking?'Tracking: '+tracking+'\n':''}\nFor any questions, just reply to this message. We hope you love your products! 💕`;
+  window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ── BULK SYNC QTY TO SUPABASE ──
+async function bulkSaveQtyToSupabase() {
+  if (!_supa) { toast('⚠️ Supabase not connected'); return; }
+  // Read current inline inputs
+  products.forEach(p => {
+    const qtyEl = document.getElementById('inv-qty-' + p.id);
+    const alertEl = document.getElementById('inv-alert-' + p.id);
+    if (qtyEl) p.qty = Math.max(0, parseInt(qtyEl.value) || 0);
+    if (alertEl) p.lowStockThreshold = Math.max(0, parseInt(alertEl.value) || 3);
+    p.inStock = p.qty > 0;
+  });
+  localStorage.setItem('gb_products', JSON.stringify(products));
+  toast('⏳ Syncing…');
+  let ok = 0, fail = 0;
+  for (const p of products) {
+    try {
+      await _supa.from('products').update({ qty: p.qty, in_stock: p.inStock, low_stock_threshold: p.lowStockThreshold }).eq('id', p.id);
+      ok++;
+    } catch(e) { fail++; }
+  }
+  renderInventoryStats();
+  filterInventoryTable();
+  toast(fail === 0 ? `✅ ${ok} products synced to Supabase` : `⚠️ ${ok} synced, ${fail} failed`);
+}
+
+// ── WEEKLY SUMMARY EMAIL ──
+async function sendWeeklySummary() {
+  const s = getSettings();
+  if (!s.ejsKey || !s.ejsService) { toast('⚠️ Configure EmailJS in Settings first'); return; }
+  const adminEmail = s.adminEmail || prompt('Enter your email address:');
+  if (!adminEmail) return;
+  const now = new Date();
+  const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+  const weekOrders = allOrders.filter(o => o._rawDate && new Date(o._rawDate) >= weekAgo);
+  const revenue = weekOrders.reduce((s, o) => s + (o._total || 0), 0);
+  const delivered = weekOrders.filter(o => o.Status === 'Delivered').length;
+  const newOrds = weekOrders.filter(o => o.Status === 'New Order').length;
+  const lowStock = products.filter(p => p.qty > 0 && p.qty <= (p.lowStockThreshold || 3)).map(p => p.name + ' (' + p.qty + ' left)').join(', ') || 'None';
+  try {
+    emailjs.init(s.ejsKey);
+    await emailjs.send(s.ejsService, s.ejsShipTemplate || 'template_summary', {
+      to_email: adminEmail,
+      customer_name: 'Admin',
+      message: `Weekly Summary (${weekAgo.toLocaleDateString('en-PK')} – ${now.toLocaleDateString('en-PK')})\n\nNew Orders: ${weekOrders.length}\nRevenue: Rs ${revenue.toLocaleString()}\nDelivered: ${delivered}\nPending: ${newOrds}\n\nLow Stock: ${lowStock}`,
+      order_items: `${weekOrders.length} orders this week`,
+      order_total: 'Rs ' + revenue.toLocaleString()
+    });
+    toast('✅ Weekly summary sent to ' + adminEmail);
+  } catch(e) {
+    toast('❌ Email failed: ' + (e.text || 'Check EmailJS settings'));
+  }
 }
 
 // ── MODAL ──

@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shop — Global Bestie</title>
+<!-- Open Graph -->
+<meta property="og:title" content="Shop — Global Bestie">
+<meta property="og:description" content="Authentic USA products delivered to Pakistan. Shop makeup, bags, fashion & more.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=1200&q=80">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Global Bestie">
+<!-- JSON-LD -->
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Global Bestie","description":"Authentic USA products delivered to Pakistan","url":"https://globalbestiepk.com","areaServed":"PK","currenciesAccepted":"PKR","openingHours":"Mo-Su 09:00-22:00"}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
@@ -408,6 +416,38 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .size-pill{display:inline-block;font-size:0.62rem;font-weight:500;letter-spacing:0.5px;padding:4px 10px;border:1px solid var(--border2);cursor:pointer;margin:0 4px 4px 0;transition:all 0.15s;color:var(--ink)}
 .size-pill:hover{border-color:var(--pink-deep);color:var(--pink-deep)}
 .size-pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* ── WISHLIST ── */
+.wish-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.88);border:none;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem;z-index:3;transition:all 0.18s;box-shadow:0 1px 4px rgba(0,0,0,0.12)}
+.wish-btn:hover{background:#fff;transform:scale(1.1)}
+.wish-btn.wished{color:var(--pink-deep)}
+.wish-badge{background:var(--pink-deep);color:#fff;font-size:9px;font-weight:600;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px;position:absolute;top:-5px;right:-5px}
+/* ── LOW STOCK ── */
+.low-stock-tag{display:inline-block;font-size:0.55rem;font-weight:600;letter-spacing:0.5px;color:var(--sienna);background:var(--sienna-light);border:1px solid #DFC4A8;padding:2px 7px;margin-top:3px}
+/* ── STAR RATING ── */
+.prod-stars{font-size:0.65rem;color:#F5A623;margin-top:2px;letter-spacing:1px}
+.prod-review-count{font-size:0.58rem;color:var(--muted2);margin-left:3px}
+/* ── RECENTLY VIEWED ── */
+.recently-viewed{padding:2rem 2rem 1rem;border-top:1px solid var(--border);background:var(--bg)}
+.rv-label{font-size:0.6rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:1rem}
+.rv-strip{display:flex;gap:0.8rem;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.rv-strip::-webkit-scrollbar{display:none}
+.rv-card{flex-shrink:0;width:110px;cursor:pointer;background:var(--card);border:1px solid var(--border);padding:0.5rem;transition:box-shadow 0.18s}
+.rv-card:hover{box-shadow:var(--shadow-md)}
+.rv-card-img{width:100%;height:75px;object-fit:cover;display:block;background:var(--pink-light)}
+.rv-card-name{font-size:0.6rem;color:var(--ink);margin-top:4px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.rv-card-price{font-size:0.62rem;font-weight:600;color:var(--pink-deep);margin-top:2px}
+/* ── SEARCH OVERLAY ── */
+.search-overlay{display:none;position:fixed;inset:0;background:rgba(26,16,21,0.82);backdrop-filter:blur(6px);z-index:400;align-items:flex-start;justify-content:center;padding-top:80px}
+.search-overlay.open{display:flex}
+.search-overlay-box{background:var(--card);width:100%;max-width:560px;padding:1.5rem;position:relative}
+.search-overlay-input{width:100%;font-size:1.1rem;font-family:'Cormorant Garamond',serif;border:none;border-bottom:2px solid var(--ink);padding:0.4rem 0;background:transparent;color:var(--ink);outline:none}
+.search-overlay-results{margin-top:1rem;display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto}
+.sor-item{display:flex;align-items:center;gap:0.8rem;padding:0.5rem;cursor:pointer;border:1px solid transparent;transition:all 0.15s}
+.sor-item:hover{border-color:var(--border2);background:var(--bg)}
+.sor-img{width:44px;height:44px;object-fit:cover;background:var(--pink-light);flex-shrink:0}
+.sor-name{font-size:0.78rem;font-weight:500;color:var(--ink)}
+.sor-brand{font-size:0.65rem;color:var(--muted)}
+.sor-price{font-size:0.72rem;font-weight:600;color:var(--pink-deep);margin-left:auto;white-space:nowrap}
 .detail-desc{font-size:0.78rem;color:var(--muted);line-height:1.85;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);margin-bottom:14px;flex-grow:1}
 .detail-desc-label{font-size:0.54rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px}
 .detail-preorder-note{font-size:0.67rem;color:var(--sienna);background:var(--sienna-light);padding:7px 12px;margin-bottom:14px;border-left:2px solid #DFC4A8;line-height:1.5}
@@ -474,6 +514,10 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   </div>
   <div class="nav-right">
     <div class="wa-nav" onclick="openWA('')">WhatsApp</div>
+    <div class="cart-wrap" style="position:relative" onclick="openWishlistPanel()">
+      ♡ <span class="cart-badge" id="wishBadge" style="display:none">0</span>
+    </div>
+    <div class="cart-wrap" onclick="openSearchOverlay()" title="Search products">⌕</div>
     <div class="cart-wrap" onclick="openCart()">
       Cart <span class="cart-badge" id="cartBadge">0</span>
     </div>
@@ -572,6 +616,10 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
       <div class="shop-active-filters" id="shopActiveFilters"></div>
     </div>
     <div class="products-grid" id="productsGrid"></div>
+    <div class="recently-viewed" id="recentlyViewedSection" style="display:none">
+      <div class="rv-label">Recently Viewed</div>
+      <div class="rv-strip" id="rvStrip"></div>
+    </div>
   </div>
 
 </div>
@@ -754,6 +802,21 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <div class="toast" id="toast"></div>
 
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearchOverlay()">
+  <div class="search-overlay-box">
+    <input class="search-overlay-input" id="searchOverlayInput" type="text" placeholder="Search products, brands…" oninput="renderSearchResults(this.value)" onkeydown="if(event.key==='Escape')closeSearchOverlay()">
+    <div class="search-overlay-results" id="searchOverlayResults"></div>
+  </div>
+</div>
+
+<!-- WISHLIST PANEL -->
+<div class="cart-overlay" id="wishOverlay" onclick="closeWishlistPanel()"></div>
+<div class="cart-sidebar" id="wishSidebar">
+  <div class="cart-head"><h3>Wishlist ♡</h3><button class="cart-close" onclick="closeWishlistPanel()">✕</button></div>
+  <div class="cart-body" id="wishBody"></div>
+</div>
+
 <!-- PRODUCT DETAIL MODAL -->
 <div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
   <div class="detail-modal">
@@ -908,14 +971,28 @@ function getDefaultProducts(){
           is_outlet:p.is_outlet||false,is_featured:p.is_featured||false,
           images:Array.isArray(p.images)?p.images:[],
           colors:Array.isArray(p.colors)?p.colors:[],
-          sizes:Array.isArray(p.sizes)?p.sizes:[]
+          sizes:Array.isArray(p.sizes)?p.sizes:[],
+          review_rating:p.review_rating||null,review_count:p.review_count||0
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
         applyFilters();
         loadCart();
+        renderRecentlyViewed();
         return;
       }
-    }catch(e){console.warn('Supabase product load failed:',e.message);}
+    }catch(e){
+      console.warn('Supabase product load failed:',e.message);
+      // Offline fallback — use cached localStorage products and show a notice
+      const cached=localStorage.getItem('gb_products');
+      if(cached){
+        try{
+          productsCache=JSON.parse(cached);
+          applyFilters();loadCart();
+          showToast('Showing saved catalogue — check connection');
+          return;
+        }catch(e2){}
+      }
+    }
   }
   // ── 2. Fallback: Google Sheet ──
   const sid=SHEET_ID||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetId||'');
@@ -1111,19 +1188,25 @@ function renderProducts(data){
     const isSale=p.on_sale&&p.sale_price;
     const isOutlet=p.is_outlet;
     const pctOff=isSale?Math.round((1-p.sale_price/p.pkr)*100):0;
+    const isLowStock=p.inStock&&p.qty>0&&p.qty<=p.lowStockThreshold;
+    const isWished=wishlistHas(p.id);
+    const starsHtml=p.review_rating?`<div class="prod-stars">${'★'.repeat(Math.round(p.review_rating))}${'☆'.repeat(5-Math.round(p.review_rating))}<span class="prod-review-count">(${p.review_count||0})</span></div>`:'';
     return `<div class="prod-card" onclick="openProductDetail(${p.id})">
-      <div class="prod-img" style="background:${p.image?'#100808':bg}">
+      <div class="prod-img" style="background:${p.image?'#100808':bg};position:relative">
         ${p.image
           ? `<img src="${p.image}" alt="${p.name}">`
           : `<div class="prod-img-placeholder" style="background:linear-gradient(145deg,${bg},${bg}dd)"><span style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--muted2);letter-spacing:3px;text-transform:uppercase;position:relative;z-index:1">${catLabel(p.cat,p.gender).substring(0,2).toUpperCase()}</span></div>`}
         ${isSale?`<span class="sale-badge">−${pctOff}%</span>`:''}
         ${isOutlet&&!isSale?`<span class="outlet-badge">Outlet</span>`:''}
+        <button class="wish-btn${isWished?' wished':''}" onclick="event.stopPropagation();toggleWishlist(${p.id})" title="${isWished?'Remove from wishlist':'Save to wishlist'}">${isWished?'♥':'♡'}</button>
       </div>
       <div class="prod-body">
         <div class="prod-cat${isMen?' men-cat':''}">${catLabel(p.cat,p.gender)}</div>
         <div class="prod-name">${p.name}</div>
         <div class="prod-brand"><a href="products.html?brand=${encodeURIComponent(p.brand)}" onclick="event.stopPropagation()">${p.brand}</a></div>
+        ${starsHtml}
         <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
+        ${isLowStock?`<div class="low-stock-tag">Only ${p.qty} left!</div>`:''}
         ${isPreorder?`<div class="preorder-note">50% advance · ~4 weeks delivery</div>`:''}
         ${isSale
           ?`<div class="prod-pkr"><span class="price-original">${fmtPKR(p.pkr)}</span><span class="price-sale">${fmtPKR(p.sale_price)}</span></div>`
@@ -1139,7 +1222,7 @@ function renderProducts(data){
   </div>`;
 }
 
-function saveCart(){localStorage.setItem('gb_cart',JSON.stringify(cart));}
+function saveCart(){localStorage.setItem('gb_cart',JSON.stringify(cart));localStorage.setItem('gb_cart_ts',Date.now());}
 function loadCart(){
   try{
     const saved=JSON.parse(localStorage.getItem('gb_cart')||'[]');
@@ -1386,6 +1469,7 @@ function _getCheckoutFields(){
 }
 
 async function confirmOrder(){
+  if(_orderPlacing)return;_orderPlacing=true;
   const btn=document.getElementById('btnConfirmOrder');
   if(btn){btn.textContent='Placing order…';btn.disabled=true;}
   const fields=_getCheckoutFields();
@@ -1408,10 +1492,12 @@ async function confirmOrder(){
     }
   }catch(e){
     console.error('Order failed:',e.message);
+    _orderPlacing=false;
     if(btn){btn.textContent='Confirm Order →';btn.disabled=false;}
     showToast('Something went wrong — please try again.');
     return;
   }
+  _orderPlacing=false;
   if(btn){btn.textContent='Confirm Order →';btn.disabled=false;}
   document.getElementById('successOrderNum').textContent=orderNum?'Order #'+orderNum:'';
   document.getElementById('successMsgMain').textContent=uploaded
@@ -1563,6 +1649,7 @@ let _detailSize = null;
 function openProductDetail(id){
   _detailColor = null;
   const p=getProducts().find(x=>x.id===id);if(!p)return;
+  trackRecentlyViewed(id);
   const isPreorder=!p.inStock;
   const imgWrap=document.getElementById('detailImgWrap'),emojiEl=document.getElementById('detailEmoji');
   const existingImg=imgWrap.querySelector('img');if(existingImg)existingImg.remove();
@@ -1657,8 +1744,87 @@ function selectDetailSize(el,size){
 
 function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');document.body.style.overflow='';}
 
+// ── WISHLIST ──
+function getWishlist(){try{return JSON.parse(localStorage.getItem('gb_wishlist')||'[]');}catch(e){return[];}}
+function saveWishlist(w){localStorage.setItem('gb_wishlist',JSON.stringify(w));}
+function wishlistHas(id){return getWishlist().includes(id);}
+function toggleWishlist(id){
+  let w=getWishlist();
+  if(w.includes(id))w=w.filter(x=>x!==id);else w=[...w,id];
+  saveWishlist(w);
+  applyFilters(); // re-render to update heart states
+  updateWishBadge();
+  showToast(w.includes(id)?'Saved to wishlist!':'Removed from wishlist');
+}
+function updateWishBadge(){
+  const b=document.getElementById('wishBadge');
+  const c=getWishlist().length;
+  if(b){b.textContent=c;b.style.display=c>0?'flex':'none';}
+}
+function openWishlistPanel(){
+  const w=getWishlist();
+  const body=document.getElementById('wishBody');
+  if(!w.length){body.innerHTML='<div class="cart-empty"><div class="cart-empty-icon">♡</div><h4>Your wishlist is empty</h4><p>Tap ♡ on any product to save it here.</p></div>';}
+  else{const prods=getProducts().filter(p=>w.includes(p.id));
+    body.innerHTML=prods.map(p=>{const effectivePkr=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
+      return`<div class="cart-item" style="cursor:pointer" onclick="closeWishlistPanel();openProductDetail(${p.id})"><div class="ci-emoji">${_fallbackIcons[p.cat]||'✨'}</div><div class="ci-info"><div class="ci-name">${p.name}</div><div class="ci-qty-row"><span class="ci-price">${fmtPKR(effectivePkr)}</span></div><div style="display:flex;gap:6px;margin-top:6px"><button class="add-btn" style="font-size:0.6rem;padding:4px 10px" onclick="event.stopPropagation();addToCart(${p.id});closeWishlistPanel()">Add to Cart</button><span class="ci-remove" onclick="event.stopPropagation();toggleWishlist(${p.id});openWishlistPanel()">Remove</span></div></div></div>`;
+    }).join('');}
+  document.getElementById('wishOverlay').classList.add('open');
+  document.getElementById('wishSidebar').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeWishlistPanel(){document.getElementById('wishOverlay').classList.remove('open');document.getElementById('wishSidebar').classList.remove('open');document.body.style.overflow='';}
+
+// ── RECENTLY VIEWED ──
+function trackRecentlyViewed(id){
+  let rv=[];try{rv=JSON.parse(localStorage.getItem('gb_rv')||'[]');}catch(e){}
+  rv=[id,...rv.filter(x=>x!==id)].slice(0,8);
+  localStorage.setItem('gb_rv',JSON.stringify(rv));
+  renderRecentlyViewed();
+}
+function renderRecentlyViewed(){
+  let rv=[];try{rv=JSON.parse(localStorage.getItem('gb_rv')||'[]');}catch(e){}
+  const prods=getProducts().filter(p=>rv.includes(p.id)).sort((a,b)=>rv.indexOf(a.id)-rv.indexOf(b.id));
+  const sec=document.getElementById('recentlyViewedSection');
+  const strip=document.getElementById('rvStrip');
+  if(!sec||!strip)return;
+  if(prods.length<2){sec.style.display='none';return;}
+  sec.style.display='block';
+  strip.innerHTML=prods.map(p=>{const ep=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
+    return`<div class="rv-card" onclick="openProductDetail(${p.id})">${p.image?`<img class="rv-card-img" src="${p.image}" alt="" loading="lazy">`:`<div class="rv-card-img" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">${_fallbackIcons[p.cat]||'✨'}</div>`}<div class="rv-card-name">${p.name}</div><div class="rv-card-price">${fmtPKR(ep)}</div></div>`;
+  }).join('');
+}
+
+// ── SEARCH OVERLAY ──
+function openSearchOverlay(){
+  document.getElementById('searchOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('searchOverlayInput').focus(),50);
+  document.body.style.overflow='hidden';
+}
+function closeSearchOverlay(){document.getElementById('searchOverlay').classList.remove('open');document.body.style.overflow='';}
+function renderSearchResults(q){
+  const res=document.getElementById('searchOverlayResults');
+  if(!q.trim()){res.innerHTML='';return;}
+  const hits=getProducts().filter(p=>p.name.toLowerCase().includes(q.toLowerCase())||p.brand.toLowerCase().includes(q.toLowerCase())).slice(0,8);
+  if(!hits.length){res.innerHTML='<div style="font-size:0.78rem;color:var(--muted);padding:0.5rem">No products found</div>';return;}
+  res.innerHTML=hits.map(p=>{const ep=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
+    return`<div class="sor-item" onclick="closeSearchOverlay();openProductDetail(${p.id})">${p.image?`<img class="sor-img" src="${p.image}" alt="" loading="lazy">`:`<div class="sor-img" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem;background:var(--pink-light)">${_fallbackIcons[p.cat]||'✨'}</div>`}<div><div class="sor-name">${p.name}</div><div class="sor-brand">${p.brand}</div></div><div class="sor-price">${fmtPKR(ep)}</div></div>`;
+  }).join('');
+}
+
+// ── CART EXPIRY (7 days) ──
+(function(){
+  const ts=parseInt(localStorage.getItem('gb_cart_ts')||'0');
+  if(ts&&Date.now()-ts>7*24*60*60*1000){localStorage.removeItem('gb_cart');localStorage.removeItem('gb_cart_ts');}
+})();
+
+// ── DUPLICATE ORDER GUARD ──
+let _orderPlacing=false;
+
 // ── INIT: read URL params ──
 loadCart();
+updateWishBadge();
+renderRecentlyViewed();
 const _p=new URLSearchParams(location.search);
 const _brand=_p.get('brand'),_cat=_p.get('cat'),_gender=_p.get('gender');
 const _hash=location.hash.replace('#','');

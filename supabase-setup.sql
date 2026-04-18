@@ -203,6 +203,13 @@ alter table orders add constraint orders_status_check check (
 );
 
 
+-- ── ADMIN INTERNAL NOTES ON ORDERS ──
+alter table orders add column if not exists admin_notes text default '';
+
+-- ── PRODUCT REVIEWS (admin-set display fields) ──
+alter table products add column if not exists review_rating decimal(2,1) default null;
+alter table products add column if not exists review_count integer default 0;
+
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:
 -- 1. Go to Authentication → Users → Add user
