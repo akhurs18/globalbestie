@@ -183,6 +183,25 @@ create index if not exists products_featured_idx on products(is_featured) where 
 alter table products add column if not exists images jsonb default '[]';
 alter table products add column if not exists colors jsonb default '[]';
 
+-- ── PRODUCT SIZES ──
+-- sizes: JSON array of size strings e.g. ["XS","S","M","L","XL"] or ["6","7","8","9","10"]
+alter table products add column if not exists sizes jsonb default '[]';
+
+-- ── ORDER ITEM SIZE ──
+alter table order_items add column if not exists size text default '';
+
+-- ── PROMO CODE EXPIRY + USAGE LIMITS ──
+alter table promo_codes add column if not exists uses_limit integer default null;
+alter table promo_codes add column if not exists expires_at date default null;
+alter table promo_codes add column if not exists usage_count integer default 0;
+
+-- ── ORDER STATUS: RETURNS & REFUNDS ──
+-- Drop old check constraint and add updated one with return/refund states
+alter table orders drop constraint if exists orders_status_check;
+alter table orders add constraint orders_status_check check (
+  status in ('new','confirmed','packed','shipped','delivered','cancelled','return_requested','refunded')
+);
+
 
 -- ════════════════════════════════════════════════════════
 -- DONE. Next steps:

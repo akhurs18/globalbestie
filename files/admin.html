@@ -504,7 +504,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
               <option value="Shipped">Shipped</option>
               <option value="Delivered">Delivered</option>
               <option value="Cancelled">Cancelled</option>
+              <option value="Return Requested">Return Requested</option>
+              <option value="Refunded">Refunded</option>
             </select>
+            <input type="date" id="order-date-from" class="filter-select" onchange="filterOrders()" title="From date" style="font-size:0.72rem">
+            <input type="date" id="order-date-to" class="filter-select" onchange="filterOrders()" title="To date" style="font-size:0.72rem">
+            <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()" title="Export filtered orders to CSV" style="white-space:nowrap">⬇ CSV</button>
           </div>
         </div>
         <div style="overflow-x:auto">
@@ -642,6 +647,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
             <div class="form-group">
               <label class="form-label">Min Order (Rs, optional)</label>
               <input class="form-input" type="number" id="new-promo-min" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Max Uses (optional)</label>
+              <input class="form-input" type="number" id="new-promo-uses" placeholder="unlimited" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expires On (optional)</label>
+              <input class="form-input" type="date" id="new-promo-expires">
             </div>
           </div>
           <button class="btn btn-primary" onclick="createPromoCode()">Create Code</button>
@@ -1718,6 +1731,15 @@ function doPost(e) {
         <button class="btn btn-ghost btn-sm" onclick="pdAddImage()">+ Add Image URL</button>
       </div>
 
+      <!-- Sizes -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Sizes
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — comma-separated, e.g. XS, S, M, L, XL or 6, 7, 8, 9, 10</span>
+        </div>
+        <input class="form-input" type="text" id="pd-sizes" placeholder="e.g. XS, S, M, L, XL" style="font-size:0.78rem">
+      </div>
+
       <!-- Color Variants -->
       <div style="margin-bottom:1.3rem">
         <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
@@ -1909,7 +1931,16 @@ function _enterApp() {
   loadOrders();
   loadProductsFromSheet();
   if (Notification.permission === 'default') Notification.requestPermission();
-  setInterval(() => loadOrders(true), 30000);
+  // Realtime subscription for new orders
+  if (_supa) {
+    _supa.channel('admin-orders')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+        loadOrders(true);
+      })
+      .subscribe();
+  }
+  // Fallback polling every 60s (covers Google Sheets mode)
+  setInterval(() => { if (!_supa) loadOrders(true); }, 60000);
 }
 
 async function doLogout() {
@@ -2058,10 +2089,13 @@ let _knownOrderKeys = new Set();
 let _ordersInitialized = false;
 
 function _supaStatusToDisplay(s) {
-  return {new:'New Order',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled'}[s] || 'New Order';
+  return {new:'New Order',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled',return_requested:'Return Requested',refunded:'Refunded'}[s] || 'New Order';
 }
 function _displayStatusToSupa(s) {
-  return s.toLowerCase().replace(' order','').replace(' ','');
+  return {
+    'New Order':'new','Confirmed':'confirmed','Packed':'packed','Shipped':'shipped',
+    'Delivered':'delivered','Cancelled':'cancelled','Return Requested':'return_requested','Refunded':'refunded'
+  }[s] || s.toLowerCase().replace(' order','').replace(' ','');
 }
 
 async function loadOrders(silent = false) {
@@ -2070,7 +2104,7 @@ async function loadOrders(silent = false) {
     try {
       const { data, error } = await _supa
         .from('orders')
-        .select('*, order_items(product_name, qty, pkr, is_preorder)')
+        .select('*, order_items(product_name, qty, pkr, is_preorder, size)')
         .order('created_at', { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -2084,7 +2118,7 @@ async function loadOrders(silent = false) {
         Email: o.customer_email || '',
         City: o.customer_city || '',
         Address: o.customer_address || '',
-        Items: (o.order_items || []).map(i => `${i.product_name} x${i.qty}`).join(', '),
+        Items: (o.order_items || []).map(i => `${i.product_name}${i.size?' ['+i.size+']':''} x${i.qty}`).join(', '),
         _total: o.total || 0,
         _advance: o.advance || 0,
         Total: 'Rs ' + (o.total || 0).toLocaleString(),
@@ -2191,7 +2225,7 @@ function openOrderDetail(idx) {
   if (o._items && o._items.length) {
     itemsEl.innerHTML = o._items.map(it =>
       '<div class="odm-item-row">' +
-      '<span>' + (it.product_name || '') + ' &times; ' + it.qty + (it.is_preorder ? ' <span style="font-size:0.62rem;color:var(--sky);font-weight:600;margin-left:4px">PREORDER</span>' : '') + '</span>' +
+      '<span>' + (it.product_name || '') + (it.size ? ' <span style="font-size:0.62rem;color:var(--muted)">['+it.size+']</span>' : '') + ' &times; ' + it.qty + (it.is_preorder ? ' <span style="font-size:0.62rem;color:var(--sky);font-weight:600;margin-left:4px">PREORDER</span>' : '') + '</span>' +
       '<span style="font-weight:600">Rs ' + ((it.pkr || 0) * it.qty).toLocaleString() + '</span>' +
       '</div>'
     ).join('');
@@ -2238,6 +2272,10 @@ function openOrderDetail(idx) {
     btns = '<button class="btn btn-green" onclick="quickShip(' + idx + ');closeModal(\'order-detail-modal\')">✈️ Ship Order</button>';
   } else if (o.Status === 'Shipped') {
     btns = '<button class="btn btn-ghost" style="color:var(--sage);border-color:var(--sage)" onclick="updateOrderStatusFromModal(' + idx + ',\'Delivered\')">✅ Mark Delivered</button>';
+  } else if (o.Status === 'Delivered') {
+    btns = '<button class="btn btn-ghost" style="color:var(--sienna);border-color:rgba(139,69,19,0.3)" onclick="updateOrderStatusFromModal(' + idx + ',\'Return Requested\')">↩ Return Requested</button>';
+  } else if (o.Status === 'Return Requested') {
+    btns = '<button class="btn btn-ghost" style="color:var(--rose);border-color:rgba(181,54,90,0.3)" onclick="updateOrderStatusFromModal(' + idx + ',\'Refunded\')">💸 Mark Refunded</button>';
   }
   btns += '<button class="btn btn-ghost" onclick="closeModal(\'order-detail-modal\')" style="margin-left:auto">Close</button>';
   actEl.innerHTML = btns;
@@ -2651,19 +2689,47 @@ function statusClass(s) {
   return 'badge-new-order'; // New Order
 }
 
+let _filteredOrders = [];
 function filterOrders() {
   const q = document.getElementById('order-search').value.toLowerCase();
   const sf = document.getElementById('order-status-filter').value;
+  const dateFrom = document.getElementById('order-date-from')?.value;
+  const dateTo = document.getElementById('order-date-to')?.value;
   const pendingStatuses = ['New Order', 'Confirmed', 'Packed'];
-  const filtered = allOrders.filter(o => {
+  _filteredOrders = allOrders.filter(o => {
     const matchQ = !q || [o.Name, o.Phone, o.City, o.Email, o.OrderNum, o._batch].some(v => (v||'').toLowerCase().includes(q));
     let matchS = true;
     if (sf === '__pending__') matchS = pendingStatuses.includes(o.Status);
     else if (sf === '__unverified__') matchS = !o._paymentConfirmed;
     else if (sf) matchS = o.Status === sf;
-    return matchQ && matchS;
+    let matchDate = true;
+    if (dateFrom || dateTo) {
+      const oDate = o._rawDate ? new Date(o._rawDate) : null;
+      if (oDate) {
+        if (dateFrom) matchDate = matchDate && oDate >= new Date(dateFrom);
+        if (dateTo) matchDate = matchDate && oDate <= new Date(dateTo + 'T23:59:59');
+      }
+    }
+    return matchQ && matchS && matchDate;
   });
-  renderOrdersTable(filtered);
+  renderOrdersTable(_filteredOrders);
+}
+
+function exportOrdersCSV() {
+  const rows = _filteredOrders.length ? _filteredOrders : allOrders;
+  if (!rows.length) { toast('No orders to export'); return; }
+  const headers = ['Order #','Date','Name','Phone','Email','City','Address','Items','Total','Advance','Status','Notes','Batch','Payment Confirmed'];
+  const csv = [headers.join(','), ...rows.map(o => [
+    o.OrderNum, o.Date, o.Name, o.Phone, o.Email||'', o.City||'', o.Address||'',
+    '"'+(o.Items||'').replace(/"/g,"''")+'"',
+    o._total||0, o._advance||0, o.Status, '"'+(o.Notes||'').replace(/"/g,"''")+'"',
+    o._batch||'', o._paymentConfirmed?'Yes':'No'
+  ].join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'orders-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
 }
 
 async function updateOrderStatus(idx, status) {
@@ -2801,19 +2867,23 @@ async function loadPromoCodes(){
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Code</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Discount</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Min Order</th>
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Uses</th>
+      <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Expires</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Status</th>
       <th style="padding:6px 8px"></th>
     </tr></thead>
-    <tbody>${data.map(c=>`<tr style="border-bottom:1px solid var(--border)">
+    <tbody>${data.map(c=>{const expired=c.expires_at&&new Date(c.expires_at)<new Date();const hitLimit=c.uses_limit!=null&&(c.usage_count||0)>=c.uses_limit;return`<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:8px;font-weight:600;letter-spacing:1px;font-size:0.82rem">${c.code}</td>
       <td style="padding:8px">${c.type==='percent'?c.value+'%':'Rs '+c.value.toLocaleString()}</td>
       <td style="padding:8px">${c.min_order?'Rs '+c.min_order.toLocaleString():'None'}</td>
-      <td style="padding:8px"><span style="display:inline-block;font-size:0.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border:1px solid ${c.active?'#BDD9C8':'var(--border)'};background:${c.active?'var(--sage-light)':'var(--bg2)'};color:${c.active?'var(--sage)':'var(--muted)'}">${c.active?'Active':'Inactive'}</span></td>
+      <td style="padding:8px">${c.uses_limit!=null?`${c.usage_count||0} / ${c.uses_limit}${hitLimit?' <span style="color:var(--rose);font-size:0.6rem">MAXED</span>':''}`:'∞'}</td>
+      <td style="padding:8px">${c.expires_at?`${c.expires_at}${expired?' <span style="color:var(--rose);font-size:0.6rem">EXPIRED</span>':''}` : '—'}</td>
+      <td style="padding:8px"><span style="display:inline-block;font-size:0.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border:1px solid ${c.active&&!expired&&!hitLimit?'#BDD9C8':'var(--border)'};background:${c.active&&!expired&&!hitLimit?'var(--sage-light)':'var(--bg2)'};color:${c.active&&!expired&&!hitLimit?'var(--sage)':'var(--muted)'}">${c.active&&!expired&&!hitLimit?'Active':'Inactive'}</span></td>
       <td style="padding:8px;text-align:right;white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="togglePromoCode(${c.id},${!c.active})" style="margin-right:4px">${c.active?'Disable':'Enable'}</button>
         <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="deletePromoCode(${c.id})">Delete</button>
       </td>
-    </tr>`).join('')}</tbody>
+    </tr>`}).join('')}</tbody>
   </table>`;
 }
 async function createPromoCode(){
@@ -2821,14 +2891,18 @@ async function createPromoCode(){
   const type=document.getElementById('new-promo-type').value;
   const value=parseInt(document.getElementById('new-promo-value').value)||0;
   const minOrder=parseInt(document.getElementById('new-promo-min').value)||0;
+  const usesLimit=parseInt(document.getElementById('new-promo-uses').value)||null;
+  const expiresAt=document.getElementById('new-promo-expires').value||null;
   if(!code||!value){toast('Enter a code and discount value');return;}
   if(type==='percent'&&(value<1||value>100)){toast('Percentage must be 1–100');return;}
   if(!_supa){toast('Supabase not connected');return;}
-  const {error}=await _supa.from('promo_codes').insert({code,type,value,min_order:minOrder,active:true});
+  const {error}=await _supa.from('promo_codes').insert({code,type,value,min_order:minOrder,active:true,uses_limit:usesLimit,expires_at:expiresAt,usage_count:0});
   if(error){toast('Error: '+(error.message.includes('unique')?'Code already exists':error.message));return;}
   document.getElementById('new-promo-code').value='';
   document.getElementById('new-promo-value').value='';
   document.getElementById('new-promo-min').value='';
+  document.getElementById('new-promo-uses').value='';
+  document.getElementById('new-promo-expires').value='';
   toast('✅ Promo code created');
   loadPromoCodes();
 }
@@ -2924,7 +2998,8 @@ async function loadProductsFromSheet() {
           is_outlet: p.is_outlet || false,
           is_featured: p.is_featured || false,
           images: Array.isArray(p.images) ? p.images : [],
-          colors: Array.isArray(p.colors) ? p.colors : []
+          colors: Array.isArray(p.colors) ? p.colors : [],
+          sizes: Array.isArray(p.sizes) ? p.sizes : []
         }));
         localStorage.setItem('gb_products', JSON.stringify(products));
         renderProducts();
@@ -3689,6 +3764,9 @@ function openProdDetails(id) {
   imgsContainer.innerHTML = '';
   (p.images || []).forEach(url => pdAddImage(url));
 
+  // Sizes
+  document.getElementById('pd-sizes').value = (p.sizes||[]).join(', ');
+
   // Color variants
   const colorsContainer = document.getElementById('pd-colors');
   colorsContainer.innerHTML = '';
@@ -3836,6 +3914,9 @@ async function saveProdDetails() {
   p.images = Array.from(document.querySelectorAll('#pd-extra-images .pd-img-url'))
     .map(i => i.value.trim()).filter(Boolean);
 
+  // Gather sizes
+  p.sizes = document.getElementById('pd-sizes').value.split(',').map(s=>s.trim()).filter(Boolean);
+
   // Gather color variants
   p.colors = Array.from(document.querySelectorAll('#pd-colors .pd-color-row')).map(row => {
     const inputs = row.querySelectorAll('input');
@@ -3845,7 +3926,7 @@ async function saveProdDetails() {
   localStorage.setItem('gb_products', JSON.stringify(products));
   if (_supa) {
     const { error } = await _supa.from('products')
-      .update({ description: p.description, image: p.image, images: p.images, colors: p.colors })
+      .update({ description: p.description, image: p.image, images: p.images, colors: p.colors, sizes: p.sizes })
       .eq('id', p.id);
     if (error) { toast('❌ ' + error.message); return; }
     toast('✅ Details saved!');

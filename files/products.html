@@ -403,6 +403,11 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .detail-color-swatch{display:inline-block;width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;margin:0 4px 4px 0;box-shadow:0 0 0 1px rgba(0,0,0,0.12);transition:transform 0.15s}
 .detail-color-swatch:hover{transform:scale(1.15)}.detail-color-swatch.active{border-color:var(--ink);transform:scale(1.1)}
 .detail-color-name{font-size:0.73rem;color:var(--muted);margin-top:2px;font-family:'Cormorant Garamond',serif;font-style:italic}
+.detail-sizes{padding-bottom:14px}
+.detail-sizes-label{font-size:0.56rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px}
+.size-pill{display:inline-block;font-size:0.62rem;font-weight:500;letter-spacing:0.5px;padding:4px 10px;border:1px solid var(--border2);cursor:pointer;margin:0 4px 4px 0;transition:all 0.15s;color:var(--ink)}
+.size-pill:hover{border-color:var(--pink-deep);color:var(--pink-deep)}
+.size-pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
 .detail-desc{font-size:0.78rem;color:var(--muted);line-height:1.85;padding:12px 14px;background:var(--bg2);border:1px solid var(--border);margin-bottom:14px;flex-grow:1}
 .detail-desc-label{font-size:0.54rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:6px}
 .detail-preorder-note{font-size:0.67rem;color:var(--sienna);background:var(--sienna-light);padding:7px 12px;margin-bottom:14px;border-left:2px solid #DFC4A8;line-height:1.5}
@@ -460,7 +465,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
     <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
     <a onclick="setGender('men')" id="nav-men">Men</a>
     <a onclick="filterCat('sale',null)" style="color:var(--pink-deep);font-weight:600;cursor:pointer">Sale</a>
-    <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
+    <a onclick="filterCat('outlet',null)" style="color:#8A6020;font-weight:600;cursor:pointer">Outlet</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
@@ -484,7 +489,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
   <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
   <a onclick="filterCat('sale',null);closeMobileNav()" style="color:var(--pink-deep);font-weight:600">Sale</a>
-  <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
+  <a onclick="filterCat('outlet',null);closeMobileNav()" style="color:#8A6020;font-weight:600;cursor:pointer">Outlet</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
@@ -770,6 +775,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
         <div class="detail-name" id="detailName"></div>
         <div class="detail-brand" id="detailBrand"></div>
         <div class="detail-colors" id="detailColors" style="display:none"></div>
+        <div class="detail-sizes" id="detailSizes" style="display:none"></div>
         <div class="detail-desc-wrap" id="detailDescWrap" style="display:none">
           <div class="detail-desc-label">About this product</div>
           <div class="detail-desc" id="detailDesc"></div>
@@ -899,9 +905,10 @@ function getDefaultProducts(){
           pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||'',
           qty:p.qty||0,sku:p.sku||'',cost:p.cost||0,lowStockThreshold:p.low_stock_threshold||3,
           on_sale:p.on_sale||false,sale_price:p.sale_price||null,
-          is_outlet:p.is_outlet||false,
+          is_outlet:p.is_outlet||false,is_featured:p.is_featured||false,
           images:Array.isArray(p.images)?p.images:[],
-          colors:Array.isArray(p.colors)?p.colors:[]
+          colors:Array.isArray(p.colors)?p.colors:[],
+          sizes:Array.isArray(p.sizes)?p.sizes:[]
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
         applyFilters();
@@ -958,11 +965,16 @@ function renderCats(g){
   const all=getProducts();
   const allCount=all.filter(p=>p.gender===g).length;
   const saleCount=all.filter(p=>p.on_sale&&p.sale_price).length;
+  const outletCount=all.filter(p=>p.is_outlet).length;
   let html=`<div class="sidebar-cat-item${currentCat==='all'?' active':''}" onclick="filterCat('all',this)">
     <span>All</span><span class="sidebar-cat-count">${allCount}</span></div>`;
   if(saleCount>0){
     html+=`<div class="sidebar-cat-item sale-item${currentCat==='sale'?' active':''}" onclick="filterCat('sale',this)">
       <span>Sale</span><span class="sidebar-cat-count">${saleCount}</span></div>`;
+  }
+  if(outletCount>0){
+    html+=`<div class="sidebar-cat-item outlet-item${currentCat==='outlet'?' active':''}" onclick="filterCat('outlet',this)">
+      <span>Outlet</span><span class="sidebar-cat-count">${outletCount}</span></div>`;
   }
   html+=cats.map(c=>{
     const cnt=all.filter(p=>p.gender===g&&p.cat===c.id).length;
@@ -988,6 +1000,7 @@ function filterProds(){
   const all=getProducts();
   if(currentBrand) return all.filter(p=>p.brand===currentBrand);
   if(currentCat==='sale') return all.filter(p=>p.on_sale&&p.sale_price);
+  if(currentCat==='outlet') return all.filter(p=>p.is_outlet);
   return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
 }
 
@@ -997,6 +1010,8 @@ function applyFilters(){
     products=products.filter(p=>p.brand===currentBrand);
   } else if(currentCat==='sale'){
     products=products.filter(p=>p.on_sale&&p.sale_price);
+  } else if(currentCat==='outlet'){
+    products=products.filter(p=>p.is_outlet);
   } else {
     products=products.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
   }
@@ -1137,13 +1152,14 @@ function loadCart(){
   }catch(e){cart=[];}
   updateBadge();
 }
-function addToCart(id,color){
+function addToCart(id,color,size){
   const p=getProducts().find(x=>x.id===id);
   const effectivePkr=(p.on_sale&&p.sale_price)?p.sale_price:p.pkr;
   const colorKey=color||'';
-  const ex=cart.find(x=>x.id===id&&(x.color||'')==colorKey);
+  const sizeKey=size||'';
+  const ex=cart.find(x=>x.id===id&&(x.color||'')==colorKey&&(x.size||'')==sizeKey);
   if(ex){if(ex.qty>=5){showToast('Max 5 per item');return;}ex.qty++;}
-  else{cart.push({...p,qty:1,pkr:effectivePkr,originalPkr:p.pkr,color:colorKey});}
+  else{cart.push({...p,qty:1,pkr:effectivePkr,originalPkr:p.pkr,color:colorKey,size:sizeKey});}
   saveCart();updateBadge();
   showToast(p.inStock?'Added to cart!':'Preorder added!');
 }
@@ -1187,7 +1203,7 @@ function openCart(){
     const ri=(c,idx)=>{
       const isShoe=['shoes','sandals'].includes(c.cat);
       const boxRow=isShoe?`<label class="ci-box-row"><input type="checkbox" ${c.wantsBox?'checked':''} onchange="toggleBoxByIdx(${idx})"> Add shoe box (+${fmtPKR(cfg.shoeBoxFee*c.qty)})</label>`:'';
-      return `<div class="cart-item"><div class="ci-emoji">${_fallbackIcons[c.cat]||'✨'}</div><div class="ci-info"><div class="ci-name">${c.name}${c.color?` <span style="font-size:0.62rem;color:var(--muted2)">${c.color}</span>`:''}</div><div class="ci-qty-row"><button class="ci-qty-btn" onclick="changeQtyIdx(${idx},-1)">−</button><span class="ci-qty-num">${c.qty}</span><button class="ci-qty-btn" onclick="changeQtyIdx(${idx},1)">+</button><span class="ci-price">${fmtPKR(c.pkr*c.qty)}</span></div>${boxRow}<span class="ci-remove" onclick="removeItemIdx(${idx})">Remove</span></div></div>`;
+      return `<div class="cart-item"><div class="ci-emoji">${_fallbackIcons[c.cat]||'✨'}</div><div class="ci-info"><div class="ci-name">${c.name}${c.color?` <span style="font-size:0.62rem;color:var(--muted2)">${c.color}</span>`:''}${c.size?` <span style="font-size:0.62rem;color:var(--muted2)">· ${c.size}</span>`:''}</div><div class="ci-qty-row"><button class="ci-qty-btn" onclick="changeQtyIdx(${idx},-1)">−</button><span class="ci-qty-num">${c.qty}</span><button class="ci-qty-btn" onclick="changeQtyIdx(${idx},1)">+</button><span class="ci-price">${fmtPKR(c.pkr*c.qty)}</span></div>${boxRow}<span class="ci-remove" onclick="removeItemIdx(${idx})">Remove</span></div></div>`;
     };
     let h='';
     if(sI.length){h+=`<div class="ci-section-label">In-Stock — Pay in Full</div>`;h+=sI.map(c=>ri(c,cart.indexOf(c))).join('');h+=`<div class="ci-subtotal"><span class="ci-subtotal-label">In-stock total</span><span class="ci-subtotal-val" style="color:var(--sage)">${fmtPKR(sS)}</span></div>`;}
@@ -1333,6 +1349,10 @@ async function applyPromo(){
   if(!_supa){errEl.textContent='Promo codes require Supabase to be connected.';errEl.style.display='block';return;}
   const {data,error}=await _supa.from('promo_codes').select('*').eq('code',code).eq('active',true).maybeSingle();
   if(error||!data){errEl.textContent='Invalid or expired promo code.';errEl.style.display='block';return;}
+  // Check expiry
+  if(data.expires_at&&new Date(data.expires_at)<new Date()){errEl.textContent='This promo code has expired.';errEl.style.display='block';return;}
+  // Check usage limit
+  if(data.uses_limit!=null&&(data.usage_count||0)>=data.uses_limit){errEl.textContent='This promo code has reached its usage limit.';errEl.style.display='block';return;}
   const base=window._baseTotal||0;
   if(data.min_order&&base<data.min_order){errEl.textContent=`Minimum order of ${fmtPKR(data.min_order)} required for this code.`;errEl.style.display='block';return;}
   const disc=data.type==='percent'?Math.round(base*data.value/100):Math.min(data.value,base);
@@ -1496,7 +1516,7 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
   if(oErr) throw oErr;
   const items=cart.map(c=>({
     order_id:orderId,product_id:c.id,product_name:c.name,brand:c.brand||'',
-    qty:c.qty,pkr:c.pkr,is_preorder:!c.inStock
+    qty:c.qty,pkr:c.pkr,is_preorder:!c.inStock,size:c.size||''
   }));
   const {error:iErr}=await _supa.from('order_items').insert(items);
   if(iErr) throw iErr;
@@ -1504,6 +1524,12 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes}){
   for(const c of cart.filter(x=>x.inStock)){
     const p=getProducts().find(x=>x.id===c.id);
     if(p&&p.qty>0) await _supa.from('products').update({qty:Math.max(0,p.qty-c.qty)}).eq('id',c.id);
+  }
+  // Increment promo usage count
+  if(window._promoCode&&_supa){
+    _supa.from('promo_codes').select('usage_count').eq('code',window._promoCode).single()
+      .then(({data})=>{ if(data!=null) _supa.from('promo_codes').update({usage_count:(data.usage_count||0)+1}).eq('code',window._promoCode); })
+      .catch(()=>{});
   }
   return {id:orderId,order_number:orderNum};
 }
@@ -1532,6 +1558,7 @@ function openMobileNav(){document.getElementById('mobileNav').classList.add('ope
 function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.body.style.overflow='';}
 
 let _detailColor = null;
+let _detailSize = null;
 
 function openProductDetail(id){
   _detailColor = null;
@@ -1565,6 +1592,16 @@ function openProductDetail(id){
     _detailColor = p.colors[0]?.name || null;
   } else { colorsEl.style.display='none'; colorsEl.innerHTML=''; }
 
+  // Size picker
+  _detailSize = null;
+  const sizesEl=document.getElementById('detailSizes');
+  if(p.sizes&&p.sizes.length>0){
+    sizesEl.style.display='block';
+    sizesEl.innerHTML='<div class="detail-sizes-label">Size</div>'+
+      p.sizes.map(s=>`<span class="size-pill" onclick="selectDetailSize(this,'${s.replace(/'/g,"\\'")}')"> ${s} </span>`).join('')+
+      `<div class="detail-color-name" id="detailSizeName" style="margin-top:4px">Select a size</div>`;
+  } else { sizesEl.style.display='none'; sizesEl.innerHTML=''; }
+
   const avail=document.getElementById('detailAvail');
   avail.className='availability-tag '+(isPreorder?'avail-preorder':'avail-stock');
   avail.textContent=isPreorder?'Preorder':'In Stock';
@@ -1583,7 +1620,11 @@ function openProductDetail(id){
   btn.textContent=isPreorder?'Preorder Now':'Add to Cart';
   btn.style.background=isPreorder?'var(--pink-deep)':'var(--ink)';
   btn.style.color='#fff';
-  btn.onclick=()=>{addToCart(id,_detailColor);closeDetail();};
+  btn.onclick=()=>{
+    const p2=getProducts().find(x=>x.id===id);
+    if(p2&&p2.sizes&&p2.sizes.length>0&&!_detailSize){showToast('Please select a size');return;}
+    addToCart(id,_detailColor,_detailSize);closeDetail();
+  };
   document.getElementById('detailOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1606,6 +1647,14 @@ function selectDetailColor(el,imgUrl,colorName){
   if(imgUrl)setDetailImage(imgUrl,null);
 }
 
+function selectDetailSize(el,size){
+  document.querySelectorAll('.size-pill').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  _detailSize=size||null;
+  const nameEl=document.getElementById('detailSizeName');
+  if(nameEl)nameEl.textContent=size||'';
+}
+
 function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');document.body.style.overflow='';}
 
 // ── INIT: read URL params ──
@@ -1618,6 +1667,11 @@ if(_brand){
 } else if(_hash==='sale'){
   setGender('women');
   currentCat='sale';
+  renderCats('women');
+  applyFilters();
+} else if(_hash==='outlet'){
+  setGender('women');
+  currentCat='outlet';
   renderCats('women');
   applyFilters();
 } else {
