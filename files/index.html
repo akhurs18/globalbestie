@@ -12,6 +12,7 @@
 <meta property="og:site_name" content="Global Bestie">
 <!-- JSON-LD -->
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Global Bestie","description":"Authentic USA products delivered to Pakistan","url":"https://globalbestiepk.com","areaServed":"PK","currenciesAccepted":"PKR"}</script>
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&family=Pacifico&display=swap');
@@ -426,6 +427,19 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .detail-price{font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:400;color:var(--ink);letter-spacing:0.3px}
 .detail-add-btn{width:100%;padding:0.88rem;font-family:'Inter',sans-serif;font-size:0.65rem;font-weight:600;border:none;cursor:pointer;letter-spacing:3px;text-transform:uppercase;transition:opacity 0.2s}
 .detail-add-btn:hover{opacity:0.84}
+.detail-share-btn{width:100%;background:transparent;border:1px solid var(--border2);color:var(--muted);font-family:'Inter',sans-serif;font-size:0.6rem;font-weight:500;padding:0.42rem;cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s;margin-top:0.5rem}
+.detail-share-btn:hover{border-color:var(--ink);color:var(--ink)}
+.share-card-btn{position:absolute;bottom:8px;left:8px;background:rgba(255,255,255,0.92);border:1px solid var(--border2);color:var(--muted);font-size:0.58rem;font-weight:500;padding:3px 8px;cursor:pointer;letter-spacing:0.5px;z-index:3;transition:all 0.2s;line-height:1.4}
+.share-card-btn:hover{background:#fff;color:var(--pink-deep);border-color:var(--pink-mid)}
+.similar-wrap{margin-top:1.2rem;padding-top:1.2rem;border-top:1px solid var(--border)}
+.similar-label{font-size:0.58rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.8rem}
+.similar-strip{display:flex;gap:0.7rem;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.similar-strip::-webkit-scrollbar{display:none}
+.similar-card{flex-shrink:0;width:110px;cursor:pointer;transition:opacity 0.15s}
+.similar-card:hover{opacity:0.8}
+.similar-card-img{width:110px;height:110px;object-fit:cover;display:block;background:var(--pink-light)}
+.similar-card-name{font-size:0.63rem;color:var(--ink);margin-top:5px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.similar-card-price{font-family:'Cormorant Garamond',serif;font-size:0.88rem;color:var(--pink-dark);margin-top:2px}
 @media(max-width:680px){
   .detail-modal{flex-direction:column;max-height:95vh;overflow-y:auto}
   .detail-left{width:100%;min-height:0}
@@ -816,6 +830,11 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
           <div class="detail-price" id="detailPrice"></div>
         </div>
         <button class="detail-add-btn" id="detailAddBtn"></button>
+        <button class="detail-share-btn" onclick="shareCurrentDetail()">⇪ Share This Product</button>
+        <div class="similar-wrap" id="detailSimilar" style="display:none">
+          <div class="similar-label">You May Also Like</div>
+          <div class="similar-strip" id="similarStrip"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1052,6 +1071,7 @@ function renderProducts(data,gridId){
         ${isSale?`<span class="sale-badge">−${pctOff}%</span>`:''}
         ${isOutlet&&!isSale?`<span class="outlet-badge">Outlet</span>`:''}
         <button class="wish-btn${isWished?' wished':''}" onclick="event.stopPropagation();toggleWishlist(${p.id})" title="${isWished?'Remove from wishlist':'Save to wishlist'}">${isWished?'♥':'♡'}</button>
+        <button class="share-card-btn" onclick="event.stopPropagation();shareProduct(${p.id})" title="Share">⇪</button>
       </div>
       <div class="prod-body">
         <div class="prod-cat${currentGender==='men'?' men-cat':''}">${catLabels[p.cat]||p.cat}</div>
@@ -1471,6 +1491,8 @@ function openProductDetail(id){
     if(p2&&p2.sizes&&p2.sizes.length>0&&!_detailSize){showToast('Please select a size');return;}
     addToCart(id,_detailColor,_detailSize);closeDetail();
   };
+  _currentDetailId=id;
+  renderSimilarProducts(p);
   document.getElementById('detailOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1504,6 +1526,31 @@ function selectDetailSize(el,size){
 function closeDetail(){
   document.getElementById('detailOverlay').classList.remove('open');
   document.body.style.overflow='';
+}
+
+// ── SHARE ──
+let _currentDetailId=null;
+function shareProduct(id){
+  const base=location.origin+location.pathname.replace(/\/[^/]*$/,'/')||location.origin+'/';
+  const url=base+'products.html?id='+id;
+  navigator.clipboard.writeText(url).then(()=>showToast('Link copied!')).catch(()=>showToast('Link copied!'));
+}
+function shareCurrentDetail(){if(_currentDetailId)shareProduct(_currentDetailId);}
+
+// ── SIMILAR PRODUCTS ──
+function renderSimilarProducts(p){
+  const wrap=document.getElementById('detailSimilar');
+  const strip=document.getElementById('similarStrip');
+  if(!wrap||!strip)return;
+  const similar=getProducts().filter(x=>x.cat===p.cat&&x.id!==p.id&&x.gender===p.gender).slice(0,5);
+  if(!similar.length){wrap.style.display='none';return;}
+  strip.innerHTML=similar.map(s=>{
+    const ep=(s.on_sale&&s.sale_price)?s.sale_price:s.pkr;
+    const bg2=bgs[s.cat]||'var(--pink-light)';
+    const imgHtml=s.image?`<img class="similar-card-img" src="${s.image}" alt="${s.name}" loading="lazy">`:`<div class="similar-card-img" style="background:${bg2};display:flex;align-items:center;justify-content:center;font-size:1.6rem">${catIcons[s.cat]||'✨'}</div>`;
+    return`<div class="similar-card" onclick="openProductDetail(${s.id})">${imgHtml}<div class="similar-card-name">${s.name}</div><div class="similar-card-price">${fmtPKR(ep)}</div></div>`;
+  }).join('');
+  wrap.style.display='block';
 }
 
 // ── CART EXPIRY (7 days) ──

@@ -402,6 +402,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-item" onclick="showPage('categories',this)"><span class="nav-icon">◻</span><span class="nav-label">Categories</span></div>
     <div class="nav-item" onclick="showPage('trends',this)"><span class="nav-icon">◻</span><span class="nav-label">Trends</span></div>
     <div class="nav-item" onclick="showPage('promos',this)"><span class="nav-icon">◻</span><span class="nav-label">Promo Codes</span></div>
+    <div class="nav-item" onclick="showPage('customers',this)"><span class="nav-icon">◻</span><span class="nav-label">Customers</span></div>
     <div class="nav-section-label">Communications</div>
     <div class="nav-item" onclick="showPage('emails',this)"><span class="nav-icon">◻</span><span class="nav-label">Emails</span></div>
     <div class="nav-section-label">Site Pages</div>
@@ -673,6 +674,37 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div class="card-body" id="promo-codes-list">
           <div style="font-size:0.78rem;color:var(--muted)">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="page" id="page-customers">
+      <div class="page-header">
+        <div class="page-title">Customers</div>
+        <div class="page-sub">All customers grouped by phone number, sorted by total spend</div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Customer List</span>
+          <input class="search-input" type="text" id="cust-search" placeholder="Search name, phone, email, city…" oninput="renderCustomers()" style="width:220px;margin-left:auto">
+        </div>
+        <div class="card-body" style="padding:0">
+          <div id="cust-list-wrap" style="overflow-x:auto">
+            <div style="font-size:0.78rem;color:var(--muted);padding:1.5rem">Open the Orders tab first to load order data, then return here.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" id="cust-detail-card" style="display:none;margin-top:1.5rem">
+        <div class="card-head">
+          <span class="card-title" id="cust-detail-name">Customer Orders</span>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('cust-detail-card').style.display='none'">✕ Close</button>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="tbl" id="cust-detail-table">
+            <thead><tr><th>Order #</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody id="cust-detail-body"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -1995,6 +2027,7 @@ function showPage(p, navEl) {
   if (p === 'analytics') initAnalyticsPage();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
   if (p === 'promos') loadPromoCodes();
+  if (p === 'customers') renderCustomers();
   if (p === 'trends') initTrendsPage();
   if (p === 'inventory') initInventoryPage();
   if (p === 'categories') initCategoriesPage();
@@ -2162,7 +2195,9 @@ async function loadOrders(silent = false) {
         _batch: o.batch || '',
         _paymentConfirmed: o.payment_confirmed || false,
         _items: o.order_items || [],
-        _admin_notes: o.admin_notes || ''
+        _admin_notes: o.admin_notes || '',
+        _promoCode: o.promo_code || '',
+        _discount: o.discount || 0
       }));
 
       const newOrders = allOrders.filter(o => o.Status === 'New Order');
@@ -2903,28 +2938,46 @@ async function loadPromoCodes(){
   const {data,error}=await _supa.from('promo_codes').select('*').order('created_at',{ascending:false});
   if(error){el.innerHTML=`<div style="color:var(--red);font-size:0.78rem">${error.message}</div>`;return;}
   if(!data||!data.length){el.innerHTML='<div style="font-size:0.78rem;color:var(--muted)">No codes yet. Create one above.</div>';return;}
+  // Build per-code stats from in-memory orders
+  const promoStats={};
+  allOrders.forEach(o=>{
+    const code=(o._promoCode||'').toUpperCase();
+    if(!code)return;
+    if(!promoStats[code]){promoStats[code]={revenue:0,discountGiven:0};}
+    promoStats[code].revenue+=o._total||0;
+    promoStats[code].discountGiven+=o._discount||0;
+  });
+
   el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
     <thead><tr style="border-bottom:2px solid var(--border)">
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Code</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Discount</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Min Order</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Uses</th>
+      <th style="text-align:right;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Revenue</th>
+      <th style="text-align:right;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Discount Given</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Expires</th>
       <th style="text-align:left;padding:6px 8px;font-size:0.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)">Status</th>
       <th style="padding:6px 8px"></th>
     </tr></thead>
-    <tbody>${data.map(c=>{const expired=c.expires_at&&new Date(c.expires_at)<new Date();const hitLimit=c.uses_limit!=null&&(c.usage_count||0)>=c.uses_limit;return`<tr style="border-bottom:1px solid var(--border)">
+    <tbody>${data.map(c=>{
+      const expired=c.expires_at&&new Date(c.expires_at)<new Date();
+      const hitLimit=c.uses_limit!=null&&(c.usage_count||0)>=c.uses_limit;
+      const stats=promoStats[c.code]||{revenue:0,discountGiven:0};
+      return`<tr style="border-bottom:1px solid var(--border)">
       <td style="padding:8px;font-weight:600;letter-spacing:1px;font-size:0.82rem">${c.code}</td>
       <td style="padding:8px">${c.type==='percent'?c.value+'%':'Rs '+c.value.toLocaleString()}</td>
       <td style="padding:8px">${c.min_order?'Rs '+c.min_order.toLocaleString():'None'}</td>
       <td style="padding:8px">${c.uses_limit!=null?`${c.usage_count||0} / ${c.uses_limit}${hitLimit?' <span style="color:var(--rose);font-size:0.6rem">MAXED</span>':''}`:'∞'}</td>
+      <td style="padding:8px;text-align:right;font-weight:600">${stats.revenue?'Rs '+Math.round(stats.revenue).toLocaleString():'—'}</td>
+      <td style="padding:8px;text-align:right;color:var(--rose)">${stats.discountGiven?'−Rs '+Math.round(stats.discountGiven).toLocaleString():'—'}</td>
       <td style="padding:8px">${c.expires_at?`${c.expires_at}${expired?' <span style="color:var(--rose);font-size:0.6rem">EXPIRED</span>':''}` : '—'}</td>
       <td style="padding:8px"><span style="display:inline-block;font-size:0.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border:1px solid ${c.active&&!expired&&!hitLimit?'#BDD9C8':'var(--border)'};background:${c.active&&!expired&&!hitLimit?'var(--sage-light)':'var(--bg2)'};color:${c.active&&!expired&&!hitLimit?'var(--sage)':'var(--muted)'}">${c.active&&!expired&&!hitLimit?'Active':'Inactive'}</span></td>
       <td style="padding:8px;text-align:right;white-space:nowrap">
         <button class="btn btn-ghost btn-sm" onclick="togglePromoCode(${c.id},${!c.active})" style="margin-right:4px">${c.active?'Disable':'Enable'}</button>
         <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="deletePromoCode(${c.id})">Delete</button>
       </td>
-    </tr>`}).join('')}</tbody>
+    </tr>`;}).join('')}</tbody>
   </table>`;
 }
 async function createPromoCode(){
@@ -2957,6 +3010,66 @@ async function deletePromoCode(id){
   if(!_supa)return;
   await _supa.from('promo_codes').delete().eq('id',id);
   loadPromoCodes();
+}
+
+// ── CUSTOMERS CRM ──
+function renderCustomers(){
+  const el=document.getElementById('cust-list-wrap');
+  if(!el)return;
+  if(!allOrders.length){
+    el.innerHTML='<div style="font-size:0.78rem;color:var(--muted);padding:1.5rem">No orders loaded. Open the Orders tab and click Refresh first.</div>';
+    return;
+  }
+  const q=(document.getElementById('cust-search')?.value||'').trim().toLowerCase();
+  const map={};
+  allOrders.forEach(o=>{
+    const key=(o.Phone||o.Email||'').toLowerCase().trim();
+    if(!key)return;
+    if(!map[key]){map[key]={name:o.Name,phone:o.Phone||'',email:o.Email||'',city:o.City||'',orders:[],total:0,_rawLast:'',lastDate:''};}
+    map[key].orders.push(o);
+    map[key].total+=o._total||0;
+    if(o._rawDate&&o._rawDate>map[key]._rawLast){map[key]._rawLast=o._rawDate;map[key].lastDate=o.Date;}
+  });
+  let custs=Object.values(map).sort((a,b)=>b.total-a.total);
+  if(q) custs=custs.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q)||c.email.toLowerCase().includes(q)||c.city.toLowerCase().includes(q));
+  if(!custs.length){el.innerHTML='<div style="font-size:0.78rem;color:var(--muted);padding:1.5rem">No customers found.</div>';return;}
+  const thStyle='text-align:left;padding:8px 10px;font-size:0.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)';
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="${thStyle}">Customer</th>
+      <th style="${thStyle}">Phone</th>
+      <th style="${thStyle}">City</th>
+      <th style="${thStyle};text-align:right">Orders</th>
+      <th style="${thStyle};text-align:right">Total Spend</th>
+      <th style="${thStyle}">Last Order</th>
+      <th style="${thStyle}"></th>
+    </tr></thead>
+    <tbody>${custs.map((c,i)=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 10px;font-weight:600">${c.name}<br><span style="font-weight:400;font-size:0.68rem;color:var(--muted2)">${c.email}</span></td>
+      <td style="padding:8px 10px">${c.phone||'—'}</td>
+      <td style="padding:8px 10px">${c.city||'—'}</td>
+      <td style="padding:8px 10px;text-align:right">${c.orders.length}</td>
+      <td style="padding:8px 10px;text-align:right;font-weight:600">Rs ${Math.round(c.total).toLocaleString()}</td>
+      <td style="padding:8px 10px;font-size:0.72rem;color:var(--muted)">${c.lastDate||'—'}</td>
+      <td style="padding:8px 10px"><button class="btn btn-ghost btn-sm" onclick="showCustomerOrders(${i})">Orders</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  window._custData=custs;
+}
+function showCustomerOrders(i){
+  const c=window._custData&&window._custData[i];
+  if(!c)return;
+  document.getElementById('cust-detail-name').textContent=c.name+' — All Orders';
+  document.getElementById('cust-detail-body').innerHTML=c.orders.map(o=>`<tr>
+    <td style="padding:8px 10px">${o.OrderNum||'—'}</td>
+    <td style="padding:8px 10px">${o.Date||'—'}</td>
+    <td style="padding:8px 10px;font-size:0.72rem;color:var(--muted2);max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.Items||'—'}</td>
+    <td style="padding:8px 10px">${o.Total||'—'}</td>
+    <td style="padding:8px 10px">${o.Status||'—'}</td>
+  </tr>`).join('');
+  const card=document.getElementById('cust-detail-card');
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function updatePromoPreview() {
