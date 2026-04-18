@@ -1181,6 +1181,20 @@ function doPost(e) {
           </div>
         </div>
 
+        <!-- Announcement Marquee -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Announcement Marquee</span>
+            <span style="font-size:0.68rem;color:var(--muted2)">Scrolling bar at the very top — one item per line</span>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">Items (one per line)</label>
+              <textarea class="form-input" id="ch-announce-items" rows="5" placeholder="Authentic USA&#10;Delivered to Pakistan&#10;WhatsApp for Support&#10;All Prices in PKR · No Hidden Costs&#10;50% Advance for Preorders" style="resize:vertical"></textarea>
+            </div>
+          </div>
+        </div>
+
         <!-- Batch Announcement -->
         <div class="card">
           <div class="card-head">
@@ -1205,8 +1219,13 @@ function doPost(e) {
         <div class="card">
           <div class="card-head"><span class="card-title">Hero Section</span></div>
           <div class="card-body">
+            <div class="form-group"><label class="form-label">Headline <span style="color:var(--muted2)">(HTML allowed — use &lt;br&gt; for line breaks, &lt;em&gt; for italic)</span></label><input class="form-input" type="text" id="ch-hero-title" placeholder="Your American&lt;br&gt;&lt;em&gt;Shopping Bestie&lt;/em&gt;&lt;br&gt;in Pakistan"></div>
             <div class="form-group"><label class="form-label">Tag Line (small text above headline)</label><input class="form-input" type="text" id="ch-hero-tag" placeholder="USA · Authentic · Delivered to Pakistan"></div>
             <div class="form-group"><label class="form-label">Subtext (paragraph below headline)</label><textarea class="form-input" id="ch-hero-sub" rows="3" style="resize:vertical"></textarea></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Primary Button Text</label><input class="form-input" type="text" id="ch-hero-btn-shop" placeholder="Shop Now"></div>
+              <div class="form-group"><label class="form-label">WhatsApp Button Text</label><input class="form-input" type="text" id="ch-hero-btn-wa" placeholder="WhatsApp Us"></div>
+            </div>
           </div>
         </div>
 
@@ -1292,8 +1311,12 @@ function doPost(e) {
 
         <!-- How It Works -->
         <div class="card">
-          <div class="card-head"><span class="card-title">How It Works — 5 Steps</span></div>
+          <div class="card-head"><span class="card-title">How to Order — Section</span></div>
           <div class="card-body">
+            <div class="form-row" style="margin-bottom:0.8rem">
+              <div class="form-group"><label class="form-label">Section Title <span style="color:var(--muted2)">(HTML allowed for &lt;span&gt; colour)</span></label><input class="form-input" type="text" id="ch-hiw-title" placeholder="How to Order from &lt;span&gt;Global Bestie&lt;/span&gt;"></div>
+              <div class="form-group"><label class="form-label">Section Subtitle</label><input class="form-input" type="text" id="ch-hiw-sub" placeholder="Simple 5-step process · No account required"></div>
+            </div>
             <div style="padding:0.7rem 0;">
               <div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Step 1</div>
               <div class="form-row" style="margin-bottom:0">
@@ -1329,6 +1352,28 @@ function doPost(e) {
                 <div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-hiw5-d" placeholder="Short description"></div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Trust Bar -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Trust Bar — 5 Items</span><span style="font-size:0.68rem;color:var(--muted2)">Strip shown above the footer</span></div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem">
+              <div><div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Item 1</div><div class="form-row" style="margin-bottom:0"><div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-tr0-t" placeholder="USA Sourced"></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-tr0-d" placeholder="Real US stores"></div></div></div>
+              <div><div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Item 2</div><div class="form-row" style="margin-bottom:0"><div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-tr1-t" placeholder="100% Authentic"></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-tr1-d" placeholder="No fakes, ever"></div></div></div>
+              <div><div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Item 3</div><div class="form-row" style="margin-bottom:0"><div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-tr2-t" placeholder="Bank Transfer"></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-tr2-d" placeholder="Safe PKR payments"></div></div></div>
+              <div><div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Item 4</div><div class="form-row" style="margin-bottom:0"><div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-tr3-t" placeholder="Home Delivery"></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-tr3-d" placeholder="All across Pakistan"></div></div></div>
+              <div><div style="font-size:0.6rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Item 5</div><div class="form-row" style="margin-bottom:0"><div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-tr4-t" placeholder="WhatsApp Support"></div><div class="form-group"><label class="form-label">Description</label><input class="form-input" type="text" id="ch-tr4-d" placeholder="Always here for you"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="card">
+          <div class="card-head"><span class="card-title">Footer</span></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Footer Tagline <span style="color:var(--muted2)">(HTML allowed for &lt;br&gt; line breaks)</span></label><input class="form-input" type="text" id="ch-footer-tagline" placeholder="Authentic American style,&lt;br&gt;delivered to Pakistan."></div>
           </div>
         </div>
       </div>
@@ -4366,12 +4411,26 @@ function saveCategories(gender) {
 // ── CONTENT ──
 const CONTENT_DEFAULTS = {
   home: {
+    announce_items: ['Authentic USA','Delivered to Pakistan','WhatsApp for Support','All Prices in PKR · No Hidden Costs','50% Advance for Preorders'],
     batch_active: false,
     batch_text: 'Next batch arriving <b>15 May 2026</b> — order by 1 May to be included',
+    hero_title: 'Your American<br><em>Shopping Bestie</em><br>in Pakistan',
     hero_tag: 'USA · Authentic · Delivered to Pakistan',
     hero_sub: 'Your favourite American brands — Charlotte Tilbury, Coach, Nike and more — sourced fresh from the US and delivered straight to your door. All prices in PKR. No conversion fees. No fakes. Ever.',
+    hero_btn_shop: 'Shop Now',
+    hero_btn_wa: 'WhatsApp Us',
     preorder_title: 'A note from your bestie',
     preorder_text: 'Some items are available for <strong>preorder</strong>. Pay a 50% advance to lock your spot, and we\'ll ship your order with the next batch arriving in approximately <strong>4 weeks</strong>.',
+    hiw_title: 'How to Order from <span>Global Bestie</span>',
+    hiw_sub: 'Simple 5-step process · No account required',
+    trust_items: [
+      {title:'USA Sourced', desc:'Real US stores'},
+      {title:'100% Authentic', desc:'No fakes, ever'},
+      {title:'Bank Transfer', desc:'Safe PKR payments'},
+      {title:'Home Delivery', desc:'All across Pakistan'},
+      {title:'WhatsApp Support', desc:'Always here for you'}
+    ],
+    footer_tagline: 'Authentic American style,<br>delivered to Pakistan.',
     testimonials: [
       {quote: 'The Charlotte Tilbury blush I\'ve been hunting for — it arrived exactly as shown. No customs drama, no fake. Worth every rupee.', author: 'Mahnoor · Lahore'},
       {quote: 'I was sceptical about ordering online but Global Bestie was so transparent throughout. WhatsApp updates every step of the way.', author: 'Zara · Karachi'},
@@ -4473,10 +4532,14 @@ function loadContentForm(page) {
   const c = saved ? JSON.parse(saved) : CONTENT_DEFAULTS[page];
 
   if (page === 'home') {
+    document.getElementById('ch-announce-items').value = (c.announce_items||CONTENT_DEFAULTS.home.announce_items).join('\n');
     document.getElementById('ch-batch-active').checked = !!c.batch_active;
     document.getElementById('ch-batch-text').value = c.batch_text || '';
+    document.getElementById('ch-hero-title').value = c.hero_title || '';
     document.getElementById('ch-hero-tag').value = c.hero_tag || '';
     document.getElementById('ch-hero-sub').value = c.hero_sub || '';
+    document.getElementById('ch-hero-btn-shop').value = c.hero_btn_shop || '';
+    document.getElementById('ch-hero-btn-wa').value = c.hero_btn_wa || '';
     document.getElementById('ch-pre-title').value = c.preorder_title || '';
     document.getElementById('ch-pre-text').value = c.preorder_text || '';
     const testis = c.testimonials || CONTENT_DEFAULTS.home.testimonials;
@@ -4493,6 +4556,19 @@ function loadContentForm(page) {
       if (ti) ti.value = s.title || '';
       if (di) di.value = s.desc || '';
     });
+    // How It Works heading
+    document.getElementById('ch-hiw-title').value = c.hiw_title || '';
+    document.getElementById('ch-hiw-sub').value = c.hiw_sub || '';
+    // Trust bar
+    const tItems = c.trust_items || CONTENT_DEFAULTS.home.trust_items;
+    tItems.forEach((item,i) => {
+      const tt = document.getElementById('ch-tr'+i+'-t');
+      const td = document.getElementById('ch-tr'+i+'-d');
+      if (tt) tt.value = item.title || '';
+      if (td) td.value = item.desc || '';
+    });
+    // Footer tagline
+    document.getElementById('ch-footer-tagline').value = c.footer_tagline || '';
     // Spotlight
     const sl = c.spotlight || CONTENT_DEFAULTS.home.spotlight;
     document.getElementById('ch-sl-image').value = sl.image || '';
@@ -4568,12 +4644,23 @@ function loadContentForm(page) {
 function gatherContentData(page) {
   if (page === 'home') {
     return {
+      announce_items: document.getElementById('ch-announce-items').value.split('\n').map(s=>s.trim()).filter(Boolean),
       batch_active: document.getElementById('ch-batch-active').checked,
       batch_text: document.getElementById('ch-batch-text').value,
+      hero_title: document.getElementById('ch-hero-title').value,
       hero_tag: document.getElementById('ch-hero-tag').value,
       hero_sub: document.getElementById('ch-hero-sub').value,
+      hero_btn_shop: document.getElementById('ch-hero-btn-shop').value,
+      hero_btn_wa: document.getElementById('ch-hero-btn-wa').value,
       preorder_title: document.getElementById('ch-pre-title').value,
       preorder_text: document.getElementById('ch-pre-text').value,
+      hiw_title: document.getElementById('ch-hiw-title').value,
+      hiw_sub: document.getElementById('ch-hiw-sub').value,
+      trust_items: [0,1,2,3,4].map(i => ({
+        title: (document.getElementById('ch-tr'+i+'-t')||{}).value || '',
+        desc: (document.getElementById('ch-tr'+i+'-d')||{}).value || ''
+      })),
+      footer_tagline: document.getElementById('ch-footer-tagline').value,
       testimonials: [1,2,3].map(n => ({
         quote: (document.getElementById('ch-testi'+n+'-q')||{}).value || '',
         author: (document.getElementById('ch-testi'+n+'-a')||{}).value || ''

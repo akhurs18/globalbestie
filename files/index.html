@@ -403,7 +403,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
-  <div class="announce-track">
+  <div class="announce-track" id="announceTrack">
     <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
     <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
     <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
@@ -470,25 +470,26 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 <div class="hero">
   <div class="hero-left">
     <span class="hero-tag" id="heroTag">USA · Authentic · Delivered to Pakistan</span>
-    <h1 class="hero-title">Your American<br><em>Shopping Bestie</em><br>in Pakistan</h1>
+    <h1 class="hero-title" id="heroTitle">Your American<br><em>Shopping Bestie</em><br>in Pakistan</h1>
     <p class="hero-sub" id="heroSub">Authentic USA products sourced and delivered to your door. Women's &amp; men's fashion, beauty, bags and more — ordered fresh from the US just for you.</p>
     <div class="hero-btns">
-      <button class="btn-primary" onclick="scrollToProducts()">Shop Now</button>
-      <button class="btn-wa" onclick="openWA('')">WhatsApp Us</button>
+      <button class="btn-primary" id="heroBtnShop" onclick="scrollToProducts()">Shop Now</button>
+      <button class="btn-wa" id="heroBtnWA" onclick="openWA('')">WhatsApp Us</button>
     </div>
   </div>
-  <div class="hero-stats">
-    <div class="hstat">
-      <div class="hstat-label">Payment</div>
-      <div class="hstat-val">Bank Transfer (PKR)</div>
-    </div>
-    <div class="hstat">
-      <div class="hstat-label">Delivery</div>
-      <div class="hstat-val">~4 Weeks</div>
-    </div>
-    <div class="hstat">
-      <div class="hstat-label">Advance</div>
-      <div class="hstat-val">50% to Confirm</div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="hiw">
+  <div class="hiw-inner">
+    <div class="hiw-title" id="hiwTitle">How to Order from <span>Global Bestie</span></div>
+    <div class="hiw-sub" id="hiwSub">Simple 5-step process · No account required</div>
+    <div class="hiw-steps">
+      <div class="hiw-step"><div class="hiw-num">1</div><h4 id="hiw1t">Browse &amp; Add to Cart</h4><p id="hiw1d">Pick any product and add it to your cart.</p></div>
+      <div class="hiw-step"><div class="hiw-num">2</div><h4 id="hiw2t">Fill Your Details</h4><p id="hiw2d">Enter your name, WhatsApp &amp; delivery address.</p></div>
+      <div class="hiw-step"><div class="hiw-num">3</div><h4 id="hiw3t">Bank Transfer</h4><p id="hiw3d">Transfer 50% advance (preorders) or full amount (in-stock).</p></div>
+      <div class="hiw-step"><div class="hiw-num">4</div><h4 id="hiw4t">Send Screenshot</h4><p id="hiw4d">WhatsApp us your payment screenshot to confirm.</p></div>
+      <div class="hiw-step"><div class="hiw-num">5</div><h4 id="hiw5t">We Deliver!</h4><p id="hiw5d">Sit back — your USA product is on its way!</p></div>
     </div>
   </div>
 </div>
@@ -568,28 +569,13 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   </div>
 </div>
 
-<!-- HOW IT WORKS -->
-<div class="hiw">
-  <div class="hiw-inner">
-    <div class="hiw-title">How to Order from <span>Global Bestie</span></div>
-    <div class="hiw-sub">Simple 5-step process · No account required</div>
-    <div class="hiw-steps">
-      <div class="hiw-step"><div class="hiw-num">1</div><h4 id="hiw1t">Browse &amp; Add to Cart</h4><p id="hiw1d">Pick any product and add it to your cart.</p></div>
-      <div class="hiw-step"><div class="hiw-num">2</div><h4 id="hiw2t">Fill Your Details</h4><p id="hiw2d">Enter your name, WhatsApp &amp; delivery address.</p></div>
-      <div class="hiw-step"><div class="hiw-num">3</div><h4 id="hiw3t">Bank Transfer</h4><p id="hiw3d">Transfer 50% advance (preorders) or full amount (in-stock).</p></div>
-      <div class="hiw-step"><div class="hiw-num">4</div><h4 id="hiw4t">Send Screenshot</h4><p id="hiw4d">WhatsApp us your payment screenshot to confirm.</p></div>
-      <div class="hiw-step"><div class="hiw-num">5</div><h4 id="hiw5t">We Deliver!</h4><p id="hiw5d">Sit back — your USA product is on its way!</p></div>
-    </div>
-  </div>
-</div>
-
 <!-- TRUST BAR -->
 <div class="trust-row">
-  <div class="trust-card"><div class="trust-title">USA Sourced</div><div class="trust-desc">Real US stores</div></div>
-  <div class="trust-card"><div class="trust-title">100% Authentic</div><div class="trust-desc">No fakes, ever</div></div>
-  <div class="trust-card"><div class="trust-title">Bank Transfer</div><div class="trust-desc">Safe PKR payments</div></div>
-  <div class="trust-card"><div class="trust-title">Home Delivery</div><div class="trust-desc">All across Pakistan</div></div>
-  <div class="trust-card"><div class="trust-title">WhatsApp Support</div><div class="trust-desc">Always here for you</div></div>
+  <div class="trust-card"><div class="trust-title" id="trust-t-0">USA Sourced</div><div class="trust-desc" id="trust-d-0">Real US stores</div></div>
+  <div class="trust-card"><div class="trust-title" id="trust-t-1">100% Authentic</div><div class="trust-desc" id="trust-d-1">No fakes, ever</div></div>
+  <div class="trust-card"><div class="trust-title" id="trust-t-2">Bank Transfer</div><div class="trust-desc" id="trust-d-2">Safe PKR payments</div></div>
+  <div class="trust-card"><div class="trust-title" id="trust-t-3">Home Delivery</div><div class="trust-desc" id="trust-d-3">All across Pakistan</div></div>
+  <div class="trust-card"><div class="trust-title" id="trust-t-4">WhatsApp Support</div><div class="trust-desc" id="trust-d-4">Always here for you</div></div>
 </div>
 
 <!-- FOOTER -->
@@ -597,7 +583,7 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   <div class="footer-grid">
     <div>
       <div class="footer-logo">Global <span>Bestie</span></div>
-      <div class="footer-tagline">Authentic American style,<br>delivered to Pakistan.</div>
+      <div class="footer-tagline" id="footerTagline">Authentic American style,<br>delivered to Pakistan.</div>
       <div class="footer-socials">
         <a class="footer-social" id="footerWaLink" href="#" target="_blank" rel="noopener">WhatsApp</a>
         <a class="footer-social" id="footerInstaLink" href="#" target="_blank" rel="noopener" style="display:none">Instagram</a>
@@ -1303,14 +1289,32 @@ renderCatGrid();
   try {
     var ch = JSON.parse(localStorage.getItem('gb_content_home')||'null');
     if (ch) {
+      // Announcement bar marquee
+      if (ch.announce_items && ch.announce_items.length) {
+        var at=document.getElementById('announceTrack');
+        if(at){var _ai=ch.announce_items.filter(Boolean);if(_ai.length){var _ab=_ai.map(function(s){return '<span>'+s+'</span><span class="announce-sep">&nbsp;·&nbsp;</span>';}).join('');at.innerHTML=_ab+_ab;}}
+      }
       // Batch announcement bar
       if (ch.batch_active && ch.batch_text) {
         var bb=document.getElementById('batchBar'), bt=document.getElementById('batchBarText');
         if(bb&&bt){bt.innerHTML=ch.batch_text;bb.style.display='';}
       }
       // Hero
+      _set('heroTitle', ch.hero_title, true);
       _set('heroTag', ch.hero_tag);
       _set('heroSub', ch.hero_sub);
+      var bShop=document.getElementById('heroBtnShop');if(bShop&&ch.hero_btn_shop)bShop.textContent=ch.hero_btn_shop;
+      var bWA=document.getElementById('heroBtnWA');if(bWA&&ch.hero_btn_wa)bWA.textContent=ch.hero_btn_wa;
+      // How it works heading
+      _set('hiwTitle', ch.hiw_title, true);
+      _set('hiwSub', ch.hiw_sub);
+      // Trust bar
+      if (ch.trust_items) ch.trust_items.forEach(function(item,i){
+        _set('trust-t-'+i, item.title);
+        _set('trust-d-'+i, item.desc);
+      });
+      // Footer
+      _set('footerTagline', ch.footer_tagline, true);
       // Spotlight
       if (ch.spotlight) {
         var sl=ch.spotlight;
