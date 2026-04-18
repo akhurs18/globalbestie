@@ -459,8 +459,8 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <div class="nav-links">
     <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
     <a onclick="setGender('men')" id="nav-men">Men</a>
-    <a onclick="filterCat('sale',null);document.getElementById('catsRow').scrollIntoView({behavior:'smooth'})" style="color:var(--pink-deep);font-weight:600" id="nav-sale">Sale</a>
-    <a onclick="filterCat('outlet',null);document.getElementById('catsRow').scrollIntoView({behavior:'smooth'})" style="color:#8A6020;font-weight:600" id="nav-outlet">Outlet</a>
+    <a onclick="filterCat('sale',null)" style="color:var(--pink-deep);font-weight:600;cursor:pointer">Sale</a>
+    <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
@@ -484,7 +484,7 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
   <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
   <a onclick="filterCat('sale',null);closeMobileNav()" style="color:var(--pink-deep);font-weight:600">Sale</a>
-  <a onclick="filterCat('outlet',null);closeMobileNav()" style="color:#8A6020;font-weight:600">Outlet</a>
+  <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
@@ -956,23 +956,14 @@ function setGender(g){
 function renderCats(g){
   const cats=getCats(g);
   const all=getProducts();
-  const saleCount=all.filter(p=>p.on_sale&&p.sale_price).length;
-  const outletCount=all.filter(p=>p.is_outlet).length;
-  const saleActive=currentCat==='sale';
-  const outletActive=currentCat==='outlet';
-  const allActive=!saleActive&&!outletActive;
   const allCount=all.filter(p=>p.gender===g).length;
-  let html='';
+  const saleCount=all.filter(p=>p.on_sale&&p.sale_price).length;
+  let html=`<div class="sidebar-cat-item${currentCat==='all'?' active':''}" onclick="filterCat('all',this)">
+    <span>All</span><span class="sidebar-cat-count">${allCount}</span></div>`;
   if(saleCount>0){
-    html+=`<div class="sidebar-cat-item sale-item${saleActive?' active':''}" onclick="filterCat('sale',this)">
+    html+=`<div class="sidebar-cat-item sale-item${currentCat==='sale'?' active':''}" onclick="filterCat('sale',this)">
       <span>Sale</span><span class="sidebar-cat-count">${saleCount}</span></div>`;
   }
-  if(outletCount>0){
-    html+=`<div class="sidebar-cat-item outlet-item${outletActive?' active':''}" onclick="filterCat('outlet',this)">
-      <span>Outlet</span><span class="sidebar-cat-count">${outletCount}</span></div>`;
-  }
-  html+=`<div class="sidebar-cat-item${allActive?' active':''}" onclick="filterCat('all',this)">
-    <span>All</span><span class="sidebar-cat-count">${allCount}</span></div>`;
   html+=cats.map(c=>{
     const cnt=all.filter(p=>p.gender===g&&p.cat===c.id).length;
     return `<div class="sidebar-cat-item${currentCat===c.id?' active':''}" onclick="filterCat('${c.id}',this)">
@@ -997,7 +988,6 @@ function filterProds(){
   const all=getProducts();
   if(currentBrand) return all.filter(p=>p.brand===currentBrand);
   if(currentCat==='sale') return all.filter(p=>p.on_sale&&p.sale_price);
-  if(currentCat==='outlet') return all.filter(p=>p.is_outlet);
   return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
 }
 
@@ -1007,8 +997,6 @@ function applyFilters(){
     products=products.filter(p=>p.brand===currentBrand);
   } else if(currentCat==='sale'){
     products=products.filter(p=>p.on_sale&&p.sale_price);
-  } else if(currentCat==='outlet'){
-    products=products.filter(p=>p.is_outlet);
   } else {
     products=products.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
   }
@@ -1624,16 +1612,14 @@ function closeDetail(){document.getElementById('detailOverlay').classList.remove
 loadCart();
 const _p=new URLSearchParams(location.search);
 const _brand=_p.get('brand'),_cat=_p.get('cat'),_gender=_p.get('gender');
-const _hashSale=location.hash==='#sale';
-const _hashOutlet=location.hash==='#outlet';
+const _hash=location.hash.replace('#','');
 if(_brand){
   showBrandFilter(_brand);
-} else if(_hashSale){
+} else if(_hash==='sale'){
+  setGender('women');
   currentCat='sale';
-  setGender('women');
-} else if(_hashOutlet){
-  currentCat='outlet';
-  setGender('women');
+  renderCats('women');
+  applyFilters();
 } else {
   setGender(_gender==='men'?'men':'women');
   if(_cat) filterCat(_cat, null);
