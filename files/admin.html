@@ -572,7 +572,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       </div>
 
       <!-- Demo products notice -->
-      <div id="demo-banner" style="display:none;background:var(--sky-light);border:1px solid #C4D5EE;padding:0.85rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div id="demo-banner" style="display:none;background:var(--sky-light);border:1px solid #C4D5EE;padding:0.85rem 1.2rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
         <div>
           <div style="font-size:0.75rem;font-weight:600;color:var(--sky);margin-bottom:2px">Demo catalogue loaded</div>
           <div style="font-size:0.7rem;color:#1E4D8C">These are sample products. Click <strong>Clear All</strong> to start building your real catalogue, or edit them directly.</div>
@@ -581,7 +581,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       </div>
 
       <!-- Sheets sync banner (only when sheet is configured + empty) -->
-      <div id="sheet-empty-banner" style="display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:1rem 1.4rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div id="sheet-empty-banner" style="display:none;background:var(--sienna-light);border:1px solid #DFC4A8;padding:1rem 1.4rem;margin-bottom:1.2rem;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
         <div>
           <div style="font-size:0.78rem;font-weight:600;color:var(--sienna);margin-bottom:3px">Google Sheet is empty</div>
           <div style="font-size:0.7rem;color:#7A3810">Your sheet has no products. Push your local catalogue to sync it.</div>
@@ -1207,6 +1207,49 @@ function doPost(e) {
           <div class="card-body">
             <div class="form-group"><label class="form-label">Tag Line (small text above headline)</label><input class="form-input" type="text" id="ch-hero-tag" placeholder="USA · Authentic · Delivered to Pakistan"></div>
             <div class="form-group"><label class="form-label">Subtext (paragraph below headline)</label><textarea class="form-input" id="ch-hero-sub" rows="3" style="resize:vertical"></textarea></div>
+          </div>
+        </div>
+
+        <!-- Spotlight Section -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Spotlight Banner</span>
+            <span style="font-size:0.68rem;color:var(--muted2)">Full-width editorial banner below the hero</span>
+          </div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Background Image URL</label><input class="form-input" type="text" id="ch-sl-image" placeholder="https://images.unsplash.com/..."></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Eyebrow (small label)</label><input class="form-input" type="text" id="ch-sl-eyebrow" placeholder="Now Available"></div>
+              <div class="form-group"><label class="form-label">Title</label><input class="form-input" type="text" id="ch-sl-title" placeholder="Fresh from the USA"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Subtitle</label><input class="form-input" type="text" id="ch-sl-sub" placeholder="Authentic brands delivered to Pakistan"></div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Button Text</label><input class="form-input" type="text" id="ch-sl-cta-text" placeholder="Shop the Collection →"></div>
+              <div class="form-group"><label class="form-label">Button Link</label><input class="form-input" type="text" id="ch-sl-cta-link" placeholder="products.html"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Images -->
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Category Photos</span>
+            <span style="font-size:0.68rem;color:var(--muted2)">Images shown on the home page category grid</span>
+          </div>
+          <div class="card-body">
+            <div style="font-size:0.68rem;color:var(--muted2);margin-bottom:1rem">Paste an image URL for each category. Leave blank to use the default Unsplash photo.</div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Makeup &amp; Beauty</label><input class="form-input" type="text" id="ch-ci-makeup" placeholder="https://..."></div>
+              <div class="form-group"><label class="form-label">Skincare</label><input class="form-input" type="text" id="ch-ci-skincare" placeholder="https://..."></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Bags &amp; Accessories</label><input class="form-input" type="text" id="ch-ci-bags" placeholder="https://..."></div>
+              <div class="form-group"><label class="form-label">Fashion</label><input class="form-input" type="text" id="ch-ci-fashion" placeholder="https://..."></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Jewellery</label><input class="form-input" type="text" id="ch-ci-accessories" placeholder="https://..."></div>
+              <div class="form-group"><label class="form-label">Home &amp; Living</label><input class="form-input" type="text" id="ch-ci-home" placeholder="https://..."></div>
+            </div>
           </div>
         </div>
 
@@ -4339,7 +4382,16 @@ const CONTENT_DEFAULTS = {
       {title: 'Send Payment Screenshot', desc: 'WhatsApp us your transfer proof — we confirm your order instantly.'},
       {title: 'We Source from the USA', desc: 'Your items are freshly sourced from US retailers and shipped to Pakistan.'},
       {title: 'Delivered to Your Door', desc: 'We deliver to all cities across Pakistan with real-time WhatsApp updates.'}
-    ]
+    ],
+    spotlight: {
+      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80',
+      eyebrow: 'Now Available',
+      title: 'Fresh from the USA,\nDelivered to You',
+      sub: 'Authentic American brands sourced fresh and shipped straight to Pakistan. All prices in PKR — no hidden fees.',
+      cta_text: 'Shop the Collection →',
+      cta_link: 'products.html'
+    },
+    cat_images: {}
   },
   about: {
     para1: "Global Bestie started with one simple frustration: why is it so hard to get real, authentic American products delivered to Pakistan? Not copies. Not knock-offs. The real thing — straight from US shelves to your door.",
@@ -4439,6 +4491,20 @@ function loadContentForm(page) {
       if (ti) ti.value = s.title || '';
       if (di) di.value = s.desc || '';
     });
+    // Spotlight
+    const sl = c.spotlight || CONTENT_DEFAULTS.home.spotlight;
+    document.getElementById('ch-sl-image').value = sl.image || '';
+    document.getElementById('ch-sl-eyebrow').value = sl.eyebrow || '';
+    document.getElementById('ch-sl-title').value = sl.title || '';
+    document.getElementById('ch-sl-sub').value = sl.sub || '';
+    document.getElementById('ch-sl-cta-text').value = sl.cta_text || '';
+    document.getElementById('ch-sl-cta-link').value = sl.cta_link || '';
+    // Category images
+    const ci = c.cat_images || {};
+    ['makeup','skincare','bags','fashion','accessories','home'].forEach(id => {
+      const el = document.getElementById('ch-ci-'+id);
+      if (el) el.value = ci[id] || '';
+    });
   }
 
   if (page === 'about') {
@@ -4512,7 +4578,20 @@ function gatherContentData(page) {
       hiw_steps: [1,2,3,4,5].map(n => ({
         title: (document.getElementById('ch-hiw'+n+'-t')||{}).value || '',
         desc: (document.getElementById('ch-hiw'+n+'-d')||{}).value || ''
-      }))
+      })),
+      spotlight: {
+        image: document.getElementById('ch-sl-image').value.trim(),
+        eyebrow: document.getElementById('ch-sl-eyebrow').value.trim(),
+        title: document.getElementById('ch-sl-title').value.trim(),
+        sub: document.getElementById('ch-sl-sub').value.trim(),
+        cta_text: document.getElementById('ch-sl-cta-text').value.trim(),
+        cta_link: document.getElementById('ch-sl-cta-link').value.trim()
+      },
+      cat_images: ['makeup','skincare','bags','fashion','accessories','home'].reduce((acc,id) => {
+        const v = (document.getElementById('ch-ci-'+id)||{}).value || '';
+        if (v) acc[id] = v;
+        return acc;
+      }, {})
     };
   }
   if (page === 'about') {

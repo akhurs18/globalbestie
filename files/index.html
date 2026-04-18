@@ -164,6 +164,28 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 .sale-pill,.sale-pill:hover,.sale-pill.active{color:#fff;background:var(--pink-deep);border-color:var(--pink-deep)}
 .sale-pill-ct{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.25);color:#fff;font-size:0.5rem;font-weight:700;padding:1px 5px;border-radius:20px;margin-left:3px}
 
+/* ── SPOTLIGHT ── */
+.spotlight{position:relative;min-height:440px;display:flex;align-items:center;overflow:hidden;background:var(--ink2)}
+.spotlight-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform 8s ease}
+.spotlight:hover .spotlight-bg{transform:scale(1.04)}
+.spotlight-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(26,16,21,0.88) 0%,rgba(26,16,21,0.55) 55%,rgba(26,16,21,0.15) 100%)}
+.spotlight-content{position:relative;z-index:1;padding:5rem 2rem;max-width:1100px;width:100%;margin:0 auto}
+.spotlight-eyebrow{font-size:0.58rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1rem;display:block}
+.spotlight-title{font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,4vw,3.2rem);color:#fff;line-height:1.15;margin-bottom:0.8rem;font-weight:400;max-width:480px}
+.spotlight-sub{font-size:0.82rem;color:#8A7070;line-height:1.8;margin-bottom:1.8rem;max-width:400px;font-weight:300}
+.spotlight-cta{display:inline-block;background:var(--pink-deep);color:#fff;padding:0.75rem 2.2rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 12px rgba(196,82,90,0.28)}
+.spotlight-cta:hover{background:var(--pink-dark);box-shadow:0 4px 20px rgba(196,82,90,0.38);transform:translateY(-1px)}
+
+/* ── CATEGORY GRID ── */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+@media(max-width:768px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ── FEATURED PRODUCTS ── */
+.feat-wrap{padding:5rem 2rem;max-width:1100px;margin:0 auto}
+.feat-header{text-align:center;margin-bottom:3rem}
+.feat-view-all{display:inline-block;margin-top:2.5rem;font-size:0.62rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--pink-deep);border-bottom:1px solid rgba(196,82,90,0.3);padding-bottom:3px;text-decoration:none;transition:all 0.2s}
+.feat-view-all:hover{border-bottom-color:var(--pink-deep);opacity:0.8}
+
 /* ── TESTIMONIALS ── */
 .testimonials{background:var(--ink2);padding:5rem 2rem;border-top:1px solid rgba(196,82,90,0.12)}
 .testimonials-inner{max-width:1100px;margin:0 auto}
@@ -399,8 +421,8 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 <nav>
   <span class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">Global <span>Bestie</span></span>
   <div class="nav-links">
-    <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
-    <a onclick="setGender('men')" id="nav-men">Men</a>
+    <a href="products.html?gender=women">Women</a>
+    <a href="products.html?gender=men">Men</a>
     <a href="products.html#sale" style="color:var(--pink-deep);font-weight:600">Sale</a>
     <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
     <a href="about.html">About</a>
@@ -423,9 +445,9 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
 <!-- MOBILE NAV -->
 <div class="mobile-nav" id="mobileNav">
   <button class="mobile-nav-close" onclick="closeMobileNav()">✕</button>
-  <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
-  <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
-  <a href="sale.html" style="color:var(--pink-deep);font-weight:600">Sale</a>
+  <a href="products.html?gender=women" onclick="closeMobileNav()">Women's Collection</a>
+  <a href="products.html?gender=men" onclick="closeMobileNav()">Men's Collection</a>
+  <a href="products.html#sale" style="color:var(--pink-deep);font-weight:600">Sale</a>
   <a href="outlet.html" style="color:#8A6020;font-weight:600">Outlet</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
@@ -471,74 +493,38 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
   </div>
 </div>
 
-<!-- CATEGORY EDITORIAL STRIP -->
+<!-- SPOTLIGHT -->
+<div class="spotlight" id="spotlightSection">
+  <div class="spotlight-bg" id="spotlightBg" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80')"></div>
+  <div class="spotlight-overlay"></div>
+  <div class="spotlight-content">
+    <span class="spotlight-eyebrow" id="spotlightEyebrow">Now Available</span>
+    <div class="spotlight-title" id="spotlightTitle">Fresh from the USA,<br>Delivered to You</div>
+    <div class="spotlight-sub" id="spotlightSub">Authentic American brands sourced fresh and shipped straight to Pakistan. All prices in PKR — no hidden fees.</div>
+    <a class="spotlight-cta" id="spotlightBtn" href="products.html">Shop the Collection →</a>
+  </div>
+</div>
+
+<!-- CATEGORY GRID -->
 <div class="cat-editorial">
   <div class="cat-editorial-inner">
-    <span class="section-eyebrow">Shop by Category</span>
-    <h2 class="section-heading">Curated just for you</h2>
-    <div class="cat-cards">
-      <div class="cat-card" onclick="setGender('women');filterCat('makeup',null);scrollToProducts()">
-        <div class="cat-card-bg" style="background:linear-gradient(135deg,#2A1E20,#3D2428)">💄</div>
-        <div class="cat-card-overlay"></div>
-        <div class="cat-card-content">
-          <div class="cat-card-name">Makeup &amp; Beauty</div>
-          <div class="cat-card-link">Explore →</div>
-        </div>
-      </div>
-      <div class="cat-card" onclick="setGender('women');filterCat('bags',null);scrollToProducts()">
-        <div class="cat-card-bg" style="background:linear-gradient(135deg,#1E2430,#2A3040)">👜</div>
-        <div class="cat-card-overlay"></div>
-        <div class="cat-card-content">
-          <div class="cat-card-name">Bags &amp; Accessories</div>
-          <div class="cat-card-link">Explore →</div>
-        </div>
-      </div>
-      <div class="cat-card" onclick="setGender('women');filterCat('fashion',null);scrollToProducts()">
-        <div class="cat-card-bg" style="background:linear-gradient(135deg,#1E2820,#2A3828)">👗</div>
-        <div class="cat-card-overlay"></div>
-        <div class="cat-card-content">
-          <div class="cat-card-name">Fashion</div>
-          <div class="cat-card-link">Explore →</div>
-        </div>
-      </div>
-    </div>
+    <span class="section-eyebrow">Browse by Category</span>
+    <h2 class="section-heading">What are you looking for?</h2>
+    <div class="cat-grid" id="catGrid"></div>
   </div>
 </div>
 
-<!-- PRICE BANNER -->
-<div class="price-banner">
-  <span class="pb-item">Makeup &amp; Beauty</span><span class="pb-dot"></span>
-  <span class="pb-item">Handbags &amp; Wallets</span><span class="pb-dot"></span>
-  <span class="pb-item">Skincare</span><span class="pb-dot"></span>
-  <span class="pb-item">Fashion &amp; Apparel</span><span class="pb-dot"></span>
-  <span class="pb-item">Home &amp; Living</span><span class="pb-dot"></span>
-  <span class="pb-item">Shoes &amp; Accessories</span>
-</div>
-
-<div style="padding:0.8rem 1.5rem 0;max-width:1100px;margin:0 auto">
-  <div class="preorder-banner">
-    <div class="pb-content">
-      <h4 id="preorderTitle">A note from your bestie</h4>
-      <p id="preorderText">Your items are ordered fresh from the USA just for you · <b>50% advance</b> secures your order · Items arrive in <b>~4 weeks</b> · All taxes &amp; shipping are already included — no hidden costs</p>
-    </div>
+<!-- FEATURED PRODUCTS -->
+<div class="feat-wrap">
+  <div class="feat-header">
+    <span class="section-eyebrow">Curated for You</span>
+    <h2 class="section-heading">Featured Products</h2>
+    <p class="section-subtext">Hand-picked from the USA — authentic brands, delivered to Pakistan</p>
   </div>
-</div>
-
-<div class="gender-tabs" id="genderTabs">
-  <div class="gtab active-women" id="gtab-women" onclick="setGender('women')">Women's Collection</div>
-  <div class="gtab" id="gtab-men" onclick="setGender('men')">Men's Collection</div>
-</div>
-
-<div class="cats-row" id="catsRow"></div>
-
-<div class="section" id="productsSection">
-  <div class="section-header">
-    <div>
-      <div class="section-title" id="sectionTitle">Women's Collection</div>
-      <div class="section-sub">Sourced from USA · Pay via Bank Transfer · 50% advance for preorders</div>
-    </div>
+  <div class="products-grid" id="featuredGrid"></div>
+  <div style="text-align:center">
+    <a class="feat-view-all" href="products.html">View All Products →</a>
   </div>
-  <div class="products-grid" id="productsGrid"></div>
 </div>
 
 <!-- TESTIMONIALS -->
@@ -620,10 +606,10 @@ nav{background:var(--ink);padding:0 2rem;display:flex;align-items:center;justify
     </div>
     <div class="footer-col">
       <div class="footer-col-title">Shop</div>
-      <a onclick="setGender('women')">Women's Collection</a>
-      <a onclick="setGender('men')">Men's Collection</a>
-      <a onclick="setGender('women');filterCat('all',null);scrollToProducts()">New Arrivals</a>
-      <a onclick="setGender('women');filterCat('bags',null);scrollToProducts()">Bags &amp; Accessories</a>
+      <a href="products.html?gender=women">Women's Collection</a>
+      <a href="products.html?gender=men">Men's Collection</a>
+      <a href="products.html">New Arrivals</a>
+      <a href="products.html?cat=bags">Bags &amp; Accessories</a>
     </div>
     <div class="footer-col">
       <div class="footer-col-title">Help</div>
@@ -817,12 +803,13 @@ function getDefaultProducts() {
           id:p.id,gender:p.gender,cat:p.cat,name:p.name,brand:p.brand||'',
           pkr:p.pkr||0,inStock:p.in_stock,description:p.description||'',image:p.image||'',
           on_sale:p.on_sale||false,sale_price:p.sale_price||null,
-          is_outlet:p.is_outlet||false,
+          is_outlet:p.is_outlet||false,is_featured:p.is_featured||false,
           images:Array.isArray(p.images)?p.images:[],
           colors:Array.isArray(p.colors)?p.colors:[]
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
-        renderProducts(filterProds());
+        renderFeatured();
+        renderCatGrid();
         loadCart();
         return;
       }
@@ -844,7 +831,8 @@ function getDefaultProducts() {
     if(!mapped.length) return;
     productsCache=mapped;
     localStorage.setItem('gb_products',JSON.stringify(productsCache));
-    renderProducts(filterProds());
+    renderFeatured();
+    renderCatGrid();
     loadCart();
   }catch(e){}
 })();
@@ -871,7 +859,7 @@ function loadCart(){
 }
 
 window.addEventListener('storage',e=>{
-  if(e.key==='gb_products'){productsCache=null;renderProducts(filterProds());}
+  if(e.key==='gb_products'){productsCache=null;renderFeatured();renderCatGrid();}
 });
 
 const fmtPKR=n=>'Rs '+Math.round(n).toLocaleString();
@@ -914,8 +902,42 @@ function filterProds(){
   return getProducts().filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
 }
 
-function renderProducts(data){
-  document.getElementById('productsGrid').innerHTML=data.map(p=>{
+const HOME_CATS=[
+  {id:'makeup',label:'Makeup & Beauty',img:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',link:'products.html?cat=makeup'},
+  {id:'skincare',label:'Skincare',img:'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80',link:'products.html?cat=skincare'},
+  {id:'bags',label:'Bags & Accessories',img:'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80',link:'products.html?cat=bags'},
+  {id:'fashion',label:'Fashion',img:'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80',link:'products.html?cat=fashion'},
+  {id:'accessories',label:'Jewellery',img:'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80',link:'products.html?cat=accessories'},
+  {id:'home',label:'Home & Living',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',link:'products.html?cat=home'},
+];
+
+function renderCatGrid(){
+  const ch=JSON.parse(localStorage.getItem('gb_content_home')||'null')||{};
+  const ci=ch.cat_images||{};
+  const el=document.getElementById('catGrid');if(!el)return;
+  el.innerHTML=HOME_CATS.map(c=>{
+    const img=ci[c.id]||c.img;
+    return `<a class="cat-card" href="${c.link}" style="text-decoration:none">
+      <div class="cat-card-bg" style="background-image:url('${img}');background-size:cover;background-position:center;font-size:0"></div>
+      <div class="cat-card-overlay"></div>
+      <div class="cat-card-content">
+        <div class="cat-card-name">${c.label}</div>
+        <div class="cat-card-link">Explore →</div>
+      </div>
+    </a>`;
+  }).join('');
+}
+
+function renderFeatured(){
+  const el=document.getElementById('featuredGrid');if(!el)return;
+  let prods=getProducts().filter(p=>p.is_featured);
+  if(!prods.length)prods=getProducts().slice(0,8);
+  renderProducts(prods,'featuredGrid');
+}
+
+function renderProducts(data,gridId){
+  const g=document.getElementById(gridId||'featuredGrid');if(!g)return;
+  g.innerHTML=data.map(p=>{
     const bg=bgs[p.cat]||'#f8f8ff';
     const isPreorder=!p.inStock;
     const isSale=p.on_sale&&p.sale_price;
@@ -1142,7 +1164,7 @@ function sendWA(){
 function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
 function copyText(t){navigator.clipboard.writeText(t).then(()=>showToast('Copied!')).catch(()=>showToast('Copied!'));}
 function copyBankAmt(){navigator.clipboard.writeText(String(window._payNow||0)).then(()=>showToast('Amount copied!')).catch(()=>showToast('Copied!'));}
-function scrollToProducts(){document.getElementById('productsSection').scrollIntoView({behavior:'smooth'});}
+function scrollToProducts(){var el=document.getElementById('featuredGrid')||document.querySelector('.feat-wrap');if(el)el.scrollIntoView({behavior:'smooth'});}
 function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
 function showPolicy(){document.getElementById('policySection').scrollIntoView({behavior:'smooth'});}
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
@@ -1249,7 +1271,8 @@ function closeDetail(){
 }
 
 loadCart();
-setGender(location.hash === '#men' ? 'men' : 'women');
+renderFeatured();
+renderCatGrid();
 
 // ── INJECT STORED SETTINGS ──
 (function(){
@@ -1278,9 +1301,17 @@ setGender(location.hash === '#men' ? 'men' : 'women');
       // Hero
       _set('heroTag', ch.hero_tag);
       _set('heroSub', ch.hero_sub);
-      // Preorder banner
-      _set('preorderTitle', ch.preorder_title);
-      _set('preorderText', ch.preorder_text, true);
+      // Spotlight
+      if (ch.spotlight) {
+        var sl=ch.spotlight;
+        var slBg=document.getElementById('spotlightBg');
+        if(slBg&&sl.image)slBg.style.backgroundImage="url('"+sl.image+"')";
+        _set('spotlightEyebrow', sl.eyebrow);
+        _set('spotlightTitle', sl.title);
+        _set('spotlightSub', sl.sub);
+        var slBtn=document.getElementById('spotlightBtn');
+        if(slBtn){if(sl.cta_text)slBtn.textContent=sl.cta_text;if(sl.cta_link)slBtn.href=sl.cta_link;}
+      }
       // Testimonials
       if (ch.testimonials) ch.testimonials.forEach(function(t,i){
         _set('testi'+(i+1)+'Quote', t.quote ? '\u201c'+t.quote+'\u201d' : null);
