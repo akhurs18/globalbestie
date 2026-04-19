@@ -363,6 +363,84 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .analytics-range-row{display:flex;gap:4px;margin-bottom:1.5rem}
 .arange-btn{padding:0.32rem 0.85rem;font-family:'Inter',sans-serif;font-size:0.62rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted);transition:all 0.2s}
 .arange-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+/* ── BATCHES PAGE ── */
+.batch-layout{display:flex;gap:1.5rem;align-items:flex-start}
+.batch-sidebar{width:260px;flex-shrink:0}
+.batch-main{flex:1;min-width:0}
+.batch-card{border:1px solid var(--border);padding:0.7rem 0.9rem;margin-bottom:6px;cursor:pointer;transition:all 0.15s;background:var(--card)}
+.batch-card:hover{border-color:var(--gold);background:var(--bg2)}
+.batch-card.active{border-color:var(--gold);background:rgba(197,160,90,0.06);border-left:3px solid var(--gold)}
+.batch-card-name{font-size:0.78rem;font-weight:600;color:var(--ink);margin-bottom:4px}
+.batch-card-meta{font-size:0.62rem;color:var(--muted2);display:flex;gap:10px;align-items:center}
+.batch-status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.batch-detail-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem}
+.batch-detail-name{font-size:1.2rem;font-weight:600;color:var(--ink);font-family:'Playfair Display',serif}
+.batch-detail-stats{font-size:0.65rem;color:var(--muted2);margin-top:4px}
+.batch-assign-modal{display:none;position:fixed;inset:0;background:rgba(10,8,6,0.65);z-index:500;align-items:center;justify-content:center;padding:1rem}
+.batch-assign-modal.open{display:flex}
+.batch-assign-box{background:var(--card);width:100%;max-width:540px;max-height:82vh;display:flex;flex-direction:column}
+.batch-assign-head{padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.batch-assign-body{overflow-y:auto;padding:0.8rem 0;flex:1}
+.batch-assign-row{display:flex;align-items:center;gap:10px;padding:0.5rem 1.4rem;cursor:pointer;transition:background 0.1s}
+.batch-assign-row:hover{background:var(--bg2)}
+.batch-assign-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--gold);cursor:pointer;flex-shrink:0}
+.batch-assign-foot{padding:0.9rem 1.4rem;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+@media(max-width:768px){.batch-layout{flex-direction:column}.batch-sidebar{width:100%}}
+
+/* ── POLISH: BULK ACTIONS ── */
+.bulk-action-bar{display:none;position:sticky;top:60px;z-index:80;background:var(--ink);padding:0.7rem 1.3rem;align-items:center;gap:1rem;flex-wrap:wrap;border-bottom:1px solid rgba(168,136,90,0.2)}
+.bulk-action-bar.visible{display:flex}
+.bulk-action-bar>span{color:#D4C4A8;font-size:0.75rem}
+.bulk-check{width:14px;height:14px;accent-color:var(--gold);cursor:pointer}
+/* ── POLISH: INLINE STATUS SELECT ── */
+.status-select{font-size:0.62rem;font-weight:500;border:1px solid var(--border);padding:3px 5px;background:var(--bg);font-family:'Inter',sans-serif;cursor:pointer;color:var(--ink3);width:118px;border-radius:0}
+.status-select:focus{outline:none;border-color:var(--gold)}
+/* ── POLISH: ROW EXPAND ── */
+.row-expand-btn{background:none;border:1px solid var(--border);padding:2px 7px;font-size:0.7rem;cursor:pointer;color:var(--muted);transition:all 0.15s;line-height:1.4;border-radius:0}
+.row-expand-btn:hover,.row-expand-btn.open{border-color:var(--gold);color:var(--gold);background:var(--gold-light)}
+.order-expand-row td{background:var(--bg2)!important;padding:0.8rem 1.2rem!important;border-bottom:2px solid var(--border)!important}
+.expand-items-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.expand-item-chip{background:var(--card);border:1px solid var(--border);padding:4px 10px;font-size:0.7rem;color:var(--ink3)}
+.expand-meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:0.6rem;font-size:0.68rem;color:var(--muted)}
+/* ── POLISH: CONFIRM DIALOG ── */
+#admin-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(13,13,13,0.65);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:1rem}
+#admin-confirm-overlay.open{display:flex}
+.admin-confirm-box{background:var(--card);border:1px solid var(--border);width:100%;max-width:400px;box-shadow:var(--shadow-lg);padding:2rem}
+.admin-confirm-icon{font-size:1.8rem;margin-bottom:0.8rem}
+.admin-confirm-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:500;color:var(--ink);margin-bottom:0.5rem}
+.admin-confirm-msg{font-size:0.8rem;color:var(--ink3);line-height:1.65;margin-bottom:1.6rem}
+.admin-confirm-btns{display:flex;gap:0.6rem;justify-content:flex-end}
+/* ── POLISH: SORT HEADERS ── */
+.sort-th{cursor:pointer;user-select:none;white-space:nowrap}
+.sort-th:hover{color:var(--gold-dark)}
+.sort-arrow{display:inline-block;margin-left:4px;opacity:0.35;font-size:0.65rem}
+.sort-th.sort-asc .sort-arrow,.sort-th.sort-desc .sort-arrow{opacity:1}
+.sort-th.sort-asc .sort-arrow::after{content:'↑'}
+.sort-th.sort-desc .sort-arrow::after{content:'↓'}
+.sort-th:not(.sort-asc):not(.sort-desc) .sort-arrow::after{content:'↕'}
+/* ── POLISH: TODAY STRIP ── */
+.today-strip{background:var(--card);border:1px solid var(--border);margin-bottom:1.5rem;overflow:hidden}
+.today-strip-head{padding:0.85rem 1.4rem;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
+.today-strip-title{font-size:0.63rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.today-strip-body{overflow-x:auto;display:flex;align-items:stretch;min-height:62px}
+.today-order-card{padding:0.7rem 1rem;border-right:1px solid var(--border);min-width:140px;flex-shrink:0;cursor:pointer;transition:background 0.15s}
+.today-order-card:hover{background:var(--bg2)}
+.today-order-card:last-child{border-right:none}
+.today-order-name{font-size:0.72rem;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
+.today-order-time{font-size:0.6rem;color:var(--muted2);margin-top:1px}
+.today-order-total{font-size:0.7rem;font-weight:600;color:var(--gold-dark);margin-top:3px}
+.today-order-status{font-size:0.58rem;font-weight:500;letter-spacing:1px;text-transform:uppercase;margin-top:2px;color:var(--muted)}
+.today-empty{font-size:0.75rem;color:var(--muted2);padding:1rem 1.4rem;flex:1;display:flex;align-items:center}
+/* ── POLISH: LOADING STATE ── */
+.btn-loading{opacity:0.7;pointer-events:none}
+.btn-loading::after{content:'';display:inline-block;width:9px;height:9px;border:1.5px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;margin-left:6px;vertical-align:middle}
+/* ── POLISH: NAV BADGE ── */
+.nav-badge{background:var(--rose);color:#fff;font-size:0.55rem;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:auto;min-width:18px;text-align:center;display:none;line-height:1.7}
+.nav-badge.visible{display:inline-block}
+/* ── POLISH: BATCH INLINE SELECT ── */
+.batch-mini-select{font-size:0.62rem;border:1px dashed var(--border);padding:2px 4px;background:var(--bg);font-family:'Inter',sans-serif;cursor:pointer;color:var(--muted2);max-width:120px;border-radius:0;margin-top:3px}
+.batch-mini-select.has-value{border-style:solid;border-color:var(--border2);color:var(--ink3);background:var(--bg2)}
+.batch-mini-select:focus{outline:none;border-color:var(--gold);border-style:solid}
 </style>
 </head>
 <body>
@@ -394,7 +472,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
   <div class="sidebar">
     <div class="nav-section-label">Overview</div>
     <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">◈</span><span class="nav-label">Dashboard</span></div>
-    <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-icon">◻</span><span class="nav-label">Orders</span></div>
+    <div class="nav-item" onclick="showPage('orders',this)"><span class="nav-icon">◻</span><span class="nav-label">Orders</span><span id="orders-nav-badge" class="nav-badge"></span></div>
+    <div class="nav-item" onclick="showPage('batches',this)"><span class="nav-icon">◻</span><span class="nav-label">Batches</span></div>
     <div class="nav-item" onclick="showPage('analytics',this)"><span class="nav-icon">◻</span><span class="nav-label">Analytics</span></div>
     <div class="nav-section-label">Catalogue</div>
     <div class="nav-item" onclick="showPage('products',this)"><span class="nav-icon">◈</span><span class="nav-label">Products</span></div>
@@ -432,6 +511,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         <div class="stat-card"><div class="stat-label">Shipped</div><div class="stat-val" id="stat-shipped">—</div><div class="stat-sub">Email sent</div></div>
         <div class="stat-card"><div class="stat-label">Customers</div><div class="stat-val" id="stat-customers">—</div><div class="stat-sub">Unique emails</div></div>
         <div class="stat-card inv-stat-alert" style="cursor:pointer" onclick="showPage('inventory',document.querySelector('.nav-item[onclick*=\'inventory\']'))"><div class="stat-label">Low Stock</div><div class="stat-val" id="stat-low-stock">—</div><div class="stat-sub">Items below threshold</div></div>
+      </div>
+      <div class="today-strip" id="today-strip">
+        <div class="today-strip-head">
+          <span class="today-strip-title">Today at a Glance</span>
+          <span id="today-strip-meta" style="font-size:0.68rem;color:var(--muted2)"></span>
+        </div>
+        <div class="today-strip-body" id="today-strip-body">
+          <div class="today-empty">Loading today's orders...</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-head"><span class="card-title">Recent Orders</span><button class="btn btn-ghost btn-sm" onclick="showPage('orders',document.querySelector('.nav-item[onclick*=\'orders\']'))">View All</button></div>
@@ -490,8 +578,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
           <span class="card-title">All Orders</span>
           <div style="display:flex;gap:0.5rem">
             <button class="btn btn-pink btn-sm" onclick="openNewOrderModal()">+ New Order</button>
-            <button class="btn btn-dark btn-sm" onclick="loadOrders()">↻ Refresh</button>
+            <button class="btn btn-dark btn-sm" id="refresh-orders-btn" onclick="setLoading(this,true);loadOrders().finally(()=>setLoading(this,false))">↻ Refresh</button>
           </div>
+        </div>
+        <!-- Bulk action bar -->
+        <div class="bulk-action-bar" id="bulk-action-bar">
+          <span id="bulk-count-label">0 selected</span>
+          <select class="filter-select" id="bulk-status-select" style="font-size:0.7rem;padding:0.38rem 0.6rem;background:rgba(255,255,255,0.08);color:#D4C4A8;border-color:rgba(255,255,255,0.15)">
+            <option value="">Set Status...</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Packed">Packed</option>
+            <option value="Shipped">Shipped</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <button class="btn btn-amber btn-sm" onclick="applyBulkStatus()">Apply</button>
+          <button class="btn btn-ghost btn-sm" style="border-color:rgba(255,255,255,0.2);color:#D4C4A8" onclick="clearBulkSelection()">Clear</button>
         </div>
         <div class="card-body" style="padding:1rem 1.3rem 0.5rem">
           <div class="search-bar">
@@ -516,9 +618,68 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         </div>
         <div style="overflow-x:auto">
           <table class="tbl" id="orders-table">
-            <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="orders-body"><tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders</td></tr></tbody>
+            <thead><tr>
+              <th style="width:32px"><input type="checkbox" class="bulk-check" id="bulk-select-all" onchange="toggleSelectAllOrders(this)" title="Select all"></th>
+              <th class="sort-th" onclick="sortOrders('num')" id="sort-th-num">Order #<span class="sort-arrow"></span></th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th class="sort-th" onclick="sortOrders('total')" id="sort-th-total">Total<span class="sort-arrow"></span></th>
+              <th class="sort-th" onclick="sortOrders('status')" id="sort-th-status">Status<span class="sort-arrow"></span></th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="orders-body"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Click Refresh to load orders</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BATCHES -->
+    <div class="page" id="page-batches">
+      <div class="page-header">
+        <div class="page-title">Batches</div>
+        <div class="page-sub">Group orders into shipment batches — 2–3 per month</div>
+      </div>
+      <div class="batch-layout">
+        <!-- Sidebar: batch list -->
+        <div class="batch-sidebar">
+          <div style="display:flex;gap:6px;margin-bottom:1rem">
+            <input id="newBatchName" class="form-input" placeholder="e.g. May Batch #2" style="flex:1;font-size:0.78rem">
+            <button class="btn btn-primary btn-sm" onclick="createBatch()">+ Create</button>
+          </div>
+          <div id="batchList"><div style="color:var(--muted2);font-size:0.75rem;text-align:center;padding:1.5rem 0">No batches yet</div></div>
+        </div>
+        <!-- Main: selected batch detail -->
+        <div class="batch-main">
+          <div id="batchDetail" style="display:none">
+            <div id="batchDetailHeader"></div>
+            <div id="batchDetailOrders"></div>
+          </div>
+          <div id="batchDetailEmpty" style="color:var(--muted2);font-size:0.78rem;text-align:center;padding:3rem 1rem;border:1px dashed var(--border)">
+            Select a batch on the left, or create a new one.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BATCH ASSIGN MODAL -->
+    <div class="batch-assign-modal" id="batchAssignModal" onclick="if(event.target===this)closeBatchAssign()">
+      <div class="batch-assign-box">
+        <div class="batch-assign-head">
+          <div>
+            <div style="font-size:0.85rem;font-weight:600;color:var(--ink)">Assign Orders to <span id="batchAssignTitle"></span></div>
+            <div style="font-size:0.62rem;color:var(--muted2);margin-top:2px">Select untagged orders to add to this batch</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="closeBatchAssign()">✕</button>
+        </div>
+        <div style="padding:0.6rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <input type="checkbox" id="batchAssignAll" onchange="toggleSelectAllBatch(this)" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer">
+          <label for="batchAssignAll" style="font-size:0.68rem;color:var(--muted);cursor:pointer">Select all</label>
+          <span id="batchAssignCount" style="font-size:0.62rem;color:var(--muted2);margin-left:auto"></span>
+        </div>
+        <div class="batch-assign-body" id="batchAssignBody"></div>
+        <div class="batch-assign-foot">
+          <button class="btn btn-primary btn-sm" onclick="confirmBatchAssign()">Assign Selected</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeBatchAssign()">Cancel</button>
         </div>
       </div>
     </div>
@@ -1072,7 +1233,7 @@ function doPost(e) {
         </div>
       </div>
 
-      <button class="btn btn-pink" onclick="saveSettings()" style="margin-top:0.3rem">💾 Save All Settings</button>
+      <button class="btn btn-pink" id="save-settings-btn" onclick="saveSettings(this)" style="margin-top:0.3rem">💾 Save All Settings</button>
     </div>
 
     <!-- TRENDS -->
@@ -1953,6 +2114,19 @@ function doPost(e) {
 
 <div class="toast" id="toast"></div>
 
+<!-- CONFIRM DIALOG -->
+<div id="admin-confirm-overlay" onclick="if(event.target===this)_confirmReject&&_confirmReject()">
+  <div class="admin-confirm-box">
+    <div class="admin-confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="admin-confirm-title" id="confirm-title">Are you sure?</div>
+    <div class="admin-confirm-msg" id="confirm-msg"></div>
+    <div class="admin-confirm-btns">
+      <button class="btn btn-ghost btn-sm" onclick="_confirmReject&&_confirmReject()">Cancel</button>
+      <button class="btn btn-red btn-sm" id="confirm-ok-btn" onclick="_confirmResolve&&_confirmResolve()">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════════
 // SUPABASE CONFIG — paste your values from Dashboard → Settings → API
@@ -2003,8 +2177,8 @@ function _enterApp() {
       })
       .subscribe();
   }
-  // Fallback polling every 60s (covers Google Sheets mode)
-  setInterval(() => { if (!_supa) loadOrders(true); }, 60000);
+  // Polling every 60s (Sheets mode) / backup for Supabase
+  setInterval(() => loadOrders(true), 60000);
 }
 
 async function doLogout() {
@@ -2024,6 +2198,7 @@ function showPage(p, navEl) {
   pageEl.classList.add('active');
   if (navEl) navEl.classList.add('active');
   if (p === 'orders') loadOrders();
+  if (p === 'batches') initBatchesPage();
   if (p === 'analytics') initAnalyticsPage();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
   if (p === 'promos') loadPromoCodes();
@@ -2081,7 +2256,8 @@ async function testSheetConnection() {
   }
 }
 
-function saveSettings() {
+function saveSettings(btn) {
+  setLoading(btn, true, '💾 Saving…');
   const s = {
     supaUrl: document.getElementById('supa-url').value.trim(),
     supaKey: document.getElementById('supa-key').value.trim(),
@@ -2102,6 +2278,7 @@ function saveSettings() {
   const nu = document.getElementById('new-user').value.trim();
   const np = document.getElementById('new-pass').value;
   if (nu && np) localStorage.setItem('gb_creds', JSON.stringify({ user: nu, pass: np }));
+  setTimeout(() => setLoading(btn, false), 600);
   toast('✅ Settings saved!');
 }
 
@@ -2150,6 +2327,9 @@ function gvizUrl(sheetId, sheetName) {
 
 // ── ORDERS ──
 let allOrders = [];
+let _bulkSelected = new Set();
+let _sortCol = null, _sortDir = 'asc';
+let _expandedIdx = null;
 let _knownOrderKeys = new Set();
 let _ordersInitialized = false;
 
@@ -2384,6 +2564,253 @@ async function saveBatchFromModal() {
   await saveBatch(_odmIdx, val);
 }
 
+// ── BATCHES PAGE ──
+let _batchMeta = {}; // { batchName: { created, note } }
+let _selectedBatch = null;
+let _batchAssignTarget = null;
+
+function _loadBatchMeta() {
+  try { _batchMeta = JSON.parse(localStorage.getItem('gb_batches') || '{}'); } catch(e) { _batchMeta = {}; }
+}
+function _saveBatchMeta() {
+  localStorage.setItem('gb_batches', JSON.stringify(_batchMeta));
+}
+function _getBatchOrders(name) {
+  return allOrders.map((o, i) => ({ ...o, _idx: i })).filter(o => o._batch === name);
+}
+function _allBatchNames() {
+  const fromOrders = [...new Set(allOrders.map(o => o._batch).filter(Boolean))];
+  const fromMeta = Object.keys(_batchMeta);
+  return [...new Set([...fromMeta, ...fromOrders])].sort((a, b) => {
+    const da = _batchMeta[a]?.created || '0';
+    const db = _batchMeta[b]?.created || '0';
+    return db.localeCompare(da);
+  });
+}
+
+function initBatchesPage() {
+  if (!allOrders.length) loadOrders(true);
+  _loadBatchMeta();
+  renderBatchList();
+  if (_selectedBatch) renderBatchDetail(_selectedBatch);
+  else {
+    document.getElementById('batchDetail').style.display = 'none';
+    document.getElementById('batchDetailEmpty').style.display = '';
+  }
+}
+
+function createBatch() {
+  const input = document.getElementById('newBatchName');
+  const name = (input.value || '').trim();
+  if (!name) { toast('Enter a batch name'); return; }
+  if (_batchMeta[name]) { toast('Batch already exists'); selectBatch(name); return; }
+  _batchMeta[name] = { created: new Date().toISOString(), note: '' };
+  _saveBatchMeta();
+  input.value = '';
+  renderBatchList();
+  selectBatch(name);
+  toast('✅ Batch created');
+}
+
+function renderBatchList() {
+  const el = document.getElementById('batchList');
+  if (!el) return;
+  const names = _allBatchNames();
+  if (!names.length) {
+    el.innerHTML = '<div style="color:var(--muted2);font-size:0.75rem;text-align:center;padding:1.5rem 0">No batches yet</div>';
+    return;
+  }
+  el.innerHTML = names.map(name => {
+    const orders = _getBatchOrders(name);
+    const total = orders.reduce((s, o) => s + (o._total || 0), 0);
+    const allShipped = orders.length > 0 && orders.every(o => ['Shipped','Delivered'].includes(o.Status));
+    const hasActive = orders.some(o => !['Shipped','Delivered','Cancelled'].includes(o.Status));
+    const dotColor = allShipped ? '#2E5E47' : hasActive ? '#C4525A' : '#BDA8AA';
+    const statusLabel = allShipped ? 'Shipped' : hasActive ? 'Active' : orders.length ? 'Done' : 'Empty';
+    const isActive = name === _selectedBatch;
+    return `<div class="batch-card${isActive ? ' active' : ''}" onclick="selectBatch('${name.replace(/'/g,"\\'")}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+        <div class="batch-card-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <span class="batch-status-dot" style="background:${dotColor}"></span>
+          <span style="font-size:0.58rem;color:var(--muted2)">${statusLabel}</span>
+        </div>
+      </div>
+      <div class="batch-card-meta">
+        <span>${orders.length} order${orders.length!==1?'s':''}</span>
+        <span>Rs ${total.toLocaleString()}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectBatch(name) {
+  _selectedBatch = name;
+  renderBatchList();
+  renderBatchDetail(name);
+}
+
+function renderBatchDetail(name) {
+  const detailEl = document.getElementById('batchDetail');
+  const emptyEl = document.getElementById('batchDetailEmpty');
+  const headerEl = document.getElementById('batchDetailHeader');
+  const ordersEl = document.getElementById('batchDetailOrders');
+  if (!detailEl || !headerEl || !ordersEl) return;
+  detailEl.style.display = '';
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const orders = _getBatchOrders(name);
+  const total = orders.reduce((s, o) => s + (o._total || 0), 0);
+  const paid = orders.filter(o => o._paymentConfirmed).length;
+  const shipped = orders.filter(o => ['Shipped','Delivered'].includes(o.Status)).length;
+  const note = _batchMeta[name]?.note || '';
+  const created = _batchMeta[name]?.created ? new Date(_batchMeta[name].created).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'}) : '';
+
+  headerEl.innerHTML = `
+    <div class="batch-detail-header">
+      <div>
+        <div class="batch-detail-name">${name}</div>
+        <div class="batch-detail-stats">${orders.length} orders &nbsp;·&nbsp; Rs ${total.toLocaleString()} total &nbsp;·&nbsp; ${paid}/${orders.length} payments confirmed &nbsp;·&nbsp; ${shipped} shipped${created?' &nbsp;·&nbsp; Created '+created:''}</div>
+        ${note ? `<div style="font-size:0.68rem;color:var(--muted);margin-top:5px;font-style:italic">📝 ${note}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="editBatchNote('${name.replace(/'/g,"\\'")}')">📝 Note</button>
+        <button class="btn btn-ghost btn-sm" onclick="openBatchAssign('${name.replace(/'/g,"\\'")}')">+ Assign Orders</button>
+        <button class="btn btn-secondary btn-sm" onclick="batchMarkAllShipped('${name.replace(/'/g,"\\'")}')">📦 Mark All Shipped</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--rose);border-color:var(--rose)" onclick="confirmDeleteBatch('${name.replace(/'/g,"\\'")}')">Delete</button>
+      </div>
+    </div>`;
+
+  if (!orders.length) {
+    ordersEl.innerHTML = `<div style="text-align:center;padding:2.5rem;color:var(--muted2);font-size:0.78rem;border:1px dashed var(--border)">No orders assigned yet. Click <b>+ Assign Orders</b> to add from untagged orders.</div>`;
+    return;
+  }
+
+  const statusColor = { 'New Order':'var(--rose)', 'Confirmed':'var(--gold)', 'Packed':'#4A7C6F', 'Shipped':'var(--sage)', 'Delivered':'var(--sage)', 'Cancelled':'var(--muted2)' };
+
+  ordersEl.innerHTML = `<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr><th>Order #</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Payment</th><th></th></tr></thead>
+    <tbody>${orders.map(o => `
+      <tr class="order-row" onclick="openOrderDetail(${o._idx})">
+        <td style="font-size:0.68rem;color:var(--muted2)">${o.OrderNum||'—'}</td>
+        <td><div style="font-size:0.75rem;font-weight:500">${o.Name||'—'}</div><div style="font-size:0.6rem;color:var(--muted2)">${o.City||''}</div></td>
+        <td style="font-size:0.65rem;color:var(--muted);max-width:200px">${(o.Items||'—').substring(0,80)}${o.Items&&o.Items.length>80?'…':''}</td>
+        <td style="font-size:0.75rem;font-weight:500;white-space:nowrap">Rs ${(o._total||0).toLocaleString()}</td>
+        <td><span style="font-size:0.62rem;font-weight:600;color:${statusColor[o.Status]||'var(--muted)'}">${o.Status||'New'}</span></td>
+        <td>${o._paymentConfirmed ? '<span style="color:var(--sage);font-size:0.62rem;font-weight:600">✓ Paid</span>' : '<span style="color:var(--muted2);font-size:0.62rem">Pending</span>'}</td>
+        <td onclick="event.stopPropagation()"><button class="btn btn-ghost btn-sm" onclick="removeOrderFromBatch(${o._idx})" title="Remove from batch" style="color:var(--rose)">✕</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+async function removeOrderFromBatch(idx) {
+  await saveBatch(idx, '');
+  renderBatchList();
+  if (_selectedBatch) setTimeout(() => renderBatchDetail(_selectedBatch), 150);
+}
+
+function editBatchNote(name) {
+  const current = _batchMeta[name]?.note || '';
+  const val = window.prompt('Batch note (e.g. expected ship date, tracking info):', current);
+  if (val === null) return;
+  if (!_batchMeta[name]) _batchMeta[name] = { created: new Date().toISOString() };
+  _batchMeta[name].note = val.trim();
+  _saveBatchMeta();
+  renderBatchDetail(name);
+}
+
+async function batchMarkAllShipped(name) {
+  const orders = _getBatchOrders(name);
+  const pending = orders.filter(o => !['Shipped','Delivered','Cancelled'].includes(o.Status));
+  if (!pending.length) { toast('All orders already shipped or closed'); return; }
+  try { await adminConfirm(`Mark ${pending.length} order${pending.length!==1?'s':''} as Shipped?`, 'Mark All Shipped', '✈️'); } catch(e) { return; }
+  for (const o of pending) await updateOrderStatus(o._idx, 'Shipped');
+  renderBatchList();
+  renderBatchDetail(name);
+  toast(`✅ ${pending.length} order${pending.length!==1?'s':''} marked Shipped`);
+}
+
+async function confirmDeleteBatch(name) {
+  const orders = _getBatchOrders(name);
+  const msg = orders.length
+    ? `Delete batch "${name}"? The ${orders.length} order${orders.length!==1?'s':''} will be untagged but not deleted.`
+    : `Delete empty batch "${name}"?`;
+  try { await adminConfirm(msg, 'Delete Batch', '🗑️'); } catch(e) { return; }
+  deleteBatch(name);
+}
+
+async function deleteBatch(name) {
+  // Untag all orders in this batch
+  const orders = _getBatchOrders(name);
+  for (const o of orders) await saveBatch(o._idx, '');
+  delete _batchMeta[name];
+  _saveBatchMeta();
+  if (_selectedBatch === name) {
+    _selectedBatch = null;
+    document.getElementById('batchDetail').style.display = 'none';
+    document.getElementById('batchDetailEmpty').style.display = '';
+  }
+  renderBatchList();
+  toast('Batch deleted');
+}
+
+// ── BATCH ASSIGN MODAL ──
+function openBatchAssign(name) {
+  _batchAssignTarget = name;
+  document.getElementById('batchAssignTitle').textContent = name;
+  document.getElementById('batchAssignAll').checked = false;
+  renderBatchAssignList();
+  document.getElementById('batchAssignModal').classList.add('open');
+}
+function closeBatchAssign() {
+  document.getElementById('batchAssignModal').classList.remove('open');
+  _batchAssignTarget = null;
+}
+function renderBatchAssignList() {
+  const body = document.getElementById('batchAssignBody');
+  const countEl = document.getElementById('batchAssignCount');
+  const untagged = allOrders.map((o, i) => ({ ...o, _idx: i })).filter(o => !o._batch);
+  if (!untagged.length) {
+    body.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted2);font-size:0.75rem">No untagged orders. All orders are already assigned to a batch.</div>';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+  if (countEl) countEl.textContent = `${untagged.length} untagged order${untagged.length!==1?'s':''}`;
+  body.innerHTML = untagged.map(o => `
+    <label class="batch-assign-row">
+      <input type="checkbox" class="ba-chk" data-idx="${o._idx}" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.75rem;font-weight:500;color:var(--ink)">${o.Name||'—'} <span style="font-size:0.6rem;color:var(--muted2);font-weight:400">${o.OrderNum||''}</span></div>
+        <div style="font-size:0.62rem;color:var(--muted2)">${o.Date||''} &nbsp;·&nbsp; ${(o.Items||'').substring(0,50)}${o.Items&&o.Items.length>50?'…':''}</div>
+      </div>
+      <div style="font-size:0.72rem;font-weight:500;color:var(--ink);white-space:nowrap">Rs ${(o._total||0).toLocaleString()}</div>
+    </label>`).join('');
+  body.querySelectorAll('.ba-chk').forEach(cb => cb.addEventListener('change', updateBatchAssignCount));
+}
+function toggleSelectAllBatch(masterCb) {
+  document.querySelectorAll('.ba-chk').forEach(cb => cb.checked = masterCb.checked);
+  updateBatchAssignCount();
+}
+function updateBatchAssignCount() {
+  const selected = document.querySelectorAll('.ba-chk:checked').length;
+  const countEl = document.getElementById('batchAssignCount');
+  if (countEl) {
+    const total = document.querySelectorAll('.ba-chk').length;
+    countEl.textContent = selected ? `${selected} selected of ${total}` : `${total} untagged order${total!==1?'s':''}`;
+  }
+}
+async function confirmBatchAssign() {
+  if (!_batchAssignTarget) return;
+  const checked = [...document.querySelectorAll('.ba-chk:checked')];
+  if (!checked.length) { toast('Select at least one order'); return; }
+  for (const cb of checked) await saveBatch(parseInt(cb.dataset.idx), _batchAssignTarget);
+  closeBatchAssign();
+  renderBatchList();
+  renderBatchDetail(_batchAssignTarget);
+  toast(`✅ ${checked.length} order${checked.length!==1?'s':''} added to ${_batchAssignTarget}`);
+}
+
 async function confirmPayment(idx) {
   const o = allOrders[idx];
   if (!o) return;
@@ -2408,21 +2835,32 @@ async function confirmPaymentFromModal() {
 function renderOrdersTable(orders) {
   const body = document.getElementById('orders-body');
   if (!orders.length) {
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)"><div class="empty-icon">📦</div><br>No orders yet</td></tr>';
     return;
   }
-  body.innerHTML = orders.map((o, i) => {
-    const paid = o._advance || 0, total = o._total || 0;
+  const batchNames = typeof _allBatchNames === 'function' ? _allBatchNames() : [];
+  const batchOpts = batchNames.map(b => `<option value="${b}">${b}</option>`).join('');
+  body.innerHTML = orders.map((o, fi) => {
+    const idx = allOrders.indexOf(o);
     const payIcon = o._paymentConfirmed
       ? '<span style="color:var(--sage);font-size:0.65rem;font-weight:600">✓ Paid</span>'
       : '<span style="color:var(--rose);font-size:0.65rem;font-weight:600">⚠ Unverified</span>';
     const itemCount = o._items && o._items.length ? o._items.length : (o.Items ? o.Items.split(',').length : 0);
     const itemLabel = itemCount === 1 ? '1 item' : itemCount + ' items';
-    return `<tr class="order-row" data-id="${o._id||''}" data-phone="${o.Phone||''}" data-date="${o.Date||''}" onclick="openOrderDetail(${i})" style="cursor:pointer">
+    const isSelected = _bulkSelected.has(idx);
+    const statuses = ['New Order','Confirmed','Packed','Shipped','Delivered','Cancelled','Return Requested','Refunded'];
+    const statusOpts = statuses.map(s => `<option value="${s}"${s===(o.Status||'New Order')?' selected':''}>${s}</option>`).join('');
+    return `<tr class="order-row${isSelected?' bulk-row-selected':''}" data-id="${o._id||''}" data-idx="${idx}" data-phone="${o.Phone||''}" data-date="${o.Date||''}" onclick="openOrderDetail(${idx})" style="cursor:pointer${isSelected?';background:var(--gold-light)':''}">
+      <td onclick="event.stopPropagation()">
+        <input type="checkbox" class="bulk-check" data-idx="${idx}" ${isSelected?'checked':''} onchange="toggleBulkRow(${idx},this)">
+      </td>
       <td style="white-space:nowrap">
         <div style="font-size:0.72rem;font-weight:600;color:var(--ink);letter-spacing:0.3px">${o.OrderNum||'—'}</div>
         <div style="font-size:0.65rem;color:var(--muted);margin-top:1px">${o.Date||''}</div>
-        ${o._batch ? `<div style="margin-top:3px"><span class="batch-tag" onclick="event.stopPropagation();editBatch(${i})">${o._batch}</span></div>` : ''}
+        <select class="batch-mini-select${o._batch?' has-value':''}" data-idx="${idx}" onclick="event.stopPropagation()" onchange="quickBatchTag(${idx},this)">
+          <option value="">— no batch —</option>
+          ${batchOpts}
+        </select>
       </td>
       <td>
         <div style="font-weight:600;font-size:0.82rem">${o.Name||''}</div>
@@ -2436,31 +2874,44 @@ function renderOrdersTable(orders) {
         <div style="font-weight:700;font-size:0.82rem">${o.Total||''}</div>
         <div style="margin-top:2px">${payIcon}</div>
       </td>
-      <td>
-        <span class="badge ${statusClass(o.Status)}">${o.Status||'New Order'}</span>
+      <td onclick="event.stopPropagation()">
+        <select class="status-select" onchange="updateOrderStatus(${idx},this.value)" onclick="event.stopPropagation()">
+          ${statusOpts}
+        </select>
       </td>
       <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+          <button class="row-expand-btn" id="expand-btn-${idx}" onclick="toggleOrderExpand(${idx},this)" title="Quick preview">▾</button>
           ${o.Status === 'New Order' ? `
-            <button class="btn btn-amber btn-sm" onclick="updateOrderStatus(${i},'Confirmed')">✓</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--rose);border-color:rgba(181,54,90,0.3)" onclick="updateOrderStatus(${i},'Cancelled')">✗</button>
+            <button class="btn btn-amber btn-sm" onclick="updateOrderStatus(${idx},'Confirmed')" title="Available — confirm & email customer">✓ Confirm</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--rose);border-color:rgba(181,54,90,0.3);font-size:0.58rem;white-space:nowrap" onclick="notifyUnavailable(${idx})" title="Not available — cancel & notify customer">✗ Unavailable</button>
           ` : ''}
           ${o.Status === 'Confirmed' ? `
-            <button class="btn btn-ghost btn-sm" onclick="updateOrderStatus(${i},'Packed')">📦</button>
+            <button class="btn btn-ghost btn-sm" onclick="updateOrderStatus(${idx},'Packed')" title="Mark packed">📦</button>
           ` : ''}
           ${o.Status === 'Packed' ? `
-            <button class="btn btn-green btn-sm" onclick="quickShip(${i})">✈️</button>
+            <button class="btn btn-green btn-sm" onclick="quickShip(${idx})" title="Ship order">✈️</button>
           ` : ''}
           ${o.Status === 'Shipped' ? `
-            <button class="btn btn-ghost btn-sm" style="color:var(--sage);border-color:var(--sage)" onclick="updateOrderStatus(${i},'Delivered')">✅</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--sage);border-color:var(--sage)" onclick="updateOrderStatus(${idx},'Delivered')" title="Mark delivered">✅</button>
           ` : ''}
         </div>
       </td>
     </tr>`;
   }).join('');
+  // Set batch selects after render (avoids template injection issues)
+  orders.forEach((o, fi) => {
+    const idx = allOrders.indexOf(o);
+    const sel = body.querySelector(`select.batch-mini-select[data-idx="${idx}"]`);
+    if (sel) sel.value = o._batch || '';
+  });
+  // Sync header checkbox state
+  const allCb = document.getElementById('bulk-select-all');
+  if (allCb) allCb.checked = orders.length > 0 && orders.every(o => _bulkSelected.has(allOrders.indexOf(o)));
 }
 
 function renderDashOrders(orders) {
+  renderTodayStrip(orders);
   const body = document.getElementById('dash-orders-body');
   const recent = orders.slice(0, 5);
   if (!recent.length) {
@@ -2546,6 +2997,12 @@ function updateNewOrdersBadge(orders) {
     el.style.color = '';
     el.style.borderColor = '';
     el.style.animation = '';
+  }
+  // Nav sidebar badge
+  const navBadge = document.getElementById('orders-nav-badge');
+  if (navBadge) {
+    navBadge.textContent = n > 0 ? n : '';
+    navBadge.classList.toggle('visible', n > 0);
   }
 }
 
@@ -2788,7 +3245,7 @@ function filterOrders() {
     }
     return matchQ && matchS && matchDate;
   });
-  renderOrdersTable(_filteredOrders);
+  renderOrdersTable(_applySortToOrders(_filteredOrders));
 }
 
 function exportOrdersCSV() {
@@ -2823,9 +3280,53 @@ async function updateOrderStatus(idx, status) {
     }
   }
   allOrders[idx].Status = status;
-  renderOrdersTable(allOrders);
+  filterOrders();
   updateStats(allOrders);
   toast('Order marked as ' + status);
+  // When confirming an order, auto-send the availability confirmation email
+  if (status === 'Confirmed') _sendConfirmEmail(order);
+}
+
+async function _sendConfirmEmail(order) {
+  if (!order.Email) return;
+  const s = getSettings();
+  if (!s.ejsKey || !s.ejsService || !s.ejsConfirmTemplate) return;
+  try {
+    emailjs.init(s.ejsKey);
+    await emailjs.send(s.ejsService, s.ejsConfirmTemplate, {
+      to_email: order.Email,
+      customer_name: order.Name,
+      order_number: order.OrderNum || '',
+      order_items: order.Items || '',
+      order_total: order.Total || '',
+      pay_now: order.Advance || order.Total || '',
+      customer_city: order.City || ''
+    });
+    toast('✅ Confirmation email sent to ' + order.Name);
+  } catch(e) {
+    console.warn('Confirm email failed:', e);
+    // Don't toast error — the status was saved successfully, email is secondary
+  }
+}
+
+async function notifyUnavailable(idx) {
+  const order = allOrders[idx];
+  if (!order) return;
+  // Ask which items are unavailable
+  const itemNames = order._items && order._items.length
+    ? order._items.map(i => i.product_name).join(', ')
+    : (order.Items || 'your ordered items');
+  try {
+    await adminConfirm(
+      `Cancel order ${order.OrderNum||''} for ${order.Name} and notify them via WhatsApp that "${itemNames}" is unavailable?`,
+      'Not Available', '😔'
+    );
+  } catch(e) { return; }
+  await updateOrderStatus(idx, 'Cancelled');
+  // Open pre-filled WhatsApp to customer
+  const waNum = (order.Phone || '').replace(/\D/g, '').replace(/^0/, '92');
+  const msg = `Hi ${order.Name||'bestie'} 💕\n\nWe're so sorry — we checked availability for your Global Bestie order (${order.OrderNum||''}) and unfortunately *"${itemNames}"* is currently out of stock or unavailable for import.\n\nYour order has been cancelled and no charges will be made. We're really sorry for the inconvenience! 🙏\n\nFeel free to browse our store for other items — we get new stock regularly!\n\n— Global Bestie Team 💕`;
+  if (waNum) window.open('https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
 // ── SHIPPING EMAIL ──
@@ -3006,7 +3507,7 @@ async function togglePromoCode(id,active){
   loadPromoCodes();
 }
 async function deletePromoCode(id){
-  if(!confirm('Delete this promo code?'))return;
+  try { await adminConfirm('Delete this promo code?', 'Delete Promo', '🗑️'); } catch(e) { return; }
   if(!_supa)return;
   await _supa.from('promo_codes').delete().eq('id',id);
   loadPromoCodes();
@@ -3420,7 +3921,7 @@ async function toggleFeatured(id) {
 
 async function deleteProduct(id) {
   const p = products.find(x => x.id === id);
-  if (!confirm(`Remove "${p ? p.name : 'this product'}"?`)) return;
+  try { await adminConfirm(`Remove "${p ? p.name : 'this product'}"?`, 'Delete Product', '🗑️'); } catch(e) { return; }
   if (_supa) {
     const { error } = await _supa.from('products').delete().eq('id', id);
     if (error) { toast('❌ ' + error.message); return; }
@@ -3453,9 +3954,9 @@ async function saveAllProducts() {
   }
 }
 
-function clearAllProducts() {
+async function clearAllProducts() {
   const count = products.length;
-  if (!confirm(`Remove all ${count} products and start with a blank catalogue?\n\nThis cannot be undone.`)) return;
+  try { await adminConfirm(`Remove all ${count} products and start with a blank catalogue? This cannot be undone.`, 'Clear Catalogue', '⚠️'); } catch(e) { return; }
   products = [];
   localStorage.setItem('gb_products', JSON.stringify(products));
   document.getElementById('demo-banner').style.display = 'none';
@@ -4191,6 +4692,190 @@ function toast(msg) {
 }
 
 
+// ── BUTTON LOADING HELPER ──
+function setLoading(btn, loading, label) {
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.origText = btn.textContent;
+    btn.textContent = label || btn.textContent;
+    btn.classList.add('btn-loading');
+  } else {
+    btn.classList.remove('btn-loading');
+    if (btn.dataset.origText) btn.textContent = btn.dataset.origText;
+  }
+}
+
+// ── CONFIRM DIALOG ──
+let _confirmResolve = null, _confirmReject = null;
+function adminConfirm(msg, title, icon) {
+  return new Promise((resolve, reject) => {
+    _confirmResolve = () => { document.getElementById('admin-confirm-overlay').classList.remove('open'); resolve(true); };
+    _confirmReject  = () => { document.getElementById('admin-confirm-overlay').classList.remove('open'); reject(false); };
+    document.getElementById('confirm-title').textContent = title || 'Are you sure?';
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-icon').textContent = icon || '⚠️';
+    document.getElementById('admin-confirm-overlay').classList.add('open');
+  });
+}
+
+// ── BULK SELECTION ──
+function toggleBulkRow(idx, cb) {
+  if (cb.checked) _bulkSelected.add(idx); else _bulkSelected.delete(idx);
+  const row = document.querySelector(`tr[data-idx="${idx}"]`);
+  if (row) row.style.background = cb.checked ? 'var(--gold-light)' : '';
+  _updateBulkBar();
+}
+function toggleSelectAllOrders(cb) {
+  const displayed = _filteredOrders.length ? _filteredOrders : [];
+  displayed.forEach(o => {
+    const idx = allOrders.indexOf(o);
+    if (cb.checked) _bulkSelected.add(idx); else _bulkSelected.delete(idx);
+    const row = document.querySelector(`tr[data-idx="${idx}"]`);
+    if (row) row.style.background = cb.checked ? 'var(--gold-light)' : '';
+    const rowCb = document.querySelector(`input.bulk-check[data-idx="${idx}"]`);
+    if (rowCb) rowCb.checked = cb.checked;
+  });
+  _updateBulkBar();
+}
+function clearBulkSelection() {
+  _bulkSelected.clear();
+  document.querySelectorAll('.bulk-check').forEach(cb => cb.checked = false);
+  document.querySelectorAll('tr[data-idx]').forEach(row => row.style.background = '');
+  _updateBulkBar();
+}
+function _updateBulkBar() {
+  const bar = document.getElementById('bulk-action-bar');
+  const n = _bulkSelected.size;
+  if (bar) bar.classList.toggle('visible', n > 0);
+  const label = document.getElementById('bulk-count-label');
+  if (label) label.textContent = n + ' order' + (n !== 1 ? 's' : '') + ' selected';
+}
+async function applyBulkStatus() {
+  const status = document.getElementById('bulk-status-select').value;
+  if (!status) { toast('Choose a status first'); return; }
+  const n = _bulkSelected.size;
+  if (!n) return;
+  try {
+    await adminConfirm(`Mark ${n} order${n!==1?'s':''} as "${status}"?`, 'Bulk Status Update', '📦');
+  } catch(e) { return; }
+  const btn = document.querySelector('#bulk-action-bar .btn-amber');
+  setLoading(btn, true);
+  for (const idx of _bulkSelected) { await updateOrderStatus(idx, status); }
+  clearBulkSelection();
+  setLoading(btn, false);
+  toast(`✅ ${n} order${n!==1?'s':''} marked ${status}`);
+}
+
+// ── COLUMN SORT ──
+function sortOrders(col) {
+  if (_sortCol === col) _sortDir = _sortDir === 'asc' ? 'desc' : 'asc';
+  else { _sortCol = col; _sortDir = 'asc'; }
+  document.querySelectorAll('.sort-th').forEach(th => th.classList.remove('sort-asc','sort-desc'));
+  const thEl = document.getElementById('sort-th-'+col);
+  if (thEl) thEl.classList.add('sort-'+_sortDir);
+  filterOrders(); // filterOrders will call renderOrdersTable with sorted data
+}
+function _applySortToOrders(arr) {
+  if (!_sortCol) return arr;
+  const dir = _sortDir === 'asc' ? 1 : -1;
+  return [...arr].sort((a, b) => {
+    if (_sortCol === 'num') return dir * (a.OrderNum||'').localeCompare(b.OrderNum||'', undefined, {numeric:true});
+    if (_sortCol === 'total') return dir * ((a._total||0) - (b._total||0));
+    if (_sortCol === 'status') return dir * (a.Status||'').localeCompare(b.Status||'');
+    return 0;
+  });
+}
+
+// ── QUICK ROW EXPAND ──
+function toggleOrderExpand(idx, btn) {
+  const existingRow = document.getElementById('expand-row-'+idx);
+  if (existingRow) {
+    existingRow.remove();
+    btn.classList.remove('open');
+    btn.textContent = '▾';
+    _expandedIdx = null;
+    return;
+  }
+  // Close any other open expand
+  if (_expandedIdx !== null) {
+    const prevRow = document.getElementById('expand-row-'+_expandedIdx);
+    if (prevRow) prevRow.remove();
+    const prevBtn = document.getElementById('expand-btn-'+_expandedIdx);
+    if (prevBtn) { prevBtn.classList.remove('open'); prevBtn.textContent = '▾'; }
+  }
+  _expandedIdx = idx;
+  btn.classList.add('open');
+  btn.textContent = '▴';
+  const o = allOrders[idx];
+  if (!o) return;
+  const itemsHtml = o._items && o._items.length
+    ? o._items.map(it => `<span class="expand-item-chip">${it.product_name}${it.size?' ['+it.size+']':''} × ${it.qty} — Rs ${(it.pkr*(it.qty||1)).toLocaleString()}</span>`).join('')
+    : (o.Items || '—').split(',').map(s => `<span class="expand-item-chip">${s.trim()}</span>`).join('');
+  const metaHtml = `<div class="expand-meta-row">
+    <span>📞 ${o.Phone||'—'}</span>
+    ${o.Email?`<span>✉️ ${o.Email}</span>`:''}
+    ${o.Address?`<span>📍 ${o.Address}</span>`:''}
+    ${o.Notes?`<span>📝 ${o.Notes}</span>`:''}
+    ${o._promoCode?`<span>🏷️ ${o._promoCode} (−Rs ${(o._discount||0).toLocaleString()})</span>`:''}
+    <span style="margin-left:auto"><a href="#" onclick="event.preventDefault();openOrderDetail(${idx})" style="font-size:0.68rem;color:var(--gold-dark)">Open full →</a></span>
+  </div>`;
+  const tr = document.querySelector(`tr[data-idx="${idx}"]`);
+  if (!tr) return;
+  const expandTr = document.createElement('tr');
+  expandTr.className = 'order-expand-row';
+  expandTr.id = 'expand-row-'+idx;
+  expandTr.innerHTML = `<td colspan="7"><div class="expand-items-wrap">${itemsHtml}</div>${metaHtml}</td>`;
+  tr.insertAdjacentElement('afterend', expandTr);
+}
+
+// ── QUICK BATCH TAG FROM ORDER ROW ──
+async function quickBatchTag(idx, sel) {
+  const newBatch = sel.value;
+  await saveBatch(idx, newBatch);
+  sel.className = 'batch-mini-select' + (newBatch ? ' has-value' : '');
+}
+
+// ── TODAY STRIP ──
+function renderTodayStrip(orders) {
+  const body = document.getElementById('today-strip-body');
+  const meta = document.getElementById('today-strip-meta');
+  if (!body) return;
+  const todayStr = new Date().toLocaleDateString('en-PK');
+  const todayOrders = orders.filter(o => o.Date === todayStr);
+  if (meta) {
+    const todayRev = todayOrders.reduce((s, o) => s + (o._total || 0), 0);
+    meta.textContent = todayOrders.length + ' orders · Rs ' + todayRev.toLocaleString();
+  }
+  if (!todayOrders.length) {
+    body.innerHTML = '<div class="today-empty">No orders today yet — go share the link! 💕</div>';
+    return;
+  }
+  body.innerHTML = todayOrders.map((o, i) => {
+    const idx = orders.indexOf(o);
+    const time = o._rawDate ? new Date(o._rawDate).toLocaleTimeString('en-PK', {hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="today-order-card" onclick="showPage('orders',document.querySelector('.nav-item[onclick*=\\'orders\\']'));setTimeout(()=>openOrderDetail(${allOrders.indexOf(o)}),100)">
+      <div class="today-order-name">${o.Name||'—'}</div>
+      <div class="today-order-time">${time} · ${o.City||''}</div>
+      <div class="today-order-total">${o.Total||''}</div>
+      <div class="today-order-status">${o.Status||'New'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown', function(e) {
+  const active = document.activeElement;
+  const isTyping = active && (active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT'||active.isContentEditable);
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open,.batch-assign-modal.open,#admin-confirm-overlay.open').forEach(m => m.classList.remove('open'));
+    return;
+  }
+  if (isTyping) return;
+  if (e.key === 'r' || e.key === 'R') { loadOrders(); toast('Refreshing orders…'); }
+  else if (e.key === 'n' || e.key === 'N') { openNewOrderModal(); }
+  else if (e.key === '/') { e.preventDefault(); const s = document.getElementById('order-search'); if (s) { showPage('orders', document.querySelector('.nav-item[onclick*="orders"]')); s.focus(); } }
+});
+
 // ── IMPORT ──
 let _importParsed = [];
 
@@ -4610,9 +5295,9 @@ function renderInventoryLog() {
   }).join('');
 }
 
-function clearInventoryLog() {
+async function clearInventoryLog() {
   const label = _logProductId !== null ? 'this product\'s log entries' : 'all inventory log entries';
-  if (!confirm(`Clear ${label}?`)) return;
+  try { await adminConfirm(`Clear ${label}?`, 'Clear Log', '🗑️'); } catch(e) { return; }
   if (_logProductId !== null) {
     const log = getInventoryLog().filter(e => e.productId !== _logProductId);
     saveInventoryLog(log);
@@ -5113,7 +5798,7 @@ async function sendTestEmail(){
 async function markRemainingPaid(idx){
   const o=allOrders[idx];
   if(!o||!o._id)return;
-  if(!confirm(`Mark remaining balance (Rs ${(o._total-o._advance).toLocaleString()}) as received for ${o.Name}?`))return;
+  try { await adminConfirm(`Mark remaining balance (Rs ${(o._total-o._advance).toLocaleString()}) as received for ${o.Name}?`, 'Confirm Payment', '💰'); } catch(e) { return; }
   if(_supa){
     const{error}=await _supa.from('orders').update({advance:o._total}).eq('id',o._id);
     if(error){toast('Error: '+error.message);return;}
