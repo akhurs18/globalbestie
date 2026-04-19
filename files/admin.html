@@ -3655,6 +3655,7 @@ async function loadProductsFromSheet() {
           on_sale: p.on_sale || false, sale_price: p.sale_price || null,
           is_outlet: p.is_outlet || false,
           is_featured: p.is_featured || false,
+          is_new: p.is_new || false,
           images: Array.isArray(p.images) ? p.images : [],
           colors: Array.isArray(p.colors) ? p.colors : [],
           sizes: Array.isArray(p.sizes) ? p.sizes : []
@@ -3839,6 +3840,10 @@ function productRow(p) {
       <button class="stock-toggle${p.is_featured ? ' featured-on' : ''}" id="feat-toggle-${p.id}" onclick="toggleFeatured(${p.id})">${p.is_featured ? '★ Featured' : 'Off'}</button>
     </div>
     <div>
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">New Arrival</div>
+      <button class="stock-toggle${p.is_new ? ' in-stock' : ''}" id="new-toggle-${p.id}" onclick="toggleNew(${p.id})">${p.is_new ? '✦ New' : 'Off'}</button>
+    </div>
+    <div>
       <div style="font-size:0.68rem;color:var(--muted);margin-bottom:6px">Stock Status</div>
       <button class="toggle ${p.inStock ? 'on' : ''}" id="toggle-${p.id}" onclick="toggleStock(${p.id})"></button>
       <div style="font-size:0.7rem;margin-top:4px" id="stock-label-${p.id}">${p.inStock ? '<span style="color:var(--green)">In Stock</span>' : '<span style="color:var(--amber)">Preorder</span>'}</div>
@@ -3894,6 +3899,20 @@ async function toggleSale(id) {
   if (btn) { btn.textContent = newVal ? 'On Sale' : 'Off'; btn.className = 'stock-toggle' + (newVal ? ' sale-on' : ''); }
   if (input) { input.style.borderColor = newVal ? 'var(--rose)' : ''; input.style.color = newVal ? 'var(--rose)' : ''; input.style.opacity = newVal ? '1' : '0.5'; }
   toast(newVal ? '🏷 Sale activated' : 'Sale turned off');
+}
+
+async function toggleNew(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const newVal = !p.is_new;
+  if (_supa) {
+    const { error } = await _supa.from('products').update({ is_new: newVal }).eq('id', id);
+    if (error) { toast('❌ ' + error.message); return; }
+  }
+  p.is_new = newVal;
+  const btn = document.getElementById('new-toggle-' + id);
+  if (btn) { btn.textContent = newVal ? '✦ New' : 'Off'; btn.className = 'stock-toggle' + (newVal ? ' in-stock' : ''); }
+  toast(newVal ? '✦ Marked as New Arrival' : 'New badge removed');
 }
 
 async function toggleOutlet(id) {
