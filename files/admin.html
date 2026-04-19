@@ -3396,7 +3396,10 @@ async function confirmSendShipping() {
     loadOrdersForShipping();
     toast('✅ Shipping email sent to ' + o.Email);
   } catch(e) {
-    toast('❌ Email failed: ' + (e.text || 'Check EmailJS settings'));
+    const isRecipientErr = (e.text||'').toLowerCase().includes('recipient') || (e.text||'').toLowerCase().includes('address');
+    toast(isRecipientErr
+      ? '❌ EmailJS: set "To Email" to {{to_email}} in your template settings'
+      : '❌ Email failed: ' + (e.text || 'Check EmailJS settings'));
   }
 }
 
@@ -5789,7 +5792,10 @@ async function sendTestEmail(){
     statusEl.textContent='✓ Test email sent! Check your inbox.';
     statusEl.style.color='var(--sage)';
   }catch(e){
-    statusEl.textContent='✗ Failed: '+e.text;
+    const isRecipientErr = (e.text||'').toLowerCase().includes('recipient') || (e.text||'').toLowerCase().includes('address');
+    statusEl.innerHTML = isRecipientErr
+      ? '✗ "To Email" not set in EmailJS template.<br><b>Fix:</b> EmailJS dashboard → Email Templates → your template → Settings tab → set <b>To Email</b> to <code>{{to_email}}</code>'
+      : '✗ Failed: '+(e.text||e.message||JSON.stringify(e));
     statusEl.style.color='var(--rose)';
   }
 }
