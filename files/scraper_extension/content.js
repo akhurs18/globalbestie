@@ -32,7 +32,14 @@ function scrapeProduct() {
     price = parseFloat(priceEl.innerText.replace(/[^0-9.]/g, ''));
   }
 
-  return { title, image, price };
+  // Look for description
+  let description = '';
+  const metaDesc = document.querySelector('meta[name="description"]') || document.querySelector('meta[property="og:description"]');
+  if (metaDesc && metaDesc.content) {
+    description = metaDesc.content.trim();
+  }
+
+  return { title, image, price, description };
 }
 
 // Send the data back to the popup

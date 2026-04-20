@@ -10,6 +10,7 @@ const usdPriceEl = document.getElementById('usdPrice');
 const exchangeRateEl = document.getElementById('exchangeRate');
 const shippingEl = document.getElementById('shipping');
 const marginEl = document.getElementById('margin');
+const descriptionEl = document.getElementById('description');
 const finalPriceEl = document.getElementById('finalPrice');
 const serviceKeyEl = document.getElementById('serviceKey');
 const previewEl = document.getElementById('preview');
@@ -65,6 +66,10 @@ chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
         if (response.image) {
           scrapedImageUrl = response.image;
           previewEl.src = response.image;
+        }
+
+        if (response.description) {
+          descriptionEl.value = response.description;
         }
 
         // Try to guess brand from title
@@ -136,7 +141,7 @@ importBtn.addEventListener('click', async () => {
         in_stock: true,
         qty: 1,
         cost: costPkr || 0,
-        description: '100% Authentic.'
+        description: descriptionEl.value.trim() || '100% Authentic.'
       })
     });
 
