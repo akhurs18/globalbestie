@@ -482,6 +482,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-item" onclick="showPage('trends',this)"><span class="nav-icon">◻</span><span class="nav-label">Trends</span></div>
     <div class="nav-item" onclick="showPage('promos',this)"><span class="nav-icon">◻</span><span class="nav-label">Promo Codes</span></div>
     <div class="nav-item" onclick="showPage('customers',this)"><span class="nav-icon">◻</span><span class="nav-label">Customers</span></div>
+    <div class="nav-item" onclick="showPage('reviews',this)"><span class="nav-icon">★</span><span class="nav-label">Reviews</span><span id="reviews-nav-badge" class="nav-badge"></span></div>
     <div class="nav-section-label">Communications</div>
     <div class="nav-item" onclick="showPage('emails',this)"><span class="nav-icon">◻</span><span class="nav-label">Emails</span></div>
     <div class="nav-section-label">Site Pages</div>
@@ -870,6 +871,38 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
       </div>
     </div>
 
+    <!-- REVIEWS -->
+    <div class="page" id="page-reviews">
+      <div class="page-header"><div class="page-title">Reviews</div><div class="page-sub">Approve or reject customer reviews</div></div>
+      <div class="order-stats-row" id="review-stats-bar">
+        <div class="ostat ostat-new" onclick="setReviewFilter('pending')">
+          <div class="ostat-val" id="rstat-pending">—</div>
+          <div class="ostat-label">Pending</div>
+        </div>
+        <div class="ostat" onclick="setReviewFilter('approved')" style="border-left:1px solid var(--border)">
+          <div class="ostat-val" id="rstat-approved">—</div>
+          <div class="ostat-label">Approved</div>
+        </div>
+        <div class="ostat" onclick="setReviewFilter('rejected')">
+          <div class="ostat-val" id="rstat-rejected">—</div>
+          <div class="ostat-label">Rejected</div>
+        </div>
+        <div class="ostat" onclick="setReviewFilter('')">
+          <div class="ostat-val" id="rstat-all">—</div>
+          <div class="ostat-label">All</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Customer Reviews</span></div>
+        <div class="card-body" style="padding:0">
+          <table class="tbl" id="reviews-table">
+            <thead><tr><th>Date</th><th>Product</th><th>Customer</th><th>Rating</th><th>Review</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="reviews-body"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Loading reviews...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- EMAILS -->
     <div class="page" id="page-emails">
       <div class="page-header"><div class="page-title">Emails</div><div class="page-sub">Send shipping notifications to customers</div></div>
@@ -891,6 +924,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
               <button class="btn btn-ghost" onclick="markShippedOnly()">📦 Mark Shipped (no email)</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Abandoned Cart Recovery -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">🛒 Abandoned Carts Recovery</span></div>
+        <div class="card-body">
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem">Scan for customers who have left items in their carts and send them an automated reminder email.</div>
+          <div style="padding:1rem;background:var(--pink-light);border:1px solid var(--pink-mid);border-radius:4px;margin-bottom:1rem">
+            <div style="font-weight:600;color:var(--pink-dark);font-size:0.85rem;margin-bottom:0.3rem">How it works:</div>
+            <ul style="margin:0;padding-left:1.2rem;font-size:0.75rem;color:var(--pink-dark);line-height:1.5">
+              <li>Finds all users currently having items in their cart.</li>
+              <li>Checks if we already emailed them in the last 48 hours to avoid spam.</li>
+              <li>Sends your configured EmailJS "Recovery Template" to the remaining users.</li>
+            </ul>
+          </div>
+          <button class="btn btn-green" id="btn-recovery" onclick="scanAndSendRecoveryEmails()">🔄 Scan & Send Recovery Emails</button>
+          <div id="recovery-status" style="margin-top:0.8rem;font-size:0.8rem;color:var(--ink)"></div>
         </div>
       </div>
 
@@ -1156,6 +1207,10 @@ function doPost(e) {
                 <div class="form-group">
                   <label class="form-label">Promo Template ID</label>
                   <input class="form-input" type="text" id="ejs-promo-template" placeholder="e.g. template_promo01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Recovery Template ID</label>
+                  <input class="form-input" type="text" id="ejs-recovery-template" placeholder="e.g. template_recovery01">
                 </div>
               </div>
             </div>
@@ -1890,6 +1945,35 @@ function doPost(e) {
         <span id="ap-ai-status" style="font-size:0.72rem;color:var(--muted)"></span>
       </div>
 
+      <!-- Additional Images -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Additional Images
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — shown as a gallery in the product page</span>
+        </div>
+        <div id="ap-extra-images" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="apAddImage()">+ Add Image URL</button>
+      </div>
+
+      <!-- Sizes -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Sizes
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — comma-separated, e.g. XS, S, M, L, XL</span>
+        </div>
+        <input class="form-input" type="text" id="ap-sizes" placeholder="e.g. XS, S, M, L, XL" style="font-size:0.78rem">
+      </div>
+
+      <!-- Color Variants -->
+      <div style="margin-bottom:1.3rem">
+        <div style="font-size:0.73rem;font-weight:700;color:var(--dark);margin-bottom:4px">
+          Color Variants
+          <span style="font-size:0.63rem;font-weight:400;color:var(--muted)"> — add named swatches</span>
+        </div>
+        <div id="ap-colors" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="apAddColor()">+ Add Color</button>
+      </div>
+
       <div style="display:flex;gap:0.7rem">
         <button class="btn btn-dark" onclick="saveNewProduct()">Add to Catalogue</button>
         <button class="btn btn-ghost" onclick="closeModal('add-product-modal')">Cancel</button>
@@ -2200,6 +2284,7 @@ function showPage(p, navEl) {
   if (p === 'orders') loadOrders();
   if (p === 'batches') initBatchesPage();
   if (p === 'analytics') initAnalyticsPage();
+  if (p === 'reviews') loadReviews();
   if (p === 'emails') { loadOrdersForShipping(); updateRecipientCount(); }
   if (p === 'promos') loadPromoCodes();
   if (p === 'customers') renderCustomers();
@@ -2221,6 +2306,7 @@ function loadSettings() {
   document.getElementById('ejs-confirm-template').value = s.ejsConfirmTemplate || '';
   document.getElementById('ejs-ship-template').value = s.ejsShipTemplate || '';
   document.getElementById('ejs-promo-template').value = s.ejsPromoTemplate || '';
+  document.getElementById('ejs-recovery-template').value = s.ejsRecoveryTemplate || '';
   document.getElementById('anthropic-key').value = s.anthropicKey || '';
   document.getElementById('delivery-fee').value = s.deliveryFee !== undefined ? s.deliveryFee : 500;
   document.getElementById('free-delivery-threshold').value = s.freeDeliveryThreshold !== undefined ? s.freeDeliveryThreshold : 20000;
@@ -2268,6 +2354,7 @@ function saveSettings(btn) {
     ejsConfirmTemplate: document.getElementById('ejs-confirm-template').value.trim(),
     ejsShipTemplate: document.getElementById('ejs-ship-template').value.trim(),
     ejsPromoTemplate: document.getElementById('ejs-promo-template').value.trim(),
+    ejsRecoveryTemplate: document.getElementById('ejs-recovery-template').value.trim(),
     anthropicKey: document.getElementById('anthropic-key').value.trim(),
     deliveryFee: parseInt(document.getElementById('delivery-fee').value) || 500,
     freeDeliveryThreshold: parseInt(document.getElementById('free-delivery-threshold').value) || 20000,
@@ -3354,6 +3441,87 @@ function buildShipMessage(o, trackingNum) {
 
 let pendingShipIdx = null;
 
+async function scanAndSendRecoveryEmails() {
+  const s = getSettings();
+  if(!_supa) { toast('⚠️ Supabase not connected. Check Settings.'); return; }
+  if(!s.ejsKey || !s.ejsService || !s.ejsRecoveryTemplate) {
+    toast('⚠️ Configure your Recovery Template ID in Settings first.');
+    return;
+  }
+  
+  const btn = document.getElementById('btn-recovery');
+  const statusEl = document.getElementById('recovery-status');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+  statusEl.textContent = 'Fetching carts from database...';
+  
+  try {
+    // 1. Fetch carts
+    const { data: carts, error: cErr } = await _supa.from('carts').select('customer_email, user_id, quantity, product_id');
+    if(cErr) throw cErr;
+    if(!carts || carts.length === 0) {
+      statusEl.textContent = 'No abandoned carts found.';
+      btn.disabled = false; btn.textContent = '🔄 Scan & Send Recovery Emails';
+      return;
+    }
+    
+    // Group by email
+    const abandonedEmails = [...new Set(carts.map(c => c.customer_email).filter(Boolean))];
+    
+    // 2. Fetch recent sent logs (last 48 hours)
+    const twoDaysAgo = new Date(Date.now() - 48*60*60*1000).toISOString();
+    const { data: logs, error: lErr } = await _supa.from('email_logs')
+      .select('customer_email')
+      .eq('email_type', 'abandoned_cart')
+      .gte('sent_at', twoDaysAgo);
+    if(lErr) throw lErr;
+    
+    const recentlyEmailed = new Set((logs || []).map(l => l.customer_email));
+    
+    // 3. Filter eligible users
+    const eligibleEmails = abandonedEmails.filter(email => !recentlyEmailed.has(email));
+    
+    if(eligibleEmails.length === 0) {
+      statusEl.textContent = `Found ${abandonedEmails.length} carts, but all have been emailed within the last 48 hours.`;
+      btn.disabled = false; btn.textContent = '🔄 Scan & Send Recovery Emails';
+      return;
+    }
+    
+    statusEl.textContent = `Sending ${eligibleEmails.length} recovery emails...`;
+    
+    // 4. Send emails via EmailJS
+    emailjs.init(s.ejsKey);
+    let successCount = 0;
+    
+    for(const email of eligibleEmails) {
+      try {
+        await emailjs.send(s.ejsService, s.ejsRecoveryTemplate, {
+          to_email: email,
+          message: "You left something amazing behind! Complete your checkout before it sells out."
+        });
+        
+        // Log it
+        await _supa.from('email_logs').insert({
+          customer_email: email,
+          email_type: 'abandoned_cart'
+        });
+        
+        successCount++;
+      } catch(e) {
+        console.error('Failed to send recovery email to', email, e);
+      }
+    }
+    
+    statusEl.innerHTML = `<span style="color:green">✅ Successfully sent ${successCount} recovery emails.</span>`;
+    
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--red)">❌ Error: ${e.message}</span>`;
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '🔄 Scan & Send Recovery Emails';
+}
+
 function sendShippingEmail() {
   const idx = document.getElementById('ship-order-select').value;
   if (idx === '') { toast('Please select an order'); return; }
@@ -3850,9 +4018,43 @@ function productRow(p) {
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
       <button class="btn btn-ghost btn-sm" onclick="openProdDetails(${p.id})" title="Edit image &amp; description">📝</button>
+      <button class="btn btn-ghost btn-sm" onclick="duplicateProduct(${p.id})" title="Duplicate product">📋</button>
       <button class="btn btn-ghost btn-sm" onclick="deleteProduct(${p.id})" title="Remove product" style="color:var(--red);border-color:var(--red)">✕</button>
     </div>
   </div>`;
+}
+
+async function duplicateProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  const newName = p.name + ' (Copy)';
+  let newProduct;
+
+  if (_supa) {
+    const row = {
+      gender: p.gender, cat: p.cat, name: newName, brand: p.brand, pkr: p.pkr, in_stock: p.inStock,
+      description: p.description, image: p.image, qty: p.qty, sku: '', cost: p.cost,
+      low_stock_threshold: p.lowStockThreshold, images: p.images || [], colors: p.colors || [], sizes: p.sizes || []
+    };
+    const { data, error } = await _supa.from('products').insert(row).select().single();
+    if (error) { toast('❌ ' + error.message); return; }
+    newProduct = {
+      id: data.id, gender: data.gender, cat: data.cat, name: data.name, brand: data.brand,
+      pkr: data.pkr, inStock: data.in_stock, description: data.description, image: data.image,
+      qty: data.qty, sku: data.sku, cost: data.cost, lowStockThreshold: data.low_stock_threshold,
+      images: data.images, colors: data.colors, sizes: data.sizes
+    };
+  } else {
+    const maxId = products.reduce((m, x) => Math.max(m, x.id || 0), 0);
+    newProduct = { ...JSON.parse(JSON.stringify(p)), id: maxId + 1, name: newName };
+    const s = getSettings();
+    if (s.sheetUrl) await saveProductsToSheet();
+  }
+  
+  products.unshift(newProduct);
+  localStorage.setItem('gb_products', JSON.stringify(products));
+  renderProducts();
+  toast(`✅ Duplicated as "${newName}"`);
 }
 
 function toggleStock(id) {
@@ -4301,8 +4503,56 @@ function openAddProduct() {
   document.getElementById('ap-cat').value = 'makeup';
   document.getElementById('ap-stock').value = 'false';
   document.getElementById('ap-ai-status').textContent = '';
+  document.getElementById('ap-sizes').value = '';
+  document.getElementById('ap-extra-images').innerHTML = '';
+  document.getElementById('ap-colors').innerHTML = '';
   clearApImage();
   document.getElementById('add-product-modal').classList.add('open');
+}
+
+function apAddImage(url='') {
+  const container = document.getElementById('ap-extra-images');
+  const row = document.createElement('div');
+  row.className = 'pd-img-extra-row';
+  const thumb = document.createElement('img');
+  thumb.className = 'pd-extra-thumb';
+  thumb.src = url || '';
+  thumb.style.display = url ? 'block' : 'none';
+  const input = document.createElement('input');
+  input.type = 'text'; input.className = 'pd-img-url form-input'; input.value = url;
+  input.placeholder = 'https://... image URL';
+  input.style.flex = '1';
+  input.addEventListener('input', () => { thumb.src = input.value; thumb.style.display = input.value ? 'block' : 'none'; });
+  const rm = document.createElement('button');
+  rm.className = 'btn btn-ghost btn-sm'; rm.textContent = '✕'; rm.title = 'Remove';
+  rm.onclick = () => row.remove();
+  row.appendChild(thumb); row.appendChild(input); row.appendChild(rm);
+  container.appendChild(row);
+}
+
+function apAddColor(name='', hex='', img='') {
+  const container = document.getElementById('ap-colors');
+  const row = document.createElement('div');
+  row.className = 'pd-color-row';
+  const swatch = document.createElement('div');
+  swatch.className = 'pd-color-swatch-preview';
+  swatch.style.background = hex || '#cccccc';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.className = 'form-input'; nameInput.value = name;
+  nameInput.placeholder = 'Color name (e.g. Pillow Talk)'; nameInput.style.cssText = 'flex:2;font-size:0.75rem';
+  const hexInput = document.createElement('input');
+  hexInput.type = 'color'; hexInput.value = hex || '#cccccc';
+  hexInput.style.cssText = 'width:38px;height:32px;padding:2px;cursor:pointer;border:1px solid var(--border);flex-shrink:0';
+  hexInput.addEventListener('input', () => { swatch.style.background = hexInput.value; });
+  const imgInput = document.createElement('input');
+  imgInput.type = 'text'; imgInput.className = 'pd-img-url form-input'; imgInput.value = img;
+  imgInput.placeholder = 'Image URL (optional)'; imgInput.style.cssText = 'flex:2;font-size:0.75rem';
+  const rm = document.createElement('button');
+  rm.className = 'btn btn-ghost btn-sm'; rm.textContent = '✕'; rm.title = 'Remove';
+  rm.onclick = () => row.remove();
+  row.appendChild(swatch); row.appendChild(nameInput); row.appendChild(hexInput);
+  row.appendChild(imgInput); row.appendChild(rm);
+  container.appendChild(row);
 }
 
 function handleApImageUpload(e) {
@@ -4379,24 +4629,38 @@ async function saveNewProduct() {
   const image = urlInput || (previewImg ? previewImg.src : '');
   const inStock = document.getElementById('ap-stock').value === 'true';
 
+  const images = Array.from(document.querySelectorAll('#ap-extra-images .pd-img-url'))
+    .map(i => i.value.trim()).filter(Boolean);
+
+  const sizesStr = document.getElementById('ap-sizes').value.trim();
+  const sizes = sizesStr ? sizesStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  const colors = Array.from(document.querySelectorAll('#ap-colors .pd-color-row')).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { name: inputs[0].value.trim(), hex: inputs[1].value, image: inputs[2].value.trim() };
+  }).filter(c => c.name || c.image);
+
   let newProduct;
 
   if (_supa) {
     const row = {
       gender: document.getElementById('ap-gender').value, cat: document.getElementById('ap-cat').value,
       name, brand, pkr, in_stock: inStock, description: document.getElementById('ap-description').value.trim(),
-      image, qty: inStock ? 5 : 0, sku: '', cost: 0, low_stock_threshold: 3
+      image, qty: inStock ? 5 : 0, sku: '', cost: 0, low_stock_threshold: 3,
+      images, colors, sizes
     };
     const { data, error } = await _supa.from('products').insert(row).select().single();
     if (error) { toast('❌ ' + error.message); return; }
     newProduct = { id: data.id, gender: data.gender, cat: data.cat, name: data.name, brand: data.brand,
       pkr: data.pkr, inStock: data.in_stock, description: data.description, image: data.image,
-      qty: data.qty, sku: data.sku, cost: data.cost, lowStockThreshold: data.low_stock_threshold };
+      qty: data.qty, sku: data.sku, cost: data.cost, lowStockThreshold: data.low_stock_threshold,
+      images: data.images, colors: data.colors, sizes: data.sizes };
   } else {
     const maxId = products.reduce((m, p) => Math.max(m, p.id || 0), 0);
     newProduct = { id: maxId + 1, gender: document.getElementById('ap-gender').value,
       cat: document.getElementById('ap-cat').value, name, brand, pkr, inStock,
-      description: document.getElementById('ap-description').value.trim(), image };
+      description: document.getElementById('ap-description').value.trim(), image,
+      images, colors, sizes };
     const s = getSettings();
     if (s.sheetUrl) await saveProductsToSheet();
   }
@@ -5903,6 +6167,125 @@ async function saveNewOrder(){
   closeModal('new-order-modal');
   toast('Order '+orderNum+' created');
   loadOrders();
+// ═══════════════════════════════════════════════════════════
+// REVIEWS MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+let _allReviews = [];
+let _reviewFilter = 'pending';
+
+async function loadReviews() {
+  const tb = document.getElementById('reviews-body');
+  if(!_supa) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center">Database offline</td></tr>'; return; }
+  
+  tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Loading reviews...</td></tr>';
+  try {
+    const { data: revs, error } = await _supa.from('reviews').select('*').order('created_at', {ascending: false});
+    if(error) throw error;
+    _allReviews = revs || [];
+    renderReviews();
+  } catch(err) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:red">Failed to load reviews</td></tr>';
+  }
+}
+
+function setReviewFilter(st) {
+  _reviewFilter = st;
+  renderReviews();
+}
+
+function renderReviews() {
+  const tb = document.getElementById('reviews-body');
+  
+  // Update stats
+  const pending = _allReviews.filter(r => r.status === 'pending').length;
+  const approved = _allReviews.filter(r => r.status === 'approved').length;
+  const rejected = _allReviews.filter(r => r.status === 'rejected').length;
+  
+  document.getElementById('rstat-pending').textContent = pending;
+  document.getElementById('rstat-approved').textContent = approved;
+  document.getElementById('rstat-rejected').textContent = rejected;
+  document.getElementById('rstat-all').textContent = _allReviews.length;
+  
+  const badge = document.getElementById('reviews-nav-badge');
+  if(badge) badge.textContent = pending > 0 ? pending : '';
+  
+  // Highlight active filter
+  document.querySelectorAll('#review-stats-bar .ostat').forEach(el => el.classList.remove('active'));
+  let fSelector = _reviewFilter ? `setReviewFilter('${_reviewFilter}')` : `setReviewFilter('')`;
+  const activeStat = document.querySelector(`#review-stats-bar .ostat[onclick="${fSelector}"]`);
+  if(activeStat) activeStat.classList.add('active');
+  
+  let toShow = _allReviews;
+  if(_reviewFilter) toShow = toShow.filter(r => r.status === _reviewFilter);
+  
+  if(toShow.length === 0) {
+    tb.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">No reviews found</td></tr>`;
+    return;
+  }
+  
+  const savedProds = JSON.parse(localStorage.getItem('gb_products') || '[]');
+  tb.innerHTML = toShow.map(r => {
+    const p = savedProds.find(x => x.id == r.product_id);
+    const pName = p ? `<a href="products.html?product_id=${p.id}" target="_blank" style="color:var(--ink);text-decoration:underline">${p.name}</a>` : `Product #${r.product_id}`;
+    
+    let actions = '';
+    if(r.status === 'pending') {
+      actions = `
+        <button class="btn btn-green btn-sm" onclick="updateReviewStatus(${r.id}, 'approved')">Approve</button>
+        <button class="btn btn-red btn-sm" onclick="updateReviewStatus(${r.id}, 'rejected')">Reject</button>
+      `;
+    } else if(r.status === 'approved') {
+      actions = `<button class="btn btn-red btn-sm" onclick="updateReviewStatus(${r.id}, 'rejected')">Hide (Reject)</button>`;
+    } else {
+      actions = `<button class="btn btn-green btn-sm" onclick="updateReviewStatus(${r.id}, 'approved')">Approve</button>`;
+    }
+    actions += `<button class="btn btn-ghost btn-sm" style="margin-top:4px;border-color:var(--rose);color:var(--rose)" onclick="deleteReview(${r.id})">Delete</button>`;
+    
+    return `
+      <tr>
+        <td style="font-size:0.7rem;white-space:nowrap">${new Date(r.created_at).toLocaleDateString()}</td>
+        <td style="max-width:200px;font-size:0.75rem">${pName}</td>
+        <td style="font-size:0.75rem">${r.customer_name}</td>
+        <td style="color:var(--gold);font-size:0.8rem;white-space:nowrap">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</td>
+        <td style="max-width:250px;font-size:0.75rem;line-height:1.4">${(r.review_text||'').replace(/</g,'&lt;')}</td>
+        <td><span class="status-chip ${r.status==='approved'?'chip-confirmed':r.status==='rejected'?'chip-cancelled':'chip-new'}">${r.status}</span></td>
+        <td style="display:flex;flex-direction:column;gap:4px">${actions}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function updateReviewStatus(id, newStatus) {
+  if(!_supa) return;
+  const prev = _allReviews.find(r => r.id === id);
+  if(!prev) return;
+  prev.status = newStatus;
+  renderReviews(); // Optimistic update
+  
+  try {
+    const { error } = await _supa.from('reviews').update({status: newStatus}).eq('id', id);
+    if(error) throw error;
+    toast(`Review marked as ${newStatus}`);
+  } catch(err) {
+    toast(`Failed to update review`);
+    loadReviews(); // Revert
+  }
+}
+
+async function deleteReview(id) {
+  if(!confirm('Are you sure you want to permanently delete this review?')) return;
+  if(!_supa) return;
+  _allReviews = _allReviews.filter(r => r.id !== id);
+  renderReviews(); // Optimistic
+  
+  try {
+    const { error } = await _supa.from('reviews').delete().eq('id', id);
+    if(error) throw error;
+    toast('Review deleted');
+  } catch(err) {
+    toast('Failed to delete review');
+    loadReviews(); // Revert
+  }
 }
 </script>
 <!-- NEW ORDER MODAL -->

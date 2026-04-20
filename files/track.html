@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Track Your Order — Global Bestie</title>
+<meta name="description" content="Track your Global Bestie order status in real-time. Enter your order number and email to see shipping updates for your USA products.">
+<!-- Open Graph -->
+<meta property="og:title" content="Track Your Order — Global Bestie">
+<meta property="og:description" content="Track your Global Bestie order status in real-time. Enter your order number and email to see shipping updates for your USA products.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Global Bestie">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link rel="manifest" href="manifest.json">
 <style>
@@ -110,10 +116,10 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
 .tl-steps{display:flex;align-items:flex-start;gap:0}
 .tl-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
 .tl-step:not(:last-child)::after{content:'';position:absolute;top:11px;left:calc(50% + 12px);right:calc(-50% + 12px);height:2px;background:var(--border2)}
-.tl-step.done:not(:last-child)::after,.tl-step.current:not(:last-child)::after{background:var(--sage)}
+.tl-step.done:not(:last-child)::after,.tl-step.current:not(:last-child)::after{background:var(--pink-deep)}
 .tl-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:var(--bg);display:flex;align-items:center;justify-content:center;margin-bottom:0.5rem;font-size:0.65rem;transition:all 0.3s;flex-shrink:0;position:relative;z-index:1}
-.tl-step.done .tl-dot{background:var(--sage);border-color:var(--sage);color:#fff}
-.tl-step.current .tl-dot{background:var(--pink-deep);border-color:var(--pink-deep);color:#fff;box-shadow:0 0 0 4px rgba(196,82,90,0.18)}
+.tl-step.done .tl-dot{background:var(--pink-deep);border-color:var(--pink-deep);color:#fff}
+.tl-step.current .tl-dot{background:linear-gradient(135deg,var(--pink-deep),#A03D44);border-color:var(--pink-dark);color:#fff;box-shadow:0 0 0 4px rgba(196,82,90,0.18)}
 .tl-label{font-size:0.58rem;font-weight:500;letter-spacing:0.5px;text-align:center;color:var(--muted2)}
 .tl-step.done .tl-label,.tl-step.current .tl-label{color:var(--ink);font-weight:600}
 
@@ -319,8 +325,8 @@ const STATUS_ORDER = ['new','confirmed','packed','shipped','delivered'];
 const STATUS_LABELS = {new:'Placed',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered'};
 const TL_IDS = ['tl-placed','tl-confirmed','tl-packed','tl-shipped','tl-delivered'];
 const EST_MAP = {
-  new:'~4 weeks estimated delivery',
-  confirmed:'~4 weeks estimated delivery',
+  new:'Estimated delivery',
+  confirmed:'Estimated delivery',
   packed:'~2 weeks estimated delivery',
   shipped:'~5–7 days estimated delivery',
   delivered:'Delivered'

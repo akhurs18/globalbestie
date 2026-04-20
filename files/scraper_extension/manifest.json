@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Global Bestie Scraper",
+  "version": "1.0",
+  "description": "Scrapes product details from US retailers and imports them to the Global Bestie store.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ]
+}
