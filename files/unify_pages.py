@@ -1,19 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Track Your Order — Global Bestie</title>
-<meta name="description" content="Track your Global Bestie order status in real-time. Enter your order number and email to see shipping updates for your USA products.">
-<!-- Open Graph -->
-<meta property="og:title" content="Track Your Order — Global Bestie">
-<meta property="og:description" content="Track your Global Bestie order status in real-time. Enter your order number and email to see shipping updates for your USA products.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Global Bestie">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<link rel="manifest" href="manifest.json">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+import re, os
+
+BASE = '/Users/abdulrehman/claude/globalbestie/files'
+
+NEW_CSS_VARS = """@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --pink:#F4E1E1;--pink-light:#FCF6F6;--pink-mid:#DDA7A5;--pink-deep:#B37D7D;--pink-dark:#805A5A;
@@ -27,17 +16,9 @@
   --shadow-md:0 4px 20px rgba(26,16,21,0.10);
   --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}"""
 
-/* ── ANNOUNCEMENT BAR ── */
-.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
-.announce-track{display:flex;gap:4rem;white-space:nowrap;animation:marquee 40s linear infinite;padding:0 2rem;align-items:center}
-.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
-.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
-@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-
-
+NAV_CSS = """
 /* ── PROGRESS BAR ── */
 #page-progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold),var(--pink-mid));z-index:9999;transition:width 0.1s linear}
 /* ── ANNOUNCE BAR ── */
@@ -113,13 +94,9 @@ nav{background:rgba(19,12,16,0.92);backdrop-filter:blur(12px);-webkit-backdrop-f
   .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
   .page-hero{padding:3rem 1.5rem}
 }
-@media(max-width:480px){.footer-grid{grid-template-columns:1fr}nav{padding:0 1rem}}
-</style>
-<link rel="stylesheet" href="css/enhance.css">
-</head>
-<body>
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}nav{padding:0 1rem}}"""
 
-<!-- PROGRESS BAR -->
+NAV_HTML = """<!-- PROGRESS BAR -->
 <div id="page-progress"></div>
 
 <!-- ANNOUNCEMENT BAR -->
@@ -187,32 +164,9 @@ nav{background:rgba(19,12,16,0.92);backdrop-filter:blur(12px);-webkit-backdrop-f
   <a href="faq.html" onclick="closeMobileNav()">FAQ</a>
   <a href="track.html" onclick="closeMobileNav()">Track Order</a>
   <a onclick="openWA();closeMobileNav()">WhatsApp Us</a>
-</div>
+</div>"""
 
-<!-- TRACK HERO -->
-<div class="track-hero">
-  <div class="track-hero-inner">
-    <span class="track-hero-eye">Order Tracking</span>
-    <div class="track-hero-title">Track Your Order</div>
-    <div class="track-hero-sub">Enter your order number to see live status and estimated delivery</div>
-  </div>
-</div>
-
-<!-- SEARCH + RESULT -->
-<div class="track-section">
-  <div class="track-input-row">
-    <input class="track-input" type="text" id="trackInput" placeholder="e.g. GB-1K3F2A9B" autocomplete="off" onkeydown="if(event.key==='Enter')trackOrder()">
-    <button class="track-btn" id="trackBtn" onclick="trackOrder()">Track</button>
-  </div>
-  <div class="track-hint">Your order number was emailed to you and shown on the confirmation screen</div>
-  <div class="track-error" id="trackError"></div>
-
-  <!-- RESULT -->
-  <div class="track-result" id="trackResult"></div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
+FOOTER_HTML = """<div class="footer">
   <div class="footer-grid">
     <div>
       <div class="footer-logo">Global <span>Bestie</span></div>
@@ -244,201 +198,16 @@ nav{background:rgba(19,12,16,0.92);backdrop-filter:blur(12px);-webkit-backdrop-f
     </div>
   </div>
   <div class="footer-bottom">All prices in PKR · 50% advance for preorders · Authentic USA products</div>
-</div>
+</div>"""
 
-<script>
-// ═══════════════════════════════════════════════════════════
-// SUPABASE CONFIG
-// ═══════════════════════════════════════════════════════════
-const SUPA_URL = 'https://jfnmworzcpgwgqslvwhl.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impmbm13b3J6Y3Bnd2dxc2x2d2hsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyNzU0MzgsImV4cCI6MjA5MTg1MTQzOH0.RFJCzqe6_kadSSHY3eDH0skL-hGSn-3KFvd7E9YjqVA';
-const _supa = (SUPA_URL && SUPA_KEY) ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
-
-let WA_NUMBER = '03214992211';
-
-const STATUS_ORDER = ['new','confirmed','packed','shipped','delivered'];
-const STATUS_LABELS = {new:'Placed',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered'};
-const TL_IDS = ['tl-placed','tl-confirmed','tl-packed','tl-shipped','tl-delivered'];
-const EST_MAP = {
-  new:'Estimated delivery',
-  confirmed:'Estimated delivery',
-  packed:'~2 weeks estimated delivery',
-  shipped:'~5–7 days estimated delivery',
-  delivered:'Delivered'
-};
-const CHIP_CLASS = {
-  new:'chip-new',confirmed:'chip-confirmed',packed:'chip-packed',
-  shipped:'chip-shipped',delivered:'chip-delivered',cancelled:'chip-cancelled'
-};
-const STATUS_DISPLAY = {new:'Pending',confirmed:'Confirmed',packed:'Packed',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled'};
-
-const fmtPKR = n => 'Rs ' + Math.round(n).toLocaleString();
-function fmtDate(d){
-  if(!d)return '—';
-  try{return new Date(d).toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});}
-  catch(e){return d;}
-}
-
-async function trackOrder(){
-  const raw = document.getElementById('trackInput').value.trim().toUpperCase();
-  const errEl = document.getElementById('trackError');
-  const resultEl = document.getElementById('trackResult');
-  const btn = document.getElementById('trackBtn');
-
-  errEl.classList.remove('visible');
-  resultEl.classList.remove('visible');
-
-  if(!raw){
-    errEl.textContent = 'Please enter your order number.';
-    errEl.classList.add('visible');
-    return;
-  }
-  if(!/^GB-[A-Z0-9]{5,12}$/.test(raw)){
-    errEl.textContent = 'Invalid order number format. It should look like GB-1K3F2A9B.';
-    errEl.classList.add('visible');
-    return;
-  }
-  if(!_supa){
-    errEl.textContent = 'Tracking is temporarily unavailable. Please contact us on WhatsApp.';
-    errEl.classList.add('visible');
-    return;
-  }
-
-  btn.textContent = 'Searching…';
-  btn.disabled = true;
-
-  try{
-    const {data:orders, error:oErr} = await _supa.from('orders').select('*').eq('order_number',raw).limit(1);
-    if(oErr) throw oErr;
-    if(!orders || !orders.length){
-      errEl.textContent = 'Order not found. Please check the order number and try again.';
-      errEl.classList.add('visible');
-      btn.textContent = 'Track';
-      btn.disabled = false;
-      return;
-    }
-    const order = orders[0];
-    const {data:items, error:iErr} = await _supa.from('order_items').select('*').eq('order_id', order.id);
-    if(iErr) throw iErr;
-    renderTrackResult(order, items||[]);
-  }catch(e){
-    errEl.textContent = 'Something went wrong. Please try again or contact us on WhatsApp.';
-    errEl.classList.add('visible');
-    console.error('Track error:',e.message);
-  }
-
-  btn.textContent = 'Track';
-  btn.disabled = false;
-}
-
-function renderTrackResult(order, items){
-  const resultEl = document.getElementById('trackResult');
-  const status = order.status || 'new';
-  const isCancelled = status === 'cancelled';
-  const chipClass = CHIP_CLASS[status] || 'chip-new';
-  const statusDisplay = STATUS_DISPLAY[status] || status;
-  const estText = EST_MAP[status] || '';
-
-  let html = '';
-
-  // Order meta
-  html += `<div class="result-meta">
-    <div class="meta-row"><span class="meta-label">Order Number</span><span class="meta-val">${order.order_number}</span></div>
-    <div class="meta-row"><span class="meta-label">Date Placed</span><span class="meta-val">${fmtDate(order.created_at)}</span></div>
-    <div class="meta-row"><span class="meta-label">Status</span><span><span class="status-chip ${chipClass}">${statusDisplay}</span></span></div>
-    ${!isCancelled && estText ? `<div class="meta-row"><span class="meta-label">Estimated Delivery</span><span class="est-delivery">${estText}</span></div>` : ''}
-    ${order.customer_name ? `<div class="meta-row"><span class="meta-label">Customer</span><span class="meta-val">${order.customer_name}</span></div>` : ''}
-    ${order.customer_city ? `<div class="meta-row"><span class="meta-label">City</span><span class="meta-val">${order.customer_city}</span></div>` : ''}
-  </div>`;
-
-  // Cancelled message
-  if(isCancelled){
-    html += `<div class="cancelled-msg">This order has been cancelled. Please WhatsApp us if you need assistance or want to re-order.</div>`;
-  } else {
-    // Timeline
-    const statusIdx = STATUS_ORDER.indexOf(status);
-    html += `<div class="timeline-wrap">
-      <div class="tl-title">Order Progress</div>
-      <div class="tl-steps">`;
-    STATUS_ORDER.forEach((s,i) => {
-      let cls = '';
-      if(i < statusIdx) cls = 'done';
-      else if(i === statusIdx) cls = 'current';
-      const icon = i < statusIdx ? '✓' : (i === statusIdx ? '●' : '');
-      const label = STATUS_LABELS[s] || s;
-      html += `<div class="tl-step ${cls}" id="tl-${s}">
-        <div class="tl-dot">${icon}</div>
-        <div class="tl-label">${label}</div>
-      </div>`;
-    });
-    html += `</div></div>`;
-  }
-
-  // Order items
-  if(items.length){
-    const total = items.reduce((a,it) => a + (it.pkr||0)*(it.qty||1), 0);
-    html += `<div class="items-wrap">
-      <div class="items-title">Items Ordered</div>`;
-    items.forEach(it => {
-      html += `<div class="item-row">
-        <span class="item-name">${it.product_name||''}${it.is_preorder?' <span style="font-size:0.6rem;color:var(--sienna)">[Preorder]</span>':''}</span>
-        <span class="item-qty">×${it.qty||1}</span>
-        <span class="item-price">${fmtPKR((it.pkr||0)*(it.qty||1))}</span>
-      </div>`;
-    });
-    html += `<div class="items-total">
-      <span class="items-total-label">Total</span>
-      <span class="items-total-val">${fmtPKR(order.total || total)}</span>
-    </div>`;
-    if(order.advance && order.advance > 0){
-      html += `<div style="font-size:0.7rem;color:var(--sienna);margin-top:0.4rem">Advance paid: ${fmtPKR(order.advance)}</div>`;
-    }
-    html += `</div>`;
-  }
-
-  // WA support
-  const waMsg = `Hi, I'm checking on my order ${order.order_number}. Can you give me an update?`;
-  html += `<button class="wa-support-btn" onclick="openWA('${waMsg.replace(/'/g,"\\'")}')">📱 WhatsApp Support</button>`;
-
-  resultEl.innerHTML = html;
-  resultEl.classList.add('visible');
-  resultEl.scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function openWA(msg){window.open('https://wa.me/'+WA_NUMBER+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.getElementById('hamburger').classList.add('open');document.body.style.overflow='hidden';}
-function closeMobileNav(){document.getElementById('mobileNav').classList.remove('open');document.getElementById('hamburger').classList.remove('open');document.body.style.overflow='';}
-
-// Pre-fill from URL params and auto-track
-(function(){
-  const params = new URLSearchParams(location.search);
-  const orderNum = params.get('order');
-  if(orderNum){
-    const inp = document.getElementById('trackInput');
-    if(inp) inp.value = orderNum.toUpperCase();
-    // Auto-trigger after short delay so page renders first
-    setTimeout(trackOrder, 300);
-  }
-
-  // WA number from stored settings
-  try{
-    const cc = JSON.parse(localStorage.getItem('gb_content_contact')||'null');
-    if(cc && cc.wa_number) WA_NUMBER = cc.wa_number.replace(/\D/g,'');
-  }catch(e){}
-})();
-</script>
-<div class="wa-fab" onclick="openWA()" title="Chat on WhatsApp">
-  <div class="wa-fab-ring"></div>
-  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12 0C5.373 0 0 5.373 0 12c0 2.123.557 4.11 1.535 5.836L.057 23.945l6.204-1.625A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.804a9.773 9.773 0 01-5.02-1.384l-.36-.213-3.68.965 1.003-3.58-.234-.374A9.76 9.76 0 012.195 12C2.195 6.573 6.574 2.195 12 2.195c5.427 0 9.805 4.378 9.805 9.805S17.427 21.804 12 21.804z"/></svg>
-</div>
-<div class="wa-fab" onclick="openWA()" title="Chat on WhatsApp">
+WA_FAB_HTML = """<div class="wa-fab" onclick="openWA()" title="Chat on WhatsApp">
   <div class="wa-fab-ring"></div>
   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z M12 0C5.373 0 0 5.373 0 12c0 2.123.557 4.11 1.535 5.836L.057 23.945l6.204-1.625A11.93 11.93 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.804a9.773 9.773 0 01-5.02-1.384l-.36-.213-3.68.965 1.003-3.58-.234-.374A9.76 9.76 0 012.195 12C2.195 6.573 6.574 2.195 12 2.195c5.427 0 9.805 4.378 9.805 9.805S17.427 21.804 12 21.804z"/></svg>
 </div>
 <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
-<div class="toast" id="toast"></div>
-<script>
+<div class="toast" id="toast"></div>"""
+
+BASE_JS = """<script>
 const WA_NUMBER = '03214992211';
 function openWA(msg=''){window.open('https://wa.me/92'+WA_NUMBER.replace(/^0/,'')+(msg?'?text='+encodeURIComponent(msg):''),'_blank');}
 function openMobileNav(){document.getElementById('mobileNav').classList.add('open');document.body.style.overflow='hidden';}
@@ -454,6 +223,82 @@ window.addEventListener('scroll',()=>{
   const st=document.getElementById('scrollTop');
   if(st)st.classList.toggle('visible',doc.scrollTop>400);
 });
-</script>
-</body>
-</html>
+</script>"""
+
+# Files and their page names + active link + breadcrumb label
+FILES = {
+  'about.html': ('About', 'about.html', 'About Us'),
+  'contact.html': ('Contact', 'contact.html', 'Contact'),
+  'faq.html': ('FAQ', 'faq.html', 'FAQ'),
+  'policy.html': ('Policy', 'policy.html', 'Policy'),
+  'track.html': ('Track Order', 'track.html', 'Track Order'),
+}
+
+for fname, (page_name, active_href, crumb) in FILES.items():
+    fpath = os.path.join(BASE, fname)
+    with open(fpath) as f:
+        html = f.read()
+
+    # 1. Replace font import + :root tokens (everything between @import and body{)
+    html = re.sub(
+        r"@import url\([^)]+\).*?body\{",
+        NEW_CSS_VARS + "\n",
+        html, flags=re.DOTALL
+    )
+
+    # 2. Replace everything from /* ── ANNOUNCE BAR ── */ (or /* ── NAV ── */) to </style>
+    # with the unified NAV_CSS
+    html = re.sub(
+        r'/\* ──\s*(ANNOUNCE BAR|NAV)\s*── \*/.*?</style>',
+        NAV_CSS + '\n</style>',
+        html, flags=re.DOTALL
+    )
+
+    # 3. Replace announce bar + nav + mobile nav block
+    html = re.sub(
+        r'<!-- ANNOUNCEMENT BAR -->.*?</div>\s*\n\s*\n<!-- NAV -->.*?</div>\s*\n\s*\n',
+        NAV_HTML + '\n\n',
+        html, flags=re.DOTALL
+    )
+    # fallback if comment style differs
+    html = re.sub(
+        r'<div class="announce-bar">.*?</div>\s*\n\s*\n<nav>.*?</nav>\s*\n\s*\n<div class="mobile-nav".*?</div>',
+        NAV_HTML,
+        html, flags=re.DOTALL
+    )
+
+    # Add breadcrumb after page-hero
+    breadcrumb = f'\n<div class="breadcrumb"><a href="index.html">Home</a><span>›</span>{crumb}</div>'
+    html = re.sub(r'(</div>\s*\n\s*\n<div class="(?:about-wrap|contact-wrap|faq-wrap|policy-wrap|track-wrap|main-wrap|content-wrap|section-wrap|wrap|container)[^"]*">)', breadcrumb + r'\n\1', html)
+    # simpler fallback
+    if 'breadcrumb' not in html:
+        html = html.replace('</div>\n\n<div', '</div>' + breadcrumb + '\n\n<div', 1)
+
+    # 4. Replace footer
+    html = re.sub(
+        r'<div class="footer">.*?</div>\s*\n\s*\n<div class="toast"',
+        FOOTER_HTML + '\n\n<div class="toast"',
+        html, flags=re.DOTALL
+    )
+    # fallback if no toast after footer
+    html = re.sub(
+        r'<div class="footer">.*?</div>(\s*\n\s*\n<script)',
+        FOOTER_HTML + r'\1',
+        html, flags=re.DOTALL
+    )
+
+    # 5. Replace wa-fab + toast + script block before </body>
+    html = re.sub(
+        r'<div class="toast"[^>]*>.*?</div>\s*\n\s*\n<script>.*?</script>\s*\n\s*<div class="wa-fab".*?</div>\s*\n',
+        '',
+        html, flags=re.DOTALL
+    )
+    # Insert before </body>
+    if WA_FAB_HTML not in html:
+        html = html.replace('</body>', WA_FAB_HTML + '\n' + BASE_JS + '\n</body>')
+
+    with open(fpath, 'w') as f:
+        f.write(html)
+    print(f'✓ Updated {fname}')
+
+print('All done!')
