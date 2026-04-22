@@ -2115,7 +2115,7 @@ function doPost(e) {
         <div style="font-size:0.68rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem" id="import-preview-label"></div>
         <div style="overflow-x:auto;max-height:220px;overflow-y:auto;border:1px solid var(--border)">
           <table class="tbl" id="import-preview-table" style="font-size:0.72rem">
-            <thead><tr><th>#</th><th>Name</th><th>Brand</th><th>Cat</th><th>Gender</th><th>USD</th><th>PKR</th></tr></thead>
+            <thead><tr><th>#</th><th>Image</th><th>Name</th><th>Brand</th><th>Cat</th><th>Gender</th><th>USD</th><th>PKR</th></tr></thead>
             <tbody id="import-preview-body"></tbody>
           </table>
         </div>
@@ -3982,8 +3982,14 @@ function renderProducts() {
 
 function productRow(p) {
   const catIcon = CAT_EMOJIS[p.cat] || '•';
-  return `<div class="prod-edit-row" id="prow-${p.id}">
-    <div class="prod-name-cell">
+  const imgThumb = p.image
+    ? `<img src="${p.image}" alt="" style="width:48px;height:48px;object-fit:cover;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <div style="display:none;width:48px;height:48px;background:var(--bg2);border:1px solid var(--border);align-items:center;justify-content:center;font-size:0.6rem;color:var(--muted2);flex-shrink:0">No img</div>`
+    : `<div style="width:48px;height:48px;background:var(--bg2);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:0.55rem;color:var(--muted2);flex-shrink:0;text-align:center;line-height:1.2">No<br>img</div>`;
+  const isApproved = p._approved !== false;
+  return `<div class="prod-edit-row" id="prow-${p.id}" style="${!isApproved ? 'border-left:3px solid var(--amber);background:rgba(255,193,7,0.04)' : ''}">
+    <div class="prod-name-cell" style="gap:10px">
+      ${imgThumb}
       <div class="prod-emoji-sm">${catIcon}</div>
       <div><div class="prod-name-sm">${p.name}</div><div class="prod-brand-sm">${p.brand} · ${p.cat}</div></div>
     </div>
@@ -4015,6 +4021,10 @@ function productRow(p) {
       <div style="font-size:0.68rem;color:var(--muted);margin-bottom:6px">Stock Status</div>
       <button class="toggle ${p.inStock ? 'on' : ''}" id="toggle-${p.id}" onclick="toggleStock(${p.id})"></button>
       <div style="font-size:0.7rem;margin-top:4px" id="stock-label-${p.id}">${p.inStock ? '<span style="color:var(--green)">In Stock</span>' : '<span style="color:var(--amber)">Preorder</span>'}</div>
+    </div>
+    <div>
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">Visibility</div>
+      <button class="stock-toggle${isApproved ? ' featured-on' : ''}" id="approve-toggle-${p.id}" onclick="toggleApprove(${p.id})" style="${!isApproved ? 'border-color:var(--amber);color:var(--amber)' : 'border-color:var(--sage);color:var(--sage)'}">${isApproved ? '👁 Live' : '🔒 Review'}</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:4px">
       <button class="btn btn-ghost btn-sm" onclick="openProdDetails(${p.id})" title="Edit image &amp; description">📝</button>
@@ -5273,6 +5283,11 @@ function renderImportPreview(rate, markup) {
   tbody.innerHTML = fresh.slice(0, 10).map((p, i) => `
     <tr>
       <td style="color:var(--muted2)">${i+1}</td>
+      <td>
+        ${p.image 
+          ? `<img src="${p.image}" alt="" style="width:36px;height:36px;object-fit:cover;border:1px solid var(--border)">`
+          : `<div style="width:36px;height:36px;background:var(--bg2);border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:0.45rem;color:var(--muted2)">No img</div>`}
+      </td>
       <td style="font-weight:500">${p.name}</td>
       <td style="color:var(--muted)">${p.brand}</td>
       <td><span style="font-size:0.62rem;background:var(--gold-light);color:var(--gold-dark);padding:1px 6px;border:1px solid var(--border2)">${p.cat}</span></td>
@@ -5296,17 +5311,33 @@ async function confirmImport() {
       description: p.desc,
       image: p.image,
       images: p.images || [],
-      colors: p.colors || []
+      colors: p.colors || [],
+      _approved: false // Imported products go to review by default
     });
   });
   localStorage.setItem('gb_products', JSON.stringify(products));
   document.getElementById('demo-banner').style.display = 'none';
   closeModal('import-modal');
   renderProducts();
-  toast(`✅ ${fresh.length} products imported — visible in storefront`);
+  toast(`✅ ${fresh.length} products imported — pending review`);
   const s = getSettings();
   if (s.sheetUrl) await saveProductsToSheet();
 }
+
+async function toggleApprove(id) {
+  const p = products.find(x => x.id === id);
+  if (!p) return;
+  p._approved = p._approved === false ? true : false;
+  localStorage.setItem('gb_products', JSON.stringify(products));
+  if (typeof _supa !== 'undefined' && _supa) {
+    // Note: If you want to sync this to Supabase, you would need an _approved or is_live column.
+    // For now, we assume local state manages visibility in admin, 
+    // or you can add a _approved field in Supabase.
+  }
+  renderProducts();
+  toast(p._approved ? '✅ Product is now Live' : '🔒 Product moved to Review');
+}
+
 
 // ── INVENTORY ──
 let _adjProductId = null;

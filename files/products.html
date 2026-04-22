@@ -1321,9 +1321,9 @@ function parseGviz(text){
 
 let productsCache=null;
 function getProducts(){
-  if(productsCache)return productsCache;
+  if(productsCache)return productsCache.filter(p => p._approved !== false);
   const saved=localStorage.getItem('gb_products');
-  if(saved){productsCache=JSON.parse(saved);return productsCache;}
+  if(saved){productsCache=JSON.parse(saved);return productsCache.filter(p => p._approved !== false);}
   return getDefaultProducts();
 }
 function getDefaultProducts(){
