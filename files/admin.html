@@ -737,6 +737,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
         <div><div class="page-title">Products</div><div class="page-sub" id="prod-count-sub">Manage your catalogue and pricing</div></div>
         <div style="display:flex;gap:0.6rem;margin-top:4px;flex-wrap:wrap">
           <button class="btn btn-ghost btn-sm" onclick="clearAllProducts()" style="color:var(--rose);border-color:rgba(181,54,90,0.4)" title="Remove all products and start fresh">Clear All</button>
+          <button class="btn btn-ghost btn-sm" onclick="runScraper()" style="color:var(--sage);border-color:var(--sage-light)">🚀 Run Scraper</button>
           <button class="btn btn-ghost btn-sm" onclick="openImportModal()">⬆ Import JSON</button>
           <button class="btn btn-ghost btn-sm" onclick="openAddProduct()">+ Add Product</button>
           <button class="btn btn-dark btn-sm" onclick="saveAllProducts()">Save All</button>
@@ -5338,6 +5339,48 @@ async function toggleApprove(id) {
   toast(p._approved ? '✅ Product is now Live' : '🔒 Product moved to Review');
 }
 
+async function runScraper() {
+  const btn = event.currentTarget;
+  const ogText = btn.innerHTML;
+  btn.innerHTML = '⏳ Scraping...';
+  btn.disabled = true;
+  toast('🚀 Running scraper in background. This might take a minute...');
+  
+  try {
+    const res = await fetch('http://localhost:8080/run_scraper', { method: 'POST' });
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+      console.log('Scraper Output:', data.stdout);
+      // Wait a moment then reload products, assuming they were pushed
+      toast('✅ Scraper finished successfully! Reloading products...');
+      if (typeof _supa !== 'undefined' && _supa) {
+        setTimeout(async () => {
+          const { data: newProds, error } = await _supa.from('products').select('*').order('id', { ascending: false });
+          if (!error && newProds) {
+            products = newProds.map(p => ({
+              ...p, inStock: p.in_stock, lowStockThreshold: p.low_stock_threshold,
+              sale_price: p.sale_price, on_sale: p.on_sale, is_featured: p.is_featured,
+              is_new: p.is_new, is_outlet: p.is_outlet, review_rating: p.review_rating, review_count: p.review_count
+            }));
+            localStorage.setItem('gb_products', JSON.stringify(products));
+            renderProducts();
+          }
+        }, 1500);
+      }
+    } else {
+      console.error('Scraper Error:', data.stderr || data.error);
+      toast('❌ Scraper failed. Check console for details.');
+    }
+  } catch (e) {
+    console.error(e);
+    toast('❌ Could not connect to local bridge. Is local_bridge.py running?');
+    alert("To run the scraper from the admin panel, you need the local bridge running.\\n\\nOpen a terminal and run:\\npython3 local_bridge.py");
+  } finally {
+    btn.innerHTML = ogText;
+    btn.disabled = false;
+  }
+}
 
 // ── INVENTORY ──
 let _adjProductId = null;
