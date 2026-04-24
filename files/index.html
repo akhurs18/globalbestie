@@ -1143,22 +1143,6 @@ const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 const _supa = (SUPA_URL && SUPA_KEY) ? supabase.createClient(SUPA_URL, SUPA_KEY) : null;
 
 let WA_NUMBER = '03214992211';
-const SHEET_URL = '';
-const SHEET_ID = '';
-
-function parseGviz(text) {
-  try {
-    const match = text.match(/setResponse\(([\s\S]*)\)\s*;?\s*$/);
-    if (!match) return null;
-    const json = JSON.parse(match[1]);
-    const cols = json.table.cols.map(c => c.label || c.id);
-    return (json.table.rows || []).map(row => {
-      const obj = {};
-      (row.c || []).forEach((cell, i) => { obj[cols[i]] = (cell && cell.v != null) ? String(cell.v) : ''; });
-      return obj;
-    }).filter(row => Object.values(row).some(v => v !== ''));
-  } catch(e) { return null; }
-}
 
 let productsCache = null;
 function getProducts() {
@@ -1246,26 +1230,6 @@ window.addEventListener('scroll',()=>{
       if(cached){try{productsCache=JSON.parse(cached);renderFeatured();renderCatGrid();loadCart();showToast('Showing saved catalogue — check connection');return;}catch(e2){}}
     }
   }
-  // ── 2. Fallback: Google Sheet ──
-  const sid=SHEET_ID||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetId||'');
-  if(!sid) return;
-  try{
-    const r=await fetch(`https://docs.google.com/spreadsheets/d/${sid}/gviz/tq?tqx=out:json&sheet=Products`);
-    const data=parseGviz(await r.text());
-    if(!data||!data.length||!data.some(p=>p.name)) return;
-    const mapped=data.map(p=>({
-      id:parseInt(p.id)||p.id, gender:p.gender||'women', cat:p.cat||'accessories',
-      name:String(p.name||''), brand:String(p.brand||''),
-      pkr:parseFloat(p.pkr)||0, inStock:p.inStock==='true'||p.inStock===true,
-      description:p.description||'', image:p.image||''
-    })).filter(p=>p.name&&p.pkr>0);
-    if(!mapped.length) return;
-    productsCache=mapped;
-    localStorage.setItem('gb_products',JSON.stringify(productsCache));
-    renderFeatured();
-    renderCatGrid();
-    loadCart();
-  }catch(e){}
 })();
 
 const womenCats=['makeup','skincare','bags','accessories','fashion','home','hair'];
@@ -1687,7 +1651,6 @@ async function placeOrder(){
   try{
     let order=null;
     if(_supa){order=await saveOrderToSupabase({...fields,screenshotUrl});}
-    else{await saveOrderToSheet(fields);}
     _screenshotFile=null;
     const orderNum=order?order.order_number:'';
     // Confirmation email is NOT sent here — admin verifies availability first,
@@ -1706,8 +1669,6 @@ async function placeOrderViaWA(){
   if(_supa){
     try{await saveOrderToSupabase({...fields,screenshotUrl:''});}
     catch(e){console.warn('Order save failed:',e.message);}
-  } else {
-    await saveOrderToSheet(fields);
   }
   sendWA();
   closeModal();
@@ -1758,15 +1719,6 @@ async function saveOrderToSupabase({name,phone,email,city,addr,notes,screenshotU
     if(p&&p.qty>0) await _supa.from('products').update({qty:Math.max(0,p.qty-c.qty)}).eq('id',c.id);
   }
   return order;
-}
-
-async function saveOrderToSheet({name,phone,email,city,addr,notes}){
-  const sheetUrl=SHEET_URL||(JSON.parse(localStorage.getItem('gb_settings')||'{}').sheetUrl||'');
-  if(!sheetUrl)return;
-  const items=cart.map(c=>`${c.name} x${c.qty} [${c.inStock?'In Stock':'PREORDER'}]`).join(', ');
-  try{
-    await fetch(sheetUrl,{method:'POST',mode:'no-cors',body:new URLSearchParams({payload:JSON.stringify({action:'addOrder',date:new Date().toLocaleDateString('en-PK'),name,phone,email,city,address:addr,items,total:fmtPKR(window._total),advance:fmtPKR(window._payNow),notes})})});
-  }catch(e){}
 }
 
 function sendWA(){
