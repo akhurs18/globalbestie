@@ -28,7 +28,6 @@
   --shadow-lg:0 12px 48px rgba(26,16,21,0.14);
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
-font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 
 /* ── ANNOUNCEMENT BAR ── */
 .announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
@@ -37,15 +36,8 @@ font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-fon
 .announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
-
 /* ── PROGRESS BAR ── */
 #page-progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold),var(--pink-mid));z-index:9999;transition:width 0.1s linear}
-/* ── ANNOUNCE BAR ── */
-.announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
-.announce-track{display:flex;gap:4rem;white-space:nowrap;animation:marquee 40s linear infinite;padding:0 2rem;align-items:center}
-.announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
-.announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem;flex-shrink:0}
-@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 /* ── NAV ── */
 nav{background:rgba(19,12,16,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;height:68px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.2)}
 .logo{font-family:'Playfair Display',serif;color:#fff;font-size:1.55rem;font-weight:500;letter-spacing:0.5px;cursor:pointer;text-decoration:none}
@@ -308,19 +300,18 @@ async function trackOrder(){
   btn.disabled = true;
 
   try{
-    const {data:orders, error:oErr} = await _supa.from('orders').select('*').eq('order_number',raw).limit(1);
+    // Use RPC to avoid exposing the full orders table publicly
+    const {data:result, error:oErr} = await _supa.rpc('get_order_by_number',{p_order_number:raw});
     if(oErr) throw oErr;
-    if(!orders || !orders.length){
+    if(!result){
       errEl.textContent = 'Order not found. Please check the order number and try again.';
       errEl.classList.add('visible');
       btn.textContent = 'Track';
       btn.disabled = false;
       return;
     }
-    const order = orders[0];
-    const {data:items, error:iErr} = await _supa.from('order_items').select('*').eq('order_id', order.id);
-    if(iErr) throw iErr;
-    renderTrackResult(order, items||[]);
+    const {items: rawItems, ...order} = result;
+    renderTrackResult(order, rawItems||[]);
   }catch(e){
     errEl.textContent = 'Something went wrong. Please try again or contact us on WhatsApp.';
     errEl.classList.add('visible');
@@ -455,5 +446,44 @@ window.addEventListener('scroll',()=>{
   if(st)st.classList.toggle('visible',doc.scrollTop>400);
 });
 </script>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="bnav" aria-label="Mobile navigation">
+  <a class="bnav-item" href="index.html"><span class="bnav-icon">🏠</span><span>Home</span></a>
+  <a class="bnav-item" href="products.html"><span class="bnav-icon">🛍</span><span>Shop</span></a>
+  <a class="bnav-item" href="products.html"><span class="bnav-icon">🛒<span class="bnav-badge" id="bnavCartCount" style="display:none">0</span></span><span>Cart</span></a>
+  <a class="bnav-item active" href="track.html"><span class="bnav-icon">📦</span><span>Track</span></a>
+</nav>
+<script>
+(function(){var c=[];try{c=JSON.parse(localStorage.getItem('gb_cart')||'[]');}catch(e){}var n=c.reduce(function(a,x){return a+(x.qty||1);},0);var el=document.getElementById('bnavCartCount');if(el){el.textContent=n;el.style.display=n>0?'flex':'none';}})()</script>
+
+<div id="page-fade"></div>
+<script>
+(function(){
+  var fade=document.getElementById('page-fade');
+  if(!fade)return;
+  fade.style.opacity='1';fade.style.pointerEvents='all';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      fade.style.transition='opacity 0.32s ease';
+      fade.style.opacity='0';
+      setTimeout(function(){fade.style.pointerEvents='none';},340);
+    });
+  });
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a[href]');
+    if(!a)return;
+    var href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('javascript')||href.startsWith('mailto')||href.startsWith('tel')||a.target==='_blank')return;
+    e.preventDefault();
+    fade.style.transition='opacity 0.28s ease';
+    fade.style.opacity='1';
+    fade.style.pointerEvents='all';
+    setTimeout(function(){window.location.href=href;},290);
+  });
+})();
+</script>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="js/enhance.js"></script>
 </body>
 </html>

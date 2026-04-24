@@ -28,10 +28,15 @@ parser.add_argument("--skip-scrape", action="store_true", help="Skip live scrapi
 CLI_ARGS = parser.parse_args()
 
 # ── Supabase Config (for --push mode) ──
-SUPA_URL = "https://jfnmworzcpgwgqslvwhl.supabase.co"
-SUPA_KEY = ""  # Set your service_role key here or via env var
-if not SUPA_KEY:
-    SUPA_KEY = os.environ.get("SUPA_SERVICE_KEY", "")
+# Set these in a .env file or export them before running:
+#   export SUPA_URL=https://xxxx.supabase.co
+#   export SUPA_SERVICE_KEY=eyJ...
+SUPA_URL = os.environ.get("SUPA_URL", "")
+SUPA_KEY = os.environ.get("SUPA_SERVICE_KEY", "")
+if CLI_ARGS.push and (not SUPA_URL or not SUPA_KEY):
+    print("❌  Set SUPA_URL and SUPA_SERVICE_KEY env vars before using --push.")
+    print("    cp .env.example .env  # then fill in your values")
+    sys.exit(1)
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
@@ -713,24 +718,134 @@ def load_curated():
 
 # ── 4. Image enrichment ───────────────────────────────────────────────────────
 
-def _sephora_image(name, brand):
-    """Try Sephora's search API for a product image URL."""
+# Trusted CDN domains — only accept images from these hosts
+TRUSTED_IMAGE_HOSTS = [
+    "sephora.com", "ulta.com", "nordstrom.com",
+    "charlottetilbury.com", "narscosmetics.com", "toofaced.com",
+    "fentybeauty.com", "rarebeauty.com", "benefitcosmetics.com",
+    "urbandecay.com", "maccosmetics.com", "hudabeauty.com",
+    "patmcgrath.com", "drunkelephant.com", "tatcha.com",
+    "theordinary.com", "cerave.com", "laroche-posay.com",
+    "kiehls.com", "olaplex.com", "dyson.com", "moroccanoil.com",
+    "tomford.com", "toryburch.com", "coach.com", "katespade.com",
+    "michaelkors.com", "marcjacobs.com", "nike.com",
+    "bathandbodyworks.com", "victoriassecret.com",
+]
+
+def _fix_url(u):
+    if not u or not isinstance(u, str):
+        return ""
+    u = u.strip()
+    return u if u.startswith("http") else "https://www.sephora.com" + u
+
+def _validate_image(url, timeout=5):
+    """Return True if url is a reachable image from a trusted host."""
+    if not url or not url.startswith("http"):
+        return False
     try:
-        q = f"{brand} {name}"
-        url = f"https://www.sephora.com/api/catalog/search?q={requests.utils.quote(q)}&currentPage=0&pageSize=3&includeContent=false"
-        r = requests.get(url, headers=HEADERS, timeout=8)
-        if r.status_code == 200:
-            data = r.json()
-            prods = (data.get("products") or data.get("data", {}).get("products") or
-                     data.get("result", {}).get("products") or [])
-            for p in prods:
-                img = (p.get("heroImage") or p.get("image") or p.get("imageUrl") or
-                       p.get("heroImageAltText") or "")
-                # heroImage on Sephora is usually a relative path
-                if img and not img.startswith("http"):
-                    img = "https://www.sephora.com" + img
-                if img and img.startswith("http"):
-                    return img
+        from urllib.parse import urlparse
+        host = urlparse(url).netloc.lower().lstrip("www.")
+        if not any(t in host for t in TRUSTED_IMAGE_HOSTS):
+            return False
+        r = requests.head(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
+        ct = r.headers.get("Content-Type", "")
+        return r.status_code == 200 and "image/" in ct
+    except Exception:
+        return False
+
+def _sephora_search_data(name, brand):
+    """Call Sephora search API and return the first matching product dict."""
+    try:
+        q = requests.utils.quote(f"{brand} {name}")
+        url = (f"https://www.sephora.com/api/catalog/search"
+               f"?q={q}&currentPage=0&pageSize=3&includeContent=false")
+        r = requests.get(url, headers=HEADERS, timeout=10)
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        prods = (data.get("products") or
+                 data.get("data", {}).get("products") or
+                 data.get("result", {}).get("products") or [])
+        return prods[0] if prods else None
+    except Exception:
+        return None
+
+def _sephora_image(name, brand):
+    """Extract verified product image from Sephora search result."""
+    p = _sephora_search_data(name, brand)
+    if not p:
+        return ""
+
+    candidates = []
+
+    # Top-level image fields
+    for field in ("heroImage", "imageUrl", "image", "gridImage",
+                  "squareImage", "heroImageAltText"):
+        u = _fix_url(p.get(field, ""))
+        if u:
+            candidates.append(u)
+
+    # Dig into sku structures for higher-res images
+    for sku_key in ("currentSku", "regularChildSkus", "skus"):
+        skus = p.get(sku_key) or []
+        if isinstance(skus, dict):
+            skus = [skus]
+        for sku in (skus if isinstance(skus, list) else [])[:3]:
+            imgs = sku.get("skuImages") or {}
+            if isinstance(imgs, dict):
+                for k in ("imageUrl", "image", "imageAltText", "zoom"):
+                    u = _fix_url(imgs.get(k, ""))
+                    if u:
+                        candidates.append(u)
+            u = _fix_url(sku.get("imageUrl", "") or sku.get("image", ""))
+            if u:
+                candidates.append(u)
+
+    # Validate each candidate and return first that passes
+    for img in candidates:
+        if _validate_image(img):
+            return img
+    return ""
+
+def _sephora_product_page_image(name, brand):
+    """
+    Fetch the Sephora product page (URL from search result) and extract
+    og:image. More reliable than search API for primary product shot.
+    """
+    try:
+        p = _sephora_search_data(name, brand)
+        if not p:
+            return ""
+        target = p.get("targetUrl") or p.get("productUrl") or p.get("url") or ""
+        if not target:
+            return ""
+        if not target.startswith("http"):
+            target = "https://www.sephora.com" + target
+
+        r = requests.get(target, headers=HEADERS, timeout=12)
+        if r.status_code != 200:
+            return ""
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        # og:image is the canonical product photo
+        og = soup.find("meta", property="og:image")
+        if og:
+            img = _fix_url(og.get("content", ""))
+            if img and _validate_image(img):
+                return img
+
+        # __NEXT_DATA__ fallback — search for first imageUrl in page JSON
+        for sc in soup.find_all("script", id="__NEXT_DATA__"):
+            try:
+                nd = json.loads(sc.string or "")
+                nd_str = json.dumps(nd)
+                for m in re.finditer(r'"(?:imageUrl|heroImage)"\s*:\s*"([^"]+)"', nd_str):
+                    img = _fix_url(m.group(1))
+                    if img and _validate_image(img):
+                        return img
+            except Exception:
+                pass
     except Exception:
         pass
     return ""
@@ -741,27 +856,10 @@ def _sephora_variants(name, brand):
     Returns (extra_images: list[str], colors: list[dict])
     Each color dict: {"name": str, "hex": str, "image": str}
     """
+    p = _sephora_search_data(name, brand)
+    if not p:
+        return [], []
     try:
-        q = f"{brand} {name}"
-        url = (f"https://www.sephora.com/api/catalog/search?"
-               f"q={requests.utils.quote(q)}&currentPage=0&pageSize=3&includeContent=false")
-        r = requests.get(url, headers=HEADERS, timeout=8)
-        if r.status_code != 200:
-            return [], []
-        data = r.json()
-        prods = (data.get("products") or
-                 data.get("data", {}).get("products") or
-                 data.get("result", {}).get("products") or [])
-        if not prods:
-            return [], []
-
-        p = prods[0]
-
-        def _fix_url(u):
-            if u and isinstance(u, str):
-                return u if u.startswith("http") else "https://www.sephora.com" + u
-            return ""
-
         # Extra images (alt angles / swatch)
         extra_imgs = []
         for field in ["squareImage", "altImages", "swatch", "imageUrl"]:
@@ -785,100 +883,77 @@ def _sephora_variants(name, brand):
             cname = (sku.get("skuExtension") or sku.get("variationType") or
                      sku.get("skuShade") or sku.get("displayName") or "").strip()
             hex_c = sku.get("hexCode") or sku.get("skuSwatchColorCode") or ""
-            sku_img = ""
             sku_imgs = sku.get("skuImages") or sku.get("images") or {}
+            sku_img = ""
             if isinstance(sku_imgs, dict):
-                sku_img = sku_imgs.get("imageUrl") or sku_imgs.get("image") or ""
+                sku_img = _fix_url(sku_imgs.get("imageUrl") or sku_imgs.get("image") or "")
             elif isinstance(sku_imgs, str):
-                sku_img = sku_imgs
-            sku_img = _fix_url(sku_img)
+                sku_img = _fix_url(sku_imgs)
             if cname:
                 colors.append({"name": cname, "hex": hex_c, "image": sku_img})
 
-        return extra_imgs[:4], colors[:12]
+        # Only keep validated extra images (skip non-image/broken URLs)
+        valid_extras = [u for u in extra_imgs if _validate_image(u)]
+        return valid_extras[:4], colors[:12]
     except Exception:
         return [], []
 
-
-def _ddg_image(name, brand):
-    """DuckDuckGo image search fallback — returns first image URL."""
-    try:
-        q = requests.utils.quote(f"{brand} {name} product official")
-        # DDG vqd token fetch
-        r = requests.get(f"https://duckduckgo.com/?q={q}&iax=images&ia=images",
-                         headers=HEADERS, timeout=8)
-        vqd = re.search(r'vqd=([\'"])([^\'"]+)\1', r.text)
-        if not vqd:
-            vqd = re.search(r'vqd=([\d-]+)', r.text)
-            token = vqd.group(1) if vqd else None
-        else:
-            token = vqd.group(2)
-        if not token:
-            return ""
-        api = (f"https://duckduckgo.com/i.js?q={q}&vqd={token}"
-               f"&o=json&p=1&s=0&u=bing&f=,,,&l=us-en")
-        r2 = requests.get(api, headers={**HEADERS, "Referer": "https://duckduckgo.com/"},
-                          timeout=8)
-        if r2.status_code == 200:
-            results = r2.json().get("results", [])
-            for res in results[:3]:
-                img = res.get("image", "")
-                # prefer images from known brand / beauty CDNs
-                if img and any(cdn in img for cdn in ["sephora","ulta","nars","charlottetilbury",
-                                                       "benefitcosmetics","toofaced","rarebeauty",
-                                                       "fentybeauty","olaplex","tatcha","drunk",
-                                                       "cerave","laroche","moroccanoil","dyson",
-                                                       "tomford","kiehl","patmcgrath"]):
-                    return img
-            # fallback: just take first result
-            if results:
-                return results[0].get("image", "")
-    except Exception:
-        pass
-    return ""
-
 def enrich_images():
-    """Fill in missing images, extra images, and color variants for curated products."""
+    """
+    Fill in / validate images and color variants for all products.
+
+    Strategy per product:
+      1. If image already set — validate it (HEAD request). Clear if broken.
+      2. Try Sephora search API (parses all nested sku/image fields, validates URL).
+      3. Try Sephora product page og:image (fetches product page, extracts meta).
+      4. No DDG fallback — blank image is better than a wrong product photo.
+    """
+    # First pass: invalidate existing broken/untrusted images
+    invalidated = 0
+    for p in products:
+        if p.get("image") and not _validate_image(p["image"]):
+            p["image"] = ""
+            invalidated += 1
+
     to_enrich = [p for p in products if not p.get("image") or not p.get("colors")]
-    if not to_enrich:
+    if not to_enrich and not invalidated:
         return
-    print(f"\n🖼️   Enriching {len(to_enrich)} products (images + variants)…")
+    if invalidated:
+        print(f"\n   ⚠  Cleared {invalidated} broken/untrusted image URLs")
+    print(f"\n   Enriching {len(to_enrich)} products (images + variants)…")
+
     imgs_ok = 0
     variants_ok = 0
     for p in to_enrich:
-        # Try Sephora API for variants + extra images
+        # Variants + extra images (reuses cached search result)
         extra_imgs, colors = _sephora_variants(p["name"], p["brand"])
 
-        # Primary image
+        # Primary image — two-stage with validation
         if not p.get("image"):
-            # Try main image first from _sephora_image, then DDG
             img = _sephora_image(p["name"], p["brand"])
             src = "sephora-api"
             if not img:
-                img = _ddg_image(p["name"], p["brand"])
-                src = "ddg"
+                img = _sephora_product_page_image(p["name"], p["brand"])
+                src = "sephora-page"
             if img:
                 p["image"] = img
                 imgs_ok += 1
-                print(f"   ✓  [{src}] {p['brand']} — {p['name'][:40]}")
+                print(f"   +  [{src}] {p['brand']} — {p['name'][:45]}")
             else:
-                print(f"   ○  (no image)  {p['brand']} — {p['name'][:40]}")
+                print(f"   -  (no image)  {p['brand']} — {p['name'][:45]}")
         else:
             imgs_ok += 1
 
-        # Extra images
         if extra_imgs and not p.get("images"):
             p["images"] = extra_imgs
-
-        # Color variants
         if colors and not p.get("colors"):
             p["colors"] = colors
             variants_ok += 1
 
-        time.sleep(random.uniform(0.6, 1.4))
+        time.sleep(random.uniform(0.8, 1.6))
 
     color_total = sum(1 for p in products if p.get("colors"))
-    print(f"   → Images: {imgs_ok}/{len(to_enrich)}  |  Products with variants: {color_total}")
+    print(f"   -> Images: {imgs_ok}/{len(to_enrich)}  |  Products with variants: {color_total}")
 
 # ── Nordstrom scraper ─────────────────────────────────────────────────────────
 
@@ -960,6 +1035,7 @@ def push_to_supabase():
         rows = []
         for p in batch:
             rows.append({
+                # No manual id — let Supabase bigserial assign it (S3)
                 "name": p["name"],
                 "brand": p["brand"],
                 "pkr": p["pkr"],
@@ -972,6 +1048,7 @@ def push_to_supabase():
                 "in_stock": p.get("inStock", False),
                 "qty": 5 if p.get("inStock") else 0,
                 "cost": int(p.get("usd", 0) * USD_TO_PKR),
+                "is_approved": False,  # S1: goes to review queue in admin
             })
 
         try:
@@ -981,7 +1058,9 @@ def push_to_supabase():
                     "Content-Type": "application/json",
                     "apikey": SUPA_KEY,
                     "Authorization": f"Bearer {SUPA_KEY}",
+                    # S5: upsert on (brand, name) — updates price/image, preserves qty/is_approved
                     "Prefer": "return=minimal,resolution=merge-duplicates",
+                    "on_conflict": "brand,name",
                 },
                 json=rows,
                 timeout=30,

@@ -347,5 +347,43 @@ window.addEventListener('scroll',()=>{
   if(st)st.classList.toggle('visible',doc.scrollTop>400);
 });
 </script>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="bnav" aria-label="Mobile navigation">
+  <a class="bnav-item" href="index.html"><span class="bnav-icon">🏠</span><span>Home</span></a>
+  <a class="bnav-item" href="products.html"><span class="bnav-icon">🛍</span><span>Shop</span></a>
+  <a class="bnav-item" href="products.html"><span class="bnav-icon">🛒<span class="bnav-badge" id="bnavCartCount" style="display:none">0</span></span><span>Cart</span></a>
+  <a class="bnav-item" href="track.html"><span class="bnav-icon">📦</span><span>Track</span></a>
+</nav>
+<script>
+(function(){var c=[];try{c=JSON.parse(localStorage.getItem('gb_cart')||'[]');}catch(e){}var n=c.reduce(function(a,x){return a+(x.qty||1);},0);var el=document.getElementById('bnavCartCount');if(el){el.textContent=n;el.style.display=n>0?'flex':'none';}})()</script>
+
+<div id="page-fade"></div>
+<script>
+(function(){
+  var fade=document.getElementById('page-fade');
+  if(!fade)return;
+  fade.style.opacity='1';fade.style.pointerEvents='all';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      fade.style.transition='opacity 0.32s ease';
+      fade.style.opacity='0';
+      setTimeout(function(){fade.style.pointerEvents='none';},340);
+    });
+  });
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a[href]');
+    if(!a)return;
+    var href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('javascript')||href.startsWith('mailto')||href.startsWith('tel')||a.target==='_blank')return;
+    e.preventDefault();
+    fade.style.transition='opacity 0.28s ease';
+    fade.style.opacity='1';
+    fade.style.pointerEvents='all';
+    setTimeout(function(){window.location.href=href;},290);
+  });
+})();
+</script>
+<script src="js/enhance.js"></script>
 </body>
 </html>

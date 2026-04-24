@@ -22,8 +22,14 @@ parser.add_argument("--margin", type=int, default=30, help="Markup percentage (d
 args = parser.parse_args()
 
 # ── Config ──
-SUPA_URL = "https://jfnmworzcpgwgqslvwhl.supabase.co"
-SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impmbm13b3J6Y3Bnd2dxc2x2d2hsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjI3NTQzOCwiZXhwIjoyMDkxODUxNDM4fQ.Zw__2cUnRDd-rizdNnkTdJPtfFJj5fL9FPZM0QUWJEA"
+# Set SUPA_URL and SUPA_SERVICE_KEY in your environment before running:
+#   cp .env.example .env  # fill in your values, then: source .env
+SUPA_URL = os.environ.get("SUPA_URL", "")
+SUPA_KEY = os.environ.get("SUPA_SERVICE_KEY", "")
+if not args.dry_run and (not SUPA_URL or not SUPA_KEY):
+    print("❌  Set SUPA_URL and SUPA_SERVICE_KEY env vars before running.")
+    print("    cp .env.example .env  # then fill in your values")
+    sys.exit(1)
 USD_TO_PKR = args.rate
 MARKUP_PCT = args.margin
 HEADERS = {

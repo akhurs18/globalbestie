@@ -77,6 +77,15 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Playfair Display',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0}
 .mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
 
+/* ── HERO MESH ── */
+.hero-mesh{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.hm-blob{position:absolute;border-radius:50%;filter:blur(72px)}
+.hm-blob-1{width:520px;height:520px;background:radial-gradient(circle,rgba(196,82,90,0.2) 0%,transparent 68%);top:-120px;right:-60px;animation:hmDrift1 13s ease-in-out infinite}
+.hm-blob-2{width:380px;height:380px;background:radial-gradient(circle,rgba(212,175,55,0.13) 0%,transparent 68%);bottom:-60px;left:8%;animation:hmDrift2 17s ease-in-out infinite}
+.hm-blob-3{width:300px;height:300px;background:radial-gradient(circle,rgba(139,90,69,0.11) 0%,transparent 68%);top:35%;left:38%;animation:hmDrift3 20s ease-in-out infinite}
+@keyframes hmDrift1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-45px,35px) scale(1.12)}66%{transform:translate(22px,-22px) scale(0.94)}}
+@keyframes hmDrift2{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(32px,-44px) scale(1.14)}72%{transform:translate(-22px,18px) scale(0.9)}}
+@keyframes hmDrift3{0%,100%{transform:translate(0,0)}50%{transform:translate(-28px,38px) scale(1.09)}}
 /* ── HERO ── */
 .hero{background:var(--ink);padding:8rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 20% 50%,rgba(196,82,90,0.08) 0%,transparent 70%)}
@@ -689,16 +698,16 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
   <div class="announce-track" id="announceTrack">
-    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
   </div>
 </div>
 
@@ -782,6 +791,7 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 
 <!-- HERO -->
 <div class="hero">
+  <div class="hero-mesh"><div class="hm-blob hm-blob-1"></div><div class="hm-blob hm-blob-2"></div><div class="hm-blob hm-blob-3"></div></div>
   <div class="hero-left">
     <span class="hero-tag" id="heroTag">USA · Authentic · Delivered to Pakistan</span>
     <h1 class="hero-title" id="heroTitle">Your American<br><em>Shopping Bestie</em><br>in Pakistan</h1>
@@ -790,33 +800,39 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
       <button class="btn-primary" id="heroBtnShop" onclick="scrollToProducts()">Shop Now</button>
       <button class="btn-wa" id="heroBtnWA" onclick="openWA('')">WhatsApp Us</button>
     </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-label">Products</div><div class="hstat-val" data-count="250" data-suffix="+">0+</div></div>
+      <div class="hstat"><div class="hstat-label">Happy Customers</div><div class="hstat-val" data-count="500" data-suffix="+">0+</div></div>
+      <div class="hstat"><div class="hstat-label">Avg Rating</div><div class="hstat-val" data-count="4.9" data-suffix="★" data-decimal="1">0★</div></div>
+      <div class="hstat"><div class="hstat-label">US Brands</div><div class="hstat-val" data-count="80" data-suffix="+">0+</div></div>
+    </div>
   </div>
   <div class="hero-right">
     <div class="hero-img-frame">
-      <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=640&q=85" alt="USA Fashion & Beauty — Global Bestie" loading="eager">
+      <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=640&q=85" alt="USA Fashion & Beauty — Global Bestie" loading="eager">
     </div>
     <div class="hero-img-tag">Authentic USA · Delivered to Pakistan</div>
   </div>
 </div>
 
 <!-- HOW IT WORKS -->
-<div class="hiw">
+<div class="hiw reveal">
   <div class="hiw-inner">
     <div class="hiw-title" id="hiwTitle">How to Order from <span>Global Bestie</span></div>
     <div class="hiw-sub" id="hiwSub">Simple 5-step process · No account required</div>
     <div class="hiw-steps">
-      <div class="hiw-step"><div class="hiw-num">1</div><h4 id="hiw1t">Browse &amp; Add to Cart</h4><p id="hiw1d">Pick any product and add it to your cart.</p></div>
-      <div class="hiw-step"><div class="hiw-num">2</div><h4 id="hiw2t">Fill Your Details</h4><p id="hiw2d">Enter your name, WhatsApp &amp; delivery address.</p></div>
-      <div class="hiw-step"><div class="hiw-num">3</div><h4 id="hiw3t">Bank Transfer</h4><p id="hiw3d">Transfer 50% advance (preorders) or full amount (in-stock).</p></div>
-      <div class="hiw-step"><div class="hiw-num">4</div><h4 id="hiw4t">Send Screenshot</h4><p id="hiw4d">WhatsApp us your payment screenshot to confirm.</p></div>
-      <div class="hiw-step"><div class="hiw-num">5</div><h4 id="hiw5t">We Deliver!</h4><p id="hiw5d">Sit back — your USA product is on its way!</p></div>
+      <div class="hiw-step reveal reveal-delay-1"><div class="hiw-num">1</div><h4 id="hiw1t">Browse &amp; Add to Cart</h4><p id="hiw1d">Pick any product and add it to your cart.</p></div>
+      <div class="hiw-step reveal reveal-delay-2"><div class="hiw-num">2</div><h4 id="hiw2t">Fill Your Details</h4><p id="hiw2d">Enter your name, WhatsApp &amp; delivery address.</p></div>
+      <div class="hiw-step reveal reveal-delay-3"><div class="hiw-num">3</div><h4 id="hiw3t">Bank Transfer</h4><p id="hiw3d">Transfer 50% advance (preorders) or full amount (in-stock).</p></div>
+      <div class="hiw-step reveal reveal-delay-4"><div class="hiw-num">4</div><h4 id="hiw4t">Send Screenshot</h4><p id="hiw4d">WhatsApp us your payment screenshot to confirm.</p></div>
+      <div class="hiw-step reveal"><div class="hiw-num">5</div><h4 id="hiw5t">We Deliver!</h4><p id="hiw5d">Sit back — your USA product is on its way!</p></div>
     </div>
   </div>
 </div>
 
 <!-- SPOTLIGHT -->
-<div class="spotlight" id="spotlightSection">
-  <div class="spotlight-bg" id="spotlightBg" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80')"></div>
+<div class="spotlight reveal" id="spotlightSection">
+  <div class="spotlight-bg" id="spotlightBg" style="background-image:url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=80')"></div>
   <div class="spotlight-overlay"></div>
   <div class="spotlight-content">
     <span class="spotlight-eyebrow" id="spotlightEyebrow">Now Available</span>
@@ -827,7 +843,7 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 </div>
 
 <!-- CATEGORY GRID -->
-<div class="cat-editorial">
+<div class="cat-editorial reveal">
   <div class="cat-editorial-inner">
     <span class="section-eyebrow">Browse by Category</span>
     <h2 class="section-heading">What are you looking for?</h2>
@@ -855,7 +871,7 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 </div>
 
 <!-- TESTIMONIALS -->
-<div class="testimonials">
+<div class="testimonials reveal">
   <div class="testimonials-inner">
     <span class="section-eyebrow">What Our Customers Say</span>
     <h2 class="section-heading">Loved across Pakistan</h2>
@@ -1317,12 +1333,12 @@ function filterProds(){
 }
 
 const HOME_CATS=[
-  {id:'makeup',label:'Makeup & Beauty',img:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',link:'products.html?cat=makeup'},
-  {id:'skincare',label:'Skincare',img:'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&q=80',link:'products.html?cat=skincare'},
-  {id:'bags',label:'Bags & Accessories',img:'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80',link:'products.html?cat=bags'},
-  {id:'fashion',label:'Fashion',img:'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600&q=80',link:'products.html?cat=fashion'},
-  {id:'accessories',label:'Jewellery',img:'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=600&q=80',link:'products.html?cat=accessories'},
-  {id:'home',label:'Home & Living',img:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',link:'products.html?cat=home'},
+  {id:'makeup',label:'Makeup & Beauty',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80',link:'products.html?cat=makeup'},
+  {id:'skincare',label:'Skincare',img:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80',link:'products.html?cat=skincare'},
+  {id:'bags',label:'Bags & Accessories',img:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&q=80',link:'products.html?cat=bags'},
+  {id:'fashion',label:'Fashion',img:'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80',link:'products.html?cat=fashion'},
+  {id:'accessories',label:'Jewellery',img:'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',link:'products.html?cat=accessories'},
+  {id:'home',label:'Home & Living',img:'https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=600&q=80',link:'products.html?cat=home'},
 ];
 
 function renderCatGrid(){
@@ -1351,7 +1367,7 @@ function renderFeatured(){
 
 function renderProducts(data,gridId){
   const g=document.getElementById(gridId||'featuredGrid');if(!g)return;
-  g.innerHTML=data.map(p=>{
+  g.innerHTML=data.map((p,i)=>{
     const bg=bgs[p.cat]||'#f8f8ff';
     const isPreorder=!p.inStock;
     const isSale=p.on_sale&&p.sale_price;
@@ -1360,7 +1376,7 @@ function renderProducts(data,gridId){
     const isWished=wishlistHas(p.id);
     const isLowStock=p.inStock&&p.qty>0&&p.qty<=(p.lowStockThreshold||3);
     const stars=p.review_rating?'★'.repeat(Math.round(p.review_rating))+'☆'.repeat(5-Math.round(p.review_rating)):'';
-    return `<div class="prod-card" data-id="${p.id}" onclick="openProductDetail(${p.id})">
+    return `<div class="prod-card card-animate" data-id="${p.id}" onclick="openProductDetail(${p.id})" style="animation-delay:${Math.min(i,8)*0.07}s">
       <div class="prod-img" style="background:${p.image?'#100808':bg};position:relative">
         ${p.image?`<img src="${p.image}" alt="${p.name}" onload="this.classList.add('img-loaded')" onerror="this.classList.add('img-loaded')">`:`<span style="font-size:2.5rem">${catIcons[p.cat]||'✨'}</span>`}
         ${isSale?`<span class="sale-badge">−${pctOff}%</span>`:''}
@@ -2253,6 +2269,23 @@ renderRecentlyViewed();
 renderFeatured();
 renderCatGrid();
 
+// ── LOAD SITE CONTENT FROM SUPABASE ──
+// Fetches admin-edited content from Supabase so all devices see live updates.
+// Falls back to localStorage if offline or Supabase unavailable.
+(async function loadSiteContent(){
+  if(!_supa) return;
+  try {
+    const pages = ['home','contact','policy'];
+    const {data,error} = await _supa.from('site_content').select('page,content').in('page',pages);
+    if(error||!data) return;
+    data.forEach(row=>{
+      localStorage.setItem('gb_content_'+row.page, JSON.stringify(row.content));
+    });
+    // Re-render anything that depends on this content
+    renderCatGrid();
+  } catch(e){}
+})();
+
 // ── INJECT STORED SETTINGS ──
 (function(){
   function _set(id,val,html){var e=document.getElementById(id);if(e&&val){if(html)e.innerHTML=val;else e.textContent=val;}}
@@ -2285,7 +2318,7 @@ renderCatGrid();
       // Announcement bar marquee
       if (ch.announce_items && ch.announce_items.length) {
         var at=document.getElementById('announceTrack');
-        if(at){var _ai=ch.announce_items.filter(Boolean);if(_ai.length){var _ab=_ai.map(function(s){return '<span>'+s+'</span><span class="announce-sep">&nbsp;·&nbsp;</span>';}).join('');at.innerHTML=_ab+_ab;}}
+        if(at){var _ai=ch.announce_items.filter(Boolean);if(_ai.length){var _ab=_ai.map(function(s){return '<span>'+s+'</span><span class="announce-sep">&nbsp;✦&nbsp;</span>';}).join('');at.innerHTML=_ab+_ab;}}
       }
       // Batch announcement bar
       if (ch.batch_active && ch.batch_text) {
@@ -2597,5 +2630,173 @@ window.addEventListener('DOMContentLoaded', async () => {
     </div>
   </div>
 </div>
+
+<!-- ── FLOATING WHATSAPP BUTTON ── -->
+<a class="wa-fab" id="waFab" href="#" aria-label="Chat on WhatsApp" onclick="event.preventDefault();openWA('Hi! I\'d like to know more about Global Bestie products 💕')">
+  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="bnav" aria-label="Mobile navigation">
+  <a class="bnav-item active" href="index.html">
+    <span class="bnav-icon">🏠</span>
+    <span>Home</span>
+  </a>
+  <a class="bnav-item" href="products.html">
+    <span class="bnav-icon">🛍</span>
+    <span>Shop</span>
+  </a>
+  <a class="bnav-item" href="products.html" id="bnavCartLink">
+    <span class="bnav-icon">🛒<span class="bnav-badge" id="bnavCartCount" style="display:none">0</span></span>
+    <span>Cart</span>
+  </a>
+  <a class="bnav-item" href="track.html">
+    <span class="bnav-icon">📦</span>
+    <span>Track</span>
+  </a>
+</nav>
+
+<div id="page-fade"></div>
+
+<script>
+// ── BOTTOM NAV CART COUNT ──
+(function syncBnavCart(){
+  function update(){
+    var c=[];try{c=JSON.parse(localStorage.getItem('gb_cart')||'[]');}catch(e){}
+    var n=c.reduce(function(a,x){return a+(x.qty||1);},0);
+    var el=document.getElementById('bnavCartCount');
+    if(el){el.textContent=n;el.style.display=n>0?'flex':'none';}
+  }
+  update();
+  window.addEventListener('storage',function(e){if(e.key==='gb_cart')update();});
+})();
+
+// ── SCROLL REVEAL ──
+(function initReveal(){
+  var els=document.querySelectorAll('.reveal');
+  if(!els.length)return;
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}
+    });
+  },{threshold:0.12});
+  els.forEach(function(el){io.observe(el);});
+})();
+
+// ── WA FAB NUMBER SYNC ──
+(function(){
+  var num=WA_NUMBER||'03214992211';
+  num=num.startsWith('92')?num:'92'+num.replace(/^0/,'');
+  var fab=document.getElementById('waFab');
+  if(fab) fab.onclick=function(e){e.preventDefault();window.open('https://wa.me/'+num+'?text='+encodeURIComponent('Hi! I\'d like to know more about Global Bestie products 💕'),'_blank');};
+})();
+
+// ── HERO STAT COUNTERS ──
+(function(){
+  var els=document.querySelectorAll('.hstat-val[data-count]');
+  if(!els.length)return;
+  function easeOut(t){return 1-Math.pow(1-t,3);}
+  function animateCount(el){
+    var target=parseFloat(el.dataset.count);
+    var suffix=el.dataset.suffix||'';
+    var dec=parseInt(el.dataset.decimal||'0');
+    var duration=1400;
+    var start=performance.now();
+    function tick(now){
+      var p=Math.min((now-start)/duration,1);
+      var val=(target*easeOut(p));
+      el.textContent=(dec?val.toFixed(dec):Math.floor(val))+suffix;
+      if(p<1)requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){animateCount(e.target);io.unobserve(e.target);}
+    });
+  },{threshold:0.5});
+  els.forEach(function(el){io.observe(el);});
+})();
+
+// ── PARALLAX: HERO IMAGE + SPOTLIGHT ──
+(function(){
+  var heroImg=document.querySelector('.hero-img-frame img');
+  var spotBg=document.getElementById('spotlightBg');
+  var ticking=false;
+  function onScroll(){
+    if(ticking)return;
+    ticking=true;
+    requestAnimationFrame(function(){
+      var sy=window.scrollY;
+      if(heroImg) heroImg.style.transform='translateY('+sy*0.18+'px)';
+      if(spotBg){
+        var rect=spotBg.parentElement.getBoundingClientRect();
+        var offset=(rect.top+rect.height/2-window.innerHeight/2)*0.12;
+        spotBg.style.transform='translateY('+offset+'px)';
+      }
+      ticking=false;
+    });
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+})();
+
+// ── BUTTON RIPPLE ──
+(function(){
+  function addRipple(e){
+    var btn=e.currentTarget;
+    btn.classList.add('ripple-host');
+    var r=document.createElement('span');
+    r.className='ripple-wave';
+    var rect=btn.getBoundingClientRect();
+    var size=Math.max(rect.width,rect.height)*2;
+    r.style.cssText='width:'+size+'px;height:'+size+'px;left:'+(e.clientX-rect.left-size/2)+'px;top:'+(e.clientY-rect.top-size/2)+'px';
+    btn.appendChild(r);
+    r.addEventListener('animationend',function(){r.remove();});
+  }
+  document.querySelectorAll('.btn-primary,.btn-wa,.add-btn,.checkout-btn,.track-btn,.quick-add-overlay').forEach(function(b){
+    b.addEventListener('click',addRipple);
+  });
+})();
+
+// ── SMOOTH PAGE TRANSITIONS ──
+(function(){
+  var fade=document.getElementById('page-fade');
+  if(!fade)return;
+  // Fade in on arrival
+  fade.style.opacity='1';fade.style.pointerEvents='all';
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      fade.style.transition='opacity 0.32s ease';
+      fade.style.opacity='0';
+      setTimeout(function(){fade.style.pointerEvents='none';},340);
+    });
+  });
+  // Fade out on navigation
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a[href]');
+    if(!a)return;
+    var href=a.getAttribute('href');
+    if(!href||href.startsWith('#')||href.startsWith('javascript')||href.startsWith('mailto')||href.startsWith('tel')||a.target==='_blank')return;
+    e.preventDefault();
+    fade.style.transition='opacity 0.28s ease';
+    fade.style.opacity='1';
+    fade.style.pointerEvents='all';
+    setTimeout(function(){window.location.href=href;},290);
+  });
+})();
+
+// ── CART ICON BOUNCE on add ──
+(function(){
+  var _origAdd=window.addToCart;
+  if(typeof _origAdd!=='function')return;
+  window.addToCart=function(){
+    _origAdd.apply(this,arguments);
+    var wrap=document.querySelector('.cart-wrap[onclick*="openCart"],.cart-wrap[aria-label*="Cart"]');
+    if(wrap){wrap.classList.remove('cart-bounce');void wrap.offsetWidth;wrap.classList.add('cart-bounce');wrap.addEventListener('animationend',function(){wrap.classList.remove('cart-bounce');},{once:true});}
+  };
+})();
+</script>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+<script src="js/enhance.js"></script>
 </body>
 </html>

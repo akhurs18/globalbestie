@@ -88,20 +88,10 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus,
 }
 
 /* ── CUSTOM SCROLLBAR ── */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border2);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--pink-mid);
-}
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.55); }
 
 /* ── MICRO ANIMATIONS & BADGES ── */
 .cart-badge {
@@ -131,4 +121,578 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus,
   top: 0; left: 0; right: 0;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(196, 82, 90, 0.3), transparent);
+}
+
+/* ── MOBILE BOTTOM NAV BAR ── */
+.bnav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: rgba(19, 12, 16, 0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(196, 82, 90, 0.18);
+  z-index: 150;
+  align-items: stretch;
+  justify-content: space-around;
+}
+.bnav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 3px;
+  text-decoration: none;
+  color: rgba(192, 160, 168, 0.65);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.48rem;
+  font-weight: 500;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+.bnav-item.active,
+.bnav-item:hover { color: var(--pink-mid); }
+.bnav-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  position: relative;
+}
+.bnav-badge {
+  position: absolute;
+  top: -4px; right: -8px;
+  background: var(--pink-deep);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 600;
+  min-width: 15px;
+  height: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  font-family: 'Inter', sans-serif;
+}
+@media (max-width: 680px) {
+  .bnav { display: flex; }
+  body { padding-bottom: 60px; }
+  /* lift floating WA above the bottom nav */
+  .wa-fab { bottom: 74px !important; }
+}
+
+/* ── FLOATING WHATSAPP BUTTON ── */
+.wa-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  background: #25D366;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+  cursor: pointer;
+  z-index: 120;
+  text-decoration: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  animation: wafab-entrance 0.6s 1s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.wa-fab:hover {
+  transform: scale(1.12);
+  box-shadow: 0 6px 28px rgba(37, 211, 102, 0.55);
+}
+.wa-fab svg {
+  width: 28px;
+  height: 28px;
+  fill: #fff;
+}
+@keyframes wafab-entrance {
+  from { transform: scale(0) rotate(-45deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* ── SCROLL REVEAL ANIMATIONS ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.reveal-left  { transform: translateX(-32px); }
+.reveal.reveal-right { transform: translateX(32px); }
+.reveal.visible {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* ── QUICK-ADD "ADDED!" FLASH ── */
+.quick-add-overlay {
+  background: rgba(26, 16, 21, 0.92) !important;
+  letter-spacing: 1.5px !important;
+}
+.quick-add-overlay.qa-added {
+  background: var(--sage) !important;
+  pointer-events: none;
+}
+
+/* ── STAGGERED PRODUCT CARD ENTRANCE ── */
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.prod-card.card-animate {
+  animation: cardEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── BUTTON RIPPLE ── */
+.ripple-host { overflow: hidden; position: relative; }
+@keyframes rippleExpand {
+  to { transform: scale(4); opacity: 0; }
+}
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+  pointer-events: none;
+  transform: scale(0);
+  animation: rippleExpand 0.55s linear forwards;
+}
+
+/* ── PAGE TRANSITION OVERLAY ── */
+#page-fade {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s ease;
+}
+#page-fade.fading { opacity: 1; pointer-events: all; }
+
+/* ── CART ICON BOUNCE ── */
+@keyframes cartBounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.35) rotate(-8deg); }
+  55%  { transform: scale(0.92) rotate(5deg); }
+  75%  { transform: scale(1.1) rotate(-3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.cart-bounce { animation: cartBounce 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+/* ── PARALLAX HERO ── */
+.hero-img-frame { will-change: transform; }
+.spotlight-bg   { will-change: transform; }
+
+/* ── HERO STAT COUNTER ── */
+.hero-stats {
+  margin-top: 2rem;
+}
+.hstat-val {
+  transition: color 0.3s;
+}
+
+/* ── ANIMATED GRADIENT HERO BACKGROUND ── */
+@keyframes heroGlow {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 0.85; }
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179,125,125,0.12) 0%, transparent 70%);
+  top: -100px; right: -80px;
+  pointer-events: none;
+  animation: heroGlow 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* ── SCROLL PROGRESS BAR ── */
+#page-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px; width: 0;
+  background: linear-gradient(90deg, var(--gold), var(--pink-mid));
+  z-index: 9999;
+  pointer-events: none;
+  transition: width 0.08s linear;
+}
+
+/* ── CUSTOM LUXURY CURSOR ── */
+@media (hover: hover) and (pointer: fine) {
+  body, a, button, [onclick], label, select, .prod-card, .cat-card, .bnav-item { cursor: none !important; }
+}
+.cursor-dot {
+  position: fixed;
+  top: 0; left: 0;
+  width: 6px; height: 6px;
+  background: var(--pink-mid);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: opacity 0.2s, transform 0.12s cubic-bezier(0.22,1,0.36,1), background 0.2s;
+}
+.cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 36px; height: 36px;
+  border: 1.5px solid rgba(196, 82, 90, 0.55);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%, -50%);
+  will-change: left, top;
+  transition: width 0.35s cubic-bezier(0.25,0.8,0.25,1),
+              height 0.35s cubic-bezier(0.25,0.8,0.25,1),
+              border-color 0.25s, background 0.25s, opacity 0.2s;
+}
+.cursor-ring.cr-hover {
+  width: 52px; height: 52px;
+  border-color: rgba(196, 82, 90, 0.85);
+  background: rgba(196, 82, 90, 0.07);
+}
+.cursor-ring.cr-click {
+  width: 22px; height: 22px;
+  background: rgba(196, 82, 90, 0.18);
+}
+.cursor-ring.cr-text {
+  width: 3px; height: 26px;
+  border-radius: 2px;
+  border-color: var(--pink-mid);
+}
+
+/* ── SPLIT-TEXT REVEAL ── */
+.st-outer {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.st-inner {
+  display: inline-block;
+  transform: translateY(110%);
+}
+.st-inner.st-visible {
+  transform: translateY(0);
+}
+
+/* ── PRODUCT IMAGE LOUPE ── */
+.loupe {
+  position: absolute;
+  width: 150px; height: 150px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(196, 82, 90, 0.45);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08);
+  pointer-events: none;
+  opacity: 0;
+  background-repeat: no-repeat;
+  background-size: 350%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  transition: opacity 0.18s ease;
+}
+.loupe.loupe-active { opacity: 1; }
+
+/* ── FILM GRAIN TEXTURE ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 300px 300px;
+  mix-blend-mode: multiply;
+}
+
+/* ── EDITORIAL SECTION EYEBROW ── */
+.section-eyebrow::after,
+.feat-eyebrow::after {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0.6rem auto 0;
+}
+.section-eyebrow,
+.feat-eyebrow {
+  letter-spacing: 4px !important;
+  margin-bottom: 1.2rem !important;
+}
+
+/* ── HERO HEADLINE REFINEMENT ── */
+.hero-title {
+  line-height: 1.08 !important;
+  letter-spacing: -0.01em !important;
+}
+.hero-title em {
+  font-weight: 500 !important;
+}
+.hero-tag {
+  letter-spacing: 5px !important;
+  font-size: 0.54rem !important;
+  opacity: 0.72;
+}
+
+/* ── GRADIENT SECTION DIVIDER ── */
+.sec-divider {
+  width: 80px !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent) !important;
+  margin: 1.2rem auto !important;
+  opacity: 0.65;
+  border: none !important;
+}
+
+/* ── HIW GOLD RING NUMERALS ── */
+.hiw-num {
+  background: transparent !important;
+  border: 1px solid rgba(212,175,55,0.45) !important;
+  color: var(--gold) !important;
+  font-style: italic !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.5px !important;
+  width: 36px !important;
+  height: 36px !important;
+  transition: border-color 0.3s, color 0.3s, transform 0.3s !important;
+}
+.hiw-step:hover .hiw-num {
+  border-color: var(--gold) !important;
+  transform: scale(1.1);
+}
+.hiw-step {
+  border: 1px solid transparent !important;
+  transition: border-color 0.3s, box-shadow 0.3s !important;
+}
+.hiw-step:hover {
+  border-color: rgba(212,175,55,0.1) !important;
+  box-shadow: 0 8px 32px rgba(26,16,21,0.07) !important;
+}
+.hiw-step h4 {
+  font-family: 'Playfair Display', serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+}
+
+/* ── EDITORIAL TESTIMONIAL CARDS ── */
+.testi-card {
+  border-left: none !important;
+  border-top: 1px solid rgba(196,82,90,0.15) !important;
+  padding-top: 2.6rem !important;
+  position: relative;
+}
+.testi-card::before {
+  content: '\201C';
+  position: absolute;
+  top: 0.3rem;
+  left: 1.6rem;
+  font-family: 'Playfair Display', serif;
+  font-size: 4.5rem;
+  line-height: 1;
+  color: var(--pink-deep);
+  opacity: 0.18;
+  pointer-events: none;
+  font-style: italic;
+}
+.testi-stars {
+  color: var(--gold) !important;
+  letter-spacing: 3px !important;
+}
+.testi-author {
+  letter-spacing: 2.5px !important;
+  font-size: 0.58rem !important;
+}
+
+/* ── EDITORIAL CATEGORY CARDS ── */
+.cat-card {
+  height: 360px !important;
+}
+.cat-card-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(19,12,16,0.96) 0%,
+    rgba(19,12,16,0.55) 38%,
+    rgba(19,12,16,0.12) 65%,
+    transparent 100%
+  ) !important;
+}
+.cat-card-name {
+  font-size: 1.5rem !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.15 !important;
+  margin-bottom: 6px !important;
+}
+.cat-card-link {
+  letter-spacing: 3px !important;
+  transition: color 0.25s, letter-spacing 0.25s !important;
+}
+.cat-card:hover .cat-card-link {
+  color: var(--gold) !important;
+  letter-spacing: 4px !important;
+}
+
+/* ── LUXURY PRODUCT CARD TYPOGRAPHY ── */
+.prod-name {
+  font-family: 'Playfair Display', serif !important;
+  font-weight: 400 !important;
+  font-size: 0.92rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.1px !important;
+}
+.prod-pkr {
+  font-style: italic !important;
+  font-size: 1.3rem !important;
+  transition: color 0.3s !important;
+}
+.prod-card:hover .prod-pkr {
+  color: var(--pink-deep) !important;
+}
+
+/* ── ANNOUNCE BAR GOLD SEPARATORS ── */
+.announce-sep {
+  color: var(--gold) !important;
+  opacity: 0.55;
+  font-size: 0.5rem !important;
+  vertical-align: middle;
+}
+
+/* ══════════════════════════════════════════════════════
+   ANIMATION & IMAGE ENHANCEMENTS
+   ══════════════════════════════════════════════════════ */
+
+/* ── CATEGORY CARD — enhanced hover ── */
+.cat-card-bg {
+  transition: transform 0.75s cubic-bezier(0.25,0.8,0.25,1),
+              filter 0.55s ease !important;
+  animation: catImgBreathe 9s ease-in-out infinite;
+}
+@keyframes catImgBreathe {
+  0%,100% { transform: scale(1.0); }
+  50%      { transform: scale(1.04); }
+}
+.cat-card:hover .cat-card-bg {
+  transform: scale(1.13) !important;
+  filter: brightness(1.1) saturate(1.12) !important;
+  animation: none !important;
+}
+.cat-card:hover {
+  box-shadow: 0 28px 72px rgba(26,16,21,0.45),
+              0 0 0 1px rgba(212,175,55,0.3) !important;
+}
+.cat-card-name {
+  transition: transform 0.4s cubic-bezier(0.22,1,0.36,1),
+              letter-spacing 0.3s ease !important;
+}
+.cat-card:hover .cat-card-name {
+  transform: translateY(-6px) !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Shimmer sweep on hover */
+.cat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 28%,
+    rgba(255,255,255,0.04) 44%,
+    rgba(255,255,255,0.1) 50%,
+    rgba(255,255,255,0.04) 56%,
+    transparent 72%
+  );
+  transform: translateX(-110%);
+  pointer-events: none;
+  z-index: 4;
+  transition: none;
+}
+.cat-card:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s cubic-bezier(0.25,0.8,0.25,1);
+}
+
+/* ── CATEGORY CARD — stagger entrance ── */
+@keyframes catReveal {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+.cat-card.cat-animated {
+  animation: catReveal 0.85s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── HIW STEP — stagger entrance ── */
+@keyframes hiwStepIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hiw-step.step-animated {
+  animation: hiwStepIn 0.7s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── PRODUCT IMAGE — blur-up on load ── */
+.prod-img img:not(.img-loaded) {
+  filter: blur(9px) !important;
+  transition: filter 0.65s ease !important;
+}
+.prod-img img.img-loaded {
+  filter: blur(0) !important;
+}
+
+/* ── HERO IMAGE — parallax wrapper ── */
+.hero-img-frame {
+  overflow: hidden;
+  border-radius: 2px;
+}
+.hero-img-frame img {
+  will-change: transform;
+  transition: transform 0.08s linear !important;
+}
+
+/* ── SPOTLIGHT — parallax ── */
+.spotlight-bg {
+  will-change: transform;
+  transform: scale(1.1);
+}
+
+/* ── STAT COUNTER — number pop ── */
+@keyframes statPop {
+  0%   { transform: scale(0.85); opacity: 0; }
+  60%  { transform: scale(1.08); }
+  100% { transform: scale(1);    opacity: 1; }
+}
+.hstat-val.counting {
+  animation: statPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ── TRUST ROW — entrance ── */
+@keyframes trustSlideIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.trust-card.trust-animated {
+  animation: trustSlideIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── TESTIMONIAL — stagger handled via inline style in JS ── */
+.testi-card {
+  will-change: opacity, transform;
 }
