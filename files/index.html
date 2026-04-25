@@ -551,10 +551,11 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 
 /* ── MEGAMENU ── */
 .nav-item-wrap{position:relative}
-.megamenu{display:none;position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);background:var(--ink2);border:1px solid rgba(196,82,90,0.18);border-top:2px solid var(--pink-deep);padding:1.1rem 0.4rem;min-width:210px;z-index:500;box-shadow:0 16px 48px rgba(0,0,0,0.4);columns:2;column-gap:0}
-.nav-item-wrap:hover .megamenu{display:block}
-.mm-item{display:block;font-family:'Playfair Display',serif;font-size:0.95rem;font-style:italic;font-weight:400;color:#9A7880;letter-spacing:0.2px;padding:0.3rem 1rem;text-decoration:none;cursor:pointer;transition:color 0.15s,padding-left 0.15s;white-space:nowrap;break-inside:avoid}
-.mm-item:hover{color:var(--pink);padding-left:1.3rem}
+@keyframes mmFade{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.megamenu{visibility:hidden;opacity:0;pointer-events:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(-6px);background:var(--ink2);border:1px solid rgba(212,175,55,0.18);border-top:1px solid rgba(212,175,55,0.5);padding:1.2rem 0.6rem;min-width:228px;z-index:500;box-shadow:0 24px 64px rgba(0,0,0,0.55);display:grid;grid-template-columns:1fr 1fr;gap:0;transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1),visibility 0s linear 0.22s}
+.nav-item-wrap:hover .megamenu{visibility:visible;opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1)}
+.mm-item{display:block;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;font-style:normal;letter-spacing:2.2px;text-transform:uppercase;color:rgba(192,160,168,0.75);padding:0.55rem 1rem;text-decoration:none;cursor:pointer;transition:color 0.2s,background 0.2s;white-space:nowrap}
+.mm-item:hover{color:var(--gold);background:rgba(212,175,55,0.05)}
 .mm-label{font-size:0.52rem;color:var(--pink);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;text-align:center}
 /* ── QUICK-ADD OVERLAY ── */
 .quick-add-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(26,16,21,0.88);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:0.55rem;cursor:pointer;transform:translateY(100%);transition:transform 0.25s ease;z-index:3}
@@ -809,9 +810,35 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   </div>
   <div class="hero-right">
     <div class="hero-img-frame">
-      <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=640&q=85" alt="USA Fashion & Beauty — Global Bestie" loading="eager">
+      <img src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=640&q=85" alt="USA Fashion & Beauty — Global Bestie" loading="eager">
     </div>
     <div class="hero-img-tag">Authentic USA · Delivered to Pakistan</div>
+  </div>
+</div>
+
+<!-- BRAND STRIP -->
+<div class="brand-strip" aria-hidden="true">
+  <div class="brand-strip-track">
+    <span>Charlotte Tilbury</span><span class="bs-sep">✦</span>
+    <span>Fenty Beauty</span><span class="bs-sep">✦</span>
+    <span>Too Faced</span><span class="bs-sep">✦</span>
+    <span>MAC Cosmetics</span><span class="bs-sep">✦</span>
+    <span>Jo Malone</span><span class="bs-sep">✦</span>
+    <span>NARS</span><span class="bs-sep">✦</span>
+    <span>Urban Decay</span><span class="bs-sep">✦</span>
+    <span>Rare Beauty</span><span class="bs-sep">✦</span>
+    <span>Glossier</span><span class="bs-sep">✦</span>
+    <span>Anastasia Beverly Hills</span><span class="bs-sep">✦</span>
+    <span>Charlotte Tilbury</span><span class="bs-sep">✦</span>
+    <span>Fenty Beauty</span><span class="bs-sep">✦</span>
+    <span>Too Faced</span><span class="bs-sep">✦</span>
+    <span>MAC Cosmetics</span><span class="bs-sep">✦</span>
+    <span>Jo Malone</span><span class="bs-sep">✦</span>
+    <span>NARS</span><span class="bs-sep">✦</span>
+    <span>Urban Decay</span><span class="bs-sep">✦</span>
+    <span>Rare Beauty</span><span class="bs-sep">✦</span>
+    <span>Glossier</span><span class="bs-sep">✦</span>
+    <span>Anastasia Beverly Hills</span><span class="bs-sep">✦</span>
   </div>
 </div>
 
@@ -1333,12 +1360,12 @@ function filterProds(){
 }
 
 const HOME_CATS=[
-  {id:'makeup',label:'Makeup & Beauty',img:'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=600&q=80',link:'products.html?cat=makeup'},
-  {id:'skincare',label:'Skincare',img:'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80',link:'products.html?cat=skincare'},
-  {id:'bags',label:'Bags & Accessories',img:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=600&q=80',link:'products.html?cat=bags'},
-  {id:'fashion',label:'Fashion',img:'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80',link:'products.html?cat=fashion'},
-  {id:'accessories',label:'Jewellery',img:'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',link:'products.html?cat=accessories'},
-  {id:'home',label:'Home & Living',img:'https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=600&q=80',link:'products.html?cat=home'},
+  {id:'makeup',label:'Makeup & Beauty',img:'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=80',link:'products.html?cat=makeup'},
+  {id:'skincare',label:'Skincare',img:'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&q=80',link:'products.html?cat=skincare'},
+  {id:'bags',label:'Bags & Accessories',img:'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80',link:'products.html?cat=bags'},
+  {id:'fashion',label:'Fashion',img:'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80',link:'products.html?cat=fashion'},
+  {id:'accessories',label:'Jewellery',img:'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&q=80',link:'products.html?cat=accessories'},
+  {id:'home',label:'Home & Living',img:'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80',link:'products.html?cat=home'},
 ];
 
 function renderCatGrid(){

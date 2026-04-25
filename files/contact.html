@@ -27,7 +27,7 @@
 }
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 .announce-bar{background:var(--ink);height:34px;overflow:hidden;display:flex;align-items:center;border-bottom:1px solid rgba(196,82,90,0.2)}
-.announce-track{display:flex;gap:3rem;white-space:nowrap;animation:marquee 28s linear infinite;padding:0 2rem;align-items:center}
+.announce-track{display:flex;gap:4rem;white-space:nowrap;animation:marquee 40s linear infinite;padding:0 2rem;align-items:center}
 .announce-track span{font-size:0.6rem;font-weight:500;color:var(--pink);letter-spacing:2px;text-transform:uppercase}
 .announce-sep{color:rgba(196,82,90,0.4);font-size:0.5rem}
 @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -49,10 +49,11 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
 @keyframes wa-ring{0%{transform:scale(1);opacity:0.7}70%{transform:scale(1.4);opacity:0}100%{transform:scale(1.4);opacity:0}}
 .wa-fab svg{width:24px;height:24px;fill:#fff;flex-shrink:0}
 .nav-item-wrap{position:relative}
-.megamenu{display:none;position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);background:var(--ink2);border:1px solid rgba(196,82,90,0.18);border-top:2px solid var(--pink-deep);padding:1.1rem 0.4rem;min-width:210px;z-index:500;box-shadow:0 16px 48px rgba(0,0,0,0.4);columns:2;column-gap:0}
-.nav-item-wrap:hover .megamenu{display:block}
-.mm-item{display:block;font-family:'Playfair Display',serif;font-size:0.95rem;font-style:italic;font-weight:400;color:#9A7880;letter-spacing:0.2px;padding:0.3rem 1rem;text-decoration:none;cursor:pointer;transition:color 0.15s,padding-left 0.15s;white-space:nowrap;break-inside:avoid}
-.mm-item:hover{color:var(--pink);padding-left:1.3rem}
+@keyframes mmFade{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.megamenu{visibility:hidden;opacity:0;pointer-events:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(-6px);background:var(--ink2);border:1px solid rgba(212,175,55,0.18);border-top:1px solid rgba(212,175,55,0.5);padding:1.2rem 0.6rem;min-width:228px;z-index:500;box-shadow:0 24px 64px rgba(0,0,0,0.55);display:grid;grid-template-columns:1fr 1fr;gap:0;transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1),visibility 0s linear 0.22s}
+.nav-item-wrap:hover .megamenu{visibility:visible;opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1)}
+.mm-item{display:block;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;font-style:normal;letter-spacing:2.2px;text-transform:uppercase;color:rgba(192,160,168,0.75);padding:0.55rem 1rem;text-decoration:none;cursor:pointer;transition:color 0.2s,background 0.2s;white-space:nowrap}
+.mm-item:hover{color:var(--gold);background:rgba(212,175,55,0.05)}
 .cart-link{color:var(--pink);font-family:'Playfair Display',serif;font-size:1rem;font-weight:400;letter-spacing:0.4px;text-decoration:none;transition:color 0.2s}
 .cart-link:hover{color:#fff}
 .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
@@ -123,16 +124,16 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
   <div class="announce-track">
-    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Authentic USA</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;·&nbsp;</span>
-    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;·&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Authentic USA</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>Delivered to Pakistan</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>WhatsApp for Support</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>All Prices in PKR · No Hidden Costs</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
+    <span>50% Advance for Preorders</span><span class="announce-sep">&nbsp;✦&nbsp;</span>
   </div>
 </div>
 
@@ -168,8 +169,11 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
     <a href="track.html">Track Order</a>
   </div>
   <div class="nav-right">
-    <a class="cart-wrap" href="products.html">Cart</a>
-    <div class="hamburger" onclick="openMobileNav()" aria-label="Open menu"><span></span><span></span><span></span></div>
+    <a class="cart-wrap" href="index.html" aria-label="My Account">👤</a>
+    <a class="cart-wrap" href="products.html" aria-label="Wishlist">♡</a>
+    <a class="cart-wrap" href="products.html" aria-label="Search">⌕</a>
+    <a class="cart-wrap" href="products.html" aria-label="Shop">Cart</a>
+    <div class="hamburger" onclick="openMobileNav()" aria-label="Open Mobile Menu"><span></span><span></span><span></span></div>
   </div>
 </nav>
 

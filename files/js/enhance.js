@@ -1,66 +1,7 @@
 /* ── Global Bestie — Luxury Enhancements ── */
 
-/* ── 1. CUSTOM CURSOR ── */
-(function () {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
-  const dot = document.createElement('div');
-  dot.className = 'cursor-dot';
-  const ring = document.createElement('div');
-  ring.className = 'cursor-ring';
-  document.body.append(dot, ring);
-
-  let mx = -200, my = -200, rx = -200, ry = -200, rafId;
-
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    dot.style.left = mx + 'px';
-    dot.style.top  = my + 'px';
-  });
-
-  (function tick() {
-    rx += (mx - rx) * 0.1;
-    ry += (my - ry) * 0.1;
-    ring.style.left = rx + 'px';
-    ring.style.top  = ry + 'px';
-    rafId = requestAnimationFrame(tick);
-  })();
-
-  const HOVER_SEL = 'a,button,[onclick],label,input[type="checkbox"],input[type="radio"],.prod-card,.cat-card,.bnav-item,[role="button"],select';
-  const TEXT_SEL  = 'input[type="text"],input[type="email"],input[type="tel"],input[type="number"],input[type="search"],textarea,.track-input,.form-input,.sidebar-search-input';
-
-  document.addEventListener('mouseover', e => {
-    const t = e.target;
-    if (t.closest(TEXT_SEL)) {
-      ring.classList.add('cr-text');
-      ring.classList.remove('cr-hover');
-    } else if (t.closest(HOVER_SEL)) {
-      ring.classList.add('cr-hover');
-      ring.classList.remove('cr-text');
-    }
-  });
-
-  document.addEventListener('mouseout', e => {
-    const t = e.target;
-    if (t.closest(TEXT_SEL)) ring.classList.remove('cr-text');
-    else if (t.closest(HOVER_SEL)) ring.classList.remove('cr-hover');
-  });
-
-  document.addEventListener('mousedown', () => {
-    ring.classList.add('cr-click');
-    dot.style.transform = 'translate(-50%,-50%) scale(0.55)';
-  });
-  document.addEventListener('mouseup', () => {
-    ring.classList.remove('cr-click');
-    dot.style.transform = 'translate(-50%,-50%) scale(1)';
-  });
-
-  document.addEventListener('mouseleave', () => { dot.style.opacity = '0'; ring.style.opacity = '0'; });
-  document.addEventListener('mouseenter', () => { dot.style.opacity = '1'; ring.style.opacity = '1'; });
-})();
-
-
-/* ── 2. SPLIT-TEXT HEADING REVEAL ── */
+/* ── 1. SPLIT-TEXT HEADING REVEAL ── */
 (function () {
   const TARGETS = [
     '#heroTitle', '#hiwTitle', '#spotlightTitle',
@@ -179,32 +120,7 @@
 })();
 
 
-/* ── 4. AMBIENT CURSOR GLOW ── */
-(function () {
-  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  const glow = document.createElement('div');
-  glow.style.cssText = 'position:fixed;pointer-events:none;z-index:1;width:520px;height:520px;border-radius:50%;transform:translate(-50%,-50%);will-change:left,top;transition:background 1.4s ease;background:radial-gradient(circle,rgba(196,82,90,0.055) 0%,transparent 62%)';
-  document.body.appendChild(glow);
-  let gx = -600, gy = -600, cx = -600, cy = -600, lastCol = 0;
-  document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
-  (function tick() {
-    gx += (cx - gx) * 0.055; gy += (cy - gy) * 0.055;
-    glow.style.left = gx + 'px'; glow.style.top = gy + 'px';
-    const now = Date.now();
-    if (now - lastCol > 1200) {
-      lastCol = now;
-      const el = document.elementFromPoint(cx, cy);
-      const dark = el && !!el.closest('.hero,.spotlight,.footer,.announce-bar,.ink-bg,[style*="var(--ink"]');
-      glow.style.background = dark
-        ? 'radial-gradient(circle,rgba(212,175,55,0.07) 0%,transparent 62%)'
-        : 'radial-gradient(circle,rgba(196,82,90,0.05) 0%,transparent 62%)';
-    }
-    requestAnimationFrame(tick);
-  })();
-})();
-
-
-/* ── 5. HERO IMAGE PARALLAX ── */
+/* ── 4. HERO IMAGE PARALLAX ── */
 (function () {
   const img = document.querySelector('.hero-img-frame img');
   if (!img) return;
@@ -392,4 +308,57 @@
       wire(grid.querySelectorAll('.prod-img img:not([data-blur-wired])'));
     }).observe(grid, { childList: true, subtree: true });
   }
+})();
+
+/* ── 14. PRODUCT CARD 3D TILT ── */
+(function () {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+
+  function wire(cards) {
+    cards.forEach(card => {
+      if (card._tiltWired) return;
+      card._tiltWired = true;
+      card.style.transformStyle = 'preserve-3d';
+
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        const dx = (e.clientX - (r.left + r.width  / 2)) / (r.width  / 2);
+        const dy = (e.clientY - (r.top  + r.height / 2)) / (r.height / 2);
+        card.style.transform = `perspective(700px) rotateY(${dx * 5}deg) rotateX(${-dy * 4}deg) translateY(-6px)`;
+        card.style.transition = 'transform 0.12s ease, box-shadow 0.12s ease, border-color 0.4s ease';
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.transition = 'transform 0.45s cubic-bezier(0.16,1,0.3,1), box-shadow 0.45s ease, border-color 0.4s ease';
+      });
+    });
+  }
+
+  wire(document.querySelectorAll('.prod-card'));
+
+  ['featuredGrid','productsGrid'].forEach(id => {
+    const g = document.getElementById(id);
+    if (g) new MutationObserver(() => wire(g.querySelectorAll('.prod-card'))).observe(g, { childList: true, subtree: true });
+  });
+})();
+
+/* ── 15. SCROLL REVEAL — SECONDARY ELEMENTS ── */
+(function () {
+  const SEL = '.feat-header, .spotlight-sub, .spotlight-cta, .policy-strip, .brand-strip';
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.style.transition = 'opacity 0.75s cubic-bezier(0.22,1,0.36,1), transform 0.75s cubic-bezier(0.22,1,0.36,1)';
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+      obs.unobserve(e.target);
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll(SEL).forEach((el, i) => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transitionDelay = (i * 0.08) + 's';
+    obs.observe(el);
+  });
 })();
