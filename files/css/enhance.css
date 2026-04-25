@@ -195,11 +195,16 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus,
   padding: 0 3px;
   font-family: 'Inter', sans-serif;
 }
+/* Desktop: push WA up so back-to-top has clear breathing room */
+.wa-fab { bottom: 6rem !important; }
+
 @media (max-width: 680px) {
   .bnav { display: flex; }
   body { padding-bottom: 60px; }
-  /* lift floating WA above the bottom nav — z-index above bnav (150) */
+  /* WA: above bottom nav */
   .wa-fab { bottom: 74px !important; z-index: 155 !important; }
+  /* Back-to-top: move to left side so it never fights with WA */
+  .back-to-top { right: auto !important; left: 1.2rem !important; bottom: 1.2rem !important; }
 }
 
 @media (max-width: 768px) {
