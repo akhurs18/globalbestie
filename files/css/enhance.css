@@ -198,8 +198,14 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="number"]:focus,
 @media (max-width: 680px) {
   .bnav { display: flex; }
   body { padding-bottom: 60px; }
-  /* lift floating WA above the bottom nav */
-  .wa-fab { bottom: 74px !important; }
+  /* lift floating WA above the bottom nav — z-index above bnav (150) */
+  .wa-fab { bottom: 74px !important; z-index: 155 !important; }
+}
+
+@media (max-width: 768px) {
+  /* nav-right: tighten gap and give every icon a proper tap target */
+  .nav-right { gap: 0.1rem; }
+  .cart-wrap { min-width: 36px; min-height: 44px; justify-content: center; padding: 0 4px; font-size: 0.75rem; }
 }
 
 /* ── FLOATING WHATSAPP BUTTON ── */

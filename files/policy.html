@@ -43,7 +43,7 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
 .wa-nav{background:transparent;color:var(--wa);font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:400;padding:5px 16px;border:1px solid rgba(37,211,102,0.35);cursor:pointer;letter-spacing:0.4px;transition:all 0.2s}
 .wa-nav:hover{background:rgba(37,211,102,0.08);border-color:rgba(37,211,102,0.6)}
 /* ── WA FLOAT BUTTON ── */
-.wa-fab{position:fixed;bottom:2rem;right:1.5rem;width:50px;height:50px;background:var(--wa);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:148;transition:transform 0.2s,box-shadow 0.2s}
+.wa-fab{position:fixed;bottom:2rem;right:1.5rem;width:50px;height:50px;background:var(--wa);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(37,211,102,0.4);z-index:155;transition:transform 0.2s,box-shadow 0.2s}
 .wa-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(37,211,102,0.5)}
 .wa-fab-ring{position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(37,211,102,0.35);animation:wa-ring 2.8s ease-out infinite;pointer-events:none}
 @keyframes wa-ring{0%{transform:scale(1);opacity:0.7}70%{transform:scale(1.4);opacity:0}100%{transform:scale(1.4);opacity:0}}
@@ -125,7 +125,7 @@ nav{background:var(--ink);padding:0 2.5rem;display:flex;align-items:center;justi
   .hamburger{display:flex}
   .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
 }
-@media(max-width:480px){.footer-grid{grid-template-columns:1fr}nav{padding:0 1rem}}
+@media(max-width:480px){.footer-grid{grid-template-columns:1fr}nav{padding:0 1rem}.page-hero{padding:2.5rem 1rem}}
 </style>
 <link rel="stylesheet" href="css/enhance.css">
 </head>
