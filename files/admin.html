@@ -51,7 +51,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .logout-btn{color:var(--muted2);font-size:0.68rem;cursor:pointer;font-weight:400;background:none;border:1px solid rgba(255,255,255,0.12);padding:5px 14px;font-family:'Inter',sans-serif;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s}
 .logout-btn:hover{color:#fff;border-color:rgba(255,255,255,0.3)}
 
-.sidebar{position:fixed;top:60px;left:0;width:220px;height:calc(100vh - 60px);background:var(--ink2);padding:1.5rem 0;z-index:90;border-right:1px solid rgba(168,136,90,0.1)}
+.sidebar{position:fixed;top:60px;left:0;width:220px;height:calc(100vh - 60px);background:var(--ink2);padding:1.5rem 0;z-index:90;border-right:1px solid rgba(168,136,90,0.1);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(168,136,90,0.2) transparent}
 .nav-section-label{font-size:0.58rem;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:rgba(168,136,90,0.5);padding:0 1.5rem;margin:1.2rem 0 0.5rem}
 .nav-item{display:flex;align-items:center;gap:11px;padding:0.65rem 1.5rem;color:#8A7E74;font-size:0.75rem;font-weight:400;cursor:pointer;transition:all 0.2s;border-left:1px solid transparent;letter-spacing:0.3px}
 .nav-item:hover{color:#D4C4B0;background:rgba(168,136,90,0.06)}
@@ -407,6 +407,39 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .ord-item-name{font-size:0.72rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;display:inline-block}
 .ord-item-meta{color:var(--muted);font-size:0.64rem}
 .ord-item-qty{font-size:0.64rem;color:var(--muted2);flex-shrink:0;white-space:nowrap}
+
+
+/* ── PAGE BUILDER ── */
+.builder-list{padding:0}
+.brow{display:flex;align-items:center;gap:0.75rem;padding:0.85rem 1.2rem;border-bottom:1px solid var(--border);background:var(--card);transition:background 0.15s;user-select:none;cursor:default}
+.brow:last-child{border-bottom:none}
+.brow.drag-over{background:var(--gold-light);border-top:2px solid var(--gold-dark)}
+.brow.dragging{opacity:0.4}
+.brow-drag{color:var(--muted2);cursor:grab;font-size:1.15rem;flex-shrink:0;line-height:1;padding:2px 0}
+.brow-drag:active{cursor:grabbing}
+.brow-info{display:flex;align-items:center;gap:0.6rem;flex:1;min-width:0}
+.brow-icon{font-size:0.9rem;flex-shrink:0;width:22px;text-align:center}
+.brow-name{font-size:0.78rem;font-weight:500;color:var(--ink);flex:1}
+.brow-badge{font-size:0.55rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);background:var(--bg2);padding:2px 7px;border:1px solid var(--border);flex-shrink:0}
+.brow-badge.custom{color:var(--gold-dark);border-color:rgba(168,136,90,0.3);background:var(--gold-light)}
+.brow-vis{display:flex;align-items:center;cursor:pointer;flex-shrink:0;gap:4px;font-size:0.62rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.brow-vis input{display:none}
+.brow-eye{font-size:1rem;transition:opacity 0.2s;color:var(--ink)}
+.brow-vis input:not(:checked) ~ .brow-eye{opacity:0.2}
+.brow-vis input:not(:checked) ~ span{color:var(--muted2)}
+.brow-del{background:none;border:1px solid rgba(181,54,90,0.25);color:var(--rose);font-size:0.6rem;padding:3px 9px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;flex-shrink:0}
+.brow-del:hover{background:var(--rose);color:#fff}
+.section-type-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.8rem;margin-bottom:1.5rem}
+.section-type-card{border:1px solid var(--border);padding:1.1rem;cursor:pointer;transition:all 0.2s;text-align:center;background:var(--card)}
+.section-type-card:hover{border-color:var(--gold-dark);background:var(--gold-light)}
+.stc-icon{font-size:1.5rem;margin-bottom:0.35rem}
+.stc-label{font-size:0.7rem;font-weight:600;color:var(--ink);letter-spacing:0.3px;margin-bottom:0.25rem}
+.stc-desc{font-size:0.6rem;color:var(--muted2);line-height:1.5}
+.custom-section-edit{border:1px solid rgba(168,136,90,0.2);margin-bottom:0.8rem;background:var(--bg2)}
+.cse-head{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid var(--border);background:var(--gold-light)}
+.cse-label{font-size:0.65rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-dark)}
+.cse-body{padding:1rem}
+.builder-empty{padding:2rem;text-align:center;color:var(--muted);font-size:0.72rem}
 
 /* ── ANALYTICS ── */
 .analytics-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;margin-bottom:2rem;border:1px solid var(--border);background:var(--border)}
@@ -1517,6 +1550,7 @@ function doPost(e) {
         <button class="content-tab-btn" onclick="showContentTab('faq',this)">FAQ</button>
         <button class="content-tab-btn" onclick="showContentTab('contact',this)">Contact</button>
         <button class="content-tab-btn" onclick="showContentTab('policy',this)">Policy</button>
+        <button class="content-tab-btn" onclick="showContentTab('builder',this)">⊞ Page Builder</button>
       </div>
 
       <!-- HOME panel -->
@@ -1722,6 +1756,57 @@ function doPost(e) {
           <div class="card-head"><span class="card-title">Footer</span></div>
           <div class="card-body">
             <div class="form-group"><label class="form-label">Footer Tagline <span style="color:var(--muted2)">(HTML allowed for &lt;br&gt; line breaks)</span></label><input class="form-input" type="text" id="ch-footer-tagline" placeholder="Authentic American style,&lt;br&gt;delivered to Pakistan."></div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- PAGE BUILDER panel -->
+      <div class="content-panel" id="cpanel-builder">
+        <div class="content-panel-head">
+          <span style="font-size:0.72rem;color:var(--muted)">Drag to reorder · 👁 to show/hide · Add new sections below</span>
+          <div style="display:flex;gap:0.6rem">
+            <button class="btn btn-ghost btn-sm" onclick="resetBuilderLayout()">Reset</button>
+            <button class="btn btn-dark btn-sm" onclick="saveBuilderLayout()">Save Layout</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <span class="card-title">Home Page Sections</span>
+            <span style="font-size:0.68rem;color:var(--muted2)">Hero &amp; Footer are always fixed at top/bottom</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div class="builder-list" id="builderList"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-title">Add a Section</span></div>
+          <div class="card-body">
+            <div class="section-type-grid">
+              <div class="section-type-card" onclick="addCustomSection('promo')">
+                <div class="stc-icon">🎯</div>
+                <div class="stc-label">Promo Banner</div>
+                <div class="stc-desc">Full-width coloured banner with heading &amp; CTA button</div>
+              </div>
+              <div class="section-type-card" onclick="addCustomSection('text')">
+                <div class="stc-icon">📝</div>
+                <div class="stc-label">Text Block</div>
+                <div class="stc-desc">Centred heading and body paragraph</div>
+              </div>
+              <div class="section-type-card" onclick="addCustomSection('img-banner')">
+                <div class="stc-icon">🖼</div>
+                <div class="stc-label">Image Banner</div>
+                <div class="stc-desc">Full-width image with overlay text &amp; button</div>
+              </div>
+              <div class="section-type-card" onclick="addCustomSection('divider')">
+                <div class="stc-icon">⸺</div>
+                <div class="stc-label">Spacer</div>
+                <div class="stc-desc">Decorative separator between sections</div>
+              </div>
+            </div>
+            <div id="customSectionForms"></div>
           </div>
         </div>
       </div>
@@ -6153,6 +6238,7 @@ function showContentTab(tab, btn) {
   document.querySelectorAll('.content-tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('cpanel-' + tab).classList.add('active');
   btn.classList.add('active');
+  if (tab === 'builder') loadBuilderLayout();
 }
 
 function updateContentBadge(page) {
@@ -6407,6 +6493,186 @@ async function _loadContentFromSupabase(page) {
   if (error || !data) return;
   // Overwrite local cache with the authoritative Supabase version
   localStorage.setItem('gb_content_' + page, JSON.stringify(data.content));
+}
+
+
+/* ── PAGE BUILDER ── */
+const BUILDER_SECTIONS = [
+  { id:'brand-strip',    label:'Brand Strip',       icon:'✦' },
+  { id:'hiw',            label:'How It Works',       icon:'📋' },
+  { id:'cat-editorial',  label:'Category Cards',     icon:'⊞' },
+  { id:'feat-wrap',      label:'Featured Products',  icon:'★' },
+  { id:'spotlight',      label:'Spotlight Banner',   icon:'◈' },
+  { id:'testimonials',   label:'Testimonials',       icon:'❝' },
+  { id:'policy-strip',   label:'Policy Strip',       icon:'📜' },
+  { id:'trust-row',      label:'Trust Bar',          icon:'✓' },
+];
+
+let _bOrder = BUILDER_SECTIONS.map(s => s.id);
+let _bHidden = new Set();
+let _bCustom = [];
+let _bDragSrc = null;
+
+function renderBuilderList() {
+  const list = document.getElementById('builderList');
+  if (!list) return;
+  const allById = Object.fromEntries(BUILDER_SECTIONS.map(s => [s.id, s]));
+  const all = _bOrder.map(id => _bCustom.find(c => c.id === id) || allById[id]).filter(Boolean);
+  if (!all.length) { list.innerHTML = '<div class="builder-empty">No sections yet.</div>'; return; }
+  list.innerHTML = all.map(s => {
+    const isCustom = !!s.type;
+    const hidden = _bHidden.has(s.id);
+    return `<div class="brow${hidden?' dragging':''}" draggable="true" data-sid="${s.id}">
+      <div class="brow-drag" title="Drag to reorder">⠿</div>
+      <div class="brow-info">
+        <span class="brow-icon">${s.icon||'▪'}</span>
+        <span class="brow-name">${s.label}</span>
+        <span class="brow-badge${isCustom?' custom':''}">${isCustom?'custom':'built-in'}</span>
+      </div>
+      ${isCustom ? `<button class="brow-del" onclick="deleteCustomSection('${s.id}')">✕ Remove</button>` : ''}
+      <label class="brow-vis" title="Show / Hide this section">
+        <input type="checkbox" class="brow-vis-check" ${hidden?'':'checked'} onchange="toggleBrowVis('${s.id}',this)">
+        <span class="brow-eye">👁</span>
+      </label>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.brow').forEach(el => _wireDragRow(el));
+}
+
+function _wireDragRow(el) {
+  el.addEventListener('dragstart', e => {
+    _bDragSrc = el;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => el.classList.add('dragging'), 0);
+  });
+  el.addEventListener('dragend', () => {
+    el.classList.remove('dragging');
+    document.querySelectorAll('#builderList .brow.drag-over').forEach(r => r.classList.remove('drag-over'));
+    _syncOrderFromDOM();
+  });
+  el.addEventListener('dragover', e => { e.preventDefault(); if (el !== _bDragSrc) el.classList.add('drag-over'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if (!_bDragSrc || _bDragSrc === el) return;
+    const rows = [...el.parentNode.children];
+    if (rows.indexOf(_bDragSrc) < rows.indexOf(el)) el.after(_bDragSrc);
+    else el.before(_bDragSrc);
+    _syncOrderFromDOM();
+  });
+}
+
+function _syncOrderFromDOM() {
+  _bOrder = [...document.querySelectorAll('#builderList .brow')].map(r => r.dataset.sid);
+}
+
+function toggleBrowVis(sid, cb) {
+  if (cb.checked) _bHidden.delete(sid); else _bHidden.add(sid);
+}
+
+function addCustomSection(type) {
+  const defs = {
+    promo: { label:'Promo Banner', icon:'🎯', heading:'New Arrivals', sub:'Shop our latest picks from the USA', bg:'#B5365A', btn_text:'Shop Now', btn_link:'products.html' },
+    text:  { label:'Text Block',   icon:'📝', heading:'Our Story', body:'Curated products sourced directly from the USA.' },
+    'img-banner': { label:'Image Banner', icon:'🖼', image:'', eyebrow:'Featured', heading:'Discover the Collection', sub:'Authentic USA products', btn_text:'Shop Now', btn_link:'products.html' },
+    divider: { label:'Spacer / Divider', icon:'⸺' }
+  };
+  if (!defs[type]) return;
+  const sid = 'cs-' + Date.now();
+  const s = { id: sid, type, ...defs[type] };
+  _bCustom.push(s);
+  _bOrder.push(sid);
+  renderBuilderList();
+  renderCustomForms();
+  toast('Section added — configure it below, then Save Layout');
+}
+
+function deleteCustomSection(sid) {
+  _bCustom = _bCustom.filter(s => s.id !== sid);
+  _bOrder = _bOrder.filter(id => id !== sid);
+  _bHidden.delete(sid);
+  renderBuilderList();
+  renderCustomForms();
+}
+
+function renderCustomForms() {
+  const el = document.getElementById('customSectionForms');
+  if (!el) return;
+  if (!_bCustom.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div style="font-size:0.6rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:1.2rem 0 0.8rem">Configure Custom Sections</div>' +
+    _bCustom.map(s => _renderCustomForm(s)).join('');
+}
+
+function _esc(v) { return String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function _renderCustomForm(s) {
+  let fields = '';
+  if (s.type === 'promo') {
+    fields = `<div class="form-row"><div class="form-group"><label class="form-label">Heading</label><input class="form-input" id="cs-${s.id}-heading" value="${_esc(s.heading)}"></div><div class="form-group"><label class="form-label">Sub Text</label><input class="form-input" id="cs-${s.id}-sub" value="${_esc(s.sub)}"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Background Color</label><input class="form-input" id="cs-${s.id}-bg" value="${_esc(s.bg||'#B5365A')}" placeholder="#B5365A"><br><input type="color" value="${s.bg||'#B5365A'}" style="margin-top:4px;width:36px;height:24px;border:none;cursor:pointer" oninput="document.getElementById('cs-${s.id}-bg').value=this.value"></div><div class="form-group"><label class="form-label">Button Text</label><input class="form-input" id="cs-${s.id}-btn_text" value="${_esc(s.btn_text)}"></div><div class="form-group"><label class="form-label">Button Link</label><input class="form-input" id="cs-${s.id}-btn_link" value="${_esc(s.btn_link||'products.html')}"></div></div>`;
+  } else if (s.type === 'text') {
+    fields = `<div class="form-group"><label class="form-label">Heading</label><input class="form-input" id="cs-${s.id}-heading" value="${_esc(s.heading)}"></div><div class="form-group"><label class="form-label">Body Text</label><textarea class="form-input" id="cs-${s.id}-body" rows="3">${_esc(s.body)}</textarea></div>`;
+  } else if (s.type === 'img-banner') {
+    fields = `<div class="form-group"><label class="form-label">Image URL</label><input class="form-input" id="cs-${s.id}-image" value="${_esc(s.image)}" placeholder="https://images.unsplash.com/..."></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Eyebrow</label><input class="form-input" id="cs-${s.id}-eyebrow" value="${_esc(s.eyebrow)}"></div><div class="form-group"><label class="form-label">Heading</label><input class="form-input" id="cs-${s.id}-heading" value="${_esc(s.heading)}"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Sub Text</label><input class="form-input" id="cs-${s.id}-sub" value="${_esc(s.sub)}"></div><div class="form-group"><label class="form-label">Button Text</label><input class="form-input" id="cs-${s.id}-btn_text" value="${_esc(s.btn_text)}"></div><div class="form-group"><label class="form-label">Button Link</label><input class="form-input" id="cs-${s.id}-btn_link" value="${_esc(s.btn_link||'products.html')}"></div></div>`;
+  }
+  return `<div class="custom-section-edit" id="cse-${s.id}">
+    <div class="cse-head"><span class="cse-label">${_esc(s.icon)} ${_esc(s.label)}</span><button class="btn btn-ghost btn-sm" onclick="applyCustomForm('${s.id}')">Apply</button></div>
+    ${fields ? '<div class="cse-body">'+fields+'</div>' : ''}
+  </div>`;
+}
+
+function applyCustomForm(sid) {
+  const s = _bCustom.find(s => s.id === sid);
+  if (!s) return;
+  ['heading','sub','bg','btn_text','btn_link','body','image','eyebrow'].forEach(f => {
+    const el = document.getElementById('cs-' + sid + '-' + f);
+    if (el) s[f] = el.value;
+  });
+  toast('Changes applied — press Save Layout to persist');
+}
+
+async function saveBuilderLayout() {
+  _syncOrderFromDOM();
+  const layout = { sections_order: _bOrder, sections_hidden: [..._bHidden], custom_sections: _bCustom };
+  localStorage.setItem('gb_layout_home', JSON.stringify(layout));
+  if (_supa) {
+    const { error } = await _supa.from('site_content').upsert({ page:'layout_home', content:layout }, { onConflict:'page' });
+    if (error) toast('⚠️ Saved locally only — Supabase sync failed');
+  }
+  toast('✅ Page layout saved');
+}
+
+async function resetBuilderLayout() {
+  _bOrder = BUILDER_SECTIONS.map(s => s.id);
+  _bHidden = new Set();
+  _bCustom = [];
+  localStorage.removeItem('gb_layout_home');
+  if (_supa) await _supa.from('site_content').delete().eq('page','layout_home');
+  renderBuilderList();
+  renderCustomForms();
+  toast('↺ Layout reset to default');
+}
+
+async function loadBuilderLayout() {
+  if (_supa) {
+    const { data } = await _supa.from('site_content').select('content').eq('page','layout_home').single();
+    if (data && data.content) localStorage.setItem('gb_layout_home', JSON.stringify(data.content));
+  }
+  const saved = JSON.parse(localStorage.getItem('gb_layout_home') || 'null');
+  if (saved) {
+    _bOrder = saved.sections_order || BUILDER_SECTIONS.map(s => s.id);
+    _bHidden = new Set(saved.sections_hidden || []);
+    _bCustom = saved.custom_sections || [];
+  } else {
+    _bOrder = BUILDER_SECTIONS.map(s => s.id);
+    _bHidden = new Set();
+    _bCustom = [];
+  }
+  renderBuilderList();
+  renderCustomForms();
 }
 
 // Init
