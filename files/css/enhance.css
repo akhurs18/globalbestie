@@ -986,14 +986,11 @@ body::after {
 }
 
 /* ── B2. CAT CARD GOLD CORNER ACCENT ── */
-.cat-card {
-  overflow: visible !important;
-}
 .cat-card::before {
   content: '';
   position: absolute;
-  top: -6px; right: -6px;
-  width: 22px; height: 22px;
+  top: 8px; right: 8px;
+  width: 18px; height: 18px;
   border-top: 1.5px solid rgba(212,175,55,0.5);
   border-right: 1.5px solid rgba(212,175,55,0.5);
   pointer-events: none;
