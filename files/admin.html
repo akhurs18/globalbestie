@@ -402,6 +402,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 
 /* ── ORDER NOTES INLINE ── */
 .order-notes{font-size:0.68rem;color:var(--muted);font-style:italic;margin-top:3px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ord-items-cell{max-width:240px;vertical-align:top;padding-top:0.65rem!important}
+.ord-item-line{display:flex;align-items:baseline;gap:6px;line-height:1.55}
+.ord-item-name{font-size:0.72rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px;display:inline-block}
+.ord-item-meta{color:var(--muted);font-size:0.64rem}
+.ord-item-qty{font-size:0.64rem;color:var(--muted2);flex-shrink:0;white-space:nowrap}
 
 /* ── ANALYTICS ── */
 .analytics-kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;margin-bottom:2rem;border:1px solid var(--border);background:var(--border)}
@@ -3037,6 +3042,9 @@ function renderOrdersTable(orders) {
       : '<span style="color:var(--rose);font-size:0.65rem;font-weight:600">⚠ Unverified</span>';
     const itemCount = o._items && o._items.length ? o._items.length : (o.Items ? o.Items.split(',').length : 0);
     const itemLabel = itemCount === 1 ? '1 item' : itemCount + ' items';
+    const itemLines = o._items && o._items.length
+      ? o._items.map(it => `<div class="ord-item-line"><span class="ord-item-name" title="${(it.product_name||'').replace(/"/g,'&quot;')}">${it.product_name||''}${it.size ? ' <span class="ord-item-meta">['+it.size+']</span>' : ''}</span><span class="ord-item-qty">×${it.qty||1}</span></div>`).join('')
+      : (o.Items ? o.Items.split(',').map(s => `<div class="ord-item-line"><span class="ord-item-name" title="${s.trim().replace(/"/g,'&quot;')}">${s.trim()}</span></div>`).join('') : '<span style="color:var(--muted)">—</span>');
     const isSelected = _bulkSelected.has(idx);
     const statuses = ['New Order','Confirmed','Packed','Shipped','Delivered','Cancelled','Return Requested','Refunded'];
     const statusOpts = statuses.map(s => `<option value="${s}"${s===(o.Status||'New Order')?' selected':''}>${s}</option>`).join('');
@@ -3056,8 +3064,8 @@ function renderOrdersTable(orders) {
         <div style="font-weight:600;font-size:0.82rem">${o.Name||''}</div>
         <div style="font-size:0.68rem;color:var(--muted);margin-top:1px">${o.City||''} ${o.Phone ? '· '+o.Phone : ''}</div>
       </td>
-      <td style="font-size:0.75rem;color:var(--ink3)">
-        <div>${itemLabel}</div>
+      <td class="ord-items-cell">
+        ${itemLines}
         ${o.Notes ? `<div class="order-notes" title="${(o.Notes||'').replace(/"/g,'&quot;')}">${o.Notes}</div>` : ''}
       </td>
       <td style="white-space:nowrap">
