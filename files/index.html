@@ -67,6 +67,11 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .wa-nav:hover{background:rgba(37,211,102,0.08);border-color:rgba(37,211,102,0.6)}
 .cart-wrap{position:relative;cursor:pointer;display:flex;align-items:center;gap:6px;color:var(--pink);font-family:'Playfair Display',serif;font-size:1rem;font-weight:400;letter-spacing:0.4px}
 .cart-badge{background:var(--pink-deep);color:#fff;font-size:9px;font-weight:600;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+.nav-search-bar{display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:5px 14px;transition:border-color 0.2s,background 0.2s}
+.nav-search-bar span{font-family:'Inter',sans-serif;font-size:0.55rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.35);white-space:nowrap}
+.nav-search-bar svg{color:rgba(255,255,255,0.3);flex-shrink:0;transition:color 0.2s}
+.nav-search-bar:hover{border-color:rgba(212,175,55,0.4);background:rgba(212,175,55,0.04)}
+.nav-search-bar:hover span,.nav-search-bar:hover svg{color:rgba(212,175,55,0.7)}
 .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px}
 .hamburger span{display:block;width:22px;height:2px;background:var(--pink);transition:all 0.3s}
 .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
@@ -552,11 +557,14 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 /* ── MEGAMENU ── */
 .nav-item-wrap{position:relative}
 @keyframes mmFade{from{opacity:0;transform:translateX(-50%) translateY(-6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.megamenu{visibility:hidden;opacity:0;pointer-events:none;position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(-6px);background:var(--ink2);border:1px solid rgba(212,175,55,0.18);border-top:1px solid rgba(212,175,55,0.5);padding:1.2rem 0.6rem;min-width:228px;z-index:500;box-shadow:0 24px 64px rgba(0,0,0,0.55);display:grid;grid-template-columns:1fr 1fr;gap:0;transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1),visibility 0s linear 0.22s}
-.nav-item-wrap:hover .megamenu{visibility:visible;opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);transition:opacity 0.2s ease,transform 0.22s cubic-bezier(0.22,1,0.36,1)}
-.mm-item{display:block;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;font-style:normal;letter-spacing:2.2px;text-transform:uppercase;color:rgba(192,160,168,0.75);padding:0.55rem 1rem;text-decoration:none;cursor:pointer;transition:color 0.2s,background 0.2s;white-space:nowrap}
-.mm-item:hover{color:var(--gold);background:rgba(212,175,55,0.05)}
-.mm-label{font-size:0.52rem;color:var(--pink);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;text-align:center}
+.megamenu{visibility:hidden;opacity:0;pointer-events:none;position:absolute;top:calc(100% + 14px);left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(19,12,16,0.98);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(212,175,55,0.2);min-width:200px;z-index:500;box-shadow:0 32px 80px rgba(0,0,0,0.65);display:flex;flex-direction:column;transition:opacity 0.22s ease,transform 0.26s cubic-bezier(0.22,1,0.36,1),visibility 0s linear 0.26s;padding:0;overflow:hidden}
+.nav-item-wrap:hover .megamenu{visibility:visible;opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);transition:opacity 0.22s ease,transform 0.26s cubic-bezier(0.22,1,0.36,1)}
+.mm-head{display:block;font-family:'Playfair Display',serif;font-size:0.72rem;font-style:italic;font-weight:400;color:rgba(212,175,55,0.55);padding:1rem 1.4rem 0.7rem;letter-spacing:0.5px;border-bottom:1px solid rgba(212,175,55,0.1);text-decoration:none;white-space:nowrap;transition:color 0.2s}
+.mm-head:hover{color:var(--gold)}
+.mm-item{display:block;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;color:rgba(192,160,168,0.65);padding:0.6rem 1.4rem;text-decoration:none;cursor:pointer;transition:color 0.18s,padding-left 0.18s,background 0.18s;white-space:nowrap;border-left:2px solid transparent}
+.mm-item:hover{color:#fff;padding-left:1.8rem;background:rgba(255,255,255,0.03);border-left-color:var(--gold)}
+.mm-footer{display:block;font-family:'Inter',sans-serif;font-size:0.52rem;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:rgba(212,175,55,0.4);padding:0.7rem 1.4rem 1rem;border-top:1px solid rgba(212,175,55,0.1);text-decoration:none;transition:color 0.2s;margin-top:2px}
+.mm-footer:hover{color:var(--gold)}
 /* ── QUICK-ADD OVERLAY ── */
 .quick-add-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(26,16,21,0.88);color:#fff;border:none;font-family:'Inter',sans-serif;font-size:0.58rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:0.55rem;cursor:pointer;transform:translateY(100%);transition:transform 0.25s ease;z-index:3}
 .prod-card:hover .quick-add-overlay{transform:translateY(0)}
@@ -719,25 +727,29 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
     <div class="nav-item-wrap">
       <a href="products.html?gender=women">Women</a>
       <div class="megamenu">
+        <a class="mm-head" href="products.html?gender=women">Women's Collection</a>
         <a class="mm-item" href="products.html?gender=women&cat=makeup">Makeup</a>
         <a class="mm-item" href="products.html?gender=women&cat=skincare">Skincare</a>
+        <a class="mm-item" href="products.html?gender=women&cat=fragrance">Fragrance</a>
         <a class="mm-item" href="products.html?gender=women&cat=bags">Bags</a>
         <a class="mm-item" href="products.html?gender=women&cat=fashion">Fashion</a>
-        <a class="mm-item" href="products.html?gender=women&cat=accessories">Accessories</a>
-        <a class="mm-item" href="products.html?gender=women&cat=hair">Hair</a>
         <a class="mm-item" href="products.html?gender=women&cat=shoes">Shoes</a>
-        <a class="mm-item" href="products.html?gender=women&cat=home">Home</a>
+        <a class="mm-item" href="products.html?gender=women&cat=accessories">Accessories</a>
+        <a class="mm-item" href="products.html?gender=women&cat=hair">Hair &amp; Body</a>
+        <a class="mm-footer" href="products.html?gender=women">View All Women's →</a>
       </div>
     </div>
     <div class="nav-item-wrap">
       <a href="products.html?gender=men">Men</a>
       <div class="megamenu">
+        <a class="mm-head" href="products.html?gender=men">Men's Collection</a>
         <a class="mm-item" href="products.html?gender=men&cat=grooming">Grooming</a>
+        <a class="mm-item" href="products.html?gender=men&cat=fragrance">Fragrance</a>
         <a class="mm-item" href="products.html?gender=men&cat=fashion">Fashion</a>
         <a class="mm-item" href="products.html?gender=men&cat=bags">Bags</a>
         <a class="mm-item" href="products.html?gender=men&cat=shoes">Shoes</a>
         <a class="mm-item" href="products.html?gender=men&cat=accessories">Accessories</a>
-        <a class="mm-item" href="products.html?gender=men&cat=home">Home</a>
+        <a class="mm-footer" href="products.html?gender=men">View All Men's →</a>
       </div>
     </div>
     <a href="products.html#sale" style="color:var(--pink-deep)">Sale</a>
@@ -755,7 +767,10 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
     <div class="cart-wrap" style="position:relative" onclick="openWishlistPanel()" aria-label="Wishlist">
       ♡ <span class="cart-badge" id="wishBadge" style="display:none">0</span>
     </div>
-    <div class="cart-wrap" onclick="openSearchOverlay()" title="Search products" aria-label="Search products">⌕</div>
+    <div class="nav-search-bar" onclick="openSearchOverlay()" role="button" aria-label="Search products">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search</span>
+    </div>
     <div class="cart-wrap" onclick="openCart()" aria-label="Shopping Cart">
       Cart <span class="cart-badge" id="cartBadge">0</span>
     </div>
