@@ -752,3 +752,363 @@ body::after {
   background: var(--pink-deep) !important;
   border-top-color: rgba(212,175,55,0.3) !important;
 }
+
+/* ── SEARCH OVERLAY REDESIGN ── */
+.search-overlay {
+  align-items: flex-start !important;
+  padding-top: 0 !important;
+  background: rgba(13,8,11,0.93) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.search-overlay-box {
+  width: 100% !important;
+  max-width: 700px !important;
+  margin-top: 10vh !important;
+  background: rgba(22,14,18,0.97) !important;
+  border: 1px solid rgba(212,175,55,0.22) !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7) !important;
+}
+.sov-header {
+  display: flex;
+  align-items: center;
+  padding: 1.1rem 1.5rem;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sov-icon {
+  color: rgba(212,175,55,0.45);
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+.search-overlay-input {
+  flex: 1 !important;
+  border: none !important;
+  border-bottom: none !important;
+  background: transparent !important;
+  color: rgba(255,255,255,0.9) !important;
+  font-size: 1.05rem !important;
+  font-family: 'Playfair Display', serif !important;
+  padding: 0.15rem 0 !important;
+  letter-spacing: 0.2px !important;
+}
+.search-overlay-input::placeholder {
+  color: rgba(255,255,255,0.2) !important;
+  font-style: italic;
+}
+.sov-close {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+  font-size: 0.52rem;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+  padding: 4px 9px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.sov-close:hover {
+  color: rgba(255,255,255,0.7);
+  border-color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.07);
+}
+.search-overlay-results {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(212,175,55,0.15) transparent !important;
+}
+.search-overlay-results::-webkit-scrollbar { width: 3px; }
+.search-overlay-results::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.15); }
+.sor-item {
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  padding: 0.7rem 1.5rem !important;
+  gap: 14px !important;
+}
+.sor-item:hover { background: rgba(255,255,255,0.04) !important; }
+.sor-img {
+  width: 48px !important;
+  height: 48px !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+.sor-name { color: rgba(255,255,255,0.88) !important; font-size: 0.82rem !important; }
+.sor-brand { color: rgba(255,255,255,0.3) !important; font-size: 0.65rem !important; }
+.sor-price { color: var(--gold) !important; font-size: 0.8rem !important; }
+.sor-suggest-row {
+  padding: 0.7rem 1.5rem 0.5rem !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  background: rgba(255,255,255,0.015) !important;
+}
+.sor-suggest {
+  background: rgba(212,175,55,0.07) !important;
+  border: 1px solid rgba(212,175,55,0.18) !important;
+  color: rgba(212,175,55,0.65) !important;
+  padding: 4px 10px !important;
+}
+.sor-suggest:hover {
+  background: rgba(212,175,55,0.15) !important;
+  color: var(--gold) !important;
+  border-color: rgba(212,175,55,0.45) !important;
+}
+.sov-hint {
+  text-align: center;
+  font-size: 0.58rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.12);
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+}
+@media (max-width: 680px) {
+  .search-overlay-box {
+    margin-top: 68px !important;
+    border-left: none !important;
+    border-right: none !important;
+    max-width: 100% !important;
+  }
+  .sov-header { padding: 1rem 1.1rem; }
+  .sor-item { padding: 0.65rem 1.1rem !important; }
+  .sor-suggest-row { padding: 0.6rem 1.1rem 0.5rem !important; }
+  .sov-hint { padding: 0.8rem 1.1rem; }
+}
+
+/* ══════════════════════════════════════════
+   ROUND 3 ENHANCEMENTS
+   ═════════════════════════════════════════��� */
+
+/* ── A1. DELIVERY PROGRESS BAR ── */
+.cart-dp-bar {
+  height: 8px !important;
+  border-radius: 4px !important;
+  background: rgba(244,225,225,0.4) !important;
+  overflow: visible !important;
+  position: relative;
+}
+.cart-dp-fill {
+  height: 100% !important;
+  border-radius: 4px !important;
+  background: linear-gradient(90deg, var(--gold) 0%, var(--sage) 100%) !important;
+  transition: width 0.55s cubic-bezier(0.22,1,0.36,1) !important;
+  position: relative;
+}
+.cart-dp-fill::after {
+  content: '🚚';
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.cart-dp-text { font-size: 0.65rem !important; }
+.cart-dp-free { font-size: 0.67rem !important; font-weight: 600 !important; }
+
+/* ── A2. CHECKOUT STEP TAB ANIMATED UNDERLINE ── */
+.step-tab {
+  position: relative !important;
+  overflow: hidden !important;
+  opacity: 0.45 !important;
+  transition: opacity 0.25s ease, background 0.2s ease, color 0.2s ease !important;
+}
+.step-tab.active {
+  opacity: 1 !important;
+  background: rgba(19,12,16,0.06) !important;
+  color: var(--ink) !important;
+}
+.step-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: tabUnderline 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes tabUnderline { to { transform: scaleX(1); } }
+.step-tab.done { opacity: 0.75 !important; }
+
+/* ── A3. CART ITEM HOVER LIFT ── */
+.cart-item {
+  transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+.cart-item:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 12px rgba(26,16,21,0.1) !important;
+}
+.ci-qty-btn:hover {
+  border-color: rgba(212,175,55,0.5) !important;
+  color: var(--gold) !important;
+  background: rgba(212,175,55,0.05) !important;
+}
+.ci-remove:hover {
+  color: #B03030 !important;
+  background: rgba(180,50,50,0.07) !important;
+  border-radius: 2px;
+}
+
+/* ── B1. TRUST ROW ICONS + HOVER ── */
+.trust-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 0.55rem;
+  color: rgba(212,175,55,0.55);
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+.trust-card {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+}
+.trust-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(212,175,55,0.25) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.07) !important;
+  z-index: 1;
+  position: relative;
+}
+.trust-card:hover .trust-icon {
+  transform: scale(1.12);
+  color: var(--gold);
+}
+
+/* ── B2. CAT CARD GOLD CORNER ACCENT ── */
+.cat-card {
+  overflow: visible !important;
+}
+.cat-card::before {
+  content: '';
+  position: absolute;
+  top: -6px; right: -6px;
+  width: 22px; height: 22px;
+  border-top: 1.5px solid rgba(212,175,55,0.5);
+  border-right: 1.5px solid rgba(212,175,55,0.5);
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+.cat-card:hover::before { opacity: 1; }
+
+/* ── B3. TESTIMONIAL QUOTE SVG ── */
+.testi-quote-svg {
+  display: block;
+  width: 32px;
+  height: 24px;
+  margin-bottom: 0.8rem;
+  filter: drop-shadow(0 2px 4px rgba(212,175,55,0.2));
+}
+
+/* ── C1. SIZE PILL GOLD GLOW ── */
+.size-pill:hover {
+  transform: scale(1.04) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  box-shadow: 0 0 0 1.5px var(--gold), 0 0 8px rgba(212,175,55,0.18) !important;
+  background: rgba(212,175,55,0.04) !important;
+}
+.size-pill.active {
+  background: rgba(212,175,55,0.06) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  box-shadow: 0 0 0 1px var(--gold) !important;
+}
+
+/* ── C2. COLOR SWATCH OUTER RING ── */
+.detail-color-swatch:hover {
+  transform: scale(1.12) !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+}
+.detail-color-swatch.active {
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--gold) !important;
+}
+
+/* ── C3. LOW STOCK PULSE + MINI BAR ── */
+@keyframes lowStockPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(139,90,69,0.45); }
+  50%      { box-shadow: 0 0 0 4px rgba(139,90,69,0); }
+}
+.low-stock-tag { animation: lowStockPulse 2.4s ease-in-out infinite !important; }
+.low-stock-bar {
+  height: 3px;
+  background: rgba(139,90,69,0.15);
+  border-radius: 2px;
+  margin-top: 3px;
+  overflow: hidden;
+  width: 60px;
+}
+.low-stock-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--sienna), #C4764A);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── D1. CONSISTENT GOLD EYEBROW LINES ── */
+.section-eyebrow::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin-bottom: 0.6rem;
+  opacity: 0.6;
+}
+
+/* ── D2. SALE PRICE GRADIENT TEXT ── */
+.price-sale {
+  background: linear-gradient(135deg, var(--pink-deep), #E04A5A) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  font-weight: 500 !important;
+}
+.price-original {
+  position: relative;
+  color: var(--muted2) !important;
+}
+
+/* ── D3. SHIMMER ON CTA LINKS ── */
+.feat-view-all {
+  position: relative;
+  overflow: hidden;
+}
+.feat-view-all::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(108deg, transparent 30%, rgba(212,175,55,0.18) 50%, transparent 70%);
+  transform: translateX(-110%);
+  pointer-events: none;
+  transition: none;
+}
+.feat-view-all:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.6s cubic-bezier(0.25,0.8,0.25,1);
+}
+.spotlight-cta {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(108deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+  transform: translateX(-110%);
+  pointer-events: none;
+  transition: none;
+}
+.spotlight-cta:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.6s cubic-bezier(0.25,0.8,0.25,1);
+}

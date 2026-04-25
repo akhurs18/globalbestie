@@ -985,11 +985,26 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 <!-- TRUST BAR -->
 <div class="trust-row">
-  <div class="trust-card"><div class="trust-title">USA Sourced</div><div class="trust-desc">Real US stores</div></div>
-  <div class="trust-card"><div class="trust-title">100% Authentic</div><div class="trust-desc">No fakes, ever</div></div>
-  <div class="trust-card"><div class="trust-title">Bank Transfer</div><div class="trust-desc">Safe PKR payments</div></div>
-  <div class="trust-card"><div class="trust-title">Home Delivery</div><div class="trust-desc">All across Pakistan</div></div>
-  <div class="trust-card"><div class="trust-title">WhatsApp Support</div><div class="trust-desc">Always here for you</div></div>
+  <div class="trust-card">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <div class="trust-title">USA Sourced</div><div class="trust-desc">Real US stores</div>
+  </div>
+  <div class="trust-card">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+    <div class="trust-title">100% Authentic</div><div class="trust-desc">No fakes, ever</div>
+  </div>
+  <div class="trust-card">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+    <div class="trust-title">Bank Transfer</div><div class="trust-desc">Safe PKR payments</div>
+  </div>
+  <div class="trust-card">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12H3l9-9 9 9h-2v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7z"/></svg>
+    <div class="trust-title">Home Delivery</div><div class="trust-desc">All across Pakistan</div>
+  </div>
+  <div class="trust-card">
+    <svg class="trust-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <div class="trust-title">WhatsApp Support</div><div class="trust-desc">Always here for you</div>
+  </div>
 </div>
 
 <!-- FOOTER -->
@@ -1196,8 +1211,13 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 <!-- SEARCH OVERLAY -->
 <div class="search-overlay" id="searchOverlay" onclick="if(event.target===this)closeSearchOverlay()">
   <div class="search-overlay-box">
-    <input class="search-overlay-input" id="searchOverlayInput" type="text" placeholder="Search products, brands…" oninput="renderSearchResults(this.value)" onkeydown="if(event.key==='Escape')closeSearchOverlay()">
+    <div class="sov-header">
+      <svg class="sov-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-overlay-input" id="searchOverlayInput" type="text" placeholder="Search products, brands…" oninput="renderSearchResults(this.value)" onkeydown="if(event.key==='Escape')closeSearchOverlay()" autocomplete="off">
+      <button class="sov-close" onclick="closeSearchOverlay()">ESC</button>
+    </div>
     <div class="search-overlay-results" id="searchOverlayResults"></div>
+    <div class="sov-hint">Start typing to discover products · Press ESC to close</div>
   </div>
 </div>
 
@@ -1719,7 +1739,7 @@ function renderProducts(data){
         ${p.colors&&p.colors.length?`<div class="prod-swatches" onclick="event.stopPropagation()">${p.colors.slice(0,4).map(c=>`<span class="prod-swatch" style="background:${colorToHex(c)}" title="${colorName(c)}" onmouseover="swapCardImage(${p.id}, '${colorImg(c)||''}')" onmouseout="resetCardImage(${p.id})"></span>`).join('')}${p.colors.length>4?`<span class="prod-swatch-more">+${p.colors.length-4}</span>`:''}</div>`:''}
         ${starsHtml}
         <div class="availability-tag ${isPreorder?'avail-preorder':'avail-stock'}">${isPreorder?'Preorder':'In Stock'}</div>
-        ${isLowStock?`<div class="low-stock-tag">Only ${p.qty} left!</div>`:''}
+        ${isLowStock?`<div class="low-stock-tag">Only ${p.qty} left!</div><div class="low-stock-bar"><div class="low-stock-fill" style="width:${Math.min(100,p.qty*10)}%"></div></div>`:''}
         ${isPreorder?`<div class="preorder-note">50% advance</div>`:''}
         ${isSale
           ?`<div class="prod-pkr"><span class="price-original">${fmtPKR(p.pkr)}</span><span class="price-sale">${fmtPKR(p.sale_price)}</span></div>`
@@ -1943,7 +1963,7 @@ function setStep(n){
     const panel=document.getElementById('step'+i);
     if(panel)panel.classList.toggle('active',i===n);
     const tab=document.getElementById('tab'+i);
-    if(tab)tab.classList.toggle('active',i===n);
+    if(tab){tab.classList.toggle('active',i===n);tab.classList.toggle('done',i<n);}
   });
   const tabs=document.querySelector('.step-tabs');
   if(tabs)tabs.style.display=n===3?'none':'';
