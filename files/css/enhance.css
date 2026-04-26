@@ -1114,3 +1114,270 @@ body::after {
   transform: translateX(120%);
   transition: transform 0.6s cubic-bezier(0.25,0.8,0.25,1);
 }
+
+
+/* ══════════════════════════════════════════════════════════
+   PRODUCT DETAIL MODAL — DRUGSTORE LUXURY REDESIGN
+   Soft neutrals, warm beige, understated elegance
+   ══════════════════════════════════════════════════════════ */
+
+.detail-modal {
+  background: #FAF8F5 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 32px 100px rgba(0,0,0,0.18), 0 0 0 1px rgba(200,160,120,0.12) !important;
+  max-width: 1060px !important;
+}
+.detail-left {
+  background: #EDE8E2 !important;
+  border-right: 1px solid rgba(180,140,120,0.12) !important;
+}
+.detail-img-wrap {
+  background: #EDE8E2 !important;
+  min-height: 460px !important;
+}
+.detail-gallery {
+  background: #E8E2DA !important;
+  padding: 10px !important;
+  gap: 6px !important;
+  border-top: 1px solid rgba(180,140,120,0.1) !important;
+}
+.detail-thumb {
+  border-color: rgba(180,140,120,0.2) !important;
+  border-radius: 6px !important;
+}
+.detail-thumb:hover { opacity: 0.9 !important; }
+.detail-thumb.active {
+  border-color: #B8805A !important;
+  box-shadow: 0 2px 8px rgba(184,128,90,0.22) !important;
+  opacity: 1 !important;
+}
+.detail-right { background: #FAF8F5 !important; }
+.detail-cat {
+  color: #B8805A !important;
+  font-size: 0.58rem !important;
+  letter-spacing: 2.5px !important;
+}
+.detail-name {
+  font-size: 1.75rem !important;
+  font-weight: 400 !important;
+  color: #2A1E18 !important;
+  letter-spacing: 0.1px !important;
+  line-height: 1.18 !important;
+  margin-bottom: 6px !important;
+}
+.detail-brand { color: #9E8478 !important; letter-spacing: 1.5px !important; }
+.detail-price {
+  font-size: 1.55rem !important;
+  color: #2A1E18 !important;
+}
+.detail-price-row {
+  border-top-color: rgba(180,140,120,0.14) !important;
+}
+/* Size pills — soft pill shape */
+.size-pill {
+  border-radius: 20px !important;
+  border-color: rgba(180,140,120,0.28) !important;
+  color: #5A3E30 !important;
+  padding: 5px 14px !important;
+  font-size: 0.62rem !important;
+  transition: all 0.2s ease !important;
+}
+.size-pill:hover {
+  border-color: #B8805A !important;
+  color: #B8805A !important;
+  background: rgba(184,128,90,0.06) !important;
+  transform: none !important;
+}
+.size-pill.active {
+  background: #2A1E18 !important;
+  border-color: #2A1E18 !important;
+  color: #FAF8F5 !important;
+  box-shadow: none !important;
+}
+/* Color swatches — premium double-ring active */
+.detail-color-swatch {
+  width: 28px !important;
+  height: 28px !important;
+  border: 2.5px solid #FAF8F5 !important;
+  box-shadow: 0 0 0 1px rgba(180,140,120,0.28) !important;
+}
+.detail-color-swatch:hover { transform: scale(1.14) !important; }
+.detail-color-swatch.active {
+  box-shadow: 0 0 0 2px #FAF8F5, 0 0 0 3.5px #B8805A !important;
+  transform: scale(1.08) !important;
+}
+/* Add to cart — terracotta rose, soft */
+.detail-add-btn {
+  background: linear-gradient(135deg, #C8937A 0%, #B8805A 100%) !important;
+  color: #fff !important;
+  border-radius: 6px !important;
+  padding: 0.92rem !important;
+  letter-spacing: 2.5px !important;
+  font-size: 0.64rem !important;
+  box-shadow: 0 4px 18px rgba(184,128,90,0.28) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .detail-add-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 26px rgba(184,128,90,0.38) !important;
+    opacity: 1 !important;
+  }
+}
+.detail-share-btn {
+  border-color: rgba(180,140,120,0.22) !important;
+  color: #9E8478 !important;
+  border-radius: 4px !important;
+}
+.detail-share-btn:hover {
+  border-color: #B8805A !important;
+  color: #B8805A !important;
+}
+.detail-desc {
+  background: rgba(200,160,120,0.05) !important;
+  border-color: rgba(200,160,120,0.14) !important;
+  border-radius: 6px !important;
+  color: #5A3E30 !important;
+  line-height: 1.9 !important;
+}
+.detail-desc-label { color: #9E8478 !important; }
+.detail-top-strip {
+  border-bottom: 1px solid rgba(180,140,120,0.1) !important;
+  padding-bottom: 0.7rem !important;
+}
+/* Sticky bar */
+.detail-sticky-bar {
+  background: #2A1E18 !important;
+  border-top: 1px solid rgba(180,140,120,0.18) !important;
+}
+.dsb-name { color: rgba(250,248,245,0.9) !important; }
+.dsb-price { color: #C8937A !important; }
+.dsb-btn {
+  background: linear-gradient(135deg, #C8937A 0%, #B8805A 100%) !important;
+  border-radius: 4px !important;
+  transition: opacity 0.2s !important;
+}
+.dsb-btn:hover { opacity: 0.88 !important; }
+/* Qty stepper */
+.qty-btn {
+  border-color: rgba(180,140,120,0.28) !important;
+  color: #5A3E30 !important;
+  transition: all 0.18s !important;
+}
+.qty-btn:hover {
+  background: rgba(200,160,120,0.08) !important;
+  border-color: #B8805A !important;
+}
+.qty-val { color: #2A1E18 !important; }
+/* "You May Also Like" */
+.similar-label { color: #9E8478 !important; }
+.similar-card-name { color: #2A1E18 !important; }
+.similar-card-price { color: #B8805A !important; }
+/* Low stock */
+.low-stock-tag {
+  background: rgba(200,160,120,0.1) !important;
+  color: #B8805A !important;
+  border-color: rgba(200,160,120,0.25) !important;
+}
+/* Availability tags */
+.avail-in-stock {
+  background: rgba(140,180,140,0.1) !important;
+  color: #4A7A55 !important;
+  border-color: rgba(140,180,140,0.25) !important;
+}
+.avail-preorder {
+  background: rgba(200,160,120,0.08) !important;
+  color: #B8805A !important;
+  border-color: rgba(200,160,120,0.2) !important;
+}
+/* Stars */
+.prod-stars { color: #C8A84B !important; }
+/* Preorder note */
+.detail-preorder-note {
+  background: rgba(200,160,120,0.07) !important;
+  border-left-color: #B8805A !important;
+  color: #B8805A !important;
+}
+/* Image dots (mobile gallery) */
+.detail-img-dot { background: rgba(90,62,48,0.25) !important; }
+.detail-img-dot.active { background: #B8805A !important; }
+/* Close button */
+.detail-close-btn {
+  background: rgba(42,30,24,0.55) !important;
+  border-radius: 50% !important;
+}
+.detail-close-btn:hover { background: #2A1E18 !important; }
+
+
+/* ══════════════════════════════════════════════════════════
+   HOMEPAGE — CINEMATIC HERO MODE
+   ══════════════════════════════════════════════════════════ */
+
+.hero.hero-cinematic {
+  min-height: 92vh !important;
+  padding: 0 !important;
+  background-image: var(--hero-bg) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+}
+.hero.hero-cinematic::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: linear-gradient(160deg, rgba(10,5,8,0.72) 0%, rgba(26,8,16,0.55) 50%, rgba(10,5,8,0.65) 100%) !important;
+  z-index: 0 !important;
+}
+.hero.hero-cinematic::after { display: none !important; }
+.hero.hero-cinematic .hero-mesh { display: none !important; }
+.hero.hero-cinematic .hero-left {
+  max-width: 680px !important;
+  text-align: center !important;
+  z-index: 1 !important;
+  padding: 4rem 2rem !important;
+}
+.hero.hero-cinematic .hero-title {
+  font-size: clamp(3rem, 7vw, 5.5rem) !important;
+  line-height: 1.05 !important;
+  margin-bottom: 1.2rem !important;
+}
+.hero.hero-cinematic .hero-btns { justify-content: center !important; }
+.hero.hero-cinematic .hero-stats { justify-content: center !important; }
+.hero.hero-cinematic .hero-right { display: none !important; }
+
+
+/* ══════════════════════════════════════════════════════════
+   CUSTOM SECTIONS — TWO COLUMN, BRAND QUOTE, COUNTDOWN
+   ══════════════════════════════════════════════════════════ */
+
+/* Two Column */
+.cs-two-col { padding: 5rem 2rem; background: var(--bg); }
+.cs-two-col-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; max-width: 1100px; margin: 0 auto; align-items: center; }
+.cs-two-col-inner.img-right .cs-two-col-img { order: 2; }
+.cs-two-col-img { height: 440px; background-color: var(--ink2); background-size: cover; background-position: center; }
+.cs-two-col-heading { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem,3vw,2.6rem); font-weight: 400; color: var(--ink); line-height: 1.15; margin-bottom: 1rem; }
+.cs-two-col-body { font-size: 0.83rem; color: var(--muted); line-height: 1.88; margin-bottom: 1.8rem; }
+@media (max-width: 768px) {
+  .cs-two-col-inner { grid-template-columns: 1fr; }
+  .cs-two-col-img { height: 260px; }
+  .cs-two-col-inner.img-right .cs-two-col-img { order: 0; }
+}
+
+/* Brand Quote */
+.cs-quote { padding: 6rem 2rem; background: var(--ink); text-align: center; position: relative; overflow: hidden; }
+.cs-quote::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 80% at 50% 50%, rgba(196,82,90,0.06) 0%, transparent 70%); pointer-events: none; }
+.cs-quote-inner { max-width: 780px; margin: 0 auto; position: relative; }
+.cs-quote-mark { display: block; width: 36px; height: 26px; margin: 0 auto 1.5rem; opacity: 0.35; }
+.cs-quote-text { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem,3.5vw,3rem); font-weight: 400; font-style: italic; color: #fff; line-height: 1.3; margin-bottom: 1.5rem; }
+.cs-quote-author { font-size: 0.62rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); }
+
+/* Countdown Timer */
+.cs-countdown { padding: 4.5rem 2rem; background: var(--ink2); text-align: center; border-top: 1px solid rgba(196,82,90,0.1); }
+.cs-countdown-inner { max-width: 700px; margin: 0 auto; }
+.cs-countdown-heading { font-family: 'Playfair Display', serif; font-size: clamp(1.6rem,3vw,2.2rem); color: #fff; font-weight: 400; margin-bottom: 2rem; }
+.cs-countdown-timer { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 2.5rem; }
+.cs-countdown-timer span { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+.cs-countdown-timer span b { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--gold); line-height: 1; font-weight: 400; }
+.cs-countdown-timer small { font-size: 0.52rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Inter', sans-serif; margin-top: 0.4rem; }

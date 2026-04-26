@@ -2412,6 +2412,14 @@ renderCatGrid();
       _set('heroSub', ch.hero_sub);
       var bShop=document.getElementById('heroBtnShop');if(bShop&&ch.hero_btn_shop)bShop.textContent=ch.hero_btn_shop;
       var bWA=document.getElementById('heroBtnWA');if(bWA&&ch.hero_btn_wa)bWA.textContent=ch.hero_btn_wa;
+      // Cinematic hero mode
+      var heroEl=document.querySelector('.hero');
+      if(heroEl&&ch.hero_mode==='cinematic'&&ch.hero_bg_image){
+        heroEl.classList.add('hero-cinematic');
+        heroEl.style.setProperty('--hero-bg','url('+ch.hero_bg_image+')');
+      } else if(heroEl&&ch.hero_mode==='cinematic'&&!ch.hero_bg_image){
+        heroEl.classList.add('hero-cinematic');
+      }
       // How it works heading
       _set('hiwTitle', ch.hiw_title, true);
       _set('hiwSub', ch.hiw_sub);
@@ -2943,6 +2951,40 @@ window.addEventListener('DOMContentLoaded', async () => {
         +'</div>';
     } else if(s.type === 'divider'){
       d.style.cssText = 'height:3rem;border-top:1px solid var(--border);background:var(--bg2)';
+    } else if(s.type === 'two-col'){
+      d.className = 'cs-two-col';
+      d.innerHTML = '<div class="cs-two-col-inner'+(s.img_side==='right'?' img-right':'')+'">'
+        +'<div class="cs-two-col-img" style="'+(s.image?'background-image:url(\''+_es(s.image)+'\');background-size:cover;background-position:center':'')+'"></div>'
+        +'<div class="cs-two-col-text">'
+        +(s.heading?'<h2 class="cs-two-col-heading">'+_es(s.heading)+'</h2>':'')
+        +(s.body?'<p class="cs-two-col-body">'+_es(s.body).replace(/\n/g,'<br>')+'</p>':'')
+        +(s.btn_text?'<a class="btn-primary" href="'+(s.btn_link||'#')+'" style="display:inline-block;text-decoration:none">'+_es(s.btn_text)+'</a>':'')
+        +'</div></div>';
+    } else if(s.type === 'quote'){
+      d.className = 'cs-quote';
+      d.innerHTML = '<div class="cs-quote-inner">'
+        +'<svg class="cs-quote-mark" viewBox="0 0 36 26" fill="none"><path d="M0 26V16.12C0 6.64 5.6 1.48 16.8 0l1.4 2.6C11.76 4 8.4 7.32 7.84 12.6H14V26H0zm20 0V16.12C20 6.64 25.6 1.48 36.8 0l1.4 2.6C31.76 4 28.4 7.32 27.84 12.6H34V26H20z" fill="var(--gold)"/></svg>'
+        +(s.quote?'<blockquote class="cs-quote-text">'+_es(s.quote)+'</blockquote>':'')
+        +(s.author?'<cite class="cs-quote-author">'+_es(s.author)+'</cite>':'')
+        +'</div>';
+    } else if(s.type === 'countdown'){
+      const cdId='cd-'+s.id;
+      d.className='cs-countdown';
+      d.innerHTML='<div class="cs-countdown-inner">'
+        +(s.heading?'<h3 class="cs-countdown-heading">'+_es(s.heading)+'</h3>':'')
+        +'<div class="cs-countdown-timer" id="'+cdId+'" data-target="'+(s.target_date||'')+'"></div>'
+        +(s.cta_text?'<a class="spotlight-cta" href="'+(s.cta_link||'#')+'">'+_es(s.cta_text)+'</a>':'')
+        +'</div>';
+      setTimeout(function(){
+        var el=document.getElementById(cdId);if(!el||!el.dataset.target)return;
+        (function tick(){
+          var diff=new Date(el.dataset.target)-new Date();
+          if(diff<=0){el.innerHTML='<span><b>0</b><small>days</small></span>';return;}
+          var dy=Math.floor(diff/864e5),h=Math.floor((diff%864e5)/36e5),m=Math.floor((diff%36e5)/6e4),sec=Math.floor((diff%6e4)/1e3);
+          el.innerHTML='<span><b>'+dy+'</b><small>days</small></span><span><b>'+h+'</b><small>hrs</small></span><span><b>'+m+'</b><small>min</small></span><span><b>'+sec+'</b><small>sec</small></span>';
+          setTimeout(tick,1000);
+        })();
+      },100);
     } else { return null; }
     return d;
   }
