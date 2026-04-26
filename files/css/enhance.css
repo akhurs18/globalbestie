@@ -1505,9 +1505,36 @@ body::after {
 nav {
   height: 66px !important;
   padding: 0 3rem !important;
+  background: rgba(13,8,11,0.97) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   border-bottom: 1px solid rgba(255,255,255,0.04) !important;
 }
 @media (max-width: 768px) { nav { padding: 0 1.2rem !important; } }
+.nav-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 5px 14px;
+  border-radius: 2px;
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.nav-search-bar span {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  white-space: nowrap;
+}
+.nav-search-bar svg { color: rgba(255,255,255,0.3); flex-shrink: 0; transition: color 0.2s; }
+.nav-search-bar:hover { border-color: rgba(212,175,55,0.4); background: rgba(212,175,55,0.04); }
+.nav-search-bar:hover span, .nav-search-bar:hover svg { color: rgba(212,175,55,0.7); }
 .logo { font-size: 1.55rem !important; letter-spacing: 1px !important; }
 .nav-links a {
   font-size: 0.82rem !important;
