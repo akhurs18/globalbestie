@@ -1917,3 +1917,144 @@ nav {
   .testi-grid { grid-template-columns: 1fr !important; }
   .trust-row { grid-template-columns: repeat(3, 1fr) !important; }
 }
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  LUXURY OVERHAUL — Spacing, Editorial Sections, Flow     ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* Remove How To Order — not a luxury brand pattern */
+.hiw { display: none !important; }
+
+/* Generous breathing room — premium brand standard */
+.cat-editorial { padding: 9rem 2rem !important; }
+.feat-wrap { padding: 9rem 2rem !important; background: var(--bg) !important; }
+.testimonials { padding: 9rem 2rem !important; }
+.spotlight { min-height: 680px !important; }
+.spotlight-content { padding: 8rem 2rem !important; }
+
+/* Category cards — taller, more editorial */
+.cat-card { height: 540px !important; }
+.cat-cards { gap: 2.4rem !important; }
+.cat-card-name { font-size: 1.9rem !important; letter-spacing: 0.5px !important; }
+
+/* Section headings — large editorial scale */
+.section-heading { font-size: clamp(2.6rem, 5vw, 3.8rem) !important; }
+
+/* ── THE EDIT — 2-column editorial section ──────────────── */
+.gb-editorial {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 640px;
+}
+.gb-ed-image { overflow: hidden; position: relative; min-height: 400px; }
+.gb-ed-image img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transition: transform 8s ease;
+}
+.gb-editorial:hover .gb-ed-image img { transform: scale(1.04); }
+.gb-ed-content {
+  background: #0C0608;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6rem 5.5rem;
+}
+.gb-ed-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.2rem, 3.8vw, 3.4rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.08;
+  margin: 1.8rem 0 2rem;
+  letter-spacing: -0.2px;
+}
+.gb-ed-text {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.27);
+  line-height: 2.3;
+  font-weight: 300;
+  margin-bottom: 3rem;
+  max-width: 360px;
+  letter-spacing: 0.3px;
+}
+.gb-ed-cta {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(212,175,55,0.65);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212,175,55,0.22);
+  padding-bottom: 4px;
+  width: fit-content;
+  transition: color 0.25s, border-color 0.25s;
+}
+.gb-ed-cta:hover { color: var(--gold); border-color: rgba(212,175,55,0.55); }
+@media (max-width: 768px) {
+  .gb-editorial { grid-template-columns: 1fr; }
+  .gb-ed-image { height: 360px; }
+  .gb-ed-content { padding: 4rem 1.8rem; }
+}
+
+/* ── SOURCED FROM — premium retailer strip ──────────────── */
+.gb-sources {
+  background: var(--ink);
+  border-top: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  padding: 3.5rem 2rem;
+}
+.gb-sources-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.gb-sources-label {
+  font-size: 0.46rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.12);
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+  padding-right: 2.5rem;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  margin-right: 2.5rem;
+}
+.gb-source-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.14);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  padding: 0.5rem 2rem;
+  border-right: 1px solid rgba(255,255,255,0.04);
+  cursor: default;
+  transition: color 0.3s;
+}
+.gb-source-name:last-child { border-right: none; }
+.gb-source-name:hover { color: rgba(255,255,255,0.38); }
+@media (max-width: 600px) { .gb-sources { display: none; } }
+
+/* Trust row — darker, more spacious */
+.trust-row { background: #0C0608 !important; }
+.trust-card { padding: 4rem 2rem !important; }
+.trust-title { color: rgba(255,255,255,0.62) !important; letter-spacing: 1.5px !important; }
+.trust-desc { color: rgba(255,255,255,0.2) !important; font-size: 0.6rem !important; }
+
+/* Mobile spacing adjustments */
+@media (max-width: 600px) {
+  .cat-editorial { padding: 5rem 1.2rem !important; }
+  .feat-wrap { padding: 5rem 1.2rem !important; }
+  .testimonials { padding: 5rem 1.2rem !important; }
+  .spotlight { min-height: 460px !important; }
+  .cat-card { height: 360px !important; }
+  .trust-card { padding: 2.5rem 1rem !important; }
+}
