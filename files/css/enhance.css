@@ -1494,3 +1494,399 @@ body::after {
 @media (hover: hover) and (pointer: fine) {
   .add-btn:hover { box-shadow: 0 2px 14px rgba(26,16,21,0.22), inset 0 0 0 1px rgba(212,175,55,0.08) !important; }
 }
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  PREMIUM EDITION — Full Visual Redesign                  ║
+   ║  Editorial luxury aesthetic: dark, spacious, gold-led    ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── NAV ────────────────────────────────────────────────── */
+nav {
+  height: 66px !important;
+  padding: 0 3rem !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+@media (max-width: 768px) { nav { padding: 0 1.2rem !important; } }
+.logo { font-size: 1.55rem !important; letter-spacing: 1px !important; }
+.nav-links a {
+  font-size: 0.82rem !important;
+  letter-spacing: 2px !important;
+  color: rgba(255,255,255,0.45) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 400 !important;
+}
+.nav-links a:hover, .nav-links a.active { color: rgba(255,255,255,0.9) !important; }
+.nav-links a::after { background: var(--gold) !important; height: 1px !important; }
+.wa-nav {
+  font-size: 0.75rem !important;
+  letter-spacing: 1px !important;
+  border-color: rgba(37,211,102,0.25) !important;
+  color: rgba(37,211,102,0.75) !important;
+}
+
+/* ── ANNOUNCEMENT BAR ───────────────────────────────────── */
+.announce-bar {
+  height: 30px !important;
+  background: #0A0608 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+.announce-track span {
+  color: rgba(255,255,255,0.3) !important;
+  font-size: 0.5rem !important;
+  letter-spacing: 4.5px !important;
+  font-weight: 400 !important;
+}
+.announce-sep { color: rgba(212,175,55,0.25) !important; }
+
+/* ── BATCH BAR ──────────────────────────────────────────── */
+.batch-bar { background: rgba(18,12,14,0.96) !important; border-bottom: 1px solid rgba(212,175,55,0.1) !important; }
+.batch-bar-text { color: rgba(212,175,55,0.7) !important; font-size: 0.85rem !important; font-style: normal !important; }
+.batch-bar-text b, .batch-bar-text strong { color: var(--gold) !important; }
+
+/* ── HERO: FULL-SCREEN EDITORIAL ────────────────────────── */
+.hero {
+  min-height: 100svh !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+}
+/* Remove busy diagonal texture */
+.hero::after { display: none !important; }
+/* Deepen the atmospheric gradient */
+.hero::before {
+  background: radial-gradient(ellipse 90% 70% at 50% 45%, rgba(150,50,70,0.07) 0%, transparent 65%) !important;
+}
+/* Center the left column */
+.hero-left {
+  max-width: 800px !important;
+  width: 100% !important;
+  text-align: center !important;
+  padding: 9rem 2.5rem 6rem !important;
+  margin: 0 auto !important;
+}
+/* Hide the side image frame */
+.hero-right { display: none !important; }
+/* Atmospheric blob intensities */
+.hm-blob-1 { opacity: 0.55 !important; }
+.hm-blob-2 { opacity: 0.45 !important; }
+/* Eyebrow tag */
+.hero-tag {
+  color: var(--gold) !important;
+  font-size: 0.52rem !important;
+  letter-spacing: 7px !important;
+  margin-bottom: 2.2rem !important;
+  opacity: 0.75 !important;
+  font-weight: 500 !important;
+}
+/* Massive editorial headline */
+.hero-title {
+  font-size: clamp(3rem, 7.5vw, 5.8rem) !important;
+  line-height: 1.03 !important;
+  letter-spacing: -0.5px !important;
+  margin-bottom: 1.8rem !important;
+  font-weight: 400 !important;
+}
+.hero-title em { letter-spacing: 0 !important; }
+/* Muted sub — reading copy */
+.hero-sub {
+  color: rgba(255,255,255,0.32) !important;
+  font-size: 0.8rem !important;
+  max-width: 400px !important;
+  margin: 0 auto 3rem !important;
+  line-height: 2.2 !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.5px !important;
+}
+/* Centered buttons */
+.hero-btns { justify-content: center !important; gap: 1rem !important; }
+/* Primary CTA → gold outline ghost */
+.btn-primary {
+  background: transparent !important;
+  color: rgba(243,229,171,0.85) !important;
+  border: 1px solid rgba(212,175,55,0.45) !important;
+  padding: 1rem 3.2rem !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 4.5px !important;
+  box-shadow: none !important;
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease !important;
+}
+.btn-primary:hover {
+  background: rgba(212,175,55,0.1) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  transform: none !important;
+  box-shadow: 0 0 28px rgba(212,175,55,0.12) !important;
+}
+/* WhatsApp button */
+.btn-wa {
+  background: transparent !important;
+  color: rgba(37,211,102,0.55) !important;
+  border-color: rgba(37,211,102,0.2) !important;
+  padding: 0.95rem 2rem !important;
+  font-size: 0.6rem !important;
+  letter-spacing: 3px !important;
+}
+.btn-wa:hover { background: rgba(37,211,102,0.05) !important; color: rgba(37,211,102,0.75) !important; }
+/* Stats — thin separator strip */
+.hero-stats {
+  border: none !important;
+  gap: 0 !important;
+  margin-top: 5rem !important;
+  justify-content: center !important;
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  padding-top: 2.5rem !important;
+  max-width: 520px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.hstat {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+  padding: 0 2.8rem !important;
+}
+.hstat:last-child { border-right: none !important; }
+.hstat-label { color: rgba(255,255,255,0.18) !important; font-size: 0.48rem !important; letter-spacing: 3px !important; }
+.hstat-val { font-size: 1rem !important; color: rgba(255,255,255,0.55) !important; font-weight: 400 !important; }
+
+/* ── BRAND STRIP ─────────────────────────────────────────── */
+.brand-strip {
+  border-top: none !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  background: var(--ink2) !important;
+}
+.brand-strip-track span {
+  color: rgba(255,255,255,0.18) !important;
+  font-size: 0.5rem !important;
+  letter-spacing: 6px !important;
+  text-transform: uppercase !important;
+  font-weight: 400 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.bs-sep { color: rgba(212,175,55,0.2) !important; }
+
+/* ── CATEGORY EDITORIAL ──────────────────────────────────── */
+.cat-editorial {
+  padding: 7rem 2rem !important;
+  background: var(--bg) !important;
+}
+.cat-card { height: 460px !important; }
+.cat-card-overlay {
+  background: linear-gradient(to top,
+    rgba(6,3,5,0.92) 0%,
+    rgba(6,3,5,0.22) 50%,
+    transparent 100%) !important;
+}
+.cat-card-name {
+  font-size: 1.65rem !important;
+  letter-spacing: 0.3px !important;
+  margin-bottom: 10px !important;
+}
+.cat-card-link {
+  opacity: 0 !important;
+  transform: translateY(6px) !important;
+  display: block !important;
+  transition: opacity 0.4s ease, transform 0.4s ease !important;
+  font-size: 0.58rem !important;
+  letter-spacing: 4px !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-card:hover .cat-card-link {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}
+
+/* ── SECTION HEADINGS ────────────────────────────────────── */
+.section-heading {
+  font-size: clamp(2.2rem, 4vw, 3.2rem) !important;
+  letter-spacing: -0.2px !important;
+  margin: 0.8rem auto 0 !important;
+  line-height: 1.1 !important;
+}
+/* Gold underline accent (overrides earlier short version) */
+.section-heading::after {
+  width: 28px !important;
+  height: 1px !important;
+  margin: 0.9rem auto 0 !important;
+  opacity: 0.45 !important;
+}
+.section-eyebrow {
+  font-size: 0.52rem !important;
+  letter-spacing: 5px !important;
+}
+
+/* ── HOW IT WORKS ────────────────────────────────────────── */
+.hiw { padding: 6.5rem 2rem !important; background: var(--ink) !important; border: none !important; }
+.hiw-title { color: #fff !important; font-size: clamp(2rem, 3.5vw, 2.8rem) !important; margin-bottom: 0.6rem !important; }
+.hiw-title span { color: var(--gold) !important; }
+.hiw-sub { color: rgba(255,255,255,0.25) !important; letter-spacing: 2px !important; margin-bottom: 4rem !important; }
+.hiw-steps { gap: 0 !important; position: relative !important; }
+/* Connecting line between steps */
+.hiw-steps::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,0.2) 20%, rgba(212,175,55,0.2) 80%, transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+@media (max-width: 600px) { .hiw-steps::before { display: none; } }
+.hiw-step {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 1.5rem !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+.hiw-step h4 { color: rgba(255,255,255,0.75) !important; font-size: 0.7rem !important; font-weight: 500 !important; margin-bottom: 0.5rem !important; }
+.hiw-step p { color: rgba(255,255,255,0.28) !important; font-size: 0.65rem !important; line-height: 1.7 !important; }
+.hiw-num {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(212,175,55,0.3) !important;
+  background: rgba(212,175,55,0.06) !important;
+  color: var(--gold) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 1px !important;
+  margin-bottom: 1.5rem !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* ── SPOTLIGHT ───────────────────────────────────────────── */
+.spotlight { min-height: 580px !important; }
+.spotlight-content { padding: 6rem 2rem !important; }
+.spotlight-title {
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem) !important;
+  max-width: 560px !important;
+  letter-spacing: -0.3px !important;
+  line-height: 1.1 !important;
+}
+.spotlight-sub { color: rgba(255,255,255,0.3) !important; font-size: 0.78rem !important; line-height: 2 !important; }
+
+/* ── FEATURED PRODUCTS ───────────────────────────────────── */
+.feat-wrap { padding: 6.5rem 2rem !important; background: var(--bg2) !important; border-top: none !important; }
+.feat-header { margin-bottom: 3.5rem !important; }
+
+/* ── TESTIMONIALS ────────────────────────────────────────── */
+.testimonials { padding: 6.5rem 2rem !important; }
+.testi-quote-svg { display: none !important; }
+.testi-card {
+  background: rgba(255,255,255,0.02) !important;
+  border-left: none !important;
+  border: 1px solid rgba(255,255,255,0.055) !important;
+  padding: 2.8rem 2.2rem !important;
+  transition: border-color 0.3s ease, background 0.3s ease !important;
+}
+.testi-card:hover {
+  border-color: rgba(212,175,55,0.2) !important;
+  background: rgba(255,255,255,0.035) !important;
+}
+.testi-quote {
+  font-size: 0.92rem !important;
+  line-height: 1.95 !important;
+  color: rgba(255,255,255,0.6) !important;
+  font-style: italic !important;
+}
+/* Replace SVG with CSS quote mark */
+.testi-quote::before {
+  content: '\201C';
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-size: 2.8rem;
+  color: rgba(212,175,55,0.25);
+  line-height: 1;
+  margin-bottom: 0.8rem;
+  font-style: normal;
+}
+.testi-stars { font-size: 0.65rem !important; letter-spacing: 4px !important; margin-bottom: 0.6rem !important; }
+.testi-author { color: rgba(255,255,255,0.28) !important; letter-spacing: 2px !important; font-size: 0.58rem !important; }
+
+/* ── TRUST ROW ───────────────────────────────────────────── */
+.trust-row { padding: 0 !important; }
+.trust-card {
+  padding: 2.8rem 1.5rem !important;
+  border-right: 1px solid rgba(255,255,255,0.04) !important;
+  transition: background 0.3s ease !important;
+}
+.trust-card:hover { background: rgba(255,255,255,0.025) !important; }
+.trust-icon { width: 28px !important; height: 28px !important; color: rgba(212,175,55,0.45) !important; margin-bottom: 1rem !important; }
+.trust-title { font-size: 0.72rem !important; font-weight: 500 !important; letter-spacing: 1px !important; margin-bottom: 5px !important; }
+
+/* ── PRODUCT CARDS ───────────────────────────────────────── */
+.prod-card {
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  border-radius: 0 !important;
+  transition: box-shadow 0.4s ease, transform 0.4s ease, border-color 0.3s ease !important;
+}
+.prod-card:hover {
+  border-color: rgba(212,175,55,0.2) !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.1) !important;
+  transform: translateY(-5px) !important;
+}
+.prod-img { height: 280px !important; }
+.prod-name { font-size: 0.88rem !important; line-height: 1.45 !important; }
+.add-btn {
+  background: var(--ink) !important;
+  border: 1px solid transparent !important;
+  letter-spacing: 3px !important;
+  font-size: 0.58rem !important;
+  padding: 0.65rem !important;
+  transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .add-btn:hover {
+    background: transparent !important;
+    border-color: var(--ink) !important;
+    color: var(--ink) !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  .add-btn.preorder-btn:hover {
+    background: transparent !important;
+    border-color: var(--pink-deep) !important;
+    color: var(--pink-deep) !important;
+  }
+}
+
+/* ── CART & CHECKOUT ─────────────────────────────────────── */
+.checkout-btn {
+  background: var(--ink) !important;
+  letter-spacing: 3px !important;
+  font-size: 0.65rem !important;
+  border: 1px solid rgba(212,175,55,0.2) !important;
+  box-shadow: none !important;
+}
+.checkout-btn:hover {
+  background: rgba(212,175,55,0.06) !important;
+  border-color: rgba(212,175,55,0.5) !important;
+  color: var(--gold-light) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ── POLICY STRIP ────────────────────────────────────────── */
+.policy-strip { padding: 0.8rem 2rem !important; }
+.policy-strip-inner { gap: 2.5rem !important; }
+.policy-strip-item { font-size: 0.6rem !important; color: rgba(255,255,255,0.2) !important; letter-spacing: 1px !important; }
+.policy-strip-item b { color: rgba(255,255,255,0.38) !important; font-weight: 400 !important; }
+
+/* ── MOBILE ──────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .hero-left { padding: 7rem 1.5rem 5rem !important; }
+  .hero-title { font-size: clamp(2.5rem, 11vw, 3.5rem) !important; }
+  .hero-stats { display: none !important; }
+  .cat-card { height: 340px !important; }
+  .hiw-step { padding: 0 0.8rem !important; }
+  .testi-grid { grid-template-columns: 1fr !important; }
+  .trust-row { grid-template-columns: repeat(3, 1fr) !important; }
+}
