@@ -1381,3 +1381,116 @@ body::after {
 .cs-countdown-timer span { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
 .cs-countdown-timer span b { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--gold); line-height: 1; font-weight: 400; }
 .cs-countdown-timer small { font-size: 0.52rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-family: 'Inter', sans-serif; margin-top: 0.4rem; }
+
+
+/* ═══════════��══════════════════════════════════════════════
+   GLOBAL CONSISTENCY & AESTHETIC POLISH
+   Gold eyebrows, premium accents, visual harmony
+   ════════════════════════════════════════��═════════════════ */
+
+/* Gold eyebrow text across all sections */
+.section-eyebrow { color: var(--gold) !important; }
+.testimonials .section-eyebrow { color: var(--gold) !important; }
+.spotlight-eyebrow { color: var(--gold) !important; }
+
+/* Gold HIW step numbers */
+.hiw-num {
+  background: transparent !important;
+  color: var(--gold) !important;
+  border: 1.5px solid rgba(212,175,55,0.35) !important;
+  font-size: 0.85rem !important;
+}
+
+/* HIW title brand name in gold */
+.hiw-title span { color: var(--gold) !important; }
+
+/* Gold testimonial stars */
+.testi-stars { color: var(--gold) !important; letter-spacing: 3px !important; }
+
+/* Testi card — gold left accent on hover */
+.testi-card:hover { border-left-color: rgba(212,175,55,0.55) !important; }
+
+/* Gold footer col titles — all pages */
+.footer-col-title { color: var(--gold) !important; }
+
+/* Cat card "Explore →" in gold */
+.cat-card-link { color: var(--gold-light) !important; letter-spacing: 3px !important; }
+
+/* View All Products — gold underline CTA */
+.feat-view-all {
+  color: var(--gold) !important;
+  border-bottom-color: rgba(212,175,55,0.3) !important;
+}
+.feat-view-all:hover {
+  color: var(--gold) !important;
+  opacity: 0.85 !important;
+  border-bottom-color: var(--gold) !important;
+}
+
+/* Spotlight CTA — gold variant */
+.spotlight-cta {
+  background: transparent !important;
+  border: 1.5px solid rgba(212,175,55,0.6) !important;
+  color: var(--gold-light) !important;
+  box-shadow: none !important;
+}
+.spotlight-cta:hover {
+  background: rgba(212,175,55,0.08) !important;
+  border-color: var(--gold) !important;
+  color: var(--gold) !important;
+  box-shadow: 0 4px 20px rgba(212,175,55,0.15) !important;
+}
+
+/* Section heading underline accent */
+.section-heading::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  margin: 0.7rem auto 0;
+  opacity: 0.5;
+}
+
+/* Featured section background distinction */
+.feat-wrap {
+  background: var(--bg) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+/* HIW step card — subtle gold on hover */
+@media (hover: hover) and (pointer: fine) {
+  .hiw-step:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(212,175,55,0.12) !important;
+    transform: translateY(-2px);
+  }
+}
+
+/* Trust row — premium dark bg */
+.trust-row {
+  background: var(--ink2) !important;
+  border-top: 1px solid rgba(212,175,55,0.08) !important;
+  border-bottom: 1px solid rgba(212,175,55,0.08) !important;
+}
+.trust-card {
+  background: transparent !important;
+  border-right: 1px solid rgba(212,175,55,0.07) !important;
+}
+.trust-title { color: rgba(255,255,255,0.88) !important; }
+.trust-desc { color: rgba(255,255,255,0.38) !important; }
+
+/* Policy strip — refined */
+.policy-strip { background: var(--ink) !important; border-top: 1px solid rgba(212,175,55,0.1) !important; }
+.policy-strip-link { color: var(--gold) !important; }
+.policy-strip-link:hover { border-bottom-color: var(--gold) !important; }
+
+/* Checkout btn — gold hover tint */
+.checkout-btn:hover { background: #9E5F6A !important; }
+
+/* Sale badge — sharper */
+.sale-badge { border-radius: 0 !important; }
+
+/* Add to cart — gold hover accent */
+@media (hover: hover) and (pointer: fine) {
+  .add-btn:hover { box-shadow: 0 2px 14px rgba(26,16,21,0.22), inset 0 0 0 1px rgba(212,175,55,0.08) !important; }
+}

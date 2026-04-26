@@ -2348,6 +2348,7 @@ renderCatGrid();
     });
     // Re-render anything that depends on this content
     renderCatGrid();
+    if(window._applyHomeContent) window._applyHomeContent();
   } catch(e){}
 })();
 
@@ -2377,6 +2378,7 @@ renderCatGrid();
       _set('co-bank-iban', cp.bank_iban);
     }
   } catch(e) {}
+  window._applyHomeContent = function(){
   try {
     var ch = JSON.parse(localStorage.getItem('gb_content_home')||'null');
     if (ch) {
@@ -2420,6 +2422,11 @@ renderCatGrid();
       } else if(heroEl&&ch.hero_mode==='cinematic'&&!ch.hero_bg_image){
         heroEl.classList.add('hero-cinematic');
       }
+      // Hero right-side image (split mode)
+      if(ch.hero_bg_image && (ch.hero_mode||'split') !== 'cinematic'){
+        var hImg=document.querySelector('.hero-img-frame img');
+        if(hImg) hImg.src=ch.hero_bg_image;
+      }
       // How it works heading
       _set('hiwTitle', ch.hiw_title, true);
       _set('hiwSub', ch.hiw_sub);
@@ -2453,6 +2460,8 @@ renderCatGrid();
       });
     }
   } catch(e) {}
+  };
+  window._applyHomeContent();
 })();
 // ═══════════════════════════════════════════════════════════
 // AUTHENTICATION LOGIC
@@ -2871,7 +2880,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 </script>
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 <script src="js/enhance.js"></script>
-
+<script>
 /* ── SECTION LAYOUT FROM PAGE BUILDER ── */
 (function(){
   async function applyHomeLayout(){
@@ -3022,6 +3031,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     dx=0;
   });
 })();
+</script>
 
 </body>
 </html>
