@@ -823,39 +823,23 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
   <a href="index.html" class="logo">Global <span>Bestie</span></a>
   <div class="nav-links">
     <div class="nav-item-wrap">
-      <a onclick="setGender('women')" id="nav-women" class="active">Women</a>
+      <a href="products.html">Shop</a>
       <div class="megamenu">
-        <div class="mm-head" onclick="setGender('women')">Women's Collection</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('makeup',null)">Makeup</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('skincare',null)">Skincare</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('fragrance',null)">Fragrance</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('bags',null)">Bags</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('fashion',null)">Fashion</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('shoes',null)">Shoes</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('accessories',null)">Accessories</div>
-        <div class="mm-item" onclick="setGender('women');filterCat('hair',null)">Hair &amp; Body</div>
-        <div class="mm-footer" onclick="setGender('women')">View All Women's →</div>
-      </div>
-    </div>
-    <div class="nav-item-wrap">
-      <a onclick="setGender('men')" id="nav-men">Men</a>
-      <div class="megamenu">
-        <div class="mm-head" onclick="setGender('men')">Men's Collection</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('grooming',null)">Grooming</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('fragrance',null)">Fragrance</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('fashion',null)">Fashion</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('bags',null)">Bags</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('shoes',null)">Shoes</div>
-        <div class="mm-item" onclick="setGender('men');filterCat('accessories',null)">Accessories</div>
-        <div class="mm-footer" onclick="setGender('men')">View All Men's →</div>
+        <div class="mm-head" onclick="filterCat('all',null)">All Products</div>
+        <div class="mm-item" onclick="filterCat('makeup',null)">Makeup</div>
+        <div class="mm-item" onclick="filterCat('skincare',null)">Skincare</div>
+        <div class="mm-item" onclick="filterCat('fragrance',null)">Fragrance</div>
+        <div class="mm-item" onclick="filterCat('bags',null)">Bags</div>
+        <div class="mm-item" onclick="filterCat('fashion',null)">Fashion</div>
+        <div class="mm-item" onclick="filterCat('shoes',null)">Shoes</div>
+        <div class="mm-item" onclick="filterCat('accessories',null)">Accessories</div>
+        <div class="mm-footer" onclick="filterCat('all',null)">View All →</div>
       </div>
     </div>
     <a onclick="filterCat('sale',null)" style="cursor:pointer;color:var(--pink-deep)">Sale</a>
-    <a onclick="filterCat('outlet',null)" style="cursor:pointer;color:var(--gold)">Outlet</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
-    <a onclick="showPolicy()">Policy</a>
     <a href="track.html">Track Order</a>
   </div>
   <div class="nav-right">
@@ -881,14 +865,14 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 <!-- MOBILE NAV -->
 <div class="mobile-nav" id="mobileNav">
   <button class="mobile-nav-close" onclick="closeMobileNav()" aria-label="Close Mobile Menu">✕</button>
-  <a onclick="setGender('women');closeMobileNav()">Women's Collection</a>
-  <a onclick="setGender('men');closeMobileNav()">Men's Collection</a>
+  <a onclick="filterCat('all',null);closeMobileNav()">Shop All</a>
+  <a onclick="filterCat('makeup',null);closeMobileNav()">Makeup</a>
+  <a onclick="filterCat('fashion',null);closeMobileNav()">Fashion</a>
+  <a onclick="filterCat('bags',null);closeMobileNav()">Bags</a>
   <a onclick="filterCat('sale',null);closeMobileNav()">Sale</a>
-  <a onclick="filterCat('outlet',null);closeMobileNav()">Outlet</a>
   <a href="about.html">About Us</a>
   <a href="contact.html">Contact</a>
   <a href="faq.html">FAQ</a>
-  <a onclick="showPolicy();closeMobileNav()">Policy</a>
   <a href="track.html" onclick="closeMobileNav()">Track Order</a>
   <a onclick="openAccountModal();closeMobileNav()">My Account</a>
   <a onclick="openWA('');closeMobileNav()">WhatsApp Us</a>
@@ -912,14 +896,10 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 <!-- PREORDER STRIP -->
 <div class="preorder-strip">Ordered fresh from the USA · <b>50% advance</b> secures your order · All taxes &amp; shipping included</div>
 
-<!-- GENDER TAB BAR -->
+<!-- SHOP TITLE -->
 <div class="gender-tab-bar">
   <div class="gender-tab-bar-inner">
-    <div class="g-tabs" id="genderTabs">
-      <div class="g-tab active" id="gtab-women" onclick="setGender('women')">Women</div>
-      <div class="g-tab" id="gtab-men" onclick="setGender('men')">Men</div>
-    </div>
-    <h1 class="g-page-title" id="sectionTitle">Women's Collection</h1>
+    <h1 class="g-page-title" id="sectionTitle">All Products</h1>
   </div>
 </div>
 
@@ -1540,18 +1520,14 @@ window.addEventListener('storage',e=>{
 });
 
 const fmtPKR=n=>'Rs '+Math.round(n).toLocaleString();
-let cart=[], currentGender='women', currentCat='all', currentBrand=null;
+let cart=[], currentGender='all', currentCat='all', currentBrand=null;
 
 function setGender(g){
   currentGender=g; currentCat='all'; currentBrand=null;
   hideBrandFilter();
-  document.getElementById('nav-women').className=g==='women'?'active':'';
-  document.getElementById('nav-men').className=g==='men'?'active':'';
-  document.getElementById('gtab-women').classList.toggle('active',g==='women');
-  document.getElementById('gtab-men').classList.toggle('active',g==='men');
   document.body.classList.toggle('gender-men',g==='men');
-  const title=g==='women'?"Women's Collection":"Men's Collection";
-  document.getElementById('sectionTitle').textContent=title;
+  const title=g==='women'?"Women's Collection":g==='men'?"Men's Collection":"All Products";
+  const st=document.getElementById('sectionTitle');if(st)st.textContent=title;
   renderCats(g);
   applyFilters();
 }
@@ -1559,7 +1535,7 @@ function setGender(g){
 function renderCats(g){
   const cats=getCats(g);
   const all=getProducts();
-  const allCount=all.filter(p=>p.gender===g).length;
+  const allCount=currentGender==='all'?all.length:all.filter(p=>p.gender===g).length;
   const saleCount=all.filter(p=>p.on_sale&&p.sale_price).length;
   const outletCount=all.filter(p=>p.is_outlet).length;
   let html=`<div class="sidebar-cat-item${currentCat==='all'?' active':''}" onclick="filterCat('all',this)">
@@ -1573,7 +1549,7 @@ function renderCats(g){
       <span>Outlet</span><span class="sidebar-cat-count">${outletCount}</span></div>`;
   }
   html+=cats.map(c=>{
-    const cnt=all.filter(p=>p.gender===g&&p.cat===c.id).length;
+    const cnt=all.filter(p=>(currentGender==='all'||p.gender===g)&&p.cat===c.id).length;
     return `<div class="sidebar-cat-item${currentCat===c.id?' active':''}" onclick="filterCat('${c.id}',this)">
       <span>${c.label}</span><span class="sidebar-cat-count">${cnt}</span></div>`;
   }).join('');
@@ -1607,7 +1583,7 @@ function filterProds(){
   if(currentBrand) return all.filter(p=>p.brand===currentBrand);
   if(currentCat==='sale') return all.filter(p=>p.on_sale&&p.sale_price);
   if(currentCat==='outlet') return all.filter(p=>p.is_outlet);
-  return all.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+  return all.filter(p=>(currentGender==='all'||p.gender===currentGender)&&(currentCat==='all'||p.cat===currentCat));
 }
 
 function applyFilters(){
@@ -1619,7 +1595,7 @@ function applyFilters(){
   } else if(currentCat==='outlet'){
     products=products.filter(p=>p.is_outlet);
   } else {
-    products=products.filter(p=>p.gender===currentGender&&(currentCat==='all'||p.cat===currentCat));
+    products=products.filter(p=>(currentGender==='all'||p.gender===currentGender)&&(currentCat==='all'||p.cat===currentCat));
   }
   // Search — covers name, brand, category, and description
   const q=(document.getElementById('shopSearch')?.value||'').trim().toLowerCase();
