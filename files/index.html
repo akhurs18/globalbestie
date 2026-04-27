@@ -53,12 +53,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webki
 .batch-bar-text b,.batch-bar-text strong{font-style:normal;color:var(--pink-mid);font-weight:500}
 @media(max-width:600px){.batch-bar-inner{padding:0.55rem 1rem}.batch-bar-text{font-size:0.88rem}}
 
-/* ── CUSTOM CURSOR ── */
-body { cursor: none; }
-a, button, input, select, textarea, .prod-card, .cat-card, .tb-btn-primary, .tb-btn-ghost { cursor: none; }
-.custom-cursor { position: fixed; top: 0; left: 0; width: 12px; height: 12px; background: rgba(255,255,255,0.8); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease; mix-blend-mode: difference; }
-.custom-cursor.hover { width: 45px; height: 45px; background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.4); mix-blend-mode: normal; }
-@media (max-width: 900px) { body { cursor: auto; } .custom-cursor { display: none; } a, button, .prod-card { cursor: pointer; } }
+
 
 /* ── NAV ── */
 nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;height:68px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.2)}
@@ -688,7 +683,6 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 </head>
 <body>
 
-<div id="custom-cursor" class="custom-cursor"></div>
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">

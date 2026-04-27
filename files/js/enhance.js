@@ -136,34 +136,7 @@
   }, { passive: true });
 })();
 
-/* ── 5. CUSTOM CURSOR ── */
-(function () {
-  const cursor = document.getElementById('custom-cursor');
-  if (!cursor || window.innerWidth < 900) return;
-  
-  let mouseX = 0, mouseY = 0;
-  let cursorX = 0, cursorY = 0;
-  
-  document.addEventListener('mousemove', e => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-  });
-  
-  function loop() {
-    cursorX += (mouseX - cursorX) * 0.2;
-    cursorY += (mouseY - cursorY) * 0.2;
-    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-  
-  // Expand on hoverable elements
-  const hoverables = document.querySelectorAll('a, button, .prod-card, .cat-card');
-  hoverables.forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-  });
-})();
+
 
 
 /* ── 6. SPOTLIGHT PARALLAX ── */
