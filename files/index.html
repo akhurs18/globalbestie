@@ -725,39 +725,23 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   <span class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">Global <span>Bestie</span></span>
   <div class="nav-links">
     <div class="nav-item-wrap">
-      <a href="products.html?gender=women">Women</a>
+      <a href="products.html">Shop</a>
       <div class="megamenu">
-        <a class="mm-head" href="products.html?gender=women">Women's Collection</a>
-        <a class="mm-item" href="products.html?gender=women&cat=makeup">Makeup</a>
-        <a class="mm-item" href="products.html?gender=women&cat=skincare">Skincare</a>
-        <a class="mm-item" href="products.html?gender=women&cat=fragrance">Fragrance</a>
-        <a class="mm-item" href="products.html?gender=women&cat=bags">Bags</a>
-        <a class="mm-item" href="products.html?gender=women&cat=fashion">Fashion</a>
-        <a class="mm-item" href="products.html?gender=women&cat=shoes">Shoes</a>
-        <a class="mm-item" href="products.html?gender=women&cat=accessories">Accessories</a>
-        <a class="mm-item" href="products.html?gender=women&cat=hair">Hair &amp; Body</a>
-        <a class="mm-footer" href="products.html?gender=women">View All Women's →</a>
-      </div>
-    </div>
-    <div class="nav-item-wrap">
-      <a href="products.html?gender=men">Men</a>
-      <div class="megamenu">
-        <a class="mm-head" href="products.html?gender=men">Men's Collection</a>
-        <a class="mm-item" href="products.html?gender=men&cat=grooming">Grooming</a>
-        <a class="mm-item" href="products.html?gender=men&cat=fragrance">Fragrance</a>
-        <a class="mm-item" href="products.html?gender=men&cat=fashion">Fashion</a>
-        <a class="mm-item" href="products.html?gender=men&cat=bags">Bags</a>
-        <a class="mm-item" href="products.html?gender=men&cat=shoes">Shoes</a>
-        <a class="mm-item" href="products.html?gender=men&cat=accessories">Accessories</a>
-        <a class="mm-footer" href="products.html?gender=men">View All Men's →</a>
+        <a class="mm-head" href="products.html">All Products</a>
+        <a class="mm-item" href="products.html?cat=makeup">Makeup</a>
+        <a class="mm-item" href="products.html?cat=skincare">Skincare</a>
+        <a class="mm-item" href="products.html?cat=fragrance">Fragrance</a>
+        <a class="mm-item" href="products.html?cat=bags">Bags</a>
+        <a class="mm-item" href="products.html?cat=fashion">Fashion</a>
+        <a class="mm-item" href="products.html?cat=shoes">Shoes</a>
+        <a class="mm-item" href="products.html?cat=accessories">Accessories</a>
+        <a class="mm-footer" href="products.html">View All →</a>
       </div>
     </div>
     <a href="products.html#sale" style="color:var(--pink-deep)">Sale</a>
-    <a href="outlet.html" style="color:var(--gold)">Outlet</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
     <a href="faq.html">FAQ</a>
-    <a onclick="showPolicy()">Policy</a>
     <a href="track.html">Track Order</a>
   </div>
   <div class="nav-right">
@@ -805,29 +789,55 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   </div>
 </div>
 
-<!-- HERO -->
-<div class="hero">
-  <div class="hero-mesh"><div class="hm-blob hm-blob-1"></div><div class="hm-blob hm-blob-2"></div><div class="hm-blob hm-blob-3"></div></div>
-  <div class="hero-left">
-    <span class="hero-tag" id="heroTag">USA · Authentic · Delivered to Pakistan</span>
-    <h1 class="hero-title" id="heroTitle">Your American<br><em>Shopping Bestie</em><br>in Pakistan</h1>
-    <p class="hero-sub" id="heroSub">Authentic USA products sourced and delivered to your door. Women's &amp; men's fashion, beauty, bags and more — ordered fresh from the US just for you.</p>
-    <div class="hero-btns">
-      <button class="btn-primary" id="heroBtnShop" onclick="scrollToProducts()">Shop Now</button>
-      <button class="btn-wa" id="heroBtnWA" onclick="openWA('')">WhatsApp Us</button>
-    </div>
-    <div class="hero-stats">
-      <div class="hstat"><div class="hstat-label">Products</div><div class="hstat-val" data-count="250" data-suffix="+">0+</div></div>
-      <div class="hstat"><div class="hstat-label">Happy Customers</div><div class="hstat-val" data-count="500" data-suffix="+">0+</div></div>
-      <div class="hstat"><div class="hstat-label">Avg Rating</div><div class="hstat-val" data-count="4.9" data-suffix="★" data-decimal="1">0★</div></div>
-      <div class="hstat"><div class="hstat-label">US Brands</div><div class="hstat-val" data-count="80" data-suffix="+">0+</div></div>
+<!-- HERO CAROUSEL -->
+<div class="hero-carousel" id="heroCarousel">
+  <div class="hc-slide active" style="background-image:url('https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=1600&q=90')">
+    <div class="hc-overlay"></div>
+    <div class="hc-content">
+      <span class="hc-eyebrow">New Season</span>
+      <h1 class="hc-title">Beauty,<br><em>Redefined</em></h1>
+      <p class="hc-sub">Charlotte Tilbury · Fenty · NARS · MAC — authentic, sourced fresh from the USA</p>
+      <div class="hc-btns">
+        <button class="hc-btn-primary" onclick="location.href='products.html?cat=makeup'">Shop Beauty</button>
+        <button class="hc-btn-ghost" onclick="openWA('')">WhatsApp Us</button>
+      </div>
     </div>
   </div>
-  <div class="hero-right">
-    <div class="hero-img-frame">
-      <img src="https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=640&q=85" alt="USA Fashion & Beauty — Global Bestie" loading="eager">
+  <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=90')">
+    <div class="hc-overlay"></div>
+    <div class="hc-content">
+      <span class="hc-eyebrow">Just Arrived</span>
+      <h1 class="hc-title">American<br><em>Fashion</em></h1>
+      <p class="hc-sub">Coach · Free People · Anthropologie · Nordstrom — delivered to Pakistan</p>
+      <div class="hc-btns">
+        <button class="hc-btn-primary" onclick="location.href='products.html?cat=fashion'">Shop Fashion</button>
+        <button class="hc-btn-ghost" onclick="location.href='products.html?cat=bags'">Shop Bags</button>
+      </div>
     </div>
-    <div class="hero-img-tag">Authentic USA · Delivered to Pakistan</div>
+  </div>
+  <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1541643600914-78b084683702?w=1600&q=90')">
+    <div class="hc-overlay"></div>
+    <div class="hc-content">
+      <span class="hc-eyebrow">US Exclusives</span>
+      <h1 class="hc-title">Luxury<br><em>Fragrance</em></h1>
+      <p class="hc-sub">Jo Malone · Maison Margiela · Viktor &amp; Rolf — US exclusives, shipped to you</p>
+      <div class="hc-btns">
+        <button class="hc-btn-primary" onclick="location.href='products.html?cat=fragrance'">Shop Fragrance</button>
+      </div>
+    </div>
+  </div>
+  <div class="hc-dots">
+    <button class="hc-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
+    <button class="hc-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
+    <button class="hc-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
+  </div>
+  <button class="hc-arrow hc-prev" onclick="stepSlide(-1)" aria-label="Previous slide">‹</button>
+  <button class="hc-arrow hc-next" onclick="stepSlide(1)" aria-label="Next slide">›</button>
+  <div class="hc-stats">
+    <div class="hstat"><div class="hstat-val" data-count="250" data-suffix="+">250+</div><div class="hstat-label">Products</div></div>
+    <div class="hstat"><div class="hstat-val" data-count="500" data-suffix="+">500+</div><div class="hstat-label">Happy Customers</div></div>
+    <div class="hstat"><div class="hstat-val" data-count="4.9" data-suffix="★" data-decimal="1">4.9★</div><div class="hstat-label">Avg Rating</div></div>
+    <div class="hstat"><div class="hstat-val" data-count="80" data-suffix="+">80+</div><div class="hstat-label">US Brands</div></div>
   </div>
 </div>
 
@@ -860,7 +870,7 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 <!-- THE EDIT — EDITORIAL -->
 <div class="gb-editorial reveal">
   <div class="gb-ed-image">
-    <img src="https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=960&q=85" alt="The Edit — Global Bestie" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1529635800780-41765f0a8607?w=960&q=90" alt="The Edit — Global Bestie" loading="lazy">
   </div>
   <div class="gb-ed-content">
     <span class="section-eyebrow">The Edit</span>
@@ -870,37 +880,39 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   </div>
 </div>
 
-<!-- SPOTLIGHT -->
-<div class="spotlight reveal" id="spotlightSection" data-section="spotlight">
-  <div class="spotlight-bg" id="spotlightBg" style="background-image:url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1400&q=80')"></div>
-  <div class="spotlight-overlay"></div>
-  <div class="spotlight-content">
-    <span class="spotlight-eyebrow" id="spotlightEyebrow">Now Available</span>
-    <div class="spotlight-title" id="spotlightTitle">Fresh from the USA,<br>Delivered to You</div>
-    <div class="spotlight-sub" id="spotlightSub">Authentic American brands sourced fresh and shipped straight to Pakistan. All prices in PKR — no hidden fees.</div>
-    <a class="spotlight-cta" id="spotlightBtn" href="products.html">Shop the Collection →</a>
+<!-- CATEGORY TILES -->
+<div class="cat-tiles-section reveal">
+  <div class="cat-tiles-header">
+    <span class="section-eyebrow">Explore</span>
+    <h2 class="section-heading">Shop the Collection</h2>
+  </div>
+  <div class="cat-tiles">
+    <a class="cat-tile" href="products.html?cat=makeup" style="background-image:url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=88')">
+      <div class="cat-tile-overlay"></div>
+      <div class="cat-tile-label"><span>Makeup &amp; Beauty</span><em>Shop →</em></div>
+    </a>
+    <a class="cat-tile" href="products.html?cat=fashion" style="background-image:url('https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=88')">
+      <div class="cat-tile-overlay"></div>
+      <div class="cat-tile-label"><span>Fashion</span><em>Shop →</em></div>
+    </a>
+    <a class="cat-tile" href="products.html?cat=bags" style="background-image:url('https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=88')">
+      <div class="cat-tile-overlay"></div>
+      <div class="cat-tile-label"><span>Bags &amp; Accessories</span><em>Shop →</em></div>
+    </a>
+    <a class="cat-tile" href="products.html?cat=fragrance" style="background-image:url('https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=88')">
+      <div class="cat-tile-overlay"></div>
+      <div class="cat-tile-label"><span>Fragrance</span><em>Shop →</em></div>
+    </a>
   </div>
 </div>
 
-<!-- CATEGORY GRID -->
-<div class="cat-editorial reveal" data-section="cat-editorial">
-  <div class="cat-editorial-inner">
-    <span class="section-eyebrow">Shop by Category</span>
-    <h2 class="section-heading">Explore the Collection</h2>
-    <div class="cat-grid" id="catGrid"></div>
-  </div>
-</div>
-
-<!-- SOURCED FROM -->
-<div class="gb-sources">
-  <div class="gb-sources-inner">
-    <span class="gb-sources-label">Sourced from</span>
-    <span class="gb-source-name">Nordstrom</span>
-    <span class="gb-source-name">Sephora</span>
-    <span class="gb-source-name">Bloomingdale's</span>
-    <span class="gb-source-name">Ulta Beauty</span>
-    <span class="gb-source-name">Anthropologie</span>
-    <span class="gb-source-name">Free People</span>
+<!-- EDITORIAL BREAK 1 -->
+<div class="ed-break reveal" style="background-image:url('https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=1600&q=88')">
+  <div class="ed-break-overlay"></div>
+  <div class="ed-break-content">
+    <span class="section-eyebrow">This Season</span>
+    <div class="ed-break-title">The New Collection</div>
+    <a class="ed-break-cta" href="products.html">Browse All →</a>
   </div>
 </div>
 
@@ -911,9 +923,37 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
     <h2 class="section-heading">New Arrivals</h2>
     <p class="section-subtext">Fresh from the US — authentic products, priced in PKR, delivered to your door</p>
   </div>
-  <div class="products-grid" id="featuredGrid"></div>
-  <div style="text-align:center">
+  <div class="carousel-wrap">
+    <button class="carousel-btn carousel-prev" onclick="scrollCarousel(this,-1)" aria-label="Previous">‹</button>
+    <div class="carousel-track products-grid" id="featuredGrid"></div>
+    <button class="carousel-btn carousel-next" onclick="scrollCarousel(this,1)" aria-label="Next">›</button>
+  </div>
+  <div style="text-align:center;margin-top:3rem">
     <a class="feat-view-all" href="products.html">Shop All →</a>
+  </div>
+</div>
+
+<!-- EDITORIAL BREAK 2 -->
+<div class="ed-break ed-break-right reveal" style="background-image:url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1600&q=88')">
+  <div class="ed-break-overlay"></div>
+  <div class="ed-break-content">
+    <span class="section-eyebrow">Best Sellers</span>
+    <div class="ed-break-title">Loved by Pakistan</div>
+    <a class="ed-break-cta" href="products.html">Shop Now →</a>
+  </div>
+</div>
+
+<!-- TRENDING NOW -->
+<div class="feat-wrap trending-wrap" data-section="trending-wrap">
+  <div class="feat-header">
+    <span class="section-eyebrow">Best Sellers</span>
+    <h2 class="section-heading">Trending Now</h2>
+    <p class="section-subtext">What Pakistan is ordering right now</p>
+  </div>
+  <div class="carousel-wrap">
+    <button class="carousel-btn carousel-prev" onclick="scrollCarousel(this,-1)" aria-label="Previous">‹</button>
+    <div class="carousel-track products-grid" id="trendingGrid"></div>
+    <button class="carousel-btn carousel-next" onclick="scrollCarousel(this,1)" aria-label="Next">›</button>
   </div>
 </div>
 
@@ -952,20 +992,20 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   </div>
 </div>
 
-<!-- POLICY STRIP -->
-<div class="policy-strip" data-section="policy-strip">
-  <div class="policy-strip-inner">
-    <span class="policy-strip-item"><b>50% advance</b> to confirm</span>
-    <span class="policy-strip-sep">·</span>
-    <span class="policy-strip-item"><b>Fast</b> delivery</span>
-    <span class="policy-strip-sep">·</span>
-    <span class="policy-strip-item"><b>Fixed prices</b> — no discounts</span>
-    <span class="policy-strip-sep">·</span>
-    <span class="policy-strip-item">All taxes &amp; shipping included</span>
-    <span class="policy-strip-sep">·</span>
-    <a class="policy-strip-link" href="policy.html">Full Policy →</a>
+<!-- STICKY SHOP BAR -->
+<div class="sticky-shop-bar" id="stickyShopBar">
+  <div class="ssb-inner">
+    <span class="ssb-logo">Global Bestie</span>
+    <span class="ssb-divider">·</span>
+    <span class="ssb-tag">Authentic USA · Delivered to Pakistan</span>
+    <a class="ssb-cta" href="products.html">Shop Now →</a>
   </div>
 </div>
+
+<!-- BACK TO TOP -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+</button>
 
 <!-- TRUST BAR -->
 <div class="trust-row" data-section="trust-row">
@@ -1290,9 +1330,46 @@ window.addEventListener('scroll',()=>{
   if(btn)btn.classList.toggle('visible',window.scrollY>400);
 },{passive:true});
 
+// ── STICKY SHOP BAR ──
+window.addEventListener('scroll',()=>{
+  const bar=document.getElementById('stickyShopBar');
+  if(bar)bar.classList.toggle('visible',window.scrollY>window.innerHeight*0.85);
+},{passive:true});
+
+// ── HERO CAROUSEL ──
+var _hcIdx=0,_hcTimer;
+function goToSlide(n){
+  var slides=document.querySelectorAll('.hc-slide');
+  var dots=document.querySelectorAll('.hc-dot');
+  if(!slides.length)return;
+  slides[_hcIdx].classList.remove('active');
+  dots[_hcIdx].classList.remove('active');
+  _hcIdx=(n+slides.length)%slides.length;
+  slides[_hcIdx].classList.add('active');
+  dots[_hcIdx].classList.add('active');
+}
+function stepSlide(d){clearInterval(_hcTimer);goToSlide(_hcIdx+d);startCarousel();}
+function startCarousel(){_hcTimer=setInterval(function(){goToSlide(_hcIdx+1);},5500);}
+if(document.querySelector('.hero-carousel'))startCarousel();
+
+// ── PRODUCT CAROUSEL ──
+function scrollCarousel(btn,dir){
+  var track=btn.parentElement.querySelector('.carousel-track');
+  if(track)track.scrollBy({left:dir*600,behavior:'smooth'});
+}
+// Drag-to-scroll
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.carousel-track').forEach(function(el){
+    var isDown=false,startX,sl;
+    el.addEventListener('mousedown',function(e){isDown=true;el.style.cursor='grabbing';startX=e.pageX-el.offsetLeft;sl=el.scrollLeft;});
+    ['mouseleave','mouseup'].forEach(function(ev){el.addEventListener(ev,function(){isDown=false;el.style.cursor='grab';});});
+    el.addEventListener('mousemove',function(e){if(!isDown)return;e.preventDefault();el.scrollLeft=sl-(e.pageX-el.offsetLeft-startX)*1.5;});
+  });
+});
+
 (async function loadProducts(){
   // ── 1. Try Supabase ──
-  renderSkeletons(8,'featuredGrid');
+  renderSkeletons(8,'featuredGrid');renderSkeletons(8,'trendingGrid');
   if(_supa){
     try{
       const {data,error}=await _supa.from('products').select('*').order('id');
@@ -1310,7 +1387,7 @@ window.addEventListener('scroll',()=>{
           review_rating:p.review_rating||null,review_count:p.review_count||0
         }));
         localStorage.setItem('gb_products',JSON.stringify(productsCache));
-        renderFeatured();
+        renderFeatured();renderTrending();
         renderCatGrid();
         loadCart();
         renderRecentlyViewed();
@@ -1319,7 +1396,7 @@ window.addEventListener('scroll',()=>{
     }catch(e){
       console.warn('Supabase product load failed:',e.message);
       const cached=localStorage.getItem('gb_products');
-      if(cached){try{productsCache=JSON.parse(cached);renderFeatured();renderCatGrid();loadCart();showToast('Showing saved catalogue — check connection');return;}catch(e2){}}
+      if(cached){try{productsCache=JSON.parse(cached);renderFeatured();renderTrending();renderCatGrid();loadCart();showToast('Showing saved catalogue — check connection');return;}catch(e2){}}
     }
   }
 })();
@@ -1365,7 +1442,7 @@ function loadCart(){
 }
 
 window.addEventListener('storage',e=>{
-  if(e.key==='gb_products'){productsCache=null;renderFeatured();renderCatGrid();}
+  if(e.key==='gb_products'){productsCache=null;renderFeatured();renderTrending();renderCatGrid();}
 });
 
 const fmtPKR=n=>'Rs '+Math.round(n).toLocaleString();
@@ -1439,6 +1516,13 @@ function renderFeatured(){
   let prods=getProducts().filter(p=>p.is_featured);
   if(!prods.length)prods=getProducts().slice(0,8);
   renderProducts(prods,'featuredGrid');
+}
+
+function renderTrending(){
+  const el=document.getElementById('trendingGrid');if(!el)return;
+  let prods=getProducts().filter(p=>p.is_in_stock&&!p.is_featured).slice(0,12);
+  if(!prods.length)prods=getProducts().slice(8,16);
+  renderProducts(prods,'trendingGrid');
 }
 
 function renderProducts(data,gridId){
@@ -2185,7 +2269,7 @@ async function toggleWishlist(id){
   const isAdding = !w.includes(id);
   if(!isAdding) w=w.filter(x=>x!==id); else w=[...w,id];
   saveWishlist(w);
-  renderFeatured();
+  renderFeatured();renderTrending();
   updateWishBadge();
   showToast(isAdding ? 'Saved to wishlist!' : 'Removed from wishlist');
   
@@ -2342,7 +2426,7 @@ function closeTapHold(){
 loadCart();
 updateWishBadge();
 renderRecentlyViewed();
-renderFeatured();
+renderFeatured();renderTrending();
 renderCatGrid();
 
 // ── LOAD SITE CONTENT FROM SUPABASE ──
@@ -2592,8 +2676,8 @@ window.addEventListener('DOMContentLoaded', async () => {
           let merged = [...new Set([...localW, ...wList.map(w => w.product_id)])];
           saveWishlist(merged);
           updateWishBadge();
-          renderFeatured();
-          
+          renderFeatured();renderTrending();
+
           // Upsert local items not in cloud
           for(let id of localW) {
             if(!wList.find(w => w.product_id === id)) {
@@ -2627,8 +2711,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
-<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
-
 <!-- LIGHTBOX -->
 <div class="lb-overlay" id="lbOverlay" onclick="if(event.target===this)closeLightbox()">
   <button class="lb-close" onclick="closeLightbox()">✕</button>

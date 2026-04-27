@@ -2058,3 +2058,425 @@ nav {
   .cat-card { height: 360px !important; }
   .trust-card { padding: 2.5rem 1rem !important; }
 }
+
+
+/* ╔══════════════════════════════════════════════════════════╗
+   ║  TORY BURCH LAYOUT — Hero Carousel, Tiles, Carousels     ║
+   ╚══════════════════════════════════════════════════════════╝ */
+
+/* ── HERO CAROUSEL ───────────────────────────────────────── */
+.hero-carousel {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 600px;
+  overflow: hidden;
+  background: var(--ink);
+}
+.hc-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+.hc-slide.active { opacity: 1; pointer-events: auto; }
+.hc-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(8,4,6,0.9) 0%, rgba(8,4,6,0.55) 50%, rgba(8,4,6,0.18) 100%);
+}
+.hc-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 1100px;
+  padding: 0 3rem;
+  z-index: 1;
+}
+.hc-eyebrow {
+  font-size: 0.52rem;
+  letter-spacing: 7px;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.75;
+  display: block;
+  margin-bottom: 2rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+.hc-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3.2rem, 8vw, 6.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.5px;
+  color: #fff;
+  font-weight: 400;
+  margin-bottom: 1.8rem;
+}
+.hc-title em { letter-spacing: 0; }
+.hc-sub {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  line-height: 2.1;
+  font-weight: 300;
+  letter-spacing: 0.3px;
+  margin-bottom: 3rem;
+  max-width: 440px;
+}
+.hc-btns { display: flex; gap: 1rem; flex-wrap: wrap; }
+.hc-btn-primary {
+  background: transparent;
+  color: rgba(243,229,171,0.85);
+  border: 1px solid rgba(212,175,55,0.45);
+  padding: 1rem 3.2rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 4.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hc-btn-primary:hover { background: rgba(212,175,55,0.1); border-color: var(--gold); color: var(--gold); }
+.hc-btn-ghost {
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 1rem 2.2rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hc-btn-ghost:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
+.hc-dots {
+  position: absolute;
+  bottom: 5.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 2;
+}
+.hc-dot {
+  width: 24px;
+  height: 1px;
+  background: rgba(255,255,255,0.2);
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  background-clip: content-box;
+  transition: all 0.35s;
+}
+.hc-dot.active { width: 40px; background-color: rgba(212,175,55,0.7); }
+.hc-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.28);
+  font-size: 3rem;
+  cursor: pointer;
+  padding: 1rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.hc-arrow:hover { color: rgba(255,255,255,0.75); }
+.hc-prev { left: 2rem; }
+.hc-next { right: 2rem; }
+.hc-stats {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  background: rgba(8,4,6,0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 1.4rem 2rem;
+}
+.hc-stats .hstat {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+  padding: 0 2.8rem !important;
+}
+.hc-stats .hstat:last-child { border-right: none !important; }
+@media (max-width: 600px) {
+  .hc-content { padding: 0 1.5rem; }
+  .hc-title { font-size: clamp(2.4rem, 11vw, 3.2rem) !important; }
+  .hc-stats { display: none; }
+  .hc-arrow { display: none; }
+  .hc-dots { bottom: 2.5rem; }
+}
+
+/* ── CATEGORY TILES (Tory 4-tile grid) ──────────────────── */
+.cat-tiles-section { padding: 8rem 2rem; background: var(--bg); }
+.cat-tiles-header { text-align: center; margin-bottom: 3.5rem; }
+.cat-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.cat-tile {
+  display: block;
+  position: relative;
+  height: 620px;
+  background-size: 100%;
+  background-position: center;
+  overflow: hidden;
+  text-decoration: none;
+  transition: background-size 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cat-tile:hover { background-size: 108%; }
+.cat-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(6,3,5,0.9) 0%, rgba(6,3,5,0.08) 55%, transparent 100%);
+  transition: background 0.5s ease;
+}
+.cat-tile:hover .cat-tile-overlay {
+  background: linear-gradient(to top, rgba(6,3,5,0.96) 0%, rgba(6,3,5,0.28) 60%, rgba(6,3,5,0.04) 100%);
+}
+.cat-tile-label {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 2.2rem;
+  right: 2.2rem;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.cat-tile-label span {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.65rem;
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+  transform: translateY(6px);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cat-tile-label em {
+  font-style: normal;
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(212,175,55,0.7);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.35s ease 0.06s, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.06s;
+}
+.cat-tile:hover .cat-tile-label span { transform: translateY(0); }
+.cat-tile:hover .cat-tile-label em { opacity: 1; transform: translateY(0); }
+@media (max-width: 900px) {
+  .cat-tiles { grid-template-columns: repeat(2, 1fr); }
+  .cat-tile { height: 420px; }
+}
+@media (max-width: 480px) {
+  .cat-tiles { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .cat-tile { height: 260px; }
+  .cat-tile-label span { font-size: 1.1rem; }
+  .cat-tiles-section { padding: 4rem 1rem; }
+}
+
+/* ── PRODUCT CAROUSELS ───────────────────────────────────── */
+.carousel-wrap { position: relative; padding: 0 0.5rem; }
+.carousel-track {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  scroll-snap-type: x mandatory !important;
+  gap: 1.4rem !important;
+  padding-bottom: 1rem !important;
+  scrollbar-width: none !important;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+}
+.carousel-track:active { cursor: grabbing; }
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track .prod-card { flex: 0 0 280px !important; scroll-snap-align: start !important; }
+.carousel-btn {
+  position: absolute;
+  top: 38%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(8,4,6,0.92);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.6);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.carousel-btn:hover { background: rgba(212,175,55,0.1); border-color: rgba(212,175,55,0.4); color: var(--gold); }
+.carousel-prev { left: -28px; }
+.carousel-next { right: -28px; }
+@media (max-width: 680px) {
+  .carousel-btn { display: none; }
+  .carousel-track .prod-card { flex: 0 0 230px !important; }
+}
+
+/* ── EDITORIAL BREAKS (full-bleed Tory runway style) ─────── */
+.ed-break {
+  position: relative;
+  min-height: 540px;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  overflow: hidden;
+}
+.ed-break-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(6,3,5,0.85) 0%, rgba(6,3,5,0.48) 55%, rgba(6,3,5,0.08) 100%);
+}
+.ed-break-right .ed-break-overlay {
+  background: linear-gradient(to left, rgba(6,3,5,0.85) 0%, rgba(6,3,5,0.48) 55%, rgba(6,3,5,0.08) 100%);
+}
+.ed-break-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 3rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+.ed-break-right .ed-break-content { text-align: right; }
+.ed-break-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.6rem, 5.5vw, 4.8rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.05;
+  letter-spacing: -0.3px;
+  margin: 1.2rem 0 2.8rem;
+}
+.ed-break-cta {
+  display: inline-block;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(212,175,55,0.78);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(212,175,55,0.28);
+  padding-bottom: 4px;
+  transition: color 0.22s, border-color 0.22s;
+}
+.ed-break-cta:hover { color: var(--gold); border-color: rgba(212,175,55,0.65); }
+@media (max-width: 600px) {
+  .ed-break { min-height: 360px; background-attachment: scroll; }
+  .ed-break-content { padding: 0 1.5rem; }
+  .ed-break-right .ed-break-content { text-align: left; }
+}
+
+/* ── SKELETON SCREENS ────────────────────────────────────── */
+.skel-card { pointer-events: none !important; }
+.skel {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: skelShimmer 1.4s infinite;
+  border-radius: 2px;
+}
+.skel-img { height: 280px; width: 100%; display: block; }
+.skel-line { display: block; margin-top: 10px; height: 10px; border-radius: 2px; }
+@keyframes skelShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── STICKY SHOP BAR ─────────────────────────────────────── */
+.sticky-shop-bar {
+  position: fixed;
+  top: 66px;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  background: rgba(8,4,6,0.97);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(212,175,55,0.1);
+  padding: 0.65rem 2rem;
+  transform: translateY(-110%);
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sticky-shop-bar.visible { transform: translateY(0); }
+.ssb-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.ssb-logo { font-family: 'Playfair Display', serif; font-size: 0.92rem; color: rgba(255,255,255,0.75); white-space: nowrap; }
+.ssb-divider { color: rgba(255,255,255,0.12); }
+.ssb-tag { font-size: 0.55rem; letter-spacing: 1.5px; color: rgba(255,255,255,0.22); flex: 1; }
+.ssb-cta {
+  font-size: 0.56rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(212,175,55,0.72);
+  text-decoration: none;
+  border: 1px solid rgba(212,175,55,0.22);
+  padding: 0.48rem 1.4rem;
+  transition: all 0.22s;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.ssb-cta:hover { color: var(--gold); border-color: rgba(212,175,55,0.5); }
+@media (max-width: 480px) { .ssb-tag { display: none; } }
+
+/* ── BACK TO TOP ─────────────────────────────────────────── */
+.back-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 1.5rem;
+  z-index: 88;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(8,4,6,0.92);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(18px);
+  pointer-events: none;
+  transition: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.back-to-top:hover { border-color: rgba(212,175,55,0.4); color: var(--gold); background: rgba(212,175,55,0.06); }
