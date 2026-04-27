@@ -597,7 +597,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
     <div class="nav-section-label">Communications</div>
     <div class="nav-item" onclick="showPage('emails',this)"><span class="nav-icon">◻</span><span class="nav-label">Emails</span></div>
     <div class="nav-section-label">Site Pages</div>
-    <div class="nav-item" onclick="showPage('content',this)"><span class="nav-icon">◻</span><span class="nav-label">Content</span></div>
+    <div class="nav-item" onclick="showPage('content',this)"><span class="nav-icon">◻</span><span class="nav-label">Home Builder & Pages</span></div>
     <div class="nav-section-label">System</div>
     <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">◻</span><span class="nav-label">Settings</span></div>
   </div>
@@ -1553,16 +1553,16 @@ function doPost(e) {
     <!-- CONTENT -->
     <div class="page" id="page-content">
       <div class="page-header">
-        <div class="page-title">Content</div>
-        <div class="page-sub">Edit text on About, FAQ, Contact and Policy pages. Changes take effect immediately on same browser (localStorage). <span style="color:var(--sienna)">Note: pages must be served from the same origin (not bare file://) to share storage.</span></div>
+        <div class="page-title">Home Builder & Pages</div>
+        <div class="page-sub">Edit images, banners, and text across your storefront. <span style="color:var(--sienna)">Note: changes take effect immediately via Supabase or localStorage.</span></div>
       </div>
       <div class="content-tabs">
-        <button class="content-tab-btn active" onclick="showContentTab('home',this)">Home Page</button>
+        <button class="content-tab-btn active" onclick="showContentTab('home',this)">Hero & Basics</button>
+        <button class="content-tab-btn" onclick="showContentTab('builder',this)">⊞ Page Builder Layout</button>
         <button class="content-tab-btn" onclick="showContentTab('about',this)">About</button>
         <button class="content-tab-btn" onclick="showContentTab('faq',this)">FAQ</button>
         <button class="content-tab-btn" onclick="showContentTab('contact',this)">Contact</button>
         <button class="content-tab-btn" onclick="showContentTab('policy',this)">Policy</button>
-        <button class="content-tab-btn" onclick="showContentTab('builder',this)">⊞ Page Builder</button>
       </div>
 
       <!-- HOME panel -->

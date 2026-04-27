@@ -82,34 +82,21 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .mobile-nav a{color:var(--pink);font-size:1.1rem;font-family:'Playfair Display',serif;font-weight:400;letter-spacing:1px;cursor:pointer;border-bottom:1px solid rgba(196,82,90,0.1);padding:1rem 0}
 .mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
 
-/* ── HERO MESH ── */
-.hero-mesh{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
-.hm-blob{position:absolute;border-radius:50%;filter:blur(72px)}
-.hm-blob-1{width:520px;height:520px;background:radial-gradient(circle,rgba(196,82,90,0.2) 0%,transparent 68%);top:-120px;right:-60px;animation:hmDrift1 13s ease-in-out infinite}
-.hm-blob-2{width:380px;height:380px;background:radial-gradient(circle,rgba(212,175,55,0.13) 0%,transparent 68%);bottom:-60px;left:8%;animation:hmDrift2 17s ease-in-out infinite}
-.hm-blob-3{width:300px;height:300px;background:radial-gradient(circle,rgba(139,90,69,0.11) 0%,transparent 68%);top:35%;left:38%;animation:hmDrift3 20s ease-in-out infinite}
-@keyframes hmDrift1{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-45px,35px) scale(1.12)}66%{transform:translate(22px,-22px) scale(0.94)}}
-@keyframes hmDrift2{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(32px,-44px) scale(1.14)}72%{transform:translate(-22px,18px) scale(0.9)}}
-@keyframes hmDrift3{0%,100%{transform:translate(0,0)}50%{transform:translate(-28px,38px) scale(1.09)}}
-/* ── HERO ── */
-.hero{background:var(--ink);padding:8rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 20% 50%,rgba(196,82,90,0.08) 0%,transparent 70%)}
-.hero::after{content:'';position:absolute;top:0;right:0;bottom:0;left:40%;background:repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(196,82,90,0.015) 40px,rgba(196,82,90,0.015) 41px);pointer-events:none}
-.hero-left{max-width:520px;position:relative;z-index:1}
-.hero-tag{font-size:0.6rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1.2rem;display:block}
-.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,5vw,4rem);color:#fff;line-height:1.15;margin-bottom:1rem;font-weight:400;letter-spacing:0.3px}
-.hero-title em{color:var(--pink-mid);font-style:italic}
-.hero-sub{color:#6A5460;font-size:0.82rem;line-height:1.85;margin-bottom:1.8rem;font-weight:300}
-.hero-btns{display:flex;gap:0.8rem;flex-wrap:wrap}
-.btn-primary{background:var(--ink);color:var(--gold-light);padding:0.85rem 2.5rem;font-family:'Inter',sans-serif;font-size:0.7rem;font-weight:500;border:1px solid var(--gold);cursor:pointer;letter-spacing:3px;text-transform:uppercase;transition:all 0.3s cubic-bezier(0.16,1,0.3,1);box-shadow:var(--shadow-md)}
-.btn-primary:hover{background:var(--gold);color:var(--ink);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
-.btn-wa{background:transparent;color:var(--wa);padding:0.75rem 1.8rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;border:1px solid rgba(37,211,102,0.4);cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s}
-.btn-wa:hover{background:rgba(37,211,102,0.08)}
-.hero-stats{display:flex;flex-direction:row;gap:0;position:relative;z-index:1;border:1px solid rgba(196,82,90,0.2)}
-.hstat{flex:1;background:rgba(255,255,255,0.02);padding:1.1rem 1.3rem;border-right:1px solid rgba(196,82,90,0.1);text-align:center}
-.hstat:last-child{border-right:none}
-.hstat-label{font-size:0.56rem;color:rgba(196,82,90,0.5);font-weight:500;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
-.hstat-val{font-family:'Playfair Display',serif;font-size:1rem;font-weight:400;color:var(--pink);letter-spacing:0.2px}
+/* ── TORY BURCH STYLE HERO ── */
+.tb-hero { position: relative; width: 100%; height: 95vh; min-height: 600px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; background: var(--ink); }
+.tb-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 10s ease-out; }
+.tb-hero:hover .tb-hero-bg { transform: scale(1.05); }
+.tb-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 40%, transparent 100%); pointer-events: none; }
+.tb-hero-content { position: relative; z-index: 2; text-align: center; padding: 3rem 2rem 5rem; width: 100%; max-width: 800px; color: #fff; }
+.tb-hero-tag { font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1.5rem; display: block; }
+.tb-hero-title { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 6vw, 5rem); font-weight: 400; line-height: 1.1; margin-bottom: 1rem; letter-spacing: 1px; }
+.tb-hero-title em { font-style: italic; color: #fff; }
+.tb-hero-sub { font-size: 0.85rem; line-height: 1.6; margin-bottom: 2rem; font-weight: 300; letter-spacing: 0.5px; opacity: 0.9; }
+.tb-hero-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.tb-btn-primary { background: #fff; color: var(--ink); padding: 0.9rem 2.8rem; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; border: 1px solid #fff; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: all 0.3s ease; text-decoration: none; }
+.tb-btn-primary:hover { background: transparent; color: #fff; }
+.tb-btn-ghost { background: transparent; color: #fff; padding: 0.9rem 2.8rem; font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 500; border: 1px solid #fff; cursor: pointer; letter-spacing: 2px; text-transform: uppercase; transition: all 0.3s ease; text-decoration: none; }
+.tb-btn-ghost:hover { background: #fff; color: var(--ink); }
 
 /* ── SHARED SECTION ELEMENTS ── */
 .sec-divider{width:40px;height:1px;background:rgba(196,82,90,0.3);margin:0 auto}
@@ -198,17 +185,15 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .sale-pill,.sale-pill:hover,.sale-pill.active{color:#fff;background:var(--pink-deep);border-color:var(--pink-deep)}
 .sale-pill-ct{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.25);color:#fff;font-size:0.5rem;font-weight:700;padding:1px 5px;border-radius:20px;margin-left:3px}
 
-/* ── SPOTLIGHT ── */
-.spotlight{position:relative;min-height:440px;display:flex;align-items:center;overflow:hidden;background:var(--ink2)}
-.spotlight-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform 8s ease}
-.spotlight:hover .spotlight-bg{transform:scale(1.04)}
-.spotlight-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(26,16,21,0.88) 0%,rgba(26,16,21,0.55) 55%,rgba(26,16,21,0.15) 100%)}
-.spotlight-content{position:relative;z-index:1;padding:5rem 2rem;max-width:1100px;width:100%;margin:0 auto}
-.spotlight-eyebrow{font-size:0.58rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1rem;display:block}
-.spotlight-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4vw,3.2rem);color:#fff;line-height:1.15;margin-bottom:0.8rem;font-weight:400;max-width:480px}
-.spotlight-sub{font-size:0.82rem;color:#8A7070;line-height:1.8;margin-bottom:1.8rem;max-width:400px;font-weight:300}
-.spotlight-cta{display:inline-block;background:var(--pink-deep);color:#fff;padding:0.75rem 2.2rem;font-family:'Inter',sans-serif;font-size:0.68rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 12px rgba(196,82,90,0.28)}
-.spotlight-cta:hover{background:var(--pink-dark);box-shadow:0 4px 20px rgba(196,82,90,0.38);transform:translateY(-1px)}
+/* ── TORY BURCH STYLE SPOTLIGHT ── */
+.tb-spotlight { position: relative; width: 100%; height: 75vh; min-height: 500px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg2); margin: 2rem 0; }
+.tb-spotlight-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 8s ease; }
+.tb-spotlight:hover .tb-spotlight-bg { transform: scale(1.03); }
+.tb-spotlight-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.2); pointer-events: none; }
+.tb-spotlight-content { position: relative; z-index: 2; text-align: center; padding: 3rem; color: #fff; max-width: 600px; }
+.tb-spotlight-eyebrow { font-family: 'Inter', sans-serif; font-size: 0.6rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1rem; display: block; }
+.tb-spotlight-title { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 400; line-height: 1.1; margin-bottom: 1rem; }
+.tb-spotlight-sub { font-size: 0.85rem; line-height: 1.6; margin-bottom: 2rem; font-weight: 300; }
 
 /* ── CATEGORY GRID ── */
 .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
@@ -536,11 +521,10 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 @media(max-width:768px){
   .nav-links,.wa-nav{display:none}
   .hamburger{display:flex}
-  .hero{padding:3rem 1.5rem;flex-direction:column}
-  .hero-title{font-size:clamp(2.2rem,7vw,3rem)}
-  .hero-stats{flex-direction:column;width:100%}
-  .hstat{border-right:none;border-bottom:1px solid rgba(196,82,90,0.1);text-align:left}
-  .hstat:last-child{border-bottom:none}
+  .tb-hero { height: 80vh; min-height: 500px; }
+  .tb-spotlight { height: 60vh; min-height: 400px; }
+  .tb-hero-content { padding: 2rem 1.5rem 3rem; }
+  .tb-btn-primary, .tb-btn-ghost { padding: 0.8rem 2rem; font-size: 0.65rem; }
   .cat-cards{grid-template-columns:1fr}
   .testi-grid{grid-template-columns:1fr}
   .footer-grid{grid-template-columns:1fr 1fr;gap:2rem}
@@ -667,13 +651,6 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .new-badge{position:absolute;top:8px;right:8px;background:#1A6B40;color:#fff;font-size:0.5rem;font-weight:700;letter-spacing:1.5px;padding:3px 7px;text-transform:uppercase;z-index:2}
 /* ── BATCH COUNTDOWN ── */
 .batch-cd{font-style:normal;font-size:0.72rem;font-family:'Inter',sans-serif;font-weight:600;color:var(--pink);background:rgba(196,82,90,0.12);padding:2px 8px;letter-spacing:1px;margin-left:0.6rem;display:inline-block;vertical-align:middle}
-/* ── HERO IMAGE ── */
-.hero-right{position:relative;z-index:1;width:320px;flex-shrink:0}
-.hero-img-frame{width:100%;height:380px;overflow:hidden;position:relative;box-shadow:0 16px 56px rgba(0,0,0,0.45)}
-.hero-img-frame img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform 8s ease}
-.hero-img-frame:hover img{transform:scale(1.04)}
-.hero-img-tag{font-size:0.52rem;color:rgba(196,82,90,0.45);letter-spacing:2px;text-transform:uppercase;text-align:right;margin-top:5px}
-@media(max-width:900px){.hero-right{display:none}}
 /* ── CARD FADE-IN ANIMATION ── */
 @keyframes fadeCardIn{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 .products-grid .prod-card,.feat-wrap .prod-card{background:var(--card);overflow:hidden;cursor:pointer;transition:all 0.4s cubic-bezier(0.16,1,0.3,1);box-shadow:var(--shadow);border:1px solid transparent}
@@ -789,55 +766,18 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
   </div>
 </div>
 
-<!-- HERO CAROUSEL -->
-<div class="hero-carousel" id="heroCarousel">
-  <div class="hc-slide active" style="background-image:url('https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=1600&q=90')">
-    <div class="hc-overlay"></div>
-    <div class="hc-content">
-      <span class="hc-eyebrow">New Season</span>
-      <h1 class="hc-title">Beauty,<br><em>Redefined</em></h1>
-      <p class="hc-sub">Charlotte Tilbury · Fenty · NARS · MAC — authentic, sourced fresh from the USA</p>
-      <div class="hc-btns">
-        <button class="hc-btn-primary" onclick="location.href='products.html?cat=makeup'">Shop Beauty</button>
-        <button class="hc-btn-ghost" onclick="openWA('')">WhatsApp Us</button>
-      </div>
+<!-- TORY BURCH STYLE HERO -->
+<div class="tb-hero" id="homeHero">
+  <img src="https://images.unsplash.com/photo-1492288991661-058aa541ff43?w=1600&q=90" alt="Hero Background" class="tb-hero-bg" id="heroBgImage">
+  <div class="tb-hero-overlay"></div>
+  <div class="tb-hero-content">
+    <span class="tb-hero-tag" id="heroTag">New Season</span>
+    <h1 class="tb-hero-title" id="heroTitle">Beauty,<br><em>Redefined</em></h1>
+    <p class="tb-hero-sub" id="heroSub">Charlotte Tilbury · Fenty · NARS · MAC — authentic, sourced fresh from the USA</p>
+    <div class="tb-hero-btns">
+      <a href="products.html" class="tb-btn-primary" id="heroBtnShop">Shop Collection</a>
+      <a href="#" class="tb-btn-ghost" id="heroBtnWa" onclick="openWA('')">Contact Us</a>
     </div>
-  </div>
-  <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1600&q=90')">
-    <div class="hc-overlay"></div>
-    <div class="hc-content">
-      <span class="hc-eyebrow">Just Arrived</span>
-      <h1 class="hc-title">American<br><em>Fashion</em></h1>
-      <p class="hc-sub">Coach · Free People · Anthropologie · Nordstrom — delivered to Pakistan</p>
-      <div class="hc-btns">
-        <button class="hc-btn-primary" onclick="location.href='products.html?cat=fashion'">Shop Fashion</button>
-        <button class="hc-btn-ghost" onclick="location.href='products.html?cat=bags'">Shop Bags</button>
-      </div>
-    </div>
-  </div>
-  <div class="hc-slide" style="background-image:url('https://images.unsplash.com/photo-1541643600914-78b084683702?w=1600&q=90')">
-    <div class="hc-overlay"></div>
-    <div class="hc-content">
-      <span class="hc-eyebrow">US Exclusives</span>
-      <h1 class="hc-title">Luxury<br><em>Fragrance</em></h1>
-      <p class="hc-sub">Jo Malone · Maison Margiela · Viktor &amp; Rolf — US exclusives, shipped to you</p>
-      <div class="hc-btns">
-        <button class="hc-btn-primary" onclick="location.href='products.html?cat=fragrance'">Shop Fragrance</button>
-      </div>
-    </div>
-  </div>
-  <div class="hc-dots">
-    <button class="hc-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
-    <button class="hc-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
-    <button class="hc-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
-  </div>
-  <button class="hc-arrow hc-prev" onclick="stepSlide(-1)" aria-label="Previous slide">‹</button>
-  <button class="hc-arrow hc-next" onclick="stepSlide(1)" aria-label="Next slide">›</button>
-  <div class="hc-stats">
-    <div class="hstat"><div class="hstat-val" data-count="250" data-suffix="+">250+</div><div class="hstat-label">Products</div></div>
-    <div class="hstat"><div class="hstat-val" data-count="500" data-suffix="+">500+</div><div class="hstat-label">Happy Customers</div></div>
-    <div class="hstat"><div class="hstat-val" data-count="4.9" data-suffix="★" data-decimal="1">4.9★</div><div class="hstat-label">Avg Rating</div></div>
-    <div class="hstat"><div class="hstat-val" data-count="80" data-suffix="+">80+</div><div class="hstat-label">US Brands</div></div>
   </div>
 </div>
 
@@ -2899,21 +2839,66 @@ window.addEventListener('DOMContentLoaded', async () => {
 <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 <script src="js/enhance.js"></script>
 <script>
-/* ── SECTION LAYOUT FROM PAGE BUILDER ── */
+/* ── PAGE CONTENT LOADER ── */
 (function(){
-  async function applyHomeLayout(){
+  async function applyHomeContent(){
+    let content = null;
     let layout = null;
-    // Try Supabase first if available
+
+    // Load from Supabase first
     if(typeof _supa !== 'undefined' && _supa){
       try{
-        const {data} = await _supa.from('site_content').select('content').eq('page','layout_home').single();
-        if(data && data.content) layout = data.content;
+        const {data} = await _supa.from('site_content').select('content').eq('page','home').single();
+        if(data && data.content) content = data.content;
+        const layoutData = await _supa.from('site_content').select('content').eq('page','layout_home').single();
+        if(layoutData.data && layoutData.data.content) layout = layoutData.data.content;
       }catch(e){}
     }
-    if(!layout){
-      const raw = localStorage.getItem('gb_layout_home');
-      if(raw) layout = JSON.parse(raw);
+    
+    // Fallback to local storage
+    if(!content){
+      const rawC = localStorage.getItem('gb_content_home');
+      if(rawC) content = JSON.parse(rawC);
     }
+    if(!layout){
+      const rawL = localStorage.getItem('gb_layout_home');
+      if(rawL) layout = JSON.parse(rawL);
+    }
+
+    // Apply Static Content (Hero, Spotlight, etc.)
+    if(content){
+      // Hero
+      if(content.hero_bg_image) document.getElementById('heroBgImage').src = content.hero_bg_image;
+      if(content.hero_title) document.getElementById('heroTitle').innerHTML = _es(content.hero_title).replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+      if(content.hero_tag) document.getElementById('heroTag').textContent = content.hero_tag;
+      if(content.hero_sub) document.getElementById('heroSub').textContent = content.hero_sub;
+      if(content.hero_btn_shop) document.getElementById('heroBtnShop').textContent = content.hero_btn_shop;
+      if(content.hero_btn_wa) document.getElementById('heroBtnWa').textContent = content.hero_btn_wa;
+      
+      // Batch Announcement
+      if(content.batch_active){
+        document.getElementById('batchBar').style.display = 'block';
+        if(content.batch_text) document.getElementById('batchBarText').innerHTML = _es(content.batch_text).replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+      } else {
+        document.getElementById('batchBar').style.display = 'none';
+      }
+
+      // Announcement Marquee
+      if(content.announce_items){
+        const items = content.announce_items.split('\n').filter(x=>x.trim());
+        if(items.length){
+          let trackHtml = '';
+          for(let i=0; i<4; i++){ // repeat for marquee effect
+            items.forEach(item => {
+              trackHtml += `<span>${_es(item)}</span><span class="announce-sep">&nbsp;✦&nbsp;</span>`;
+            });
+          }
+          document.getElementById('announceTrack').innerHTML = trackHtml;
+        }
+      }
+    }
+
+    // Apply Dynamic Page Builder Layout
     if(!layout) return;
 
     const { sections_order, sections_hidden, custom_sections } = layout;
@@ -2967,14 +2952,14 @@ window.addEventListener('DOMContentLoaded', async () => {
         +(s.body?'<p style="color:var(--muted);font-size:0.85rem;line-height:1.8">'+_es(s.body)+'</p>':'')
         +'</div>';
     } else if(s.type === 'img-banner'){
-      d.style.cssText = 'position:relative;min-height:360px;overflow:hidden;display:flex;align-items:center;justify-content:center';
-      d.innerHTML = (s.image?'<div style="position:absolute;inset:0;background-image:url(''+_es(s.image)+'');background-size:cover;background-position:center"></div>':'')
-        +'<div style="position:absolute;inset:0;background:rgba(19,12,16,0.55)"></div>'
-        +'<div style="position:relative;text-align:center;padding:3rem 2rem;max-width:700px">'
-        +(s.eyebrow?'<div style="font-size:0.58rem;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:var(--pink-mid);margin-bottom:1rem">'+_es(s.eyebrow)+'</div>':'')
-        +(s.heading?'<h2 style="font-family:'Playfair Display',serif;color:#fff;font-size:2rem;font-weight:400;margin-bottom:0.8rem">'+_es(s.heading)+'</h2>':'')
-        +(s.sub?'<p style="color:rgba(255,255,255,0.7);font-size:0.82rem;margin-bottom:1.4rem">'+_es(s.sub)+'</p>':'')
-        +(s.btn_text?'<a href="'+(s.btn_link||'products.html')+'" style="display:inline-block;padding:0.65rem 2rem;background:var(--pink-deep);color:#fff;font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;text-decoration:none">'+_es(s.btn_text)+'</a>':'')
+      d.className = 'tb-spotlight';
+      d.innerHTML = (s.image?`<img src="${_es(s.image)}" alt="" class="tb-spotlight-bg">`:'')
+        +'<div class="tb-spotlight-overlay"></div>'
+        +'<div class="tb-spotlight-content">'
+        +(s.eyebrow?'<span class="tb-spotlight-eyebrow">'+_es(s.eyebrow)+'</span>':'')
+        +(s.heading?'<h2 class="tb-spotlight-title">'+_es(s.heading)+'</h2>':'')
+        +(s.sub?'<p class="tb-spotlight-sub">'+_es(s.sub)+'</p>':'')
+        +(s.btn_text?'<a href="'+(s.btn_link||'products.html')+'" class="tb-btn-primary" style="border-color:#fff">'+_es(s.btn_text)+'</a>':'')
         +'</div>';
     } else if(s.type === 'divider'){
       d.style.cssText = 'height:3rem;border-top:1px solid var(--border);background:var(--bg2)';
@@ -3019,7 +3004,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   function _es(v){ const t=document.createElement('div');t.textContent=v;return t.innerHTML; }
 
   // Run after a short delay to let other content scripts settle
-  setTimeout(applyHomeLayout, 120);
+  setTimeout(applyHomeContent, 120);
 })();
 
 // ── SWIPE-TO-DISMISS CART ──
