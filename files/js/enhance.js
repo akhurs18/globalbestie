@@ -4,7 +4,7 @@
 /* ── 1. SPLIT-TEXT HEADING REVEAL ── */
 (function () {
   const TARGETS = [
-    '#heroTitle', '#hiwTitle', '#spotlightTitle',
+    '.tb-hero-title', '.tb-spotlight-title', '#hiwTitle', '#spotlightTitle',
     '.page-title', '.section-title', '.about-hero-title',
     '.contact-hero-title', '.faq-hero-title', '.policy-hero-title'
   ];
@@ -122,13 +122,13 @@
 
 /* ── 4. HERO IMAGE PARALLAX ── */
 (function () {
-  const img = document.querySelector('.hero-img-frame img');
-  if (!img) return;
+  const bg = document.querySelector('.tb-hero-bg');
+  if (!bg) return;
   let ticking = false;
   window.addEventListener('scroll', () => {
     if (!ticking) {
       requestAnimationFrame(() => {
-        img.style.transform = 'translateY(' + (window.scrollY * 0.22) + 'px)';
+        bg.style.transform = 'translateY(' + (window.scrollY * 0.15) + 'px)';
         ticking = false;
       });
       ticking = true;
@@ -136,12 +136,41 @@
   }, { passive: true });
 })();
 
+/* ── 5. CUSTOM CURSOR ── */
+(function () {
+  const cursor = document.getElementById('custom-cursor');
+  if (!cursor || window.innerWidth < 900) return;
+  
+  let mouseX = 0, mouseY = 0;
+  let cursorX = 0, cursorY = 0;
+  
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+  
+  function loop() {
+    cursorX += (mouseX - cursorX) * 0.2;
+    cursorY += (mouseY - cursorY) * 0.2;
+    cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+  
+  // Expand on hoverable elements
+  const hoverables = document.querySelectorAll('a, button, .prod-card, .cat-card');
+  hoverables.forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+  });
+})();
+
 
 /* ── 6. SPOTLIGHT PARALLAX ── */
 (function () {
-  const bg = document.querySelector('.spotlight-bg');
+  const bg = document.querySelector('.tb-spotlight-bg');
   if (!bg) return;
-  const spot = bg.closest('.spotlight');
+  const spot = bg.closest('.tb-spotlight');
   let ticking = false;
   function update() {
     const r = spot.getBoundingClientRect();
@@ -242,7 +271,7 @@
 /* ── 11. MAGNETIC BUTTONS ── */
 (function () {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-  document.querySelectorAll('.btn-primary, .btn-wa, .spotlight-cta').forEach(btn => {
+  document.querySelectorAll('.tb-btn-primary, .tb-btn-ghost').forEach(btn => {
     btn.addEventListener('mousemove', e => {
       const r = btn.getBoundingClientRect();
       const dx = (e.clientX - (r.left + r.width  / 2)) * 0.2;
@@ -344,7 +373,7 @@
 
 /* ── 15. SCROLL REVEAL — SECONDARY ELEMENTS ── */
 (function () {
-  const SEL = '.feat-header, .spotlight-sub, .spotlight-cta, .policy-strip, .brand-strip';
+  const SEL = '.feat-header, .tb-spotlight-sub, .tb-spotlight-content, .policy-strip, .brand-strip, .cat-editorial';
   const obs = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (!e.isIntersecting) return;

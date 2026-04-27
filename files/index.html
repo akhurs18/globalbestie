@@ -53,6 +53,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);-webki
 .batch-bar-text b,.batch-bar-text strong{font-style:normal;color:var(--pink-mid);font-weight:500}
 @media(max-width:600px){.batch-bar-inner{padding:0.55rem 1rem}.batch-bar-text{font-size:0.88rem}}
 
+/* ── CUSTOM CURSOR ── */
+body { cursor: none; }
+a, button, input, select, textarea, .prod-card, .cat-card, .tb-btn-primary, .tb-btn-ghost { cursor: none; }
+.custom-cursor { position: fixed; top: 0; left: 0; width: 12px; height: 12px; background: rgba(255,255,255,0.8); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), height 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease; mix-blend-mode: difference; }
+.custom-cursor.hover { width: 45px; height: 45px; background: rgba(255,255,255,0.2); backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.4); mix-blend-mode: normal; }
+@media (max-width: 900px) { body { cursor: auto; } .custom-cursor { display: none; } a, button, .prod-card { cursor: pointer; } }
+
 /* ── NAV ── */
 nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;height:68px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(196,82,90,0.2)}
 .logo{font-family:'Playfair Display',serif;color:#fff;font-size:1.55rem;font-weight:500;letter-spacing:0.5px;cursor:pointer}
@@ -83,9 +90,9 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 .mobile-nav-close{position:absolute;top:1.5rem;right:2rem;color:var(--pink-mid);font-size:1.4rem;cursor:pointer;background:none;border:none}
 
 /* ── TORY BURCH STYLE HERO ── */
+@keyframes kenBurns { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 .tb-hero { position: relative; width: 100%; height: 95vh; min-height: 600px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; background: var(--ink); }
-.tb-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; transition: transform 10s ease-out; }
-.tb-hero:hover .tb-hero-bg { transform: scale(1.05); }
+.tb-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; animation: kenBurns 40s ease-in-out infinite; }
 .tb-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 40%, transparent 100%); pointer-events: none; }
 .tb-hero-content { position: relative; z-index: 2; text-align: center; padding: 3rem 2rem 5rem; width: 100%; max-width: 800px; color: #fff; }
 .tb-hero-tag { font-family: 'Inter', sans-serif; font-size: 0.65rem; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 1.5rem; display: block; }
@@ -680,6 +687,8 @@ nav{background:rgba(19, 12, 16, 0.85);backdrop-filter:blur(12px);-webkit-backdro
 <link rel="stylesheet" href="css/enhance.css">
 </head>
 <body>
+
+<div id="custom-cursor" class="custom-cursor"></div>
 
 <!-- ANNOUNCEMENT BAR -->
 <div class="announce-bar">
