@@ -1,0 +1,14 @@
+{
+  "name": "global-bestie-commerce",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 4173",
+    "build": "node scripts/check-static-app.mjs",
+    "marketing:daily": "node scripts/run-daily-marketing-agent.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
