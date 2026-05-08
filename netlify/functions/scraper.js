@@ -101,6 +101,44 @@ function makeRemotionBrief(candidate) {
 }
 
 function makeSeedCandidates(batchId = "", targetCount = 200) {
+  const IMAGES = {
+    handbags: [
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=84",
+    ],
+    shoes: [
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=900&q=84",
+    ],
+    makeup: [
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1631214540242-3cd8c30f9f60?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1583241800698-e8ab01830a6a?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1586495777744-4e6ffeef8041?auto=format&fit=crop&w=900&q=84",
+    ],
+    fragrance: [
+      "https://images.unsplash.com/photo-1541643600914-78b084683702?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1595535873420-a599195b3f4a?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1588405748880-12d1d2a59f75?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1610461888750-10bfc601b4a6?auto=format&fit=crop&w=900&q=84",
+    ],
+    accessories: [
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=84",
+      "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?auto=format&fit=crop&w=900&q=84",
+    ],
+  };
+
   const seeds = [
     // Handbags
     { brand: "Coach", title: "Tabby Shoulder Bag 26", category: "handbags", url: "https://www.coach.com/", usd: 395, ship: 14500, score: 96, angle: "most-requested blush/neutral", hook: "Unbox → price reveal → 4-week preorder window." },
@@ -158,7 +196,7 @@ function makeSeedCandidates(batchId = "", targetCount = 200) {
       shipping_pkr: seed.ship,
       score: Math.max(70, seed.score - Math.floor(candidates.length / 8)),
       status: "pending",
-      image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
+      image_url: (IMAGES[seed.category] || IMAGES.handbags)[cursor % (IMAGES[seed.category] || IMAGES.handbags).length],
       suggested_description: buildProductDescription({
         title,
         category: seed.category,
