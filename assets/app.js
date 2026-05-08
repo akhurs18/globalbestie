@@ -490,6 +490,9 @@ const state = {
   },
 };
 
+const selectedTrends = new Set();
+const selectedProducts = new Set();
+
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 const has = (selector) => Boolean(qs(selector));
@@ -771,7 +774,17 @@ function renderProducts() {
   setHTML("[data-featured-products]", featured.map((product) => productCard(product)).join(""));
   setHTML("[data-shop-products]", filteredProducts().map((product) => productCard(product)).join(""));
   const adminGrid = qs("[data-admin-products]");
-  if (adminGrid) adminGrid.innerHTML = state.products.map((product) => productCard(product, { admin: true })).join("");
+  if (adminGrid) {
+    adminGrid.innerHTML = state.products.map((product) => `
+      <div class="admin-product-wrap${selectedProducts.has(product.id) ? " selected" : ""}">
+        <label class="card-select-wrap">
+          <input type="checkbox" class="card-checkbox" data-product-select="${product.id}" ${selectedProducts.has(product.id) ? "checked" : ""} />
+        </label>
+        ${productCard(product, { admin: true })}
+      </div>
+    `).join("");
+    updateProductBulkBar();
+  }
 }
 
 function cartLines() {
@@ -1236,7 +1249,10 @@ function renderShipmentBatches() {
 
 function renderTrends() {
   setHTML("[data-trend-candidates]", state.trends.map((trend) => `
-    <article class="trend-card">
+    <article class="trend-card${selectedTrends.has(trend.id) ? " selected" : ""}">
+      <label class="card-select-wrap">
+        <input type="checkbox" class="card-checkbox" data-trend-select="${trend.id}" ${selectedTrends.has(trend.id) ? "checked" : ""} />
+      </label>
       <img src="${trend.image_url}" alt="${trend.title}" loading="lazy" />
       <span class="status-pill preorder">Trend score ${trend.score}</span>
       <h3>${trend.title}</h3>
@@ -1248,12 +1264,33 @@ function renderTrends() {
       </div>
       <small>${trend.batch_id || "Manual batch"} · ${trend.production_status || "fetched"} · ${trend.suggested_description || "Add final copy and media before approval."}</small>
       <div class="mini-actions">
-        <button class="button secondary" type="button" data-action="edit-trend" data-trend-id="${trend.id}">Edit candidate</button>
+        <button class="button secondary" type="button" data-action="edit-trend" data-trend-id="${trend.id}">Edit</button>
         <button class="button primary" type="button" data-action="approve-trend" data-trend-id="${trend.id}">Approve</button>
         <button class="button secondary" type="button" data-action="reject-trend" data-trend-id="${trend.id}">Reject</button>
       </div>
     </article>
   `).join(""));
+  updateTrendBulkBar();
+}
+
+function updateTrendBulkBar() {
+  const n = selectedTrends.size;
+  qsa("[data-trends-sel-count]").forEach((el) => { el.textContent = n; });
+  qsa("[data-trends-total]").forEach((el) => { el.textContent = state.trends.length; });
+  qsa("[data-trends-bulk-bar] button").forEach((btn) => { btn.disabled = n === 0; });
+  const selectAll = qs("[data-action='select-all-trends']");
+  if (selectAll) selectAll.indeterminate = n > 0 && n < state.trends.length;
+  if (selectAll) selectAll.checked = n === state.trends.length && state.trends.length > 0;
+}
+
+function updateProductBulkBar() {
+  const n = selectedProducts.size;
+  qsa("[data-products-sel-count]").forEach((el) => { el.textContent = n; });
+  qsa("[data-products-total]").forEach((el) => { el.textContent = state.products.length; });
+  qsa("[data-products-bulk-bar] button").forEach((btn) => { btn.disabled = n === 0; });
+  const selectAll = qs("[data-action='select-all-products']");
+  if (selectAll) selectAll.indeterminate = n > 0 && n < state.products.length;
+  if (selectAll) selectAll.checked = n === state.products.length && state.products.length > 0;
 }
 
 function renderMarketing() {
@@ -1881,8 +1918,76 @@ async function rejectTrend(trendId) {
     body: JSON.stringify({ status: "rejected" }),
   }, { trend: { id: trendId, status: "rejected" } });
   state.trends = state.trends.filter((item) => item.id !== trendId);
+  selectedTrends.delete(trendId);
   renderTrends();
   toast("Trend rejected.");
+}
+
+async function bulkApproveTrends() {
+  if (!selectedTrends.size) return;
+  const ids = [...selectedTrends];
+  const fallbackProducts = ids.map((id) => {
+    const trend = state.trends.find((t) => t.id === id);
+    if (!trend) return null;
+    return {
+      id: trend.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      title: trend.title,
+      brand: trend.brand || trend.title.split(" ").slice(0, 2).join(" "),
+      category: trend.category,
+      description: trend.suggested_description || `Trend-approved product imported from ${trend.source_url}.`,
+      usa_price_usd: Number(trend.usa_price_usd),
+      shipping_pkr: Number(trend.shipping_pkr),
+      fx_rate: state.settings.fx_rate,
+      markup_rate: state.settings.markup_rate,
+      stock_mode: "preorder",
+      inventory: 0,
+      image_url: trend.asset_urls?.[0] || trend.image_url,
+      source_url: trend.source_url,
+      featured: false,
+      preorder_weeks: state.settings.preorder_weeks,
+    };
+  }).filter(Boolean);
+
+  await apiFetch("/api/admin/trends/bulk", {
+    method: "POST",
+    body: JSON.stringify({ ids, action: "approved" }),
+  }, { updated: ids.length, productsCreated: fallbackProducts.length });
+
+  fallbackProducts.forEach((product) => state.products.unshift(product));
+  state.trends = state.trends.filter((t) => !selectedTrends.has(t.id));
+  selectedTrends.clear();
+  renderAll();
+  toast(`${ids.length} trend${ids.length === 1 ? "" : "s"} approved and published to shop.`);
+}
+
+async function bulkDenyTrends() {
+  if (!selectedTrends.size) return;
+  const ids = [...selectedTrends];
+
+  await apiFetch("/api/admin/trends/bulk", {
+    method: "POST",
+    body: JSON.stringify({ ids, action: "rejected" }),
+  }, { updated: ids.length });
+
+  state.trends = state.trends.filter((t) => !selectedTrends.has(t.id));
+  selectedTrends.clear();
+  renderTrends();
+  toast(`${ids.length} trend${ids.length === 1 ? "" : "s"} rejected.`);
+}
+
+async function bulkRemoveProducts() {
+  if (!selectedProducts.size) return;
+  const ids = [...selectedProducts];
+
+  await apiFetch("/api/catalog", {
+    method: "DELETE",
+    body: JSON.stringify({ ids }),
+  }, { removed: ids.length });
+
+  state.products = state.products.filter((p) => !selectedProducts.has(p.id));
+  selectedProducts.clear();
+  renderProducts();
+  toast(`${ids.length} product${ids.length === 1 ? "" : "s"} removed from site.`);
 }
 
 function wireEvents() {
@@ -1930,7 +2035,21 @@ function wireEvents() {
     if (action === "save-order-note") return saveOrderNote(orderId);
     if (action === "run-scraper") return runScraper();
     if (action === "new-shipment-batch") return qs("[data-shipment-form] input[name='name']")?.focus();
-    if (action === "bulk-trends") return toast("Bulk review mode ready: select all, completeness, duplicate, and official-source checks should connect to Supabase next.");
+    if (action === "select-all-trends") {
+      if (target.checked) state.trends.forEach((t) => selectedTrends.add(t.id));
+      else selectedTrends.clear();
+      renderTrends();
+      return;
+    }
+    if (action === "select-all-products") {
+      if (target.checked) state.products.forEach((p) => selectedProducts.add(p.id));
+      else selectedProducts.clear();
+      renderProducts();
+      return;
+    }
+    if (action === "bulk-approve-trends") return bulkApproveTrends();
+    if (action === "bulk-deny-trends") return bulkDenyTrends();
+    if (action === "bulk-remove-products") return bulkRemoveProducts();
     if (action === "edit-trend") return toast("Candidate editing should open the product editor with source, media, description, and Remotion fields.");
     if (action === "approve-trend") return approveTrend(trendId);
     if (action === "reject-trend") return rejectTrend(trendId);
@@ -1938,6 +2057,25 @@ function wireEvents() {
     if (action === "reply-lead") return replyLead(target.dataset.leadId);
     if (action === "sync-marketing") return syncMarketing();
     if (action === "new-campaign") return qs("[data-campaign-form] input[name='name']")?.focus();
+  });
+
+  document.addEventListener("change", (event) => {
+    const trendSelect = event.target.dataset.trendSelect;
+    if (trendSelect) {
+      if (event.target.checked) selectedTrends.add(trendSelect);
+      else selectedTrends.delete(trendSelect);
+      event.target.closest(".trend-card")?.classList.toggle("selected", event.target.checked);
+      updateTrendBulkBar();
+      return;
+    }
+    const productSelect = event.target.dataset.productSelect;
+    if (productSelect) {
+      if (event.target.checked) selectedProducts.add(productSelect);
+      else selectedProducts.delete(productSelect);
+      event.target.closest(".admin-product-wrap")?.classList.toggle("selected", event.target.checked);
+      updateProductBulkBar();
+      return;
+    }
   });
 
   document.addEventListener("keydown", (event) => {

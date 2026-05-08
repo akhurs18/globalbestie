@@ -251,6 +251,15 @@
                   </div>
                   <button class="button secondary" type="button" data-action="new-product">New product</button>
                 </div>
+                <div class="bulk-bar" data-products-bulk-bar>
+                  <label class="bulk-select-all">
+                    <input type="checkbox" data-action="select-all-products" />
+                    Select all (<span data-products-total>0</span>)
+                  </label>
+                  <button class="button secondary" type="button" data-action="bulk-remove-products" disabled>
+                    Remove <span data-products-sel-count>0</span> from site
+                  </button>
+                </div>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
                   <label>Title<input name="title" required /></label>
@@ -284,8 +293,19 @@
                   </div>
                   <div class="mini-actions">
                     <button class="button secondary" type="button" data-action="run-scraper">Run 200-product batch</button>
-                    <button class="button secondary" type="button" data-action="bulk-trends">Bulk review</button>
                   </div>
+                </div>
+                <div class="bulk-bar" data-trends-bulk-bar>
+                  <label class="bulk-select-all">
+                    <input type="checkbox" data-action="select-all-trends" />
+                    Select all (<span data-trends-total>0</span>)
+                  </label>
+                  <button class="button primary" type="button" data-action="bulk-approve-trends" disabled>
+                    Approve <span data-trends-sel-count>0</span> selected
+                  </button>
+                  <button class="button secondary" type="button" data-action="bulk-deny-trends" disabled>
+                    Deny <span data-trends-sel-count>0</span>
+                  </button>
                 </div>
                 <div class="trend-grid" data-trend-candidates></div>
               </section>

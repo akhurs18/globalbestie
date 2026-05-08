@@ -62,6 +62,20 @@ export default async (req) => {
       return json({ product: saved, configured: true });
     }
 
+    if (req.method === "DELETE") {
+      if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+      const { ids } = await req.json();
+      if (!Array.isArray(ids) || !ids.length) return json({ error: "ids array required" }, { status: 400 });
+      if (!hasSupabase()) return json({ removed: ids.length, configured: false });
+      const idFilter = ids.map(encodeURIComponent).join(",");
+      await supabase(`/rest/v1/products?id=in.(${idFilter})`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify({ status: "archived", updated_at: new Date().toISOString() }),
+      });
+      return json({ removed: ids.length, configured: true });
+    }
+
     return json({ error: "Method not allowed" }, { status: 405 });
   } catch (error) {
     return json({ error: error.message }, { status: 500 });

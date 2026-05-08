@@ -310,6 +310,66 @@ h3 {
   flex-wrap: wrap;
 }
 
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.bulk-select-all {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  cursor: pointer;
+  margin-right: auto;
+  user-select: none;
+}
+
+.bulk-select-all input[type="checkbox"],
+.card-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pink-2);
+  cursor: pointer;
+}
+
+.card-select-wrap {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  line-height: 1;
+}
+
+.trend-card,
+.admin-product-wrap {
+  position: relative;
+}
+
+.trend-card.selected,
+.admin-product-wrap.selected {
+  outline: 2px solid var(--pink-2);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+.admin-product-wrap {
+  position: relative;
+}
+
+.admin-product-wrap .card-select-wrap {
+  top: 12px;
+  left: 12px;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
