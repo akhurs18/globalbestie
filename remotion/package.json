@@ -1,0 +1,17 @@
+{
+  "name": "globalbestie-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio src/index.jsx",
+    "render:one": "remotion render src/index.jsx ProductReel out/reel.mp4",
+    "render:batch": "node render.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.237",
+    "@remotion/google-fonts": "4.0.237",
+    "remotion": "4.0.237",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  }
+}
