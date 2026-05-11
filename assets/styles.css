@@ -1075,6 +1075,41 @@ dl div,
   border: 1px solid var(--line);
 }
 
+.policy-section {
+  max-width: 860px;
+  margin: 0 auto 64px;
+  padding: 0 22px;
+}
+
+.policy-list {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 24px 0 0;
+  list-style: none;
+}
+
+.policy-list li {
+  display: grid;
+  gap: 6px;
+  padding: 18px 22px;
+  border-left: 3px solid var(--pink-2);
+  background: rgba(255, 255, 255, 0.045);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.policy-list li strong {
+  font-size: 0.95rem;
+  color: var(--light);
+  letter-spacing: 0.01em;
+}
+
+.policy-list li span {
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
 .cart-drawer {
   position: fixed;
   inset: 0 0 0 auto;
