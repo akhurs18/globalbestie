@@ -1473,12 +1473,28 @@ function parseRoute() {
   return { viewName, params };
 }
 
-function setRoute() {
+let _transitioning = false;
+let _firstLoad = true;
+
+async function setRoute() {
+  if (_transitioning) return;
+  _transitioning = true;
   closeModal();
   const { viewName, params } = parseRoute();
   const fallbackView = document.body.dataset.page === "portal" ? "admin" : "home";
   const safeView = qs(`[data-view="${viewName}"]`) ? viewName : fallbackView;
+
+  const curtain = qs("#page-curtain");
+
+  if (!_firstLoad && curtain) {
+    curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
+    curtain.style.transform = "translateX(0%)";
+    await new Promise((r) => setTimeout(r, 440));
+  }
+  _firstLoad = false;
+
   qsa(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === safeView));
+
   if (safeView === "shop" && params.get("category")) {
     state.filters.category = params.get("category");
     const category = qs("[data-filter-category]");
@@ -1488,7 +1504,18 @@ function setRoute() {
   if (safeView === "checkout") {
     qs("[data-cart-drawer]")?.classList.remove("open");
   }
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0 });
+
+  if (curtain) {
+    await new Promise((r) => setTimeout(r, 16));
+    curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
+    curtain.style.transform = "translateX(101%)";
+    await new Promise((r) => setTimeout(r, 440));
+    curtain.style.transition = "none";
+    curtain.style.transform = "translateX(-101%)";
+  }
+
+  _transitioning = false;
 }
 
 function addToCart(productId) {
@@ -2126,10 +2153,78 @@ function wireEvents() {
 function initReveal() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-      if (entry.isIntersecting) entry.target.classList.add("visible");
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("visible");
+      const staggerTargets = entry.target.querySelectorAll(
+        ".process-rail article, .collection-tile, .faq-item, .policy-list li"
+      );
+      staggerTargets.forEach((child, i) => {
+        child.style.animationDelay = `${i * 85}ms`;
+        child.classList.add("stagger-child");
+      });
+      observer.unobserve(entry.target);
     });
-  }, { threshold: 0.14 });
+  }, { threshold: 0.08 });
   qsa(".reveal").forEach((node) => observer.observe(node));
+}
+
+function animateHeroText() {
+  const h1 = qs(".hero-copy h1");
+  if (!h1 || h1.dataset.split) return;
+  h1.dataset.split = "1";
+  const text = h1.textContent.trim();
+  h1.innerHTML = text.split(/\s+/).map((word, i) =>
+    `<span class="hero-word" style="--wi:${i}">${word}</span>`
+  ).join(" ");
+}
+
+function initCursor() {
+  const dot = qs("#cursor-dot");
+  const ring = qs("#cursor-ring");
+  if (!dot || !ring || window.matchMedia("(hover: none)").matches) return;
+
+  let ringX = 0, ringY = 0, dotX = 0, dotY = 0;
+  let visible = false;
+
+  document.addEventListener("mousemove", (e) => {
+    dotX = e.clientX;
+    dotY = e.clientY;
+    dot.style.transform = `translate(${dotX}px, ${dotY}px) translate(-50%, -50%)`;
+    if (!visible) {
+      visible = true;
+      dot.style.opacity = "1";
+      ring.style.opacity = "1";
+    }
+  });
+
+  document.addEventListener("mouseleave", () => {
+    visible = false;
+    dot.style.opacity = "0";
+    ring.style.opacity = "0";
+  });
+
+  document.addEventListener("mouseenter", () => {
+    if (dotX || dotY) {
+      visible = true;
+      dot.style.opacity = "1";
+      ring.style.opacity = "1";
+    }
+  });
+
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest("a, button, [role='button'], input, select, textarea")) {
+      ring.classList.add("expanded");
+    } else {
+      ring.classList.remove("expanded");
+    }
+  });
+
+  (function animateRing() {
+    ringX += (dotX - ringX) * 0.1;
+    ringY += (dotY - ringY) * 0.1;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%, -50%)`;
+    requestAnimationFrame(animateRing);
+  })();
 }
 
 function init() {
@@ -2141,7 +2236,9 @@ function init() {
   }
   setRoute();
   renderAll();
+  animateHeroText();
   initReveal();
+  initCursor();
   loadRemoteData();
 }
 
