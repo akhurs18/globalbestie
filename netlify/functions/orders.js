@@ -123,6 +123,75 @@ export default async (req) => {
       });
     }
 
+    if (req.method === "PATCH") {
+      const payload = await req.json();
+      const id = String(payload.id || "").trim();
+      const phone = String(payload.customer_phone || "").trim();
+      const stage = payload.payment_stage === "balance" ? "balance" : "advance";
+      if (!id || !phone) return json({ error: "Order number and phone are required." }, { status: 400 });
+
+      const now = new Date().toISOString();
+      const nextPaymentStatus = stage === "balance" ? "balance_uploaded" : "advance_uploaded";
+      const fallbackOrder = {
+        id,
+        customer_phone: phone,
+        payment_status: nextPaymentStatus,
+        transfer_reference: payload.transfer_reference || "",
+        proof_url: payload.transfer_file?.name || "",
+        events: [{
+          status: nextPaymentStatus,
+          note: `${stage === "balance" ? "Balance" : "Advance"} transfer proof uploaded by customer.`,
+          created_at: now,
+        }],
+      };
+
+      if (!hasSupabase()) return json({ order: fallbackOrder, configured: false });
+
+      const matches = await supabase(`/rest/v1/orders?id=eq.${encodeURIComponent(id)}&customer_phone=ilike.${encodeURIComponent(`*${phone}*`)}&select=*`);
+      const order = matches[0];
+      if (!order) return json({ error: "No matching order found for this order number and phone." }, { status: 404 });
+
+      const proofPath = await uploadTransferProof(id, payload.transfer_file);
+      const updates = {
+        payment_status: nextPaymentStatus,
+        transfer_reference: payload.transfer_reference || order.transfer_reference || "",
+        proof_url: proofPath || order.proof_url || "",
+        next_action: stage === "balance"
+          ? "Review remaining balance proof before local dispatch."
+          : "Review advance proof before sourcing.",
+        updated_at: now,
+      };
+
+      const [updated] = await supabase(`/rest/v1/orders?id=eq.${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: JSON.stringify(updates),
+      });
+
+      await supabase("/rest/v1/transfer_confirmations", {
+        method: "POST",
+        body: JSON.stringify({
+          order_id: id,
+          transfer_reference: payload.transfer_reference || "",
+          proof_path: proofPath,
+          status: "uploaded",
+          created_at: now,
+        }),
+      });
+
+      await supabase("/rest/v1/order_events", {
+        method: "POST",
+        body: JSON.stringify({
+          order_id: id,
+          status: nextPaymentStatus,
+          note: `${stage === "balance" ? "Balance" : "Advance"} transfer proof uploaded by customer.`,
+          created_at: now,
+        }),
+      });
+
+      return json({ order: updated, configured: true });
+    }
+
     return json({ error: "Method not allowed" }, { status: 405 });
   } catch (error) {
     return json({ error: error.message }, { status: 500 });

@@ -87,6 +87,11 @@ alter table public.products add column if not exists receipt_url text;
 alter table public.products add column if not exists supplier_cost_pkr numeric(14, 2) not null default 0;
 alter table public.products add column if not exists product_status text not null default 'active';
 alter table public.products add column if not exists social_proof text;
+-- New product fields for the rebuilt upload flow:
+--   marketing_badge: short tag like "Frequently requested" / "VIP drop" shown on cards
+--   variant_display_hint: short text shown as a chip on product cards (e.g. "Choose your shade")
+alter table public.products add column if not exists marketing_badge text;
+alter table public.products add column if not exists variant_display_hint text;
 
 create table if not exists public.orders (
   id text primary key,
@@ -208,8 +213,22 @@ create table if not exists public.order_items (
   variant text,
   source_url text,
   source_status text,
+  -- Per-item actual USD cost recorded by the owner when they buy in the USA.
+  -- Drives the Cashflow panel's "where is the money" math.
+  actual_usd_cost numeric(12, 2),
+  usd_purchased_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Backfill-safe migration: these columns may not exist on installs that ran
+-- earlier versions of the schema.
+alter table public.order_items add column if not exists actual_usd_cost numeric(12, 2);
+alter table public.order_items add column if not exists usd_purchased_at timestamptz;
+create index if not exists order_items_purchased_idx on public.order_items (usd_purchased_at desc);
+
+-- Per-product-on-order real photos uploaded after the item arrives in the USA.
+-- Drives the cashflow sourcing queue's "Add real photos" passive nudge.
+alter table public.order_items add column if not exists real_photo_urls jsonb not null default '[]'::jsonb;
 
 create table if not exists public.transfer_confirmations (
   id uuid primary key default gen_random_uuid(),
@@ -494,6 +513,10 @@ on conflict (id) do nothing;
 
 insert into storage.buckets (id, name, public)
 values ('transfer-proofs', 'transfer-proofs', false)
+on conflict (id) do nothing;
+
+insert into storage.buckets (id, name, public)
+values ('store-assets', 'store-assets', true)
 on conflict (id) do nothing;
 
 alter table public.store_settings enable row level security;

@@ -1,5 +1,16 @@
 import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
 
+// Production guard: when Netlify is doing a production build, refuse to ship
+// without the Maychats webhook signing secret. The webhook handler falls back
+// to "accept anything" if the secret is missing, which is fine for dev but
+// must not silently ship.
+if (process.env.CONTEXT === "production" && !process.env.MAYCHATS_WEBHOOK_SECRET) {
+  console.error(
+    "MAYCHATS_WEBHOOK_SECRET is not set in this production build. The Instagram (Maychats) webhook will accept unsigned requests — set the secret in Netlify → Site settings → Environment variables before deploying."
+  );
+  process.exit(1);
+}
+
 const requiredFiles = [
   "index.html",
   "portal.html",

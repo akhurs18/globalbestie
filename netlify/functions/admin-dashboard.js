@@ -1,4 +1,4 @@
-import { getOrders, getProducts, getSettings, getShipmentBatches, getTrends, hasSupabase, json, requireAdmin } from "./_shared/supabase.js";
+import { getAllProducts, getOrders, getSettings, getShipmentBatches, getTrends, hasSupabase, json, requireAdmin } from "./_shared/supabase.js";
 
 export default async (req) => {
   if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
@@ -6,7 +6,7 @@ export default async (req) => {
   try {
     const [orders, products, trends, settings, shipmentBatches] = await Promise.all([
       getOrders(),
-      getProducts(),
+      getAllProducts(),
       getTrends(),
       getSettings(),
       getShipmentBatches(),

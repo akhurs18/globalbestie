@@ -1,4 +1,4 @@
-import { getProducts, getSettings, hasSupabase, json, requireAdmin, upsertProduct } from "./_shared/supabase.js";
+import { getProducts, getSettings, hasSupabase, json, requireAdmin, supabase, upsertProduct } from "./_shared/supabase.js";
 
 function customerPrice(product, settings) {
   const fx = Number(product.fx_rate || settings.fx_rate || 282);
@@ -15,6 +15,12 @@ function publicProduct(product, settings) {
     category: product.category,
     description: product.description,
     customer_price_pkr: customerPrice(product, settings),
+    // Frontend pricing helper expects these to compute the same number client
+    // side; they're not secret.
+    usa_price_usd: product.usa_price_usd,
+    shipping_pkr: product.shipping_pkr,
+    fx_rate: product.fx_rate,
+    markup_rate: product.markup_rate,
     stock_mode: product.stock_mode,
     inventory: product.inventory,
     image_url: product.image_url,
@@ -22,6 +28,10 @@ function publicProduct(product, settings) {
     variants: product.variants,
     authenticity_note: product.authenticity_note,
     social_proof: product.social_proof,
+    // Customer-facing new fields — without these the card badge + variant
+    // chip never render on the storefront, only in the admin preview.
+    marketing_badge: product.marketing_badge,
+    variant_display_hint: product.variant_display_hint,
     featured: product.featured,
     preorder_weeks: product.preorder_weeks,
     status: product.status,

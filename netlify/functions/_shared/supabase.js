@@ -171,6 +171,11 @@ export async function getProducts() {
   return supabase("/rest/v1/products?status=eq.active&select=*&order=featured.desc,title.asc");
 }
 
+export async function getAllProducts() {
+  if (!hasSupabase()) return FALLBACK_PRODUCTS;
+  return supabase("/rest/v1/products?select=*&order=featured.desc,title.asc");
+}
+
 export async function getOrders(query = "") {
   if (!hasSupabase()) return [];
   const select = "select=*,order_items(*),order_events(*)";
@@ -234,6 +239,44 @@ export async function uploadTransferProof(orderId, file) {
   });
   if (!response.ok) throw new Error(await response.text());
   return objectPath;
+}
+
+// Fetches a remote image URL (typical case: scraper found something on Coach
+// or Sephora) and re-hosts it in our public store-assets bucket under the
+// products/ folder. This insulates us from retailer URL rot and gives us a
+// single origin for all transforms downstream.
+export async function downloadAndStoreImage(productId, remoteUrl) {
+  if (!remoteUrl || !hasSupabase()) return remoteUrl || "";
+  try {
+    const response = await fetch(remoteUrl, {
+      headers: { "User-Agent": "GlobalBestieIngest/1.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return remoteUrl;
+    const contentType = response.headers.get("content-type") || "image/jpeg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const ext = (contentType.split("/")[1] || "jpg").split(";")[0].replace(/[^a-z0-9]/gi, "");
+    const safeId = String(productId || "product").replace(/[^a-zA-Z0-9._-]/g, "-");
+    const objectPath = `products/${safeId}/${Date.now()}.${ext}`;
+    const url = env("SUPABASE_URL");
+    const key = env("SUPABASE_SERVICE_ROLE_KEY");
+    const upload = await fetch(`${url}/storage/v1/object/store-assets/${objectPath}`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": contentType,
+        "x-upsert": "true",
+      },
+      body: buffer,
+    });
+    if (!upload.ok) return remoteUrl;
+    return `${url}/storage/v1/object/public/store-assets/${objectPath}`;
+  } catch {
+    // Anything fails (404, timeout, retailer blocked us) — fall back to the
+    // original URL so the product can still publish.
+    return remoteUrl;
+  }
 }
 
 export function makeOrderId() {

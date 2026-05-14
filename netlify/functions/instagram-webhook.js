@@ -1,3 +1,15 @@
+// Maychats <-> Global Bestie Instagram bridge.
+//
+// We used to call the Meta Graph API directly from this function. We now hand
+// the Instagram connection off to Maychats:
+//   - Maychats holds the Instagram Business / Meta Page authorization.
+//   - Maychats POSTs inbound DMs to this webhook.
+//   - We POST replies back to Maychats, which delivers them on the IG account.
+//
+// The Netlify path stays /api/webhooks/instagram so any existing Maychats
+// configuration keeps working. We also expose /api/webhooks/maychats as the
+// canonical alias.
+
 import crypto from "node:crypto";
 import { hasSupabase, json, supabase } from "./_shared/supabase.js";
 
@@ -5,13 +17,19 @@ function env(name) {
   return globalThis.Netlify?.env?.get(name) || "";
 }
 
-function verifySignature(rawBody, signature) {
-  const secret = env("META_APP_SECRET");
+// Maychats signs every webhook body with an HMAC-SHA256 over the raw bytes,
+// using the shared secret you configured in the Maychats dashboard. If the
+// secret isn't set we skip verification so local/dev still works.
+function verifyMaychatsSignature(rawBody, signatureHeader) {
+  const secret = env("MAYCHATS_WEBHOOK_SECRET");
   if (!secret) return true;
-  if (!signature?.startsWith("sha256=")) return false;
-  const expected = `sha256=${crypto.createHmac("sha256", secret).update(rawBody).digest("hex")}`;
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
+  if (!signatureHeader) return false;
+  const provided = signatureHeader.startsWith("sha256=")
+    ? signatureHeader.slice("sha256=".length)
+    : signatureHeader;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const a = Buffer.from(provided, "utf8");
+  const b = Buffer.from(expected, "utf8");
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
@@ -54,7 +72,7 @@ function classifyMessage(text = "") {
   return "general";
 }
 
-function buildReply({ text, missingFields, intent, product }) {
+function buildReply({ missingFields, intent, product }) {
   if (intent === "human") {
     return "Hi bestie, I’m sending this to our team now so they can personally check it for you. Please keep your order number, transfer reference, or screenshot ready if this is about payment or delivery.";
   }
@@ -76,29 +94,103 @@ function buildReply({ text, missingFields, intent, product }) {
   return `Perfect, I have the key details for ${product || "your product"}. Our team will confirm availability, final PKR price, and shipment batch. Preorders require 50% advance after approval and the remaining balance once the shipment reaches Pakistan before local dispatch.`;
 }
 
+// Maychats has gone through several payload shapes depending on integration
+// version. We normalize all of them into the same {senderId, text, ...} shape
+// we used to build from Meta entry/messaging arrays.
 function getEvents(payload) {
-  return (payload.entry || []).flatMap((entry) => (entry.messaging || []).map((event) => ({
-    senderId: event.sender?.id || "",
-    recipientId: event.recipient?.id || "",
-    timestamp: event.timestamp || Date.now(),
-    text: event.message?.text || event.postback?.title || "",
-    messageId: event.message?.mid || event.postback?.mid || `ig-${event.timestamp || Date.now()}`,
-    raw: event,
-  }))).filter((event) => event.senderId && event.text);
+  const events = [];
+
+  const push = (raw) => {
+    if (!raw) return;
+    const senderId =
+      raw.sender_id ||
+      raw.from_id ||
+      raw.contact_id ||
+      raw.user_id ||
+      raw.sender?.id ||
+      raw.sender?.user_id ||
+      raw.from?.id ||
+      raw.contact?.id ||
+      "";
+    const text =
+      raw.text ||
+      raw.body ||
+      raw.message?.text ||
+      raw.message?.body ||
+      raw.content ||
+      "";
+    if (!senderId || !text) return;
+    events.push({
+      senderId: String(senderId),
+      recipientId: String(
+        raw.recipient_id ||
+          raw.account_id ||
+          raw.channel_id ||
+          raw.recipient?.id ||
+          raw.account?.id ||
+          ""
+      ),
+      timestamp: raw.timestamp || raw.created_at || Date.now(),
+      text,
+      messageId:
+        raw.message_id ||
+        raw.id ||
+        raw.message?.id ||
+        `maychats-${raw.timestamp || Date.now()}`,
+      senderName:
+        raw.sender?.username ||
+        raw.sender?.name ||
+        raw.contact?.username ||
+        raw.contact?.name ||
+        "",
+      raw,
+    });
+  };
+
+  // Common Maychats shapes:
+  // 1) { event: "message.received", data: { ... } }
+  // 2) { events: [{ ... }] }
+  // 3) { messages: [{ ... }] }
+  // 4) Legacy Meta-style { entry: [{ messaging: [{ ... }] }] }
+  if (payload.data) push(payload.data);
+  if (Array.isArray(payload.events)) payload.events.forEach(push);
+  if (Array.isArray(payload.messages)) payload.messages.forEach(push);
+  if (Array.isArray(payload.entry)) {
+    payload.entry.forEach((entry) => {
+      (entry.messaging || []).forEach((event) => {
+        push({
+          sender_id: event.sender?.id,
+          recipient_id: event.recipient?.id,
+          timestamp: event.timestamp,
+          text: event.message?.text || event.postback?.title || "",
+          message_id: event.message?.mid || event.postback?.mid,
+        });
+      });
+    });
+  }
+  // Some Maychats setups POST a single flat message object.
+  if (!events.length && (payload.text || payload.body || payload.message)) push(payload);
+
+  return events;
 }
 
-async function sendInstagramReply(recipientId, text) {
-  const accessToken = env("META_PAGE_ACCESS_TOKEN") || env("INSTAGRAM_PAGE_ACCESS_TOKEN") || env("META_ACCESS_TOKEN");
-  const endpoint = env("META_IG_MESSAGES_ENDPOINT");
-  const accountId = env("INSTAGRAM_BUSINESS_ACCOUNT_ID") || env("META_PAGE_ID");
-  const version = env("META_GRAPH_VERSION") || "v24.0";
-  const url = endpoint || (accountId ? `https://graph.facebook.com/${version}/${accountId}/messages` : "");
-  if (!url || !accessToken) return { sent: false, reason: "missing_meta_send_credentials" };
+async function sendMaychatsReply(recipientId, text, accountId) {
+  const apiKey = env("MAYCHATS_API_KEY");
+  const endpoint =
+    env("MAYCHATS_SEND_ENDPOINT") || "https://api.maychats.com/v1/messages";
+  const channelId = env("MAYCHATS_ACCOUNT_ID") || accountId || "";
 
-  const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(accessToken)}`, {
+  if (!apiKey) return { sent: false, reason: "missing_maychats_api_key" };
+
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
     body: JSON.stringify({
+      channel: "instagram",
+      account_id: channelId || undefined,
       recipient: { id: recipientId },
       message: { text },
     }),
@@ -118,7 +210,7 @@ async function notifyTeam(lead, inboundText) {
       event: "instagram_handoff",
       lead,
       inboundText,
-      note: "Global Bestie automation routed this Instagram DM to a human.",
+      note: "Global Bestie automation routed this Maychats DM to a human.",
     }),
   }).catch(() => {});
 }
@@ -139,14 +231,16 @@ async function handleInbound(event) {
       phone ? "" : "phone",
     ].filter(Boolean);
   const needsHuman = intent === "human";
-  const reply = buildReply({ text: event.text, missingFields, intent, product });
+  const reply = buildReply({ missingFields, intent, product });
   const stage = needsHuman ? "new" : missingFields.length ? "new" : "order_ready";
   const automationStatus = needsHuman ? "human_handoff" : missingFields.length ? "needs_info" : "auto_replied";
   const now = new Date().toISOString();
+  const displayName =
+    event.senderName || `Instagram ${String(event.senderId).slice(-5)}`;
   const lead = {
     id: `ig-${event.senderId}`,
-    name: `Instagram ${event.senderId.slice(-5)}`,
-    source: "Instagram DM",
+    name: displayName,
+    source: "Instagram DM (Maychats)",
     stage,
     product: product || "Needs product details",
     value_pkr: 0,
@@ -162,12 +256,18 @@ async function handleInbound(event) {
     handoff_reason: needsHuman ? `Detected ${intent} intent` : "",
     last_inbound_at: now,
     last_auto_reply_at: needsHuman ? null : now,
-    meta: { intent, city, variant, recipientId: event.recipientId },
+    meta: {
+      intent,
+      city,
+      variant,
+      recipientId: event.recipientId,
+      provider: "maychats",
+    },
     updated_at: now,
   };
 
   let sendResult = { sent: false, reason: "not_attempted" };
-  if (!needsHuman) sendResult = await sendInstagramReply(event.senderId, reply);
+  if (!needsHuman) sendResult = await sendMaychatsReply(event.senderId, reply, event.recipientId);
 
   if (!hasSupabase()) {
     return { lead, reply, sendResult, configured: false };
@@ -184,17 +284,20 @@ async function handleInbound(event) {
     body: JSON.stringify([
       {
         lead_id: lead.id,
-        source: "Instagram DM",
+        source: "Instagram DM (Maychats)",
         direction: "inbound",
         body: event.text,
         external_message_id: event.messageId,
       },
       {
         lead_id: lead.id,
-        source: "Instagram automation",
+        source: "Instagram automation (Maychats)",
         direction: "outbound",
         body: needsHuman ? "Human handoff created; automation did not reply." : reply,
-        external_message_id: sendResult.data?.message_id || null,
+        external_message_id:
+          sendResult.data?.message_id ||
+          sendResult.data?.id ||
+          null,
       },
     ]),
   });
@@ -206,21 +309,33 @@ async function handleInbound(event) {
 export default async (req) => {
   const url = new URL(req.url);
 
+  // GET is used for two things:
+  // 1) Maychats "test connection" — returns 200 + a simple ok payload.
+  // 2) Legacy Meta hub.challenge verification, kept so existing customers can
+  //    point Meta directly at this URL during migration if needed.
   if (req.method === "GET") {
     const mode = url.searchParams.get("hub.mode");
     const token = url.searchParams.get("hub.verify_token");
     const challenge = url.searchParams.get("hub.challenge");
-    if (mode === "subscribe" && token === env("META_WEBHOOK_VERIFY_TOKEN")) {
-      return new Response(challenge || "", { status: 200 });
+    if (mode === "subscribe") {
+      if (token && token === env("META_WEBHOOK_VERIFY_TOKEN")) {
+        return new Response(challenge || "", { status: 200 });
+      }
+      return json({ error: "Webhook verification failed." }, { status: 403 });
     }
-    return json({ error: "Webhook verification failed." }, { status: 403 });
+    return json({ ok: true, provider: "maychats" });
   }
 
   if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
 
   const raw = await req.text();
-  if (!verifySignature(raw, req.headers.get("x-hub-signature-256"))) {
-    return json({ error: "Invalid Meta signature." }, { status: 401 });
+  const signature =
+    req.headers.get("x-maychats-signature") ||
+    req.headers.get("x-signature") ||
+    req.headers.get("x-hub-signature-256") ||
+    "";
+  if (!verifyMaychatsSignature(raw, signature)) {
+    return json({ error: "Invalid Maychats signature." }, { status: 401 });
   }
 
   const payload = JSON.parse(raw || "{}");
@@ -229,9 +344,9 @@ export default async (req) => {
   for (const event of events) {
     results.push(await handleInbound(event));
   }
-  return json({ received: true, processed: results.length, results });
+  return json({ received: true, processed: results.length, results, provider: "maychats" });
 };
 
 export const config = {
-  path: "/api/webhooks/instagram",
+  path: ["/api/webhooks/instagram", "/api/webhooks/maychats"],
 };

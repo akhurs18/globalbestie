@@ -27,13 +27,14 @@
               <span class="brand-mark">G</span>
               <span><strong>Global Bestie</strong><small>Internal portal</small></span>
             </div>
-            <button class="admin-tab active" type="button" data-admin-tab="overview">Overview</button>
-            <button class="admin-tab" type="button" data-admin-tab="growth">Growth Studio</button>
-            <button class="admin-tab" type="button" data-admin-tab="orders">Orders</button>
-            <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments</button>
-            <button class="admin-tab" type="button" data-admin-tab="products">Products</button>
-            <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals</button>
-            <button class="admin-tab" type="button" data-admin-tab="settings">Settings</button>
+            <button class="admin-tab active" type="button" data-admin-tab="overview">Overview <span data-tab-badge="overview"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="cashflow">Cashflow <span data-tab-badge="cashflow"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="growth">Growth Studio <span data-tab-badge="growth"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="orders">Orders <span data-tab-badge="orders"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments <span data-tab-badge="shipments"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="settings">Settings <span data-tab-badge="settings"></span></button>
           </aside>
 
           <div class="admin-main">
@@ -46,6 +47,11 @@
             </form>
 
             <div class="admin-content hidden" data-admin-content>
+              <!-- Renders a warning banner whenever the configured store
+                   settings still look like the demo placeholders (bank, IBAN,
+                   support WhatsApp, product images). Hidden when settings have
+                   been customized. -->
+              <div data-demo-banner hidden></div>
               <section class="admin-panel active" data-admin-panel="overview">
                 <div class="admin-heading">
                   <div>
@@ -55,6 +61,7 @@
                   <button class="button secondary" type="button" data-action="refresh-admin">Refresh</button>
                 </div>
                 <div class="metric-grid" data-admin-metrics></div>
+                <div class="today-strip" data-admin-today-feed></div>
                 <div class="ops-grid">
                   <section class="ops-panel">
                     <h2>Orders needing action</h2>
@@ -65,6 +72,112 @@
                     <div class="pipeline" data-admin-pipeline></div>
                   </section>
                 </div>
+              </section>
+
+              <!-- Cashflow panel: the source of truth for "where is every order
+                   right now?" and "where is the money?". All numbers compute
+                   from live order data; nothing is stored separately. -->
+              <section class="admin-panel" data-admin-panel="cashflow">
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Orders & cashflow</p>
+                    <h1>Where every order — and every dollar — is right now.</h1>
+                  </div>
+                  <div class="cashflow-heading-actions">
+                    <span class="cashflow-fx-note" data-cashflow-fx></span>
+                  </div>
+                </div>
+
+                <!-- Top strip: six live metrics -->
+                <div class="cashflow-strip" data-cashflow-strip></div>
+
+                <!-- Money-stripe summary bar for all open batches combined -->
+                <div class="cashflow-money-bar" data-cashflow-money-bar></div>
+
+                <div class="cashflow-grid">
+                  <!-- Sourcing queue: every line item not yet marked purchased -->
+                  <section class="ops-panel cashflow-sourcing">
+                    <div class="panel-title-row">
+                      <h2>Sourcing queue</h2>
+                      <span class="status-pill preorder" data-sourcing-count>0 items</span>
+                    </div>
+                    <p class="cashflow-note">Items you've accepted but haven't bought yet. Type the actual USD cost as you shop — saves on enter / blur.</p>
+                    <div data-sourcing-queue></div>
+                  </section>
+
+                  <!-- Per-batch cards -->
+                  <section class="ops-panel cashflow-batches">
+                    <div class="panel-title-row">
+                      <h2>Open batches</h2>
+                      <span class="status-pill in_stock" data-batches-count>0 open</span>
+                    </div>
+                    <div data-cashflow-batches></div>
+                  </section>
+                </div>
+
+                <!-- Two side worklists -->
+                <div class="cashflow-worklists">
+                  <section class="ops-panel">
+                    <div class="panel-title-row">
+                      <h2>Arrived in PK · balance not collected</h2>
+                      <span class="status-pill preorder" data-balance-chase-count>0</span>
+                    </div>
+                    <div data-balance-chase></div>
+                  </section>
+                  <section class="ops-panel">
+                    <div class="panel-title-row">
+                      <h2>Accepted &gt;7 days · no batch</h2>
+                      <span class="status-pill preorder" data-stale-orders-count>0</span>
+                    </div>
+                    <div data-stale-orders></div>
+                  </section>
+                </div>
+
+                <!-- Order ledger: every open order with cashflow columns -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Order ledger</h2>
+                    <div class="ledger-filters">
+                      <select data-ledger-batch aria-label="Batch filter"><option value="all">All batches</option></select>
+                      <select data-ledger-stage aria-label="Stage filter">
+                        <option value="all">All stages</option>
+                        <option value="pending_review">Pending review</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="sourcing">Sourcing</option>
+                        <option value="in_transit">In transit</option>
+                        <option value="pakistan_processing">Arrived in PK</option>
+                        <option value="delivered">Delivered</option>
+                      </select>
+                      <select data-ledger-payment aria-label="Payment filter">
+                        <option value="all">All payment</option>
+                        <option value="awaiting_advance">Awaiting advance</option>
+                        <option value="advance_confirmed">Advance paid</option>
+                        <option value="balance_due">Balance due</option>
+                        <option value="paid_in_full">Paid in full</option>
+                      </select>
+                      <input type="search" data-ledger-search placeholder="Order ID, customer, phone" />
+                    </div>
+                  </div>
+                  <div class="admin-table-wrap">
+                    <table class="admin-table cashflow-ledger">
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>Customer</th>
+                          <th>Batch</th>
+                          <th>Stage</th>
+                          <th>Payment</th>
+                          <th>PKR sale</th>
+                          <th>USD cost</th>
+                          <th>Advance in</th>
+                          <th>Balance due</th>
+                          <th>Profit</th>
+                        </tr>
+                      </thead>
+                      <tbody data-ledger-rows></tbody>
+                    </table>
+                  </div>
+                </section>
               </section>
 
               <section class="admin-panel" data-admin-panel="growth">
@@ -120,8 +233,17 @@
                   </aside>
                 </div>
 
+                <div class="subnav-tabs" role="tablist" aria-label="Growth Studio views">
+                  <button class="active" type="button" data-growth-tab="all">All</button>
+                  <button type="button" data-growth-tab="inbox">Inbox</button>
+                  <button type="button" data-growth-tab="content">Content</button>
+                  <button type="button" data-growth-tab="campaigns">Campaigns</button>
+                  <button type="button" data-growth-tab="leads">Leads</button>
+                  <button type="button" data-growth-tab="setup">Setup</button>
+                </div>
+
                 <div class="growth-grid">
-                  <section class="ops-panel">
+                  <section class="ops-panel" data-growth-pane="content">
                     <div class="panel-title-row">
                       <h2>Content pile</h2>
                       <span class="status-pill preorder">Manual Remotion handoff</span>
@@ -129,7 +251,7 @@
                     <div data-creative-jobs></div>
                   </section>
 
-                  <section class="ops-panel">
+                  <section class="ops-panel" data-growth-pane="campaigns">
                     <div class="panel-title-row">
                       <h2>Campaigns</h2>
                       <button class="button secondary" type="button" data-action="new-campaign">New campaign</button>
@@ -143,7 +265,7 @@
                     <div data-campaigns></div>
                   </section>
 
-                  <section class="ops-panel inbox-panel">
+                  <section class="ops-panel inbox-panel" data-growth-pane="inbox">
                     <div class="panel-title-row">
                       <h2>Instagram + WhatsApp inbox</h2>
                       <span class="status-pill in_stock">Lead tracking</span>
@@ -151,7 +273,7 @@
                     <div data-lead-inbox></div>
                   </section>
 
-                  <section class="ops-panel automation-panel">
+                  <section class="ops-panel automation-panel" data-growth-pane="inbox setup">
                     <div class="panel-title-row">
                       <h2>24/7 DM automation</h2>
                       <span class="status-pill in_stock">Webhook ready</span>
@@ -159,7 +281,7 @@
                     <div data-automation-desk></div>
                   </section>
 
-                  <section class="ops-panel">
+                  <section class="ops-panel" data-growth-pane="leads">
                     <div class="panel-title-row">
                       <h2>Lead pipeline</h2>
                       <span class="status-pill preorder">Response SLA</span>
@@ -167,7 +289,7 @@
                     <div data-lead-pipeline></div>
                   </section>
 
-                  <section class="ops-panel">
+                  <section class="ops-panel" data-growth-pane="campaigns content">
                     <div class="panel-title-row">
                       <h2>Posting calendar</h2>
                       <span class="status-pill preorder">Instagram ops</span>
@@ -175,13 +297,13 @@
                     <div data-content-calendar></div>
                   </section>
 
-                  <section class="ops-panel">
+                  <section class="ops-panel" data-growth-pane="setup">
                     <div class="panel-title-row">
                       <h2>Channel integrations</h2>
                       <span class="status-pill preorder">Setup map</span>
                     </div>
                     <div class="integration-list" data-integration-status>
-                      <article><strong>Instagram Graph API</strong><span>Publish media, read comments, route DMs, measure post performance.</span></article>
+                      <article><strong>Maychats Instagram bridge</strong><span>Inbound DMs forwarded to /api/webhooks/maychats and replies sent back via the Maychats API.</span></article>
                       <article><strong>WhatsApp Business Cloud API</strong><span>Lead replies, broadcast templates, order follow-ups, abandoned checkout nudges.</span></article>
                       <article><strong>Remotion production desk</strong><span>Approved assets, captions, timing notes, product footage, and editor handoff status.</span></article>
                       <article><strong>Retargeting pixels</strong><span>Meta Pixel + conversion events for view content, add to bag, checkout, and lead capture.</span></article>
@@ -205,6 +327,13 @@
                     <option value="pakistan_processing">Pakistan arrived</option>
                     <option value="delivered">Delivered</option>
                   </select>
+                </div>
+                <div class="quick-filter-row" aria-label="Order quick filters">
+                  <button class="active" type="button" data-order-filter-chip="all">All</button>
+                  <button type="button" data-order-filter-chip="pending_review">Needs approval</button>
+                  <button type="button" data-order-filter-chip="pakistan_processing">Balance due</button>
+                  <button type="button" data-order-filter-chip="sourcing">Sourcing</button>
+                  <button type="button" data-order-filter-chip="in_transit">In transit</button>
                 </div>
                 <div class="admin-table-wrap">
                   <table class="admin-table">
@@ -254,16 +383,46 @@
                 <div class="bulk-bar" data-products-bulk-bar>
                   <label class="bulk-select-all">
                     <input type="checkbox" data-action="select-all-products" />
-                    Select all (<span data-products-total>0</span>)
+                    <span>Select all</span>
+                    <span class="bulk-count-chip" data-products-total>0</span>
                   </label>
-                  <button class="button secondary" type="button" data-action="bulk-remove-products" disabled>
-                    Remove <span data-products-sel-count>0</span> from site
+                  <button class="button secondary" type="button" data-action="bulk-remove-products" data-bulk-button="remove" disabled>
+                    Remove from site
                   </button>
+                </div>
+                <div class="import-bar">
+                  <div>
+                    <strong>Import marketing batch</strong>
+                    <span>Use the generated product JSON after your team replaces placeholder images and reviews copy.</span>
+                  </div>
+                  <label class="file-button">
+                    Import JSON
+                    <input type="file" data-product-import accept="application/json,.json" />
+                  </label>
                 </div>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
+                  <!-- Paste a retailer URL (Coach / Sephora / Nordstrom / etc.)
+                       and the form auto-fills title, brand, category, price,
+                       description, and images. Images are re-hosted in our
+                       own Supabase bucket so retailer link rot can't break
+                       the product later. Everything is editable after fill. -->
+                  <div class="url-import span-2">
+                    <label class="span-2">
+                      Paste retailer URL to autofill
+                      <div class="url-import-row">
+                        <input data-product-url-import type="url" placeholder="https://www.coach.com/products/..." />
+                        <button class="button secondary" type="button" data-action="import-from-url">Autofill</button>
+                      </div>
+                    </label>
+                    <small data-product-url-import-status></small>
+                  </div>
+                  <div class="form-section-title span-2">Product identity</div>
                   <label>Title<input name="title" required /></label>
+                  <label>Brand<input name="brand" placeholder="Coach, Nike, Rare Beauty..." /></label>
                   <label>Category<select name="category"><option>handbags</option><option>shoes</option><option>makeup</option><option>fragrance</option><option>accessories</option></select></label>
+                  <label>Card badge (optional, shows on shop card)<input name="marketing_badge" maxlength="22" placeholder="VIP drop · Trending · Restocked" /></label>
+                  <div class="form-section-title span-2">Pricing and stock rules</div>
                   <label>USA retail USD<input name="usa_price_usd" type="number" min="0" step="0.01" required /></label>
                   <label>Shipping PKR<input name="shipping_pkr" type="number" min="0" step="100" required /></label>
                   <label>FX rate<input name="fx_rate" type="number" min="1" step="0.01" required /></label>
@@ -271,13 +430,16 @@
                   <label>Inventory<input name="inventory" type="number" min="0" step="1" required /></label>
                   <label>Publish status<select name="product_status"><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
                   <label>Supplier cost PKR<input name="supplier_cost_pkr" type="number" min="0" step="100" /></label>
+                  <div class="form-section-title span-2">Media and source proof</div>
                   <label>Image URL<input name="image_url" required /></label>
+                  <label>Upload image<input name="image_file" type="file" accept="image/*" data-product-image-upload /></label>
+                  <div class="image-preview-wrap"><img data-image-preview alt="Image preview" /></div>
                   <label>Source URL<input name="source_url" placeholder="Official retailer or product link" /></label>
                   <label class="span-2">Gallery URLs<textarea name="gallery_urls" rows="2" placeholder="One image URL per line"></textarea></label>
                   <label class="span-2">Variants / size / shade<textarea name="variants" rows="2" placeholder="Sizes, shades, colors, backup choices"></textarea></label>
                   <label class="span-2">Authenticity / receipt note<textarea name="authenticity_note" rows="2" placeholder="Official source, receipt, packaging, box notes"></textarea></label>
                   <label>Receipt URL<input name="receipt_url" placeholder="Internal receipt/proof link" /></label>
-                  <label>Social proof<input name="social_proof" placeholder="Most requested, VIP drop, fast moving..." /></label>
+                  <label>Trust line (optional, shows on detail page)<input name="social_proof" placeholder="Frequently requested through Instagram DMs" /></label>
                   <label class="span-2">Description<textarea name="description" rows="3"></textarea></label>
                   <button class="button primary" type="submit">Save product</button>
                   <output data-price-preview></output>
@@ -298,13 +460,14 @@
                 <div class="bulk-bar" data-trends-bulk-bar>
                   <label class="bulk-select-all">
                     <input type="checkbox" data-action="select-all-trends" />
-                    Select all (<span data-trends-total>0</span>)
+                    <span>Select all</span>
+                    <span class="bulk-count-chip" data-trends-total>0</span>
                   </label>
-                  <button class="button primary" type="button" data-action="bulk-approve-trends" disabled>
-                    Approve <span data-trends-sel-count>0</span> selected
+                  <button class="button primary" type="button" data-action="bulk-approve-trends" data-bulk-button="approve" disabled>
+                    Save selected as drafts
                   </button>
-                  <button class="button secondary" type="button" data-action="bulk-deny-trends" disabled>
-                    Deny <span data-trends-sel-count>0</span>
+                  <button class="button secondary" type="button" data-action="bulk-deny-trends" data-bulk-button="deny" disabled>
+                    Deny selected
                   </button>
                 </div>
                 <div class="trend-grid" data-trend-candidates></div>
@@ -322,7 +485,7 @@
                   <label>Account title<input name="account_title" required /></label>
                   <label>Account number<input name="account_number" required /></label>
                   <label>IBAN<input name="iban" /></label>
-                  <label>Markup %<input name="markup_rate" type="number" min="0" step="0.01" required /></label>
+                  <label>Markup rate (0.25 = 25%)<input name="markup_rate" type="number" min="0" step="0.01" required /></label>
                   <label>Default FX rate<input name="fx_rate" type="number" min="1" step="0.01" required /></label>
                   <label>Default preorder weeks<input name="preorder_weeks" type="number" min="1" step="1" required /></label>
                   <label>Next shipment ETA<input name="next_shipment_date" type="date" /></label>
@@ -335,6 +498,13 @@
                   <label>Support WhatsApp<input name="support_whatsapp" /></label>
                   <button class="button primary" type="submit">Save settings</button>
                 </form>
+                <section class="ops-panel launch-checklist">
+                  <div class="panel-title-row">
+                    <h2>Production readiness</h2>
+                    <span class="status-pill preorder">Before launch</span>
+                  </div>
+                  <div data-launch-checklist></div>
+                </section>
               </section>
             </div>
           </div>

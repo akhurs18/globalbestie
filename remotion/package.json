@@ -5,6 +5,9 @@
   "scripts": {
     "studio": "remotion studio src/index.jsx",
     "render:one": "remotion render src/index.jsx ProductReel out/reel.mp4",
+    "render:service": "remotion render src/index.jsx ServiceReel out/global-bestie-service-reel.mp4",
+    "render:doorstep": "remotion render src/index.jsx DoorstepReel out/global-bestie-doorstep-reel.mp4",
+    "render:roleplay": "remotion render src/index.jsx RoleplayReel out/global-bestie-roleplay-reel.mp4",
     "render:batch": "node render.mjs"
   },
   "dependencies": {

@@ -81,7 +81,7 @@ Run a luxury USA-to-Pakistan import store with transparent pricing, reliable pre
 - Use the Growth Studio as the command center for content collection, campaigns, leads, and content calendar work.
 - Content items should collect source, product, channel, caption notes, Remotion handoff notes, and approval status.
 - Remotion is a manual production step handled by the team outside the portal.
-- Instagram and WhatsApp integrations should use official Meta APIs and store only the tokens needed on Netlify or Supabase server-side settings.
+- Instagram is integrated through Maychats (which manages the Meta authorization on our behalf); WhatsApp still goes through the official WhatsApp Cloud API. Store only the tokens needed on Netlify or Supabase server-side settings.
 - Every Instagram DM, WhatsApp message, comment request, or checkout question should become a lead when it contains buying intent.
 - Lead stages are `new`, `quote_sent`, `order_ready`, `won`, and `lost`.
 - Track response SLA for every lead; luxury service means fast replies and clean handoffs.
@@ -89,8 +89,9 @@ Run a luxury USA-to-Pakistan import store with transparent pricing, reliable pre
 
 ## 24/7 Instagram Concierge Agent
 
-- Meta sends Instagram DM webhooks to `/api/webhooks/instagram`.
-- The webhook verifies `META_WEBHOOK_VERIFY_TOKEN` during setup and verifies `x-hub-signature-256` when `META_APP_SECRET` is set.
+- Maychats holds the Instagram authorization and forwards DM events to `/api/webhooks/maychats` (alias of the legacy `/api/webhooks/instagram` URL).
+- The webhook verifies `x-maychats-signature` (HMAC-SHA256 of the raw body) against `MAYCHATS_WEBHOOK_SECRET`. If the secret is not set, verification is skipped — only do this in development.
+- Outbound replies are POSTed to Maychats using `MAYCHATS_API_KEY` (Bearer token) at `MAYCHATS_SEND_ENDPOINT` (default `https://api.maychats.com/v1/messages`).
 - Each inbound DM is saved as a `marketing_leads` row and a `marketing_messages` inbound row.
 - The agent qualifies buying intent by checking for product, variant/size/shade/color, city, and WhatsApp number.
 - If details are missing, the agent sends one concise reply asking for the missing fields.
@@ -137,19 +138,16 @@ Required Netlify variables:
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ADMIN_SHARED_SECRET`
-- `META_WEBHOOK_VERIFY_TOKEN`
 
 Optional variables:
 
 - `SCRAPER_ALLOWED_HOSTS`
 - `STORE_SUPPORT_WHATSAPP`
-- `META_APP_SECRET`
-- `META_PAGE_ACCESS_TOKEN`
-- `INSTAGRAM_PAGE_ACCESS_TOKEN`
-- `INSTAGRAM_BUSINESS_ACCOUNT_ID`
-- `META_PAGE_ID`
-- `META_GRAPH_VERSION`
-- `META_IG_MESSAGES_ENDPOINT`
+- `MAYCHATS_WEBHOOK_SECRET`
+- `MAYCHATS_API_KEY`
+- `MAYCHATS_ACCOUNT_ID`
+- `MAYCHATS_SEND_ENDPOINT`
+- `META_WEBHOOK_VERIFY_TOKEN` (only if you keep a parallel Meta-direct verification)
 - `TEAM_ALERT_WEBHOOK_URL`
 
 ## Maintenance Rhythm

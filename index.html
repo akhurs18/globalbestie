@@ -16,6 +16,70 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I place an order?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then submit the order for team review."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What payment methods do you accept?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We accept direct bank deposits. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "When do I pay the remaining preorder balance?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How long does delivery take?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment review. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA when your order is accepted."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you deliver to my city?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Are your products authentic?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We source from USA brand stores, official retailers, or trusted retail channels."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do shoes come with the original box?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500 — please request this at the time of ordering."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -30,7 +94,7 @@
     </div>
 
     <header class="site-header" data-elevated="false">
-      <a class="brand" href="#home" aria-label="Global Bestie home">
+      <a class="brand" href="/" data-route="home" aria-label="Global Bestie home">
         <span class="brand-mark">G</span>
         <span>
           <strong>Global Bestie</strong>
@@ -39,10 +103,10 @@
       </a>
 
       <nav class="main-nav" aria-label="Primary navigation">
-        <a href="#shop">Shop</a>
-        <a href="#preorder">Preorder</a>
-        <a href="#track">Track</a>
-        <a href="#faq">FAQ</a>
+        <a href="/shop" data-route="shop">Shop</a>
+        <a href="/preorder" data-route="preorder">Preorder</a>
+        <a href="/track" data-route="track">Track</a>
+        <a href="/faq" data-route="faq">FAQ</a>
       </nav>
 
       <button class="icon-button" type="button" data-action="open-cart" aria-label="Open bag">
@@ -59,11 +123,11 @@
             <h1>Luxury drops without the guesswork.</h1>
             <p>
               Handbags, shoes, makeup, and trending branded products sourced from the USA,
-              with clear PKR pricing and team approval before payment.
+              with clear PKR pricing and authentic USA sourcing.
             </p>
             <div class="hero-actions">
-              <a class="button primary" href="#shop">Shop curated drops</a>
-              <a class="button ghost" href="#track">Track an order</a>
+              <a class="button primary" href="/shop" data-route="shop">Shop curated drops</a>
+              <a class="button ghost" href="/track" data-route="track">Track an order</a>
             </div>
           </div>
 
@@ -71,7 +135,17 @@
             <figure class="hero-card hero-card-large">
               <img
                 src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84"
+                srcset="
+                  https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=480&q=80 480w,
+                  https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=720&q=82 720w,
+                  https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84 900w,
+                  https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1200&q=85 1200w"
+                sizes="(max-width: 720px) 100vw, (max-width: 1100px) 60vw, 540px"
                 alt="Blush luxury handbag on a sculptural set"
+                fetchpriority="high"
+                decoding="async"
+                width="900"
+                height="1100"
               />
               <figcaption>
                 <span>Handbags</span>
@@ -81,7 +155,14 @@
             <figure class="hero-card hero-card-small top">
               <img
                 src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=700&q=84"
+                srcset="
+                  https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=360&q=80 360w,
+                  https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=540&q=82 540w,
+                  https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=700&q=84 700w"
+                sizes="(max-width: 720px) 45vw, 320px"
                 alt="Designer heels in a fashion editorial composition"
+                loading="lazy"
+                decoding="async"
               />
               <figcaption>
                 <span>Shoes</span>
@@ -91,7 +172,14 @@
             <figure class="hero-card hero-card-small bottom">
               <img
                 src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=700&q=84"
+                srcset="
+                  https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=360&q=80 360w,
+                  https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=540&q=82 540w,
+                  https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=700&q=84 700w"
+                sizes="(max-width: 720px) 45vw, 320px"
                 alt="Premium makeup products arranged on a pink surface"
+                loading="lazy"
+                decoding="async"
               />
               <figcaption>
                 <span>Makeup</span>
@@ -137,8 +225,8 @@
             </article>
             <article>
               <span>02</span>
-              <h3>Request approval</h3>
-              <p>Submit the order first. Our team confirms availability, final sourcing, and the next shipment batch before payment is accepted.</p>
+              <h3>Place your order</h3>
+              <p>Pick your product, add to bag, and pay the 50% advance by bank transfer at checkout. We confirm availability and the shipment batch on WhatsApp within 15 minutes.</p>
             </article>
             <article>
               <span>03</span>
@@ -153,24 +241,95 @@
           </div>
         </section>
 
+        <section class="order-clarity-band reveal" aria-labelledby="order-clarity-title">
+          <div>
+            <p class="kicker">Before payment</p>
+            <h2 id="order-clarity-title">You request first. We approve, then you pay.</h2>
+          </div>
+          <div class="clarity-grid">
+            <article>
+              <strong>1</strong>
+              <span>Request order</span>
+              <p>No payment is taken at checkout. Your product, size, shade, and city go to the team first.</p>
+            </article>
+            <article>
+              <strong>2</strong>
+              <span>Team confirms availability</span>
+              <p>We verify source availability, final PKR price, and the current USA shipment batch.</p>
+            </article>
+            <article>
+              <strong>3</strong>
+              <span>Pay the right amount</span>
+              <p>Preorders pay 50% advance at checkout. Balance is due when the parcel arrives in Pakistan, before local dispatch.</p>
+            </article>
+          </div>
+        </section>
+
         <section class="collection-strip reveal" aria-labelledby="collections-title">
           <div class="section-heading">
             <p class="kicker">Primary categories</p>
             <h2 id="collections-title">Built around handbags, shoes, and makeup.</h2>
           </div>
           <div class="collection-grid">
-            <a class="collection-tile" href="#shop?category=handbags">
-              <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=84" alt="Luxury handbag detail" />
+            <a class="collection-tile" href="/shop?category=handbags" data-route="shop">
+              <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=84"
+                   srcset="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=480&q=80 480w,
+                           https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=84 900w"
+                   sizes="(max-width: 720px) 100vw, 360px"
+                   alt="Luxury handbag detail"
+                   loading="lazy"
+                   decoding="async" />
               <span>Women’s handbags</span>
             </a>
-            <a class="collection-tile" href="#shop?category=shoes">
-              <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=84" alt="Premium sneakers in pink and black tones" />
+            <a class="collection-tile" href="/shop?category=shoes" data-route="shop">
+              <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=84"
+                   srcset="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=480&q=80 480w,
+                           https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=84 900w"
+                   sizes="(max-width: 720px) 100vw, 360px"
+                   alt="Premium sneakers in pink and black tones"
+                   loading="lazy"
+                   decoding="async" />
               <span>Shoes and sneakers</span>
             </a>
-            <a class="collection-tile" href="#shop?category=makeup">
-              <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=84" alt="Premium makeup flat lay" />
+            <a class="collection-tile" href="/shop?category=makeup" data-route="shop">
+              <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=84"
+                   srcset="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=480&q=80 480w,
+                           https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=84 900w"
+                   sizes="(max-width: 720px) 100vw, 360px"
+                   alt="Premium makeup flat lay"
+                   loading="lazy"
+                   decoding="async" />
               <span>Makeup counter</span>
             </a>
+          </div>
+        </section>
+
+        <!-- TRUST SIGNALS — replace with real customer screenshots / IG UGC. The
+             admin can change these via the Growth Studio content library; for
+             now they're hard-coded so the static preview stays self-contained. -->
+        <section class="trust-band reveal" aria-labelledby="trust-title">
+          <div class="section-heading">
+            <p class="kicker">From real besties</p>
+            <h2 id="trust-title">Authentic USA finds, delivered nationwide.</h2>
+          </div>
+          <div class="trust-grid">
+            <article class="trust-card">
+              <span class="trust-quote">“My Coach Tabby arrived in Karachi in 26 days — packaging and dust bag exactly like the US store.”</span>
+              <span class="trust-meta">@ayeshakhan · Karachi · April 2026</span>
+            </article>
+            <article class="trust-card">
+              <span class="trust-quote">“They quoted me PKR, no surprise customs charge, balance paid only after the parcel landed.”</span>
+              <span class="trust-meta">@sarashah · Lahore · March 2026</span>
+            </article>
+            <article class="trust-card">
+              <span class="trust-quote">“Got my Rare Beauty haul before Eid. WhatsApp replies were quick and the team was patient with my shade questions.”</span>
+              <span class="trust-meta">@maliha.n · Islamabad · February 2026</span>
+            </article>
+          </div>
+          <div class="trust-stats">
+            <span><strong>4 wk</strong> avg preorder time</span>
+            <span><strong>15 min</strong> WhatsApp reply window</span>
+            <span><strong>9</strong> cities served regularly</span>
           </div>
         </section>
 
@@ -232,7 +391,7 @@
         <div class="page-intro preorder-intro">
           <p class="kicker">Preorder concierge</p>
           <h1>Batch-based USA sourcing, made visible.</h1>
-          <p>Most products are preordered from the USA. Shipment timing is estimated because products move in batches, and the current batch ETA is confirmed after team approval.</p>
+          <p>Most products are preordered from the USA. Shipment timing is estimated because products move in batches, and we confirm the current batch ETA on WhatsApp after your order.</p>
         </div>
         <div class="timeline-panel">
           <ol>
@@ -284,15 +443,22 @@
           <section class="empty-checkout hidden" data-empty-checkout>
             <p class="kicker">Checkout</p>
             <h1>Your bag is waiting.</h1>
-            <p>Add a product before submitting an order request. Global Bestie will confirm availability, final PKR price, and the shipment batch before payment is accepted.</p>
-            <a class="button primary" href="#shop">Continue shopping</a>
+            <p>Your bag is empty. Browse the shop and add what you want — we'll handle the USA sourcing and Pakistan delivery.</p>
+            <a class="button primary" href="/shop" data-route="shop">Continue shopping</a>
           </section>
           <form class="checkout-form" data-checkout-form>
             <div class="page-intro compact">
               <p class="kicker">Checkout</p>
-              <h1>Confirm your order.</h1>
-              <p>Submit your order request first. Our team confirms product availability, final PKR price, and the next shipment batch before payment is accepted.</p>
+              <h1>Place your order.</h1>
+              <p>Fill in your details and transfer the 50% advance to confirm your order. Balance is due once your parcel reaches Pakistan, before local dispatch.</p>
             </div>
+
+            <ol class="checkout-progress" aria-label="Order request progress">
+              <li class="active"><strong>Bag</strong><span>Selected</span></li>
+              <li class="active"><strong>Details</strong><span>Now</span></li>
+              <li><strong>Team approval</strong><span>Before payment</span></li>
+              <li><strong>Advance / balance</strong><span>As required</span></li>
+            </ol>
 
             <fieldset>
               <legend>Customer details</legend>
@@ -307,17 +473,28 @@
               <label>Order notes<textarea name="notes" rows="3" placeholder="Size, shade, preferred substitute, or delivery instructions"></textarea></label>
             </fieldset>
 
-            <fieldset class="bank-box">
-              <legend>Payment after approval</legend>
+            <!-- Bank details shown upfront — single-step checkout, no two-phase
+                 approval gate. Customer transfers the 50% advance and submits
+                 in one go. Team still reviews server-side but the customer
+                 experience is normal ecommerce. -->
+            <fieldset class="bank-box bank-box-primary">
+              <legend>Pay 50% advance</legend>
+              <p class="payment-note">Transfer the amount shown in your order summary to the account below. Paste the transaction reference (or upload a screenshot) so we can match it to your order faster.</p>
               <div data-bank-details></div>
-              <p class="payment-note">No payment is confirmed until our team accepts the order. If you were already quoted on WhatsApp, you can add your transfer reference below.</p>
-              <label>Transfer reference<input name="transfer_reference" placeholder="Transaction ID or sender account title" /></label>
-              <label>Confirmation screenshot<input name="transfer_file" type="file" accept="image/*,.pdf" /></label>
-              <label class="check-row"><input name="balance_ack" type="checkbox" required /> I understand Global Bestie must approve availability before payment is accepted.</label>
-              <label class="check-row"><input name="terms_ack" type="checkbox" required /> I understand preorder shipment timing can vary by batch, and the current ETA will be confirmed after approval.</label>
+              <label>Transfer reference<input name="transfer_reference" required placeholder="Transaction ID or sender account title" /></label>
+              <label>Confirmation screenshot (optional, speeds up matching)<input name="transfer_file" type="file" accept="image/*,.pdf" /></label>
             </fieldset>
 
-            <button class="button primary wide" type="submit">Submit order request</button>
+            <fieldset class="ack-box">
+              <legend>Confirm before placing your order</legend>
+              <label class="check-row"><input name="terms_ack" type="checkbox" required /> I understand preorder shipment timing can vary by batch, and the exact ETA will be confirmed on WhatsApp after my order.</label>
+              <label class="check-row"><input name="balance_ack" type="checkbox" required /> I understand the remaining 50% balance is collected after my parcel arrives in Pakistan, before local dispatch.</label>
+            </fieldset>
+
+            <button class="button primary wide" type="submit">Place order</button>
+            <p class="checkout-reassure">
+              We confirm your order details, shipment batch, and exact ETA on WhatsApp within about 15 minutes.
+            </p>
           </form>
 
           <aside class="order-summary">
@@ -346,7 +523,7 @@
           <h1>Got questions?</h1>
           <p>Everything you need to know about ordering from Global Bestie.</p>
           <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="#home">Home</a>
+            <a href="/" data-route="home">Home</a>
             <span aria-hidden="true">›</span>
             <span>FAQ</span>
           </nav>
@@ -358,69 +535,34 @@
               <h2 id="faq-ordering-title">Ordering & payment</h2>
             </div>
             <div class="faq-list">
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>How do I place an order?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then submit the order for team review.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>What payment methods do you accept?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>We currently accept direct bank deposits only. First, submit your order request. After our team confirms availability and the shipment batch, preorder items require a 50% advance and the remaining balance is paid once the shipment arrives in Pakistan before local delivery.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>When do I pay the remaining preorder balance?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Is bank transfer safe?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Yes. Your order is reviewed manually, and you can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Can I cancel my order?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>You can request cancellation before an order is accepted or sourced. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Do you offer refunds or returns?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Refunds and returns depend on order stage, product type, and the USA retailer policy. We review issues case by case before sourcing and after delivery.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Why can't I get a Google rate conversion?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Our final PKR price includes the live working FX assumption, card and sourcing costs, the 25% service margin, and shipping to Pakistan, so it will not match a simple Google conversion.</p>
-                </div>
-              </article>
+              <details class="faq-item">
+                <summary>How do I place an order?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then submit the order for team review.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>What payment methods do you accept?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>We accept direct bank deposits. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>When do I pay the remaining preorder balance?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Is bank transfer safe?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. Your order is reviewed manually, and you can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Can I cancel my order?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>You can request cancellation before an order is accepted or sourced. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Do you offer refunds or returns?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Refunds and returns depend on order stage, product type, and the USA retailer policy. We review issues case by case before sourcing and after delivery.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Why can't I get a Google rate conversion?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Our final PKR price includes the live working FX assumption, card and sourcing costs, the 25% service margin, and shipping to Pakistan, so it will not match a simple Google conversion.</p></div>
+              </details>
             </div>
           </section>
 
@@ -429,60 +571,30 @@
               <h2 id="faq-shipping-title">Shipping & products</h2>
             </div>
             <div class="faq-list">
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>How long does delivery take?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment review. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA when your order is accepted.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Are customs or duties included?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Our quote includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms before accepting the order.</p>
-                </div>
-              </article>
-              <article class="faq-item open">
-                <button type="button" class="faq-question" aria-expanded="true">
-                  <span>Do you deliver to my city?</span>
-                  <span aria-hidden="true">−</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you are unsure about your area.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Are your products authentic?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Do shoes come with the original box?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p>
-                </div>
-              </article>
-              <article class="faq-item">
-                <button type="button" class="faq-question" aria-expanded="false">
-                  <span>Can I request a specific product?</span>
-                  <span aria-hidden="true">+</span>
-                </button>
-                <div class="faq-answer">
-                  <p>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp. The team can quote it using the USA retail price, markup, and shipping model.</p>
-                </div>
-              </article>
+              <details class="faq-item">
+                <summary>How long does delivery take?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment review. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA when your order is accepted.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Are customs or duties included?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Our quote includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms before accepting the order.</p></div>
+              </details>
+              <details class="faq-item" open>
+                <summary>Do you deliver to my city?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you are unsure about your area.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Are your products authentic?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Do shoes come with the original box?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Can I request a specific product?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp. The team can quote it using the USA retail price, markup, and shipping model.</p></div>
+              </details>
             </div>
           </section>
         </div>
@@ -490,7 +602,7 @@
 
     </main>
 
-    <a class="whatsapp-fab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp">
+    <a class="whatsapp-fab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp" data-support-whatsapp>
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       <span class="whatsapp-fab-label">Chat with us</span>
     </a>
@@ -502,15 +614,22 @@
       </div>
       <div data-cart-items></div>
       <dl class="cart-totals" data-cart-totals></dl>
-      <a class="button primary wide" href="#checkout" data-action="checkout">Checkout</a>
+      <a class="button primary wide" href="/checkout" data-route="checkout" data-action="checkout">Go to checkout</a>
     </aside>
+
+    <nav class="mobile-action-bar" aria-label="Mobile quick actions">
+      <a href="/shop" data-route="shop">Shop</a>
+      <a href="/track" data-route="track">Track</a>
+      <a href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" data-support-whatsapp>WhatsApp</a>
+      <button type="button" data-action="open-cart">Bag <strong data-cart-count>0</strong></button>
+    </nav>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
 
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="footer-col footer-brand-col">
-          <a class="brand" href="#home" aria-label="Global Bestie home">
+          <a class="brand" href="/" data-route="home" aria-label="Global Bestie home">
             <span class="brand-mark">G</span>
             <span>
               <strong>Global Bestie</strong>
@@ -521,18 +640,18 @@
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Shop</h3>
-          <a href="#shop?category=handbags">Women's handbags</a>
-          <a href="#shop?category=shoes">Shoes &amp; sneakers</a>
-          <a href="#shop?category=makeup">Makeup counter</a>
-          <a href="#shop?category=fragrance">Fragrance</a>
-          <a href="#shop?category=accessories">Accessories</a>
+          <a href="/shop?category=handbags" data-route="shop">Women's handbags</a>
+          <a href="/shop?category=shoes" data-route="shop">Shoes &amp; sneakers</a>
+          <a href="/shop?category=makeup" data-route="shop">Makeup counter</a>
+          <a href="/shop?category=fragrance" data-route="shop">Fragrance</a>
+          <a href="/shop?category=accessories" data-route="shop">Accessories</a>
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Orders</h3>
-          <a href="#preorder">How preorder works</a>
-          <a href="#track">Track your order</a>
-          <a href="#checkout">Checkout</a>
-          <a href="#faq">FAQ</a>
+          <a href="/preorder" data-route="preorder">How preorder works</a>
+          <a href="/track" data-route="track">Track your order</a>
+          <a href="/checkout" data-route="checkout">Order request</a>
+          <a href="/faq" data-route="faq">FAQ</a>
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Get in touch</h3>
@@ -554,8 +673,6 @@
     </footer>
 
     <div id="page-curtain" aria-hidden="true"></div>
-    <div id="cursor-dot" class="lx-cursor" aria-hidden="true"></div>
-    <div id="cursor-ring" class="lx-cursor" aria-hidden="true"></div>
 
     <script type="module" src="./assets/app.js"></script>
   </body>
