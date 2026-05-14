@@ -1,12 +1,24 @@
 import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
 
-// Production guard: when Netlify is doing a production build, refuse to ship
-// without the Maychats webhook signing secret. The webhook handler falls back
-// to "accept anything" if the secret is missing, which is fine for dev but
-// must not silently ship.
-if (process.env.CONTEXT === "production" && !process.env.MAYCHATS_WEBHOOK_SECRET) {
+// Production guard for the Maychats Instagram bridge.
+//
+// The webhook handler accepts unsigned requests when MAYCHATS_WEBHOOK_SECRET
+// isn't set (so local dev "just works"). That's safe ONLY when the integration
+// isn't live — if Maychats isn't sending real DMs to your webhook, nobody can
+// abuse the unsigned path either.
+//
+// So we only fail the build when the user is *partially* configured: outbound
+// is enabled (MAYCHATS_API_KEY is set, meaning the bridge is going to be
+// active in production) but the inbound signing secret is missing. A
+// brand-new deploy with no Maychats config at all is fine — the webhook will
+// sit there inert until you wire it up.
+if (
+  process.env.CONTEXT === "production" &&
+  process.env.MAYCHATS_API_KEY &&
+  !process.env.MAYCHATS_WEBHOOK_SECRET
+) {
   console.error(
-    "MAYCHATS_WEBHOOK_SECRET is not set in this production build. The Instagram (Maychats) webhook will accept unsigned requests — set the secret in Netlify → Site settings → Environment variables before deploying."
+    "MAYCHATS_WEBHOOK_SECRET is missing but MAYCHATS_API_KEY is set, which means inbound DMs would be accepted without signature verification while outbound replies are live. Set MAYCHATS_WEBHOOK_SECRET in Netlify → Site settings → Environment variables before deploying."
   );
   process.exit(1);
 }
