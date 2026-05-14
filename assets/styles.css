@@ -1215,7 +1215,7 @@ dl div,
 
 .policy-list li strong {
   font-size: 0.95rem;
-  color: var(--light);
+  color: var(--cream);
   letter-spacing: 0.01em;
 }
 
@@ -1370,10 +1370,20 @@ dl div,
 }
 
 .drawer-header h2,
-.order-summary h2,
-.ops-panel h2 {
+.order-summary h2 {
   margin: 0;
   font-family: "Playfair Display", serif;
+}
+
+.ops-panel .panel-title-row h2,
+.ops-panel > h2 {
+  margin: 0;
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pink-2);
 }
 
 .admin-shell {
@@ -1471,12 +1481,39 @@ dl div,
 }
 
 .metric-card {
-  padding: 14px;
+  position: relative;
+  padding: 16px 14px 14px;
+  overflow: hidden;
+  transition: border-color 180ms var(--ease), transform 180ms var(--ease);
+}
+
+.metric-card:hover {
+  border-color: rgba(255, 216, 232, 0.28);
+  transform: translateY(-2px);
+}
+
+.metric-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pink), transparent);
+  opacity: 0;
+  transition: opacity 200ms var(--ease);
+}
+
+.metric-card:hover::after {
+  opacity: 0.5;
 }
 
 .metric-card span {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .metric-card strong {
@@ -1484,6 +1521,16 @@ dl div,
   margin-top: 10px;
   color: var(--cream);
   font-size: 1.32rem;
+  font-weight: 800;
+}
+
+.metric-card em {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 0.72rem;
+  line-height: 1.4;
 }
 
 .today-strip {
@@ -1533,7 +1580,17 @@ dl div,
 }
 
 .ops-panel {
-  padding: 14px;
+  padding: 16px;
+}
+
+.ops-panel > h2 {
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pink-2);
+  margin-bottom: 14px;
 }
 
 .pipeline {
@@ -1561,6 +1618,14 @@ dl div,
 
 .admin-table-wrap {
   overflow-x: auto;
+  max-height: 580px;
+  overflow-y: auto;
+}
+
+.admin-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .admin-order-cards {
@@ -1583,8 +1648,16 @@ dl div,
 
 .admin-table th {
   color: var(--pink-2);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  background: rgba(255, 79, 154, 0.05);
+  white-space: nowrap;
+}
+
+.admin-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.018);
 }
 
 .table-actions {
@@ -2249,10 +2322,10 @@ output {
 .trend-edit-form input,
 .trend-edit-form select,
 .trend-edit-form textarea {
-  background: rgba(255,255,255,0.06);
+  background: rgba(0, 0, 0, 0.28);
   border: 1px solid var(--line);
   border-radius: 6px;
-  color: var(--fg);
+  color: var(--cream);
   padding: 8px 10px;
   font-size: 0.88rem;
   font-family: inherit;
@@ -3538,12 +3611,31 @@ body[data-active-view="checkout"] .whatsapp-fab {
 }
 
 .cashflow-card {
+  position: relative;
   padding: 16px 16px 14px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(180deg, rgba(255, 79, 154, 0.04), rgba(17, 13, 16, 0.55));
   display: grid;
   gap: 6px;
+  overflow: hidden;
+  transition: border-color 180ms var(--ease), background 180ms var(--ease);
+}
+
+.cashflow-card:hover {
+  border-color: rgba(255, 216, 232, 0.28);
+  background: linear-gradient(180deg, rgba(255, 79, 154, 0.08), rgba(17, 13, 16, 0.65));
+}
+
+.cashflow-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--pink), transparent);
+  opacity: 0.45;
 }
 
 .cashflow-card span {
@@ -3569,8 +3661,16 @@ body[data-active-view="checkout"] .whatsapp-fab {
   color: #6ee7b7;
 }
 
+.cashflow-tone-positive::before {
+  background: linear-gradient(90deg, #6ee7b7, transparent);
+}
+
 .cashflow-tone-negative strong {
   color: #fb7185;
+}
+
+.cashflow-tone-negative::before {
+  background: linear-gradient(90deg, #fb7185, transparent);
 }
 
 .cashflow-tone-attention strong {
@@ -3711,7 +3811,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--cream);
 }
 
@@ -3816,7 +3916,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
   padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--cream);
   font-size: 0.82rem;
 }
@@ -3826,6 +3926,147 @@ body[data-active-view="checkout"] .whatsapp-fab {
   color: var(--muted);
   font-size: 0.7rem;
   margin-top: 2px;
+}
+
+/* Ledger row colour-coding by payment status */
+.cashflow-ledger tr[data-payment="paid_in_full"] td {
+  background: rgba(110, 231, 183, 0.04);
+}
+
+.cashflow-ledger tr[data-payment="paid_in_full"] td:first-child {
+  border-left: 2px solid #6ee7b7;
+}
+
+.cashflow-ledger tr[data-payment="balance_due"] td {
+  background: rgba(251, 113, 133, 0.05);
+}
+
+.cashflow-ledger tr[data-payment="balance_due"] td:first-child {
+  border-left: 2px solid #fb7185;
+}
+
+.cashflow-ledger tr[data-payment="awaiting_advance"] td {
+  background: rgba(255, 208, 122, 0.04);
+}
+
+.cashflow-ledger tr[data-payment="awaiting_advance"] td:first-child {
+  border-left: 2px solid var(--amber);
+}
+
+.cashflow-ledger tr[data-payment="advance_confirmed"] td {
+  background: rgba(255, 79, 154, 0.04);
+}
+
+.cashflow-ledger tr[data-payment="advance_confirmed"] td:first-child {
+  border-left: 2px solid var(--pink);
+}
+
+/* Profit column — positive green, negative red */
+.cashflow-ledger .profit-positive {
+  color: #6ee7b7;
+  font-weight: 700;
+}
+
+.cashflow-ledger .profit-negative {
+  color: #fb7185;
+  font-weight: 700;
+}
+
+/* Batch card enhancements */
+.cashflow-batch {
+  transition: border-color 180ms var(--ease);
+}
+
+.cashflow-batch:hover {
+  border-color: rgba(255, 216, 232, 0.28);
+}
+
+.batch-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.batch-status-chip.collecting {
+  background: rgba(255, 208, 122, 0.14);
+  color: var(--amber);
+  border: 1px solid rgba(255, 208, 122, 0.28);
+}
+
+.batch-status-chip.sourcing {
+  background: rgba(255, 79, 154, 0.12);
+  color: var(--pink-2);
+  border: 1px solid rgba(255, 79, 154, 0.28);
+}
+
+.batch-status-chip.shipped,
+.batch-status-chip.arriving {
+  background: rgba(110, 231, 183, 0.1);
+  color: #6ee7b7;
+  border: 1px solid rgba(110, 231, 183, 0.24);
+}
+
+.batch-status-chip.arrived {
+  background: rgba(110, 231, 183, 0.18);
+  color: #6ee7b7;
+  border: 1px solid rgba(110, 231, 183, 0.38);
+}
+
+/* Worklist row urgent state */
+.worklist-row.urgent strong {
+  color: #fb7185;
+}
+
+.worklist-row.urgent small {
+  color: rgba(251, 113, 133, 0.7);
+}
+
+.worklist-row.urgent {
+  background: linear-gradient(90deg, rgba(251, 113, 133, 0.07), transparent);
+  border-left: 2px solid #fb7185;
+  padding-left: 8px;
+}
+
+/* Ledger totals footer row */
+.ledger-totals td {
+  background: rgba(255, 79, 154, 0.08) !important;
+  border-top: 2px solid var(--pink);
+  border-bottom: 0;
+  font-size: 0.95rem;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  color: var(--cream);
+}
+
+.ledger-totals td:first-child {
+  border-left: 2px solid var(--pink);
+}
+
+/* Inline WhatsApp link inside ledger order cell */
+.ledger-wa-link {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 7px;
+  border: 1px solid rgba(37, 211, 102, 0.4);
+  border-radius: 999px;
+  background: rgba(37, 211, 102, 0.1);
+  color: #4ade80;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background 160ms var(--ease);
+}
+
+.ledger-wa-link:hover {
+  background: rgba(37, 211, 102, 0.2);
+  color: #86efac;
 }
 
 /* ═══════════════════════════════════════ QTY STEPPER (haul flow)
@@ -4089,7 +4330,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--cream);
 }
 
@@ -4189,7 +4430,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--ink);
+  background: rgba(0, 0, 0, 0.28);
   color: var(--cream);
   font-size: 0.92rem;
   text-transform: none;

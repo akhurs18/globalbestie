@@ -1770,9 +1770,12 @@ function renderCashflowBatches(fx) {
           <header>
             <div>
               <strong>${batch.name}</strong>
-              <small>${batchStatusLabel(batch.status)} · ETA ${formatDate(batch.eta_date)}</small>
+              <small>ETA ${formatDate(batch.eta_date)}</small>
             </div>
-            <small>${batchOrders.length} orders · ${items} items</small>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="batch-status-chip ${batch.status}">${batchStatusLabel(batch.status)}</span>
+              <small>${batchOrders.length} orders · ${items} items</small>
+            </div>
           </header>
           <div class="money-bar-track money-bar-track-mini">
             <span class="money-bar-seg money-bar-out" style="width:${((usd * fx) / scale) * 100}%"></span>
@@ -1810,9 +1813,11 @@ function renderCashflowWorklists() {
             const waHref = waNum
               ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${o.customer_name.split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: PKR ${due}. Please transfer before local dispatch.`)}`
               : "#";
+            const days = daysSince(o.arrived_at || o.updated_at || o.created_at);
+            const urgent = days !== null && days >= 3;
             return `
-              <div class="worklist-row">
-                <div><strong>${o.id}</strong><small>${o.customer_name} · ${o.city || ""}</small></div>
+              <div class="worklist-row ${urgent ? "urgent" : ""}">
+                <div><strong>${o.id}</strong><small>${o.customer_name} · ${o.city || ""}${days !== null ? ` · arrived ${days}d ago` : ""}</small></div>
                 <strong>${PKR.format(due)}</strong>
                 <a class="button secondary" href="${waHref}" target="_blank" rel="noreferrer">WhatsApp</a>
               </div>`;
@@ -1833,12 +1838,16 @@ function renderCashflowWorklists() {
     "[data-stale-orders]",
     stale.length
       ? stale
-          .map((o) => `
-            <div class="worklist-row">
-              <div><strong>${o.id}</strong><small>${o.customer_name} · ${daysSince(o.accepted_at || o.created_at)} days</small></div>
+          .map((o) => {
+            const days = daysSince(o.accepted_at || o.created_at) || 0;
+            const urgent = days >= 14;
+            return `
+            <div class="worklist-row ${urgent ? "urgent" : ""}">
+              <div><strong>${o.id}</strong><small>${o.customer_name} · ${days} days accepted${urgent ? " · urgent" : ""}</small></div>
               <strong>${PKR.format(Number(o.total_pkr || 0))}</strong>
               <button class="button secondary" type="button" data-action="view-order" data-order-id="${o.id}">Open</button>
-            </div>`)
+            </div>`;
+          })
           .join("")
       : `<p class="cashflow-empty">No stale accepted orders.</p>`
   );
@@ -1882,6 +1891,12 @@ function renderLedger() {
     return true;
   });
 
+  let totalPkr = 0;
+  let totalUsd = 0;
+  let totalAdvance = 0;
+  let totalBalance = 0;
+  let totalProfit = 0;
+
   tbody.innerHTML = rows
     .map((o) => {
       const payment = orderPaymentSummary(o);
@@ -1890,9 +1905,19 @@ function renderLedger() {
       const balanceLeft = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
       const profit = payment.total - usd * fx;
       const batch = shipmentBatchForOrder(o);
+      const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
+      const waNum = String(o.customer_phone || "").replace(/\D/g, "");
+      const waHref = waNum && balanceLeft > 0
+        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has a remaining balance of PKR ${balanceLeft.toLocaleString()}. Please transfer when convenient — thank you!`)}`
+        : "";
+      totalPkr += payment.total;
+      totalUsd += usdActual;
+      totalAdvance += Number(o.advance_paid_pkr || 0);
+      totalBalance += balanceLeft;
+      totalProfit += profit;
       return `
-        <tr role="button" tabindex="0" data-action="view-order" data-order-id="${o.id}">
-          <td><strong>${o.id}</strong></td>
+        <tr role="button" tabindex="0" class="order-row" data-action="view-order" data-order-id="${o.id}" data-payment="${o.payment_status}">
+          <td><strong>${o.id}</strong>${waHref ? `<br><a class="ledger-wa-link" href="${waHref}" target="_blank" rel="noreferrer" data-stop-row title="WhatsApp balance reminder">↗ WA</a>` : ""}</td>
           <td>${o.customer_name}<br><small>${o.customer_phone || ""}</small></td>
           <td>${batch ? batch.name : "—"}</td>
           <td>${o.status.replaceAll("_", " ")}</td>
@@ -1901,10 +1926,99 @@ function renderLedger() {
           <td>${USD.format(usdActual)}${usdActual < usd ? `<br><small>est ${USD.format(usd)}</small>` : ""}</td>
           <td>${PKR.format(Number(o.advance_paid_pkr || 0))}</td>
           <td>${PKR.format(balanceLeft)}</td>
-          <td>${PKR.format(profit)}</td>
+          <td class="${profitClass}">${PKR.format(profit)}</td>
         </tr>`;
     })
     .join("") || `<tr><td colspan="10"><p class="cashflow-empty">No orders match these filters.</p></td></tr>`;
+
+  const totalProfitClass = totalProfit >= 0 ? "profit-positive" : "profit-negative";
+  const tfootRow = rows.length
+    ? `<tr class="ledger-totals">
+        <td colspan="5"><strong>Totals (${rows.length} orders)</strong></td>
+        <td><strong>${PKR.format(totalPkr)}</strong></td>
+        <td><strong>${USD.format(totalUsd)}</strong></td>
+        <td><strong>${PKR.format(totalAdvance)}</strong></td>
+        <td><strong>${PKR.format(totalBalance)}</strong></td>
+        <td class="${totalProfitClass}"><strong>${PKR.format(totalProfit)}</strong></td>
+       </tr>`
+    : "";
+  const table = tbody.closest("table");
+  if (table) {
+    let tfoot = table.querySelector("tfoot");
+    if (!tfoot) {
+      tfoot = document.createElement("tfoot");
+      table.appendChild(tfoot);
+    }
+    tfoot.innerHTML = tfootRow;
+  }
+
+  // Stash current filtered rows so the CSV export uses exactly what is shown.
+  state._ledgerExport = rows;
+}
+
+function exportLedgerCsv() {
+  const rows = state._ledgerExport || state.orders || [];
+  if (!rows.length) {
+    toast("No orders in the current view to export.");
+    return;
+  }
+  const fx = Number(state.settings?.fx_rate || 282);
+  const headers = [
+    "Order ID",
+    "Customer",
+    "Phone",
+    "City",
+    "Batch",
+    "Stage",
+    "Payment status",
+    "PKR sale",
+    "USD cost (actual)",
+    "USD cost (est)",
+    "Advance in PKR",
+    "Balance left PKR",
+    "Profit PKR",
+    "Created",
+  ];
+  const escape = (val) => {
+    const s = val == null ? "" : String(val);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const body = rows.map((o) => {
+    const payment = orderPaymentSummary(o);
+    const usd = orderUsdExpected(o);
+    const usdActual = orderUsdSpent(o);
+    const balanceLeft = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
+    const profit = payment.total - usd * fx;
+    const batch = shipmentBatchForOrder(o);
+    return [
+      o.id,
+      o.customer_name,
+      o.customer_phone || "",
+      o.city || "",
+      batch ? batch.name : "",
+      (o.status || "").replaceAll("_", " "),
+      paymentLabel(o.payment_status),
+      payment.total,
+      usdActual,
+      usd,
+      Number(o.advance_paid_pkr || 0),
+      balanceLeft,
+      Math.round(profit),
+      o.created_at || "",
+    ].map(escape).join(",");
+  });
+  const csv = [headers.join(","), ...body].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `global-bestie-ledger-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} orders to CSV.`);
 }
 
 function findOrderItem(order, key) {
@@ -3815,6 +3929,7 @@ function wireEvents() {
     if (action === "reply-lead") return replyLead(target.dataset.leadId);
     if (action === "sync-marketing") return syncMarketing();
     if (action === "new-campaign") return qs("[data-campaign-form] input[name='name']")?.focus();
+    if (action === "export-ledger-csv") return exportLedgerCsv();
   });
 
   document.addEventListener("change", (event) => {
