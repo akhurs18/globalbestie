@@ -536,6 +536,9 @@ const state = {
   messageFilter: "all",
   dispatchQueue: [],
   selectedOrders: new Set(),
+  watchedOrders: new Set(JSON.parse(localStorage.getItem("gb_watched_orders") || "[]")),
+  ordersView: localStorage.getItem("gb_orders_view") || "list",
+  customerColumns: JSON.parse(localStorage.getItem("gb_customer_columns") || "{\"last_wa\":false,\"trend\":false,\"tier\":true}"),
   settings: { ...sampleSettings },
   cart: loadJSON("mm_cart", []),
   adminToken: localStorage.getItem("mm_admin_token") || "",
@@ -1453,9 +1456,19 @@ function showOrderDetails(orderId) {
       <span class="repeat-arrow" aria-hidden="true">›</span>
     </button>
   ` : "";
-  openModal(`
-    <div class="order-detail-modal">
-      <div class="drawer-hero">
+  // Full-screen takeover: capture the currently active admin tab so the
+  // back button knows where to return, then render the order detail into
+  // its own panel.
+  if (!state._previousAdminPanel) {
+    const current = qs(".admin-tab.active");
+    state._previousAdminPanel = current?.dataset.adminTab || "overview";
+  }
+  state._currentOrderId = orderId;
+  renderOrderFullscreen(`
+    <div class="order-fs-grid">
+      ${renderOrderProgressBar(order)}
+      <div class="order-fs-hero">
+        <div class="drawer-hero">
         <div>
           <p class="kicker">Order command drawer</p>
           <h2>${order.id}</h2>
@@ -1582,8 +1595,61 @@ function showOrderDetails(orderId) {
           </div>
         </section>
       </div>
+      </div>
     </div>
   `);
+}
+
+// Switches the admin panels so the dedicated order-detail full-screen panel
+// is the only active one. The sidebar tab buttons get deactivated so the
+// operator knows they're in a focused view; the toolbar's Back button
+// restores whatever was active before.
+function renderOrderFullscreen(html) {
+  const slot = qs("[data-order-fs]");
+  if (!slot) return;
+  slot.innerHTML = html;
+  qsa("[data-admin-tab]").forEach((t) => t.classList.remove("active"));
+  qsa("[data-admin-panel]").forEach((p) => p.classList.toggle("active", p.dataset.adminPanel === "order-detail"));
+  // Scroll to the top of the new panel so the user sees the order header.
+  qs("[data-admin-panel='order-detail']")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Horizontal stage tracker — six dots, current one pulsing. Renders above
+// every order detail view so the team sees where the order is at a glance.
+function renderOrderProgressBar(order) {
+  const stages = [
+    { key: "pending_review", label: "Received" },
+    { key: "accepted", label: "Accepted" },
+    { key: "sourcing", label: "Sourcing" },
+    { key: "in_transit", label: "In transit" },
+    { key: "pakistan_processing", label: "Arrived" },
+    { key: "delivered", label: "Delivered" },
+  ];
+  const currentIdx = stages.findIndex((s) => s.key === order.status);
+  const isCancelled = order.status === "cancelled";
+  return `
+    <div class="order-stage-bar ${isCancelled ? "is-cancelled" : ""}">
+      ${stages.map((s, i) => {
+        const state = i < currentIdx ? "done" : i === currentIdx ? "current" : "todo";
+        return `
+          <div class="stage-dot ${state}">
+            <span class="stage-dot-circle">${i + 1}</span>
+            <span class="stage-dot-label">${esc(s.label)}</span>
+          </div>
+        `;
+      }).join("")}
+      ${isCancelled ? `<div class="stage-cancelled-overlay">Cancelled</div>` : ""}
+    </div>
+  `;
+}
+
+// Triggered by the back button on the full-screen order view. Restores the
+// previously-active admin tab.
+function backFromOrderFullscreen() {
+  const tab = state._previousAdminPanel || "overview";
+  state._previousAdminPanel = null;
+  state._currentOrderId = null;
+  qs(`[data-admin-tab="${tab}"]`)?.click();
 }
 
 function renderAdmin() {
@@ -1662,6 +1728,70 @@ function renderAdmin() {
   renderScheduledBroadcastsList();
   renderCampaignReplyRates();
   renderTemplatesEditor();
+  renderTodayRibbon();
+}
+
+// The sticky Today ribbon — a 4-stat heartbeat shown above every admin
+// panel. Each stat is click-through to the relevant tab/filter so the team
+// can drill into "what needs me now?" without scrolling for it.
+function renderTodayRibbon() {
+  const el = qs("[data-today-ribbon]");
+  if (!el) return;
+  const orders = state.orders || [];
+  const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+  const startOfYesterday = new Date(startOfDay.getTime() - 86_400_000);
+
+  const pending = orders.filter((o) => o.status === "pending_review").length;
+  const todayOrders = orders.filter((o) => new Date(o.created_at || 0) >= startOfDay);
+  const yesterdayOrders = orders.filter((o) => {
+    const t = new Date(o.created_at || 0).getTime();
+    return t >= startOfYesterday.getTime() && t < startOfDay.getTime();
+  });
+  const revenueToday = todayOrders.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const revenueYesterday = yesterdayOrders.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const trend = revenueYesterday > 0
+    ? Math.round(((revenueToday - revenueYesterday) / revenueYesterday) * 100)
+    : (revenueToday > 0 ? 100 : 0);
+  const trendArrow = trend > 0 ? "↑" : trend < 0 ? "↓" : "·";
+  const trendTone = trend > 0 ? "ok" : trend < 0 ? "warn" : "info";
+
+  const balanceOverdue = orders.filter((o) => {
+    if (o.status !== "pakistan_processing") return false;
+    const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+    if (balance <= 0) return false;
+    const arrivedAt = new Date(o.arrived_at || o.updated_at || o.created_at || 0).getTime();
+    return (Date.now() - arrivedAt) >= 24 * 3_600_000;
+  }).length;
+
+  const oneWeek = Date.now() + 7 * 86_400_000;
+  const arrivingSoon = (state.shipmentBatches || []).filter((b) => {
+    if (b.status === "arrived") return false;
+    const eta = new Date(b.eta_date || 0).getTime();
+    return eta && eta <= oneWeek && eta >= Date.now() - 86_400_000;
+  }).length;
+
+  el.innerHTML = `
+    <button class="today-stat ${pending > 0 ? "tone-warn" : "tone-ok"}" type="button" data-action="jump-tab" data-action-filter="orders" title="Open Orders tab">
+      <span class="today-label">Pending now</span>
+      <strong>${pending}</strong>
+      <small>${pending === 1 ? "order" : "orders"} awaiting approval</small>
+    </button>
+    <button class="today-stat tone-info" type="button" data-action="jump-tab" data-action-filter="orders" title="Today's orders">
+      <span class="today-label">Revenue today</span>
+      <strong>${PKR.format(revenueToday)}</strong>
+      <small class="today-trend tone-${trendTone}">${trendArrow} ${Math.abs(trend)}% vs yesterday</small>
+    </button>
+    <button class="today-stat ${balanceOverdue > 0 ? "tone-warn" : "tone-ok"}" type="button" data-action="jump-tab" data-action-filter="cashflow" title="Open Cashflow">
+      <span class="today-label">Balance overdue</span>
+      <strong>${balanceOverdue}</strong>
+      <small>${balanceOverdue === 1 ? "order" : "orders"} > 24h since arrival</small>
+    </button>
+    <button class="today-stat tone-info" type="button" data-action="jump-tab" data-action-filter="shipments" title="Open Shipments">
+      <span class="today-label">Arriving this week</span>
+      <strong>${arrivingSoon}</strong>
+      <small>${arrivingSoon === 1 ? "batch" : "batches"} due</small>
+    </button>
+  `;
 }
 
 // ─── Overview rewrites ───
@@ -1757,19 +1887,39 @@ function renderOverviewExtras() {
       : `<p class="cashflow-empty">✓ No SLA breaches, no low stock — everything's on track.</p>`,
   );
 
-  // Snapshot cards — quick jumps into each major tab with one stat each
-  setHTML("[data-overview-snapshots]", [
-    { tab: "cashflow", icon: "₨", label: "Cashflow", stat: PKR.format(balanceOutstanding) + " outstanding" },
-    { tab: "customers", icon: "★", label: "Customers", stat: `${(state.customers || []).length} total` },
-    { tab: "shipments", icon: "✈", label: "Shipments", stat: `${(state.shipmentBatches || []).filter((b) => b.status !== "arrived").length} active batches` },
-    { tab: "products", icon: "✦", label: "Products", stat: `${(state.products || []).length} live` },
-  ].map((s) => `
-    <button class="snapshot-card" type="button" data-action="jump-tab" data-action-filter="${attr(s.tab)}">
-      <span class="snapshot-icon">${s.icon}</span>
-      <div><strong>${esc(s.label)}</strong><small>${esc(s.stat)}</small></div>
-      <span aria-hidden="true">›</span>
-    </button>
-  `).join(""));
+  // Recent activity rail — last 6 order events across the whole portal,
+  // pulled from order.events. Replaces the snapshot grid; the team gets a
+  // pulse of what's actually moving instead of static stat cards.
+  const allEvents = [];
+  for (const o of state.orders || []) {
+    for (const ev of orderEvents(o)) {
+      allEvents.push({
+        order_id: o.id,
+        customer: o.customer_name || "",
+        status: ev.status,
+        note: ev.note,
+        created_at: ev.created_at,
+      });
+    }
+  }
+  allEvents.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const top = allEvents.slice(0, 6);
+  setHTML("[data-overview-activity]",
+    top.length
+      ? top.map((ev) => {
+          const meta = timelineMeta(ev.status);
+          return `
+            <li class="activity-row tone-${meta.tone}">
+              <span class="activity-glyph" aria-hidden="true">${meta.glyph}</span>
+              <div>
+                <strong>${esc(meta.label)}</strong>
+                <small>${esc(ev.order_id)} · ${esc(ev.customer)} · ${esc(relativeTime(ev.created_at))}</small>
+              </div>
+            </li>
+          `;
+        }).join("")
+      : `<li class="kanban-empty">No recent activity.</li>`
+  );
 }
 
 // Pending scheduled broadcasts list — shown under the broadcast form.
@@ -3145,6 +3295,77 @@ function renderLaunchChecklist() {
   `).join("");
 }
 
+// Kanban board view — 6 columns (one per status). Click any card → opens
+// the full-screen order detail. Cards are compact: ID + customer name +
+// total + age + SLA chip + watch star.
+function renderKanbanBoard(rows) {
+  const slot = qs("[data-orders-board]");
+  if (!slot) return;
+  const columns = [
+    { key: "pending_review", label: "Pending Review", tone: "warn" },
+    { key: "accepted", label: "Accepted", tone: "info" },
+    { key: "sourcing", label: "Sourcing", tone: "info" },
+    { key: "in_transit", label: "In Transit", tone: "info" },
+    { key: "pakistan_processing", label: "Arrived in PK", tone: "ok" },
+    { key: "delivered", label: "Delivered", tone: "ok" },
+  ];
+  slot.innerHTML = columns.map((col) => {
+    const cards = rows.filter((o) => o.status === col.key);
+    return `
+      <div class="kanban-col tone-${col.tone}">
+        <header>
+          <strong>${esc(col.label)}</strong>
+          <span class="kanban-count">${cards.length}</span>
+        </header>
+        <div class="kanban-cards">
+          ${cards.length
+            ? cards.map((o) => {
+                const sla = orderSlaBadge(o);
+                const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+                const ageDays = daysSince(o.created_at);
+                const watched = isWatched(o.id);
+                return `
+                  <button class="kanban-card ${sla ? `sla-${sla.level}` : ""} ${watched ? "is-watched" : ""}" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
+                    <div class="kanban-card-top">
+                      <strong>${esc(o.id)}</strong>
+                      ${watched ? `<span class="kanban-star" aria-hidden="true">★</span>` : ""}
+                    </div>
+                    <small>${esc((o.customer_name || "").split(" ").slice(0, 2).join(" "))}</small>
+                    <div class="kanban-card-bottom">
+                      <span class="kanban-amount">${PKR.format(Number(o.total_pkr || 0))}</span>
+                      <span class="kanban-age">${ageDays === 0 ? "today" : `${ageDays}d`}</span>
+                    </div>
+                    ${sla ? `<span class="kanban-sla sla-${sla.level}">${esc(sla.label)}</span>` : ""}
+                    ${balance > 0 && col.key === "pakistan_processing" ? `<span class="kanban-balance">₨${balance.toLocaleString()} due</span>` : ""}
+                  </button>
+                `;
+              }).join("")
+            : `<p class="kanban-empty">·</p>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// Watchlist — pin orders to the top of the operator's view. State lives in
+// localStorage so it survives reload but doesn't leak between operators.
+function toggleWatchOrder(id) {
+  if (!id) return;
+  state.watchedOrders = state.watchedOrders || new Set();
+  if (state.watchedOrders.has(id)) state.watchedOrders.delete(id);
+  else state.watchedOrders.add(id);
+  localStorage.setItem("gb_watched_orders", JSON.stringify([...state.watchedOrders]));
+  toast(state.watchedOrders.has(id) ? "★ Added to watchlist" : "Removed from watchlist");
+  renderAdminOrders();
+  // Re-render order detail if open to update the star state
+  if (state._currentOrderId === id) showOrderDetails(id);
+}
+
+function isWatched(id) {
+  return state.watchedOrders?.has(id) || false;
+}
+
 // SLA windows tuned to the agent file's promise of a 15 min WhatsApp reply.
 // Returns { level: "ok" | "warn" | "danger", label, mins }.
 function orderSlaBadge(order) {
@@ -3254,8 +3475,20 @@ function renderAdminOrders() {
     const all = state.orders.length;
     countChip.textContent = `${rows.length} of ${all}`;
   }
+  // Watched orders surface first, then the rest in chronological order.
+  rows.sort((a, b) => {
+    const aw = isWatched(a.id) ? 0 : 1;
+    const bw = isWatched(b.id) ? 0 : 1;
+    if (aw !== bw) return aw - bw;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
   state._ordersExport = rows;
   renderBulkActionBar();
+  // Sync the visibility based on current view choice + render kanban if active
+  qs("[data-orders-list-wrap]")?.classList.toggle("hidden", state.ordersView === "board");
+  qs("[data-orders-board]")?.classList.toggle("hidden", state.ordersView !== "board");
+  qsa("[data-action='set-orders-view']").forEach((b) => b.classList.toggle("active", b.dataset.ordersView === (state.ordersView || "list")));
+  if (state.ordersView === "board") renderKanbanBoard(rows);
   const tableRows = rows.map((order) => {
     const payment = orderPaymentSummary(order);
     const due = amountDueForOrder(order);
@@ -7064,6 +7297,30 @@ function wireEvents() {
       previewBroadcastCount();
       return;
     }
+    if (action === "set-orders-view") {
+      const view = target.dataset.ordersView || "list";
+      state.ordersView = view;
+      localStorage.setItem("gb_orders_view", view);
+      qsa("[data-action='set-orders-view']").forEach((b) => b.classList.toggle("active", b.dataset.ordersView === view));
+      qs("[data-orders-list-wrap]")?.classList.toggle("hidden", view !== "list");
+      qs("[data-orders-board]")?.classList.toggle("hidden", view !== "board");
+      renderAdminOrders();
+      return;
+    }
+    if (action === "back-from-order") {
+      backFromOrderFullscreen();
+      return;
+    }
+    if (action === "watch-order") {
+      toggleWatchOrder(state._currentOrderId);
+      return;
+    }
+    if (action === "open-wa-templates-current") {
+      const id = state._currentOrderId;
+      const o = (state.orders || []).find((x) => x.id === id);
+      if (o) showWhatsappTemplateModal(o);
+      return;
+    }
     if (action === "open-customer") {
       const ph = target.dataset.customerPhone || "";
       if (ph) showCustomerDetails(ph);
@@ -7220,6 +7477,9 @@ function wireEvents() {
       });
     });
   });
+  // Trigger the default (Inbox) so we don't render every Growth Studio
+  // panel on first load.
+  qs("[data-growth-tab].active")?.click();
 
   qsa("[data-order-filter-chip]").forEach((chip) => {
     chip.addEventListener("click", () => {

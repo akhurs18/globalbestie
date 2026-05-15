@@ -3354,6 +3354,406 @@ button.tier-pill-btn:hover { filter: brightness(1.18); }
   min-height: 30px;
 }
 
+/* ═══════════════════════════════════ TODAY RIBBON ═══════════════════════════════════ */
+.today-ribbon {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  padding: 14px 0;
+  margin-bottom: 18px;
+  background: rgba(11, 7, 10, 0.92);
+  backdrop-filter: blur(14px);
+}
+
+.today-stat {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease), background 140ms var(--ease);
+}
+
+.today-stat:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 79, 154, 0.4);
+  background: rgba(255, 79, 154, 0.06);
+}
+
+.today-stat.tone-warn { border-color: rgba(255, 208, 122, 0.36); background: rgba(255, 208, 122, 0.07); }
+.today-stat.tone-ok { border-color: rgba(152, 240, 195, 0.28); }
+.today-stat.tone-info { border-color: rgba(255, 156, 199, 0.28); }
+
+.today-label {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.today-stat strong {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.55rem;
+  color: var(--cream);
+  line-height: 1.1;
+}
+
+.today-stat small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.today-trend.tone-ok { color: var(--green); }
+.today-trend.tone-warn { color: #fb7185; }
+.today-trend.tone-info { color: var(--muted); }
+
+@media (max-width: 880px) {
+  .today-ribbon { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ═══════════════════════════════════ ORDERS VIEW TOGGLE ═══════════════════════════════════ */
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 5px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 140ms var(--ease), color 140ms var(--ease);
+}
+
+.view-toggle button.active {
+  background: rgba(255, 79, 154, 0.18);
+  color: var(--rose);
+}
+
+/* ═══════════════════════════════════ KANBAN BOARD ═══════════════════════════════════ */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(180px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.kanban-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+  padding: 12px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.kanban-col.tone-warn { border-top: 3px solid var(--amber); }
+.kanban-col.tone-ok { border-top: 3px solid var(--green); }
+.kanban-col.tone-info { border-top: 3px solid var(--pink); }
+
+.kanban-col header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.kanban-col header strong {
+  color: var(--cream);
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+}
+
+.kanban-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255, 79, 154, 0.18);
+  color: var(--rose);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.kanban-cards {
+  display: grid;
+  gap: 6px;
+}
+
+.kanban-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cream);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 140ms var(--ease), border-color 140ms var(--ease), background 140ms var(--ease);
+}
+
+.kanban-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 79, 154, 0.4);
+  background: rgba(255, 79, 154, 0.06);
+}
+
+.kanban-card.sla-warn { border-left: 3px solid var(--amber); }
+.kanban-card.sla-danger { border-left: 3px solid #fb7185; }
+.kanban-card.is-watched { border-color: rgba(255, 208, 122, 0.42); }
+
+.kanban-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-card strong {
+  color: var(--cream);
+  font-size: 0.82rem;
+}
+
+.kanban-card small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.kanban-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 0.74rem;
+}
+
+.kanban-amount { color: var(--rose); font-weight: 800; }
+.kanban-age { color: var(--muted); }
+
+.kanban-sla {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kanban-sla.sla-warn { background: rgba(255, 208, 122, 0.18); color: var(--amber); }
+.kanban-sla.sla-danger { background: rgba(251, 113, 133, 0.18); color: #fb7185; }
+
+.kanban-balance {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--amber);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.kanban-star { color: var(--amber); font-size: 0.95rem; }
+
+.kanban-empty {
+  margin: 0;
+  padding: 8px 4px;
+  color: rgba(191, 174, 183, 0.4);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+@media (max-width: 1200px) {
+  .kanban-board { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+}
+@media (max-width: 720px) {
+  .kanban-board { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════ ORDER FULL-SCREEN VIEW ═══════════════════════════════════ */
+.order-detail-fullscreen.admin-panel.active {
+  display: block;
+}
+
+.order-fs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.order-fs-toolbar .button { padding: 7px 14px; min-height: 34px; }
+.order-fs-spacer { flex: 1; }
+
+.order-fs-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.order-fs-hero { /* container that wraps the old modal HTML */ }
+
+/* Horizontal stage tracker */
+.order-stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 18px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+  position: relative;
+}
+
+.stage-dot {
+  flex: 1;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.stage-dot::after {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  right: -50%;
+  height: 2px;
+  background: var(--line);
+  z-index: 0;
+}
+
+.stage-dot:last-child::after { display: none; }
+
+.stage-dot-circle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.78rem;
+  position: relative;
+  z-index: 1;
+  transition: background 220ms var(--ease), color 220ms var(--ease);
+}
+
+.stage-dot-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.stage-dot.done .stage-dot-circle {
+  background: rgba(152, 240, 195, 0.22);
+  color: var(--green);
+}
+.stage-dot.done::after { background: rgba(152, 240, 195, 0.3); }
+
+.stage-dot.current .stage-dot-circle {
+  background: linear-gradient(135deg, var(--pink), var(--rose));
+  color: var(--black);
+  animation: stage-pulse 1.8s ease-in-out infinite;
+}
+
+.stage-dot.current .stage-dot-label { color: var(--rose); }
+
+@keyframes stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 79, 154, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 79, 154, 0.0); }
+}
+
+.order-stage-bar.is-cancelled {
+  opacity: 0.5;
+}
+
+.stage-cancelled-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: rgba(251, 113, 133, 0.22);
+  color: #fb7185;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════ ACTIVITY RAIL ═══════════════════════════════════ */
+.activity-rail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.activity-row {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.activity-glyph {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--cream);
+  font-size: 0.92rem;
+}
+
+.activity-row.tone-ok .activity-glyph { background: rgba(152, 240, 195, 0.18); color: var(--green); }
+.activity-row.tone-warn .activity-glyph { background: rgba(255, 208, 122, 0.18); color: var(--amber); }
+.activity-row.tone-danger .activity-glyph { background: rgba(251, 113, 133, 0.18); color: #fb7185; }
+.activity-row.tone-info .activity-glyph { background: rgba(255, 79, 154, 0.16); color: var(--pink-2); }
+
+.activity-row strong {
+  display: block;
+  color: var(--cream);
+  font-size: 0.86rem;
+}
+
+.activity-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
 /* ───── WhatsApp template modal ───── */
 .wa-template-modal {
   display: grid;
