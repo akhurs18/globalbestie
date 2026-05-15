@@ -153,6 +153,197 @@ create table if not exists public.orders (
 
 create index if not exists orders_status_idx on public.orders (status);
 create index if not exists orders_phone_idx on public.orders (customer_phone);
+
+-- New columns that came in with the canonical-phone migration. The
+-- `customer_phone` itself is stored as the canonical E.164-without-plus
+-- form (e.g. 923001234567). Display form is a convenience derived field.
+alter table public.orders add column if not exists customer_phone_display text;
+alter table public.orders add column if not exists whatsapp_opt_in boolean default true;
+alter table public.orders add column if not exists pricing_note text;
+alter table public.orders add column if not exists idempotency_key text;
+create index if not exists orders_idempotency_idx on public.orders (idempotency_key);
+
+-- =========================================================================
+-- CUSTOMERS — keyed by canonical phone (923xxxxxxxxx). One row per unique
+-- buyer. Counters maintained from /api/orders POST and /api/leads.
+-- =========================================================================
+create table if not exists public.customers (
+  phone text primary key,
+  name text,
+  email text,
+  city text,
+  default_address text,
+  whatsapp_opt_in boolean default true,
+  vip_tier text default 'standard' check (vip_tier in ('standard', 'silver', 'gold', 'vip')),
+  total_orders integer not null default 0,
+  total_revenue_pkr numeric(14, 2) not null default 0,
+  tags text[] default '{}',
+  notes text,
+  first_seen timestamptz not null default now(),
+  last_seen timestamptz not null default now()
+);
+create index if not exists customers_last_seen_idx on public.customers (last_seen desc);
+create index if not exists customers_revenue_idx on public.customers (total_revenue_pkr desc);
+
+-- =========================================================================
+-- WHATSAPP TEMPLATES — pre-written messages with {{name}}, {{order_id}},
+-- {{eta}}, {{advance}}, {{balance}}, {{tracking}} placeholders.
+-- =========================================================================
+create table if not exists public.whatsapp_templates (
+  id text primary key,
+  name text not null,
+  category text not null,    -- 'advance_request' | 'balance_reminder' | 'sourcing_update' | 'dispatch' | 'custom'
+  body text not null,
+  is_active boolean default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- Seed a useful starter set so the team has something to send on day one.
+insert into public.whatsapp_templates (id, name, category, body) values
+  ('tmpl-advance', 'Advance payment request', 'advance_request',
+   'Hi {{name}}, thank you for your Global Bestie order {{order_id}}. Please transfer the 50% advance of PKR {{advance}} to confirm — bank details on the order page. Reply once sent so we can match it. ETA: {{eta}}'),
+  ('tmpl-balance', 'Balance reminder (arrived in PK)', 'balance_reminder',
+   'Hi {{name}}, your order {{order_id}} has arrived in Pakistan. Please transfer the remaining balance of PKR {{balance}} so we can dispatch via courier today. Thank you!'),
+  ('tmpl-sourcing', 'Sourcing update', 'sourcing_update',
+   'Hi {{name}}, quick update on order {{order_id}} — we''ve sourced your item and it''s on its way to the consolidator. ETA: {{eta}}. We''ll message again once it lands in Pakistan.'),
+  ('tmpl-dispatch', 'Dispatch confirmation', 'dispatch',
+   'Hi {{name}}, your order {{order_id}} is out for delivery 📦 Tracking: {{tracking}}. Please expect a call from the courier within 1–2 working days.'),
+  ('tmpl-instock', 'In-stock order confirmation', 'in_stock_confirmation',
+   'Hi {{name}}, thank you for your Global Bestie order {{order_id}}. Your item is in stock — please transfer PKR {{advance}} to confirm and we''ll dispatch within 1–2 working days. Reply with your transfer reference so we can match it.')
+on conflict (id) do nothing;
+
+-- Direct phone link on every outbound/inbound message — lets us count
+-- broadcasts per recipient (per-day cap) and surface a per-customer
+-- message history without joining via lead_id.
+alter table public.marketing_messages add column if not exists customer_phone text;
+alter table public.marketing_messages add column if not exists replied_to_broadcast text; -- broadcast id when an inbound is recognized as a reply
+create index if not exists marketing_messages_phone_idx on public.marketing_messages (customer_phone, created_at desc);
+
+-- Last successful outbound timestamp on the customer row — enables segments
+-- like "haven't been messaged in 90+ days" without scanning all messages.
+alter table public.customers add column if not exists last_outbound_at timestamptz;
+alter table public.customers add column if not exists risk_flag boolean default false;
+
+-- Snooze an SLA breach on an order. The UI hides the chip until this time
+-- passes — useful when the customer asked to wait.
+alter table public.orders add column if not exists sla_snoozed_until timestamptz;
+
+-- =========================================================================
+-- SCHEDULED BROADCASTS — admin can queue a send for a future time. A 5-min
+-- cron function (broadcasts-process) finds rows where status='pending' and
+-- send_at <= now(), fires them via the same code path as the live send,
+-- then flips status to 'sent' or 'failed'.
+-- =========================================================================
+create table if not exists public.scheduled_broadcasts (
+  id text primary key,
+  template_id text not null,
+  body_override text,
+  filters jsonb not null default '{}'::jsonb,
+  send_at timestamptz not null,
+  status text not null default 'pending' check (status in ('pending', 'running', 'sent', 'failed', 'cancelled')),
+  recipient_count integer,
+  sent_count integer default 0,
+  failed_count integer default 0,
+  skipped_count integer default 0,
+  error text,
+  created_by text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  sent_at timestamptz
+);
+create index if not exists scheduled_broadcasts_status_idx on public.scheduled_broadcasts (status, send_at);
+
+-- =========================================================================
+-- BROADCAST CAMPAIGNS — when a broadcast is fired (live or via scheduler),
+-- we insert one row here so the team can later see "this template got 12
+-- replies in 14 days". Tracked counters (sent / failed / replies) keep
+-- denormalized so the dashboard never has to aggregate messages.
+-- =========================================================================
+create table if not exists public.broadcast_campaigns (
+  id text primary key,
+  template_id text,
+  template_name text,
+  body text,
+  filters jsonb not null default '{}'::jsonb,
+  sent_count integer not null default 0,
+  failed_count integer not null default 0,
+  reply_count integer not null default 0,
+  triggered_by text,
+  triggered_at timestamptz not null default now()
+);
+create index if not exists broadcast_campaigns_recent_idx on public.broadcast_campaigns (triggered_at desc);
+
+-- Reason a customer was flagged risky (refund/cancel/angry keywords). Stored
+-- so the UI can show why, not just that.
+alter table public.customers add column if not exists risk_reason text;
+
+-- =========================================================================
+-- SMART SEGMENTS — saved filter combos for the Customers tab + broadcast
+-- form. One row per segment; `filters` is the same JSON shape the broadcast
+-- form serializes (city, tag, vip_tier, last_order_days, etc.).
+-- =========================================================================
+create table if not exists public.smart_segments (
+  id text primary key,
+  name text not null,
+  filters jsonb not null default '{}'::jsonb,
+  pinned boolean default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists smart_segments_pinned_idx on public.smart_segments (pinned desc, updated_at desc);
+
+-- Seed a few useful starter segments so the team has working examples on
+-- day one. Win-back, VIPs in Karachi, anyone overdue on a balance.
+insert into public.smart_segments (id, name, filters, pinned) values
+  ('seg-winback-90', 'Win-back · 90+ days dormant', '{"min_orders": 2, "last_order_days": 9999}'::jsonb, true),
+  ('seg-vip-karachi', 'VIPs in Karachi', '{"city": "Karachi", "vip_tier": "vip"}'::jsonb, true),
+  ('seg-recent-30', 'Active this month', '{"last_order_days": 30}'::jsonb, false)
+on conflict (id) do nothing;
+
+-- Courier choices for the dispatch modal. Stored in store_settings as a
+-- comma-separated string so the team can edit them on the Settings tab.
+alter table public.store_settings add column if not exists couriers text default 'Leopards,TCS,M&P,OCS,Trax';
+
+-- Per-product low-stock threshold. The Overview attention queue and
+-- Products tab chip both compare against this when populated; otherwise
+-- they fall back to the global default of 2.
+alter table public.products add column if not exists low_stock_threshold integer default 2;
+
+-- Optional team member roster — used by the daily digest fan-out (and any
+-- future per-role workflows). Each row's phone is canonical (923xxxxxxxxx).
+create table if not exists public.team_members (
+  phone text primary key,
+  name text,
+  role text default 'team',
+  digest_opt_in boolean default true,
+  created_at timestamptz not null default now()
+);
+
+-- =========================================================================
+-- ORDER VIEWS — saved filter combinations for the Orders tab. Mirrors the
+-- smart_segments pattern (city/tier/etc) but with order-specific fields.
+-- =========================================================================
+create table if not exists public.order_views (
+  id text primary key,
+  name text not null,
+  filters jsonb not null default '{}'::jsonb,
+  pinned boolean default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists order_views_pinned_idx on public.order_views (pinned desc, updated_at desc);
+
+-- Seed three useful starter order views.
+insert into public.order_views (id, name, filters, pinned) values
+  ('ov-pending-today', 'Pending today', '{"status": "pending_review", "dateRange": "7"}'::jsonb, true),
+  ('ov-balance-due', 'Balance due', '{"status": "pakistan_processing"}'::jsonb, true),
+  ('ov-this-month', 'This month', '{"dateRange": "month"}'::jsonb, false)
+on conflict (id) do nothing;
+
+-- Helpful index for the audit log so the customer modal can query "what
+-- happened to this customer recently" without scanning the whole table.
+create index if not exists admin_audit_entity_idx on public.admin_audit (entity_type, entity_id, created_at desc);
 create index if not exists orders_created_at_idx on public.orders (created_at desc);
 
 alter table public.orders

@@ -279,8 +279,16 @@ export async function downloadAndStoreImage(productId, remoteUrl) {
   }
 }
 
+// Generates a human-readable order ID with enough entropy to avoid birthday-
+// paradox collisions inside a single year. Format: `GB-YYYY-MMDDXXXX` where
+// XXXX is a 0–9999 random suffix. Date prefix gives us implicit sortability
+// AND immediate uniqueness across days — only same-day same-suffix orders can
+// collide, which at our volume is essentially zero. If we ever need stricter
+// guarantees, swap this for a Supabase sequence; the format stays human.
 export function makeOrderId() {
-  const year = new Date().getFullYear();
-  const chunk = Math.floor(100000 + Math.random() * 900000);
-  return `GB-${year}-${chunk}`;
+  const now = new Date();
+  const year = now.getFullYear();
+  const md = String(now.getMonth() + 1).padStart(2, "0") + String(now.getDate()).padStart(2, "0");
+  const suffix = String(Math.floor(1000 + Math.random() * 9000));
+  return `GB-${year}-${md}${suffix}`;
 }

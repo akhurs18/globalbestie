@@ -27,10 +27,15 @@
               <span class="brand-mark">G</span>
               <span><strong>Global Bestie</strong><small>Internal portal</small></span>
             </div>
+            <button class="cmd-k-trigger" type="button" data-action="open-cmd-palette" aria-label="Open command palette">
+              <span>Search anything</span>
+              <kbd>⌘K</kbd>
+            </button>
             <button class="admin-tab active" type="button" data-admin-tab="overview">Overview <span data-tab-badge="overview"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="orders">Orders <span data-tab-badge="orders"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="customers">Customers <span data-tab-badge="customers"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="cashflow">Cashflow <span data-tab-badge="cashflow"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="growth">Growth Studio <span data-tab-badge="growth"></span></button>
-            <button class="admin-tab" type="button" data-admin-tab="orders">Orders <span data-tab-badge="orders"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments <span data-tab-badge="shipments"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
@@ -52,26 +57,41 @@
                    support WhatsApp, product images). Hidden when settings have
                    been customized. -->
               <div data-demo-banner hidden></div>
+              <div data-fx-banner hidden></div>
               <section class="admin-panel active" data-admin-panel="overview">
                 <div class="admin-heading">
                   <div>
-                    <p class="kicker">Command center</p>
-                    <h1>Today’s operation board</h1>
+                    <p class="kicker">Today, at a glance</p>
+                    <h1 data-overview-greeting>Welcome back.</h1>
                   </div>
                   <button class="button secondary" type="button" data-action="refresh-admin">Refresh</button>
                 </div>
-                <div class="metric-grid" data-admin-metrics></div>
-                <div class="today-strip" data-admin-today-feed></div>
+
+                <!-- Hero KPIs: 4 big numbers the team needs every morning -->
+                <div class="kpi-hero" data-overview-kpis></div>
+
+                <!-- Single action queue — collapses the old "Orders needing
+                     action" panel + SLA breaches into one prioritized list -->
+                <section class="ops-panel attention-panel">
+                  <div class="panel-title-row">
+                    <h2>Needs your attention</h2>
+                    <span class="status-pill preorder" data-attention-count>0</span>
+                  </div>
+                  <div data-attention-queue></div>
+                </section>
+
+                <!-- Two-up: pipeline visualisation + per-tab snapshot link cards -->
                 <div class="ops-grid">
                   <section class="ops-panel">
-                    <h2>Orders needing action</h2>
-                    <div data-admin-action-orders></div>
-                  </section>
-                  <section class="ops-panel">
-                    <h2>Preorder pipeline</h2>
+                    <h2>Pipeline by stage</h2>
                     <div class="pipeline" data-admin-pipeline></div>
                   </section>
+                  <section class="ops-panel snapshot-panel">
+                    <h2>Jump in</h2>
+                    <div class="snapshot-grid" data-overview-snapshots></div>
+                  </section>
                 </div>
+
               </section>
 
               <!-- Cashflow panel: the source of truth for "where is every order
@@ -156,6 +176,7 @@
                         <option value="paid_in_full">Paid in full</option>
                       </select>
                       <input type="search" data-ledger-search placeholder="Order ID, customer, phone" />
+                      <button class="button secondary" type="button" data-action="export-ledger-csv" title="Download the visible ledger as CSV">Export CSV</button>
                     </div>
                   </div>
                   <div class="admin-table-wrap">
@@ -251,6 +272,58 @@
                     <div data-creative-jobs></div>
                   </section>
 
+                  <section class="ops-panel broadcast-panel" data-growth-pane="campaigns">
+                    <div class="panel-title-row">
+                      <h2>WhatsApp broadcast</h2>
+                      <span class="status-pill in_stock">Maychats outbound</span>
+                    </div>
+                    <p class="broadcast-helper">Send a template to a customer segment. Opt-outs are skipped automatically. Capped at 200 recipients per send to stay within rate limits — narrow your filters if the count exceeds that.</p>
+                    <form class="broadcast-form" data-broadcast-form>
+                      <label class="span-2">Template
+                        <select name="template_id" data-broadcast-template required></select>
+                      </label>
+                      <label>City filter
+                        <input name="city" placeholder="Karachi, Lahore, …" autocomplete="off" />
+                      </label>
+                      <label>Tag filter
+                        <input name="tag" placeholder="VIP Karachi, Coach fan, …" autocomplete="off" />
+                      </label>
+                      <label>VIP tier
+                        <select name="vip_tier">
+                          <option value="">Any</option>
+                          <option value="standard">Standard</option>
+                          <option value="silver">Silver</option>
+                          <option value="gold">Gold</option>
+                          <option value="vip">VIP</option>
+                        </select>
+                      </label>
+                      <label>Ordered in last N days
+                        <input name="last_order_days" type="number" min="0" step="1" placeholder="e.g. 30" />
+                      </label>
+                      <label>Min lifetime orders
+                        <input name="min_orders" type="number" min="0" step="1" />
+                      </label>
+                      <label>Min lifetime revenue (PKR)
+                        <input name="min_revenue" type="number" min="0" step="1000" />
+                      </label>
+                      <label>Send at (leave blank for now)
+                        <input name="send_at" type="datetime-local" />
+                      </label>
+                      <label>&nbsp;</label>
+                      <label class="span-2">Preview body
+                        <textarea data-broadcast-preview rows="5" readonly></textarea>
+                      </label>
+                      <div class="broadcast-actions span-2">
+                        <span class="broadcast-count" data-broadcast-count>0 recipients match</span>
+                        <button class="button secondary" type="button" data-action="broadcast-preview">Refresh count</button>
+                        <button class="button primary" type="submit">Send broadcast</button>
+                      </div>
+                    </form>
+
+                    <div class="broadcast-sub" data-scheduled-broadcasts></div>
+                    <div class="broadcast-sub" data-campaign-reply-rates></div>
+                  </section>
+
                   <section class="ops-panel" data-growth-pane="campaigns">
                     <div class="panel-title-row">
                       <h2>Campaigns</h2>
@@ -318,8 +391,25 @@
                     <p class="kicker">Order management</p>
                     <h1>Accept, source, ship, deliver.</h1>
                   </div>
-                  <select data-admin-order-filter aria-label="Filter orders">
-                    <option value="all">All orders</option>
+                  <div class="orders-heading-actions">
+                    <button class="button secondary" type="button" data-action="open-dispatch">Bulk dispatch</button>
+                    <button class="button secondary" type="button" data-action="export-orders-csv">Export CSV</button>
+                  </div>
+                </div>
+
+                <!-- Saved views — one-click filter combinations -->
+                <div class="segment-bar" data-order-views-bar>
+                  <strong class="segment-bar-label">Saved views</strong>
+                  <div class="segment-chips" data-order-views-chips></div>
+                  <button class="button secondary" type="button" data-action="open-order-view-save">Save current view</button>
+                </div>
+
+                <!-- Filter bar — distinct row from the chip-row beneath, gives
+                     the team date/batch/status all in one place + an obvious
+                     CSV export for whatever they've filtered to. -->
+                <div class="orders-filter-bar">
+                  <select data-admin-order-filter aria-label="Status">
+                    <option value="all">All statuses</option>
                     <option value="pending_review">Pending review</option>
                     <option value="accepted">Accepted</option>
                     <option value="sourcing">Sourcing</option>
@@ -327,6 +417,30 @@
                     <option value="pakistan_processing">Pakistan arrived</option>
                     <option value="delivered">Delivered</option>
                   </select>
+                  <select data-orders-batch aria-label="Batch">
+                    <option value="all">All batches</option>
+                    <option value="__none__">No batch</option>
+                  </select>
+                  <select data-orders-date aria-label="Date range">
+                    <option value="all">All time</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="month">This month</option>
+                    <option value="prev_month">Previous month</option>
+                    <option value="custom">Custom range…</option>
+                  </select>
+                  <div class="orders-custom-range hidden" data-orders-custom>
+                    <input type="date" data-orders-start aria-label="Start date" />
+                    <input type="date" data-orders-end aria-label="End date" />
+                  </div>
+                  <input type="search" data-orders-search placeholder="Order ID, customer, phone" />
+                  <span class="orders-count-chip" data-orders-count-chip>0</span>
+                </div>
+
+                <div class="sla-filter-banner hidden" data-sla-filter-banner>
+                  <span>⚠️ Showing SLA breaches only</span>
+                  <button class="button secondary" type="button" data-action="toggle-sla-filter">Show all</button>
                 </div>
                 <div class="quick-filter-row" aria-label="Order quick filters">
                   <button class="active" type="button" data-order-filter-chip="all">All</button>
@@ -335,10 +449,23 @@
                   <button type="button" data-order-filter-chip="sourcing">Sourcing</button>
                   <button type="button" data-order-filter-chip="in_transit">In transit</button>
                 </div>
+                <!-- Bulk action bar — appears when at least one row is selected -->
+                <div class="bulk-action-bar hidden" data-bulk-action-bar>
+                  <span><strong data-bulk-selected-count>0</strong> orders selected</span>
+                  <button class="button secondary" type="button" data-action="bulk-orders-action" data-bulk-op="mark-accepted">Mark accepted</button>
+                  <select data-bulk-batch-select aria-label="Assign to batch">
+                    <option value="">Assign to batch…</option>
+                  </select>
+                  <button class="button secondary" type="button" data-action="bulk-orders-action" data-bulk-op="export">Export selected CSV</button>
+                  <button class="button secondary" type="button" data-action="bulk-orders-action" data-bulk-op="clear">Clear selection</button>
+                  <span class="bulk-progress" data-bulk-progress hidden><span data-bulk-progress-bar></span></span>
+                </div>
+
                 <div class="admin-table-wrap">
                   <table class="admin-table">
                     <thead>
                       <tr>
+                        <th class="bulk-col"><input type="checkbox" data-action="toggle-all-orders" aria-label="Select all" /></th>
                         <th>Order</th>
                         <th>Customer</th>
                         <th>Status</th>
@@ -351,6 +478,80 @@
                   </table>
                 </div>
                 <div class="admin-order-cards" data-admin-order-cards></div>
+              </section>
+
+              <!-- ────────────────── CUSTOMERS TAB ────────────────── -->
+              <section class="admin-panel" data-admin-panel="customers">
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Customer 360</p>
+                    <h1>Every customer, by phone.</h1>
+                  </div>
+                  <div class="orders-heading-actions">
+                    <button class="button secondary" type="button" data-action="export-customers-csv">Export CSV</button>
+                    <button class="button primary" type="button" data-action="broadcast-from-filter">Broadcast to current view</button>
+                  </div>
+                </div>
+
+                <!-- Risk audit banner — only visible when there's at least
+                     one risk-flagged customer in the book -->
+                <div class="risk-audit-banner hidden" data-risk-audit-banner>
+                  <span><strong data-risk-count>0</strong> customers flagged risky</span>
+                  <button class="button secondary" type="button" data-action="filter-risk-only">Show only risky</button>
+                  <button class="button secondary" type="button" data-action="filter-clear-risk">Show all</button>
+                </div>
+
+                <!-- KPI strip for the customer book -->
+                <div class="kpi-hero" data-customers-kpis></div>
+
+                <!-- Smart segments — one-click filter combinations -->
+                <div class="segment-bar" data-segment-bar>
+                  <strong class="segment-bar-label">Segments</strong>
+                  <div class="segment-chips" data-segment-chips></div>
+                  <button class="button secondary" type="button" data-action="open-segment-save">Save current view</button>
+                </div>
+
+                <!-- Filter bar — mirrors broadcast filter shape so the
+                     "Broadcast to current view" CTA is meaningful -->
+                <div class="customer-filter-bar">
+                  <input type="search" data-customer-search placeholder="Search by name, phone, city, tag…" autocomplete="off" />
+                  <select data-customer-city><option value="all">All cities</option></select>
+                  <select data-customer-tier>
+                    <option value="all">All tiers</option>
+                    <option value="standard">Standard</option>
+                    <option value="silver">Silver</option>
+                    <option value="gold">Gold</option>
+                    <option value="vip">VIP</option>
+                  </select>
+                  <select data-customer-sort>
+                    <option value="revenue">Sort: Lifetime spend ↓</option>
+                    <option value="orders">Sort: Orders ↓</option>
+                    <option value="recent">Sort: Most recent ↓</option>
+                    <option value="dormant">Sort: Dormant ↓ (longest gap)</option>
+                    <option value="name">Sort: Name A-Z</option>
+                  </select>
+                  <span class="customer-count-chip" data-customer-count-chip>0</span>
+                </div>
+
+                <div class="admin-table-wrap">
+                  <table class="admin-table customer-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Orders</th>
+                        <th>Lifetime spend</th>
+                        <th>Tier</th>
+                        <th>Trend <small>(6 mo)</small></th>
+                        <th>Last seen</th>
+                        <th>Last WA</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody data-customers-rows></tbody>
+                  </table>
+                </div>
               </section>
 
               <section class="admin-panel" data-admin-panel="shipments">
@@ -428,6 +629,7 @@
                   <label>FX rate<input name="fx_rate" type="number" min="1" step="0.01" required /></label>
                   <label>Status<select name="stock_mode"><option value="preorder">Preorder</option><option value="in_stock">In stock</option></select></label>
                   <label>Inventory<input name="inventory" type="number" min="0" step="1" required /></label>
+                  <label>Low-stock alert at<input name="low_stock_threshold" type="number" min="0" step="1" placeholder="2" /></label>
                   <label>Publish status<select name="product_status"><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
                   <label>Supplier cost PKR<input name="supplier_cost_pkr" type="number" min="0" step="100" /></label>
                   <div class="form-section-title span-2">Media and source proof</div>
@@ -504,6 +706,15 @@
                     <span class="status-pill preorder">Before launch</span>
                   </div>
                   <div data-launch-checklist></div>
+                </section>
+
+                <section class="ops-panel template-editor-panel">
+                  <div class="panel-title-row">
+                    <h2>WhatsApp templates</h2>
+                    <button class="button secondary" type="button" data-action="new-wa-template">+ New template</button>
+                  </div>
+                  <p class="broadcast-helper">Placeholders: <code>{{name}}</code> <code>{{order_id}}</code> <code>{{advance}}</code> <code>{{balance}}</code> <code>{{eta}}</code> <code>{{tracking}}</code> <code>{{city}}</code></p>
+                  <div data-templates-editor></div>
                 </section>
               </section>
             </div>

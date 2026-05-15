@@ -95,6 +95,22 @@ export default async (req, context) => {
       body: JSON.stringify(updates),
     });
 
+    // Audit row — best-effort, never throws. Captures who changed what so
+    // the team can answer "who marked this delivered yesterday?".
+    try {
+      await supabase("/rest/v1/admin_audit", {
+        method: "POST",
+        body: JSON.stringify({
+          actor: "admin",
+          action: "order.update",
+          entity_type: "order",
+          entity_id: id,
+          payload: { before: existing, updates },
+          created_at: new Date().toISOString(),
+        }),
+      });
+    } catch {}
+
     // Persist per-item cost updates. Only the two cashflow-relevant columns
     // are written; everything else on the line item is left alone.
     if (itemUpdates && itemUpdates.length) {

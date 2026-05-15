@@ -12,6 +12,8 @@
 
 import crypto from "node:crypto";
 import { hasSupabase, json, supabase } from "./_shared/supabase.js";
+import { canonPhone, isValidPkMobile } from "./_shared/phone.js";
+import { sendWhatsappMessage } from "./_shared/whatsapp.js";
 
 function env(name) {
   return globalThis.Netlify?.env?.get(name) || "";
@@ -120,8 +122,29 @@ function getEvents(payload) {
       raw.content ||
       "";
     if (!senderId || !text) return;
+    // Maychats payloads vary; the channel field tells us whether this is an
+    // Instagram DM or a WhatsApp message. Default to instagram for backward
+    // compatibility with older configurations.
+    const channel = String(
+      raw.channel ||
+        raw.platform ||
+        raw.message?.channel ||
+        raw.source ||
+        "instagram"
+    ).toLowerCase();
+    // Whatsapp inbound senders ARE their canonical phone — Maychats forwards
+    // the contact's phone in sender.phone / from.phone, but the legacy
+    // sender.id field on WhatsApp deliveries is also the phone number.
+    const senderPhone =
+      raw.sender?.phone ||
+      raw.contact?.phone ||
+      raw.from?.phone ||
+      raw.message?.from ||
+      "";
     events.push({
       senderId: String(senderId),
+      senderPhone: String(senderPhone || (channel === "whatsapp" ? senderId : "")),
+      channel,
       recipientId: String(
         raw.recipient_id ||
           raw.account_id ||
@@ -215,7 +238,152 @@ async function notifyTeam(lead, inboundText) {
   }).catch(() => {});
 }
 
+// Common WhatsApp / SMS unsubscribe keywords. Matches the WhatsApp Business
+// API "global stop" guidance: any of these words on their own line should
+// flip the customer's opt-in OFF and stop all promotional sends. We err on
+// the side of strict matching ("stop kindly" still counts as stop) so we
+// never accidentally re-message someone who said no.
+const OPT_OUT_KEYWORDS = ["stop", "unsubscribe", "unsub", "opt out", "opt-out", "remove me", "off", "no more"];
+
+function detectOptOut(text) {
+  const norm = String(text || "").toLowerCase().trim();
+  if (!norm) return false;
+  // Whole-message match — "stop" alone, or one of the multi-word phrases.
+  if (OPT_OUT_KEYWORDS.includes(norm)) return true;
+  // Word-boundary scan for "stop", "unsubscribe", etc. anywhere in the body.
+  return OPT_OUT_KEYWORDS.some((kw) => {
+    const escaped = kw.replace(/[-]/g, "\\-").replace(/ /g, "\\s+");
+    return new RegExp(`(?:^|\\s|,|\\.|!)${escaped}(?:$|\\s|,|\\.|!)`, "i").test(norm);
+  });
+}
+
+// Async, fire-and-forget: lookup the customer by canonical phone, flip the
+// opt-in flag to false, and write a marketing_leads event so the team can
+// see what happened. Never throws.
+async function handleOptOut({ senderPhone, channel, text }) {
+  const canon = canonPhone(senderPhone);
+  if (!isValidPkMobile(canon)) return { ok: false, reason: "no_valid_phone" };
+  if (!hasSupabase()) {
+    return { ok: true, configured: false, canon };
+  }
+  try {
+    // Look up existing customer row first; create one if missing so we
+    // never lose the consent record.
+    const existing = await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}&select=phone,name`);
+    if (!existing?.length) {
+      await supabase("/rest/v1/customers", {
+        method: "POST",
+        body: JSON.stringify({
+          phone: canon,
+          whatsapp_opt_in: false,
+          notes: `Opted out via ${channel} on ${new Date().toISOString()} ("${text.slice(0, 80)}").`,
+          first_seen: new Date().toISOString(),
+          last_seen: new Date().toISOString(),
+        }),
+      });
+    } else {
+      await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          whatsapp_opt_in: false,
+          last_seen: new Date().toISOString(),
+        }),
+      });
+    }
+    // Also flip future-order behavior: stamp every existing order with
+    // whatsapp_opt_in=false so auto-templates don't re-engage.
+    await supabase(`/rest/v1/orders?customer_phone=eq.${encodeURIComponent(canon)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ whatsapp_opt_in: false }),
+    }).catch(() => {});
+    // Audit row for Growth Studio so the team can see "Customer opted out".
+    await supabase("/rest/v1/marketing_leads?on_conflict=id", {
+      method: "POST",
+      headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+      body: JSON.stringify({
+        id: `optout-${canon}-${Date.now()}`,
+        customer_phone: canon,
+        source: `${channel} (opt-out)`,
+        stage: "lost",
+        automation_status: "opted_out",
+        last_message: text,
+        handoff_reason: `Customer sent opt-out keyword on ${channel}.`,
+        last_inbound_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }),
+    }).catch(() => {});
+    return { ok: true, configured: true, canon };
+  } catch (err) {
+    return { ok: false, reason: String(err?.message || err) };
+  }
+}
+
+// Opt-IN re-subscribe keywords — used so a customer who said STOP can
+// switch back on without contacting the team.
+const OPT_IN_KEYWORDS = ["start", "subscribe", "resume", "opt in", "opt-in", "yes please"];
+
+function detectOptIn(text) {
+  const norm = String(text || "").toLowerCase().trim();
+  if (OPT_IN_KEYWORDS.includes(norm)) return true;
+  return OPT_IN_KEYWORDS.some((kw) => {
+    const escaped = kw.replace(/-/g, "\\-").replace(/ /g, "\\s+");
+    return new RegExp(`(?:^|\\s)${escaped}(?:$|\\s|,|\\.|!)`, "i").test(norm);
+  });
+}
+
+async function handleOptIn({ senderPhone, channel }) {
+  const canon = canonPhone(senderPhone);
+  if (!isValidPkMobile(canon) || !hasSupabase()) return { ok: false, canon };
+  try {
+    await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ whatsapp_opt_in: true, last_seen: new Date().toISOString() }),
+    });
+    await supabase(`/rest/v1/orders?customer_phone=eq.${encodeURIComponent(canon)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ whatsapp_opt_in: true }),
+    }).catch(() => {});
+    return { ok: true, canon };
+  } catch {
+    return { ok: false, canon };
+  }
+}
+
 async function handleInbound(event) {
+  // ─── Opt-in (re-subscribe) short circuit ───
+  if (event.channel === "whatsapp" && detectOptIn(event.text)) {
+    const result = await handleOptIn({ senderPhone: event.senderPhone, channel: event.channel });
+    if (result.canon) {
+      await sendWhatsappMessage({
+        to: result.canon,
+        text: "Welcome back! You're subscribed to Global Bestie WhatsApp updates again. Reply STOP anytime to unsubscribe.",
+      }).catch(() => {});
+    }
+    return { optIn: true, ...result };
+  }
+
+  // ─── Opt-out short circuit ───
+  // Honored before classify/lead-create — a "STOP" message should NEVER
+  // enter the qualification flow or trigger an automated reply other than
+  // the one confirmation we send below. Required for compliance, and saves
+  // us from being shadow-banned by the WhatsApp Business API.
+  if (event.channel === "whatsapp" && detectOptOut(event.text)) {
+    const result = await handleOptOut({
+      senderPhone: event.senderPhone,
+      channel: event.channel,
+      text: event.text,
+    });
+    // Send a single confirmation message acknowledging the opt-out. If
+    // Maychats credentials aren't configured this silently no-ops.
+    if (result.canon) {
+      await sendWhatsappMessage({
+        to: result.canon,
+        text: "You've been unsubscribed from Global Bestie WhatsApp updates. You won't receive promotional messages from us. If this was a mistake, reply START to opt back in.",
+      }).catch(() => {});
+    }
+    return { optOut: true, ...result };
+  }
+
   const intent = classifyMessage(event.text);
   const product = detectProduct(event.text);
   const city = detectCity(event.text);
@@ -279,18 +447,64 @@ async function handleInbound(event) {
     body: JSON.stringify(lead),
   });
 
+  // Tag every message with the canonical phone when we have one — lets the
+  // customer-modal history list and the per-recipient broadcast cap work
+  // without joining via lead_id.
+  const msgPhone = phone ? canonPhone(phone) : (event.senderPhone ? canonPhone(event.senderPhone) : "");
+
+  // Reply-to-broadcast detection: if this inbound is within 7 days of any
+  // outbound we sent on a broadcast campaign, mark the inbound with the
+  // matching campaign id AND bump that campaign's reply_count. Pure
+  // best-effort — never throws into the main handler.
+  let repliedToBroadcast = null;
+  if (msgPhone && hasSupabase()) {
+    try {
+      const cutoff = new Date(Date.now() - 7 * 86_400_000).toISOString();
+      const previousOutbounds = await supabase(
+        `/rest/v1/marketing_messages?customer_phone=eq.${encodeURIComponent(msgPhone)}&direction=eq.outbound&created_at=gte.${encodeURIComponent(cutoff)}&lead_id=like.bc-*&select=lead_id,created_at&order=created_at.desc&limit=1`,
+      );
+      const match = previousOutbounds?.[0];
+      if (match?.lead_id) {
+        repliedToBroadcast = match.lead_id;
+        // Only count one reply per (customer, campaign) — check if we
+        // already credited this pair.
+        const existing = await supabase(
+          `/rest/v1/marketing_messages?customer_phone=eq.${encodeURIComponent(msgPhone)}&direction=eq.inbound&replied_to_broadcast=eq.${encodeURIComponent(match.lead_id)}&select=id&limit=1`,
+        );
+        if (!existing?.length) {
+          // Bump reply_count atomically by reading then writing — Supabase
+          // doesn't expose RPC-style increment here, so we accept the
+          // small race window. Worst case: 1 reply counted twice during
+          // a true concurrent inbound.
+          const camp = await supabase(
+            `/rest/v1/broadcast_campaigns?id=eq.${encodeURIComponent(match.lead_id)}&select=reply_count`,
+          );
+          const current = Number(camp?.[0]?.reply_count || 0);
+          await supabase(`/rest/v1/broadcast_campaigns?id=eq.${encodeURIComponent(match.lead_id)}`, {
+            method: "PATCH",
+            body: JSON.stringify({ reply_count: current + 1 }),
+          }).catch(() => {});
+        }
+      }
+    } catch {
+      /* reply detection is best-effort */
+    }
+  }
   await supabase("/rest/v1/marketing_messages", {
     method: "POST",
     body: JSON.stringify([
       {
         lead_id: lead.id,
+        customer_phone: msgPhone || null,
         source: "Instagram DM (Maychats)",
         direction: "inbound",
         body: event.text,
         external_message_id: event.messageId,
+        replied_to_broadcast: repliedToBroadcast || null,
       },
       {
         lead_id: lead.id,
+        customer_phone: msgPhone || null,
         source: "Instagram automation (Maychats)",
         direction: "outbound",
         body: needsHuman ? "Human handoff created; automation did not reply." : reply,

@@ -523,6 +523,19 @@ const state = {
   leads: [...sampleLeads],
   calendar: [...sampleCalendar],
   shipmentBatches: [...sampleShipmentBatches],
+  customers: [],
+  waTemplates: [],
+  marketingMessages: [],
+  broadcastCampaigns: [],
+  scheduledBroadcasts: [],
+  smartSegments: [],
+  orderViews: [],
+  teamMembers: [],
+  customerFilters: { search: "", city: "all", tier: "all", sort: "revenue" },
+  orderFilters: { dateRange: "all", batch: "all", customStart: "", customEnd: "" },
+  messageFilter: "all",
+  dispatchQueue: [],
+  selectedOrders: new Set(),
   settings: { ...sampleSettings },
   cart: loadJSON("mm_cart", []),
   adminToken: localStorage.getItem("mm_admin_token") || "",
@@ -638,7 +651,94 @@ function orderItems(order) {
 }
 
 function orderEvents(order) {
-  return order?.events || order?.order_events || [];
+  const base = order?.events || order?.order_events || [];
+  if (!order?.customer_phone) return base;
+  // Merge in any inbound WhatsApp messages from this customer that arrived
+  // after the order was created — they're almost always replies to our
+  // order-related outbounds and belong in the timeline.
+  const canon = canonPhone(order.customer_phone);
+  const since = new Date(order.created_at || 0).getTime();
+  const inbound = (state.marketingMessages || []).filter((m) => {
+    if (m.direction !== "inbound") return false;
+    if (canonPhone(m.customer_phone) !== canon) return false;
+    const t = new Date(m.created_at || 0).getTime();
+    return !Number.isNaN(t) && t >= since;
+  }).map((m) => ({
+    status: "customer_reply",
+    note: m.body || "(empty reply)",
+    created_at: m.created_at,
+    _is_reply: true,
+  }));
+  return [...base, ...inbound];
+}
+
+// ─── Order timeline rendering ───
+// Each event status maps to (a) a friendly label, (b) a color class, and
+// (c) an icon glyph. The mapping covers every status the backend writes
+// today; unknown statuses fall back to a neutral pink dot with the raw
+// status text underscored-to-spaced.
+const TIMELINE_STATUS_MAP = {
+  pending_review:        { label: "Order received",           tone: "info",    glyph: "•" },
+  accepted:              { label: "Team accepted",            tone: "ok",      glyph: "✓" },
+  sourcing:              { label: "Sourcing in USA",          tone: "info",    glyph: "→" },
+  in_transit:            { label: "In international transit", tone: "info",    glyph: "✈" },
+  pakistan_processing:   { label: "Arrived in Pakistan",      tone: "ok",      glyph: "⌂" },
+  delivered:             { label: "Delivered",                tone: "ok",      glyph: "✓" },
+  cancelled:             { label: "Cancelled",                tone: "danger",  glyph: "×" },
+  advance_uploaded:      { label: "Advance proof uploaded",   tone: "info",    glyph: "₨" },
+  advance_confirmed:     { label: "Advance confirmed",        tone: "ok",      glyph: "₨" },
+  balance_due:           { label: "Balance now due",          tone: "warn",    glyph: "₨" },
+  balance_uploaded:      { label: "Balance proof uploaded",   tone: "info",    glyph: "₨" },
+  paid_in_full:          { label: "Paid in full",             tone: "ok",      glyph: "✓" },
+  payment_rejected:      { label: "Payment rejected",         tone: "danger",  glyph: "×" },
+  auto_whatsapp_sent:    { label: "WhatsApp message sent",    tone: "ok",      glyph: "💬" },
+  auto_whatsapp_failed:  { label: "WhatsApp send failed",     tone: "danger",  glyph: "!" },
+  customer_reply:        { label: "Customer replied",         tone: "ok",      glyph: "↩" },
+};
+
+function timelineMeta(status) {
+  return TIMELINE_STATUS_MAP[status] || {
+    label: String(status || "event").replaceAll("_", " "),
+    tone: "info",
+    glyph: "•",
+  };
+}
+
+// "2 hours ago" / "3 days ago" / "just now" — keeps the timeline scannable
+// without forcing a date parser into your eyes. Falls back to the full
+// timestamp once the event is older than a week.
+function relativeTime(iso) {
+  if (!iso) return "";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const diff = Date.now() - then;
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} min ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} hours ago`;
+  if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)} days ago`;
+  return new Date(iso).toLocaleDateString("en-PK", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function renderOrderTimeline(events) {
+  if (!events?.length) return "";
+  // Newest first so the latest event lands at the top of the panel.
+  const sorted = [...events].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  return sorted.map((event) => {
+    const meta = timelineMeta(event.status);
+    const absolute = event.created_at ? new Date(event.created_at).toLocaleString("en-PK") : "";
+    return `
+      <div class="timeline-event tone-${meta.tone}">
+        <span class="timeline-glyph" aria-hidden="true">${meta.glyph}</span>
+        <div class="timeline-body">
+          <div class="timeline-headline">
+            <strong>${esc(meta.label)}</strong>
+            <span class="timeline-time" title="${esc(absolute)}">${esc(relativeTime(event.created_at))}</span>
+          </div>
+          ${event.note ? `<p>${esc(event.note)}</p>` : ""}
+        </div>
+      </div>
+    `;
+  }).join("");
 }
 
 function orderMessages(order) {
@@ -763,10 +863,63 @@ async function loadRemoteData() {
   const catalog = await apiFetch("/api/catalog", {}, {
     products: sampleProducts,
     settings: sampleSettings,
+    shipmentBatches: sampleShipmentBatches,
   });
   state.products = catalog.products?.length ? catalog.products : sampleProducts;
   state.settings = { ...sampleSettings, ...(catalog.settings || {}) };
+  if (Array.isArray(catalog.shipmentBatches) && catalog.shipmentBatches.length) {
+    state.shipmentBatches = catalog.shipmentBatches;
+  }
   renderAll();
+}
+
+// What to call the variant field for a given product. Shoes get "size",
+// makeup gets "shade", fragrance gets "size", everything else "option".
+// Reads the source URL on a product and returns a clean retailer label for
+// the "Sourced from" badge on PDP. Maps a handful of known luxury USA
+// retailers; otherwise returns the bare hostname (no www.).
+function retailerFromUrl(url) {
+  if (!url) return "";
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    const map = {
+      "coach.com": "Coach USA",
+      "michaelkors.com": "Michael Kors USA",
+      "katespade.com": "Kate Spade USA",
+      "nordstrom.com": "Nordstrom",
+      "sephora.com": "Sephora USA",
+      "ulta.com": "Ulta Beauty",
+      "charlottetilbury.com": "Charlotte Tilbury",
+      "rarebeauty.com": "Rare Beauty",
+      "fentybeauty.com": "Fenty Beauty",
+      "nike.com": "Nike USA",
+      "adidas.com": "Adidas USA",
+      "amazon.com": "Amazon US",
+    };
+    return map[host] || host;
+  } catch {
+    return "";
+  }
+}
+
+function variantLabel(product) {
+  return {
+    shoes: "size",
+    makeup: "shade",
+    fragrance: "size",
+    handbags: "color",
+    accessories: "color",
+  }[product?.category] || "option";
+}
+
+function variantPlaceholder(product) {
+  return {
+    shoes: "e.g. US 7.5 / EU 38",
+    makeup: "e.g. Pillow Talk Medium",
+    fragrance: "e.g. 50ml",
+    handbags: "e.g. Blush pink",
+    accessories: "e.g. Gold",
+  }[product?.category] || "Tell us your preference";
 }
 
 function variantHint(product) {
@@ -843,6 +996,7 @@ function productCard(product, options = {}) {
         ${productImageMarkup}
         <div class="product-badges">
           <span class="status-pill ${attr(product.stock_mode)}">${esc(stockLabel)}</span>
+          ${product.stock_mode === "in_stock" && Number(product.inventory || 0) > 0 && Number(product.inventory || 0) <= Number(product.low_stock_threshold ?? 2) ? `<span class="low-stock-chip">${Number(product.inventory)} left</span>` : ""}
           ${product.marketing_badge ? `<span class="marketing-badge">${esc(product.marketing_badge)}</span>` : ""}
         </div>
       </div>
@@ -871,7 +1025,15 @@ function productCard(product, options = {}) {
           <button class="button secondary" type="button" data-action="view-product" data-product-id="${attr(product.id)}">View details</button>
           ${options.admin ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : renderAddToBag(product, disabled)}
         </div>
-        ${!isPortal && !options.admin ? `<small class="cta-helper">50% advance at checkout · we confirm shipment on WhatsApp</small>` : ""}
+        ${!isPortal && !options.admin ? `
+          <div class="card-secondary-row">
+            <button class="ask-about-link" type="button" data-action="ask-about-product" data-product-id="${attr(product.id)}" aria-label="Ask about ${attr(product.title)} on WhatsApp">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="14" height="14"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
+              Ask about this
+            </button>
+            <small class="cta-helper">${product.stock_mode === "preorder" ? "50% advance at checkout · balance on Pakistan arrival" : "Pay in full after team confirms"}</small>
+          </div>
+        ` : ""}
       </div>
     </article>
   `;
@@ -940,7 +1102,11 @@ function renderCart() {
     <div class="order-line">
       <div>
         <strong>${esc(line.product.title)}</strong>
-        <small>${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}</small>
+        <small>${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}${line.variant ? ` · ${esc(line.variant)}` : ""}</small>
+        <label class="cart-variant-edit">
+          <span>${esc(variantLabel(line.product))}</span>
+          <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}" />
+        </label>
       </div>
       <div class="mini-actions">
         <strong>${PKR.format(line.subtotal)}</strong>
@@ -986,12 +1152,15 @@ function renderBankDetails() {
   // Bank details now show inline as the primary "where to pay" panel at
   // checkout. The previous "after approval" framing is gone — customers
   // transfer immediately.
+  const copyChip = (val, label) => val
+    ? `<button class="copy-chip" type="button" data-action="copy-text" data-copy="${attr(val)}" data-copy-label="${attr(label)}" aria-label="Copy ${attr(label)}"><span>Copy</span></button>`
+    : "";
   setHTML("[data-bank-details]", `
     <dl class="bank-details-grid">
       <div><dt>Bank</dt><dd>${esc(settings.bank_name)}</dd></div>
-      <div><dt>Account title</dt><dd>${esc(settings.account_title)}</dd></div>
-      <div><dt>Account number</dt><dd><code>${esc(settings.account_number)}</code></dd></div>
-      <div><dt>IBAN</dt><dd><code>${esc(settings.iban || "Available on request")}</code></dd></div>
+      <div><dt>Account title</dt><dd>${esc(settings.account_title)}${copyChip(settings.account_title, "account title")}</dd></div>
+      <div><dt>Account number</dt><dd><code>${esc(settings.account_number)}</code>${copyChip(settings.account_number, "account number")}</dd></div>
+      <div><dt>IBAN</dt><dd><code>${esc(settings.iban || "Available on request")}</code>${copyChip(settings.iban, "IBAN")}</dd></div>
     </dl>
   `);
 }
@@ -1164,10 +1333,29 @@ function showProductDetails(productId) {
     <div><dt>Supabase product id</dt><dd>${esc(product.id)}</dd></div>
     <div><dt>Source URL</dt><dd>${product.source_url ? `<a href="${safeUrl(product.source_url)}" target="_blank" rel="noreferrer">${esc(product.source_url)}</a>` : "Not added"}</dd></div>
   `;
+  const sourcedFrom = retailerFromUrl(product.source_url);
+  const fxUsed = Number(product.fx_rate || state.settings?.fx_rate || 282);
+  const usaInPkr = Math.round(Number(product.usa_price_usd || 0) * fxUsed);
+  const priceBreakdown = `
+    <details class="price-breakdown">
+      <summary><span>Why this price?</span><span class="price-breakdown-toggle" aria-hidden="true">+</span></summary>
+      <dl>
+        <div><dt>USA retail</dt><dd>${USD.format(product.usa_price_usd || 0)}</dd></div>
+        <div><dt>FX (Rs ${fxUsed.toFixed(0)} / $1)</dt><dd>${PKR.format(usaInPkr)}</dd></div>
+        <div><dt>25% concierge margin</dt><dd>${PKR.format(parts.margin)}</dd></div>
+        <div><dt>USA → Pakistan shipping</dt><dd>${PKR.format(parts.shipping)}</dd></div>
+        <div class="price-breakdown-total"><dt>Final PKR</dt><dd>${PKR.format(parts.total)}</dd></div>
+      </dl>
+      <p class="price-breakdown-note">Google rate conversions won't match — our quote covers live FX, USA payment costs, sourcing time, and door-to-door shipping.</p>
+    </details>
+  `;
   openModal(`
     <div class="modal-grid product-detail-modal">
       <div class="product-gallery">
-        <img class="gallery-main" id="gallery-main-img" src="${safeUrl(imageUrl(gallery[0]), "")}" alt="${attr(product.title)}" decoding="async" />
+        <div class="gallery-main-wrap" data-zoom>
+          <img class="gallery-main" id="gallery-main-img" src="${safeUrl(imageUrl(gallery[0]), "")}" alt="${attr(product.title)}" decoding="async" />
+          ${sourcedFrom ? `<span class="sourced-badge" aria-label="Sourced from ${attr(sourcedFrom)}">✦ Sourced from ${esc(sourcedFrom)}</span>` : ""}
+        </div>
         ${gallery.length > 1 ? `
           <div class="gallery-strip">
             ${gallery.map((url, i) => `
@@ -1187,6 +1375,7 @@ function showProductDetails(productId) {
           <span class="price-large">${PKR.format(parts.total)}</span>
           <span class="status-pill ${attr(product.stock_mode)}">${product.stock_mode === "preorder" ? "Preorder" : "In stock"}</span>
         </div>
+        ${isPortal ? "" : priceBreakdown}
         <p>${esc(product.description || "No description added yet.")}</p>
         <div class="trust-strip">
           <span>Authenticity-first sourcing</span>
@@ -1203,13 +1392,16 @@ function showProductDetails(productId) {
         </dl>
         ${isPortal ? "" : `
           <aside class="variant-callout" aria-label="Variants and customization">
-            <strong>Variants &amp; customization</strong>
-            <p>${esc(product.variants && product.variants.trim() ? product.variants : "Message us on WhatsApp before submitting to confirm size, shade, or color.")}</p>
-            <a class="button secondary small" href="${safeUrl(supportWhatsAppHref(`Hi Global Bestie, I want to confirm variants for ${product.title}`))}" target="_blank" rel="noreferrer">Ask about variants on WhatsApp</a>
+            <strong>Choose your ${esc(variantLabel(product))}</strong>
+            <p class="variant-hint">${esc(product.variants && product.variants.trim() ? product.variants : "Tell us your preferred option below — we confirm availability on WhatsApp before payment.")}</p>
+            <label class="variant-input-label">
+              <span>${esc(variantLabel(product))}</span>
+              <input type="text" data-pdp-variant data-product-id="${attr(product.id)}" placeholder="${esc(variantPlaceholder(product))}" autocomplete="off" />
+            </label>
           </aside>
         `}
         <div class="product-modal-cta">
-          ${isPortal ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : `<button class="button primary wide" type="button" data-action="add-cart" data-product-id="${attr(product.id)}">Add to bag · ${PKR.format(parts.total)}</button>`}
+          ${isPortal ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : `<button class="button primary wide" type="button" data-action="add-cart" data-product-id="${attr(product.id)}" data-add-from-pdp="1">Add to bag · ${PKR.format(parts.total)}</button>`}
           ${isPortal ? "" : `<a class="button secondary" href="${safeUrl(supportWhatsAppHref(`Hi Global Bestie, I want details for ${product.title}`))}" target="_blank" rel="noreferrer">Ask on WhatsApp</a>`}
           ${isPortal ? "" : `<small class="cta-helper">50% advance at checkout · balance on Pakistan arrival</small>`}
           <button class="button secondary" type="button" data-action="close-modal">Done</button>
@@ -1243,20 +1435,40 @@ function showOrderDetails(orderId) {
   const outstanding = amountDueForOrder(order);
   const batch = shipmentBatchForOrder(order);
   const margin = Number(order.margin_pkr ?? (payment.total - Number(order.cost_pkr || 0)));
+
+  // Returning-customer banner. Find every other order under the same canonical
+  // phone — if there's >1, this is a repeat customer. Surfaces their LTV and
+  // prior city up top so the team treats them with the right attention.
+  const canon = canonPhone(order.customer_phone);
+  const samePhoneOrders = (state.orders || []).filter((o) => canonPhone(o.customer_phone) === canon);
+  const customerRow = (state.customers || []).find((c) => c.phone === canon);
+  const repeatCount = customerRow?.total_orders ?? samePhoneOrders.length;
+  const ltv = customerRow?.total_revenue_pkr ?? samePhoneOrders.reduce((sum, o) => sum + Number(o.total_pkr || 0), 0);
+  const isRepeat = repeatCount >= 2;
+  const repeatBanner = isRepeat ? `
+    <button class="repeat-customer-banner" type="button" data-action="open-customer" data-customer-phone="${attr(canon)}" aria-label="Open ${esc(order.customer_name || "")} customer profile">
+      <strong>★ Returning customer · order ${repeatCount}</strong>
+      <span>Lifetime spend ${PKR.format(ltv)} · ${customerRow?.city || order.city || ""} · last seen ${customerRow?.last_seen ? new Date(customerRow.last_seen).toLocaleDateString("en-PK", { month: "short", day: "numeric" }) : "this order"}</span>
+      <span class="repeat-tier">${esc(customerRow?.vip_tier || "standard")}</span>
+      <span class="repeat-arrow" aria-hidden="true">›</span>
+    </button>
+  ` : "";
   openModal(`
     <div class="order-detail-modal">
       <div class="drawer-hero">
         <div>
           <p class="kicker">Order command drawer</p>
           <h2>${order.id}</h2>
-          <p>${order.customer_name} · ${order.channel || "Storefront"} · ${order.priority || "Standard"} · Owner ${order.owner || "Unassigned"}</p>
+          <p>${order.customer_name} · ${esc(formatPkDisplay(canon) || order.customer_phone || "")} · ${order.channel || "Storefront"} · ${order.priority || "Standard"} · Owner ${order.owner || "Unassigned"}</p>
         </div>
         <div class="drawer-actions">
           ${order.status === "pending_review" ? `<button class="button primary" type="button" data-action="accept-order" data-order-id="${order.id}">Accept order</button>` : ""}
           <button class="button primary" type="button" data-action="mark-balance-due" data-order-id="${order.id}">Mark balance due</button>
           <button class="button secondary" type="button" data-action="send-balance-reminder" data-order-id="${order.id}">Balance reminder</button>
+          <button class="button secondary" type="button" data-action="open-wa-templates" data-order-id="${order.id}">WhatsApp templates</button>
         </div>
       </div>
+      ${repeatBanner}
       <div class="payment-ledger">
         <article><span>Total order value</span><strong>${PKR.format(payment.total)}</strong></article>
         <article><span>Advance due / paid</span><strong>${PKR.format(payment.advanceDue)} / ${PKR.format(advancePaid)}</strong></article>
@@ -1286,7 +1498,7 @@ function showOrderDetails(orderId) {
           <h3>Customer</h3>
           <dl class="detail-list">
             <div><dt>Name</dt><dd>${order.customer_name}</dd></div>
-            <div><dt>WhatsApp</dt><dd>${order.customer_phone}</dd></div>
+            <div><dt>WhatsApp</dt><dd>${esc(formatPkDisplay(canonPhone(order.customer_phone)) || order.customer_phone || "")}</dd></div>
             <div><dt>Instagram</dt><dd>${order.customer_instagram || "Not linked"}</dd></div>
             <div><dt>Email</dt><dd>${order.customer_email || "Not added"}</dd></div>
             <div><dt>City</dt><dd>${order.city || "Not added"}</dd></div>
@@ -1364,14 +1576,9 @@ function showOrderDetails(orderId) {
           </div>
         </section>
         <section class="detail-panel">
-          <h3>Timeline</h3>
-          <div class="detail-lines">
-            ${events.map((event) => `
-              <div class="tracking-step done">
-                <span class="tracking-dot" aria-hidden="true"></span>
-                <div><strong>${event.status.replaceAll("_", " ")}</strong><br /><span>${event.note} · ${new Date(event.created_at).toLocaleString()}</span></div>
-              </div>
-            `).join("") || "<p>No events recorded yet.</p>"}
+          <h3>Timeline <span class="timeline-count">${events.length}</span></h3>
+          <div class="detail-lines order-timeline">
+            ${renderOrderTimeline(events) || "<p>No events recorded yet.</p>"}
           </div>
         </section>
       </div>
@@ -1447,8 +1654,179 @@ function renderAdmin() {
   renderTrends();
   fillSettingsForm();
   renderDemoBanner();
+  renderFxBanner();
   renderLaunchChecklist();
   renderCashflow();
+  renderCustomersTab();
+  renderOverviewExtras();
+  renderScheduledBroadcastsList();
+  renderCampaignReplyRates();
+  renderTemplatesEditor();
+}
+
+// ─── Overview rewrites ───
+// Builds the new KPI hero strip on the Overview tab + the consolidated
+// "Needs your attention" queue (collapses pending-SLA + balance-overdue +
+// stale-accepted into one prioritised list) + the snapshot navigation cards.
+function renderOverviewExtras() {
+  if (!has("[data-overview-kpis]")) return;
+
+  // Greeting tied to the local time so the dashboard feels human.
+  const greet = qs("[data-overview-greeting]");
+  if (greet) {
+    const hour = new Date().getHours();
+    const word = hour < 5 ? "Working late?" : hour < 12 ? "Good morning." : hour < 17 ? "Good afternoon." : "Good evening.";
+    greet.textContent = word;
+  }
+
+  const orders = state.orders || [];
+  const pending = orders.filter((o) => o.status === "pending_review").length;
+  const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+  const startOfYesterday = new Date(startOfDay.getTime() - 86_400_000);
+  const ordersToday = orders.filter((o) => new Date(o.created_at || 0) >= startOfDay);
+  const ordersYesterday = orders.filter((o) => {
+    const t = new Date(o.created_at || 0).getTime();
+    return t >= startOfYesterday.getTime() && t < startOfDay.getTime();
+  });
+  const revenueToday = ordersToday.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const revenueYesterday = ordersYesterday.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const balanceOutstanding = orders.reduce((s, o) => s + Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0)), 0);
+  const inTransit = orders.filter((o) => ["in_transit", "sourcing", "pakistan_processing"].includes(o.status)).length;
+
+  // Yesterday-comparison trend % — capped at ±999 to avoid jarring numbers
+  // when the previous value was 0 or near-0.
+  const trendPct = (current, prior) => {
+    if (!prior) return current ? 100 : 0;
+    return Math.max(-999, Math.min(999, Math.round(((current - prior) / prior) * 100)));
+  };
+
+  renderKpiHero("[data-overview-kpis]", [
+    { label: "Pending review", value: String(pending), sub: pending ? "Approve or reject" : "All caught up", tone: pending > 3 ? "warn" : "ok", action: "jump-tab", actionFilter: "orders" },
+    { label: "Orders today", value: String(ordersToday.length), sub: PKR.format(revenueToday) + " revenue", trend: { value: trendPct(ordersToday.length, ordersYesterday.length) } },
+    { label: "Revenue today", value: PKR.format(revenueToday), sub: `vs ${PKR.format(revenueYesterday)} yesterday`, trend: { value: trendPct(revenueToday, revenueYesterday) } },
+    { label: "Active in pipeline", value: String(inTransit), sub: "Sourcing → arrived" },
+  ]);
+
+  // Action queue — every order with an SLA badge, sorted by severity then age
+  const attentionRows = orders
+    .map((o) => ({ order: o, sla: orderSlaBadge(o) }))
+    .filter(({ sla }) => sla && sla.level !== "ok")
+    .sort((a, b) => {
+      const order = { danger: 0, warn: 1 };
+      const dDiff = (order[a.sla.level] ?? 9) - (order[b.sla.level] ?? 9);
+      return dDiff !== 0 ? dDiff : (b.sla.mins || 0) - (a.sla.mins || 0);
+    });
+
+  // Low-stock chips — any active in-stock product whose inventory drops to
+  // or below its threshold (defaults to 2 when unset). Respects per-product
+  // override for products that need a higher safety margin.
+  const lowStock = (state.products || [])
+    .filter((p) => {
+      if (p.stock_mode !== "in_stock") return false;
+      if ((p.status || "active") !== "active") return false;
+      const threshold = Number(p.low_stock_threshold ?? 2);
+      return Number(p.inventory || 0) <= threshold;
+    })
+    .slice(0, 6);
+  const totalAttention = attentionRows.length + lowStock.length;
+  qs("[data-attention-count]").textContent = String(totalAttention);
+  const slaRows = attentionRows.slice(0, 10).map(({ order: o, sla }) => `
+    <button class="attention-row tone-${sla.level}" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
+      <span class="attention-tone">${sla.level === "danger" ? "●" : "▲"}</span>
+      <div>
+        <strong>${esc(o.id)} — ${esc(o.customer_name || "")}</strong>
+        <small>${esc((o.status || "").replaceAll("_", " "))} · ${esc(o.city || "")}</small>
+      </div>
+      <span class="attention-label">${esc(sla.label)}</span>
+    </button>
+  `).join("");
+  const stockRows = lowStock.map((p) => `
+    <button class="attention-row tone-warn" type="button" data-action="jump-tab" data-action-filter="products">
+      <span class="attention-tone">⛁</span>
+      <div>
+        <strong>${esc(p.title)} — low stock</strong>
+        <small>${esc(p.brand || "")} · ${esc(p.category || "")}</small>
+      </div>
+      <span class="attention-label">${Number(p.inventory || 0)} left</span>
+    </button>
+  `).join("");
+  setHTML(
+    "[data-attention-queue]",
+    totalAttention > 0
+      ? `${slaRows}${stockRows}`
+      : `<p class="cashflow-empty">✓ No SLA breaches, no low stock — everything's on track.</p>`,
+  );
+
+  // Snapshot cards — quick jumps into each major tab with one stat each
+  setHTML("[data-overview-snapshots]", [
+    { tab: "cashflow", icon: "₨", label: "Cashflow", stat: PKR.format(balanceOutstanding) + " outstanding" },
+    { tab: "customers", icon: "★", label: "Customers", stat: `${(state.customers || []).length} total` },
+    { tab: "shipments", icon: "✈", label: "Shipments", stat: `${(state.shipmentBatches || []).filter((b) => b.status !== "arrived").length} active batches` },
+    { tab: "products", icon: "✦", label: "Products", stat: `${(state.products || []).length} live` },
+  ].map((s) => `
+    <button class="snapshot-card" type="button" data-action="jump-tab" data-action-filter="${attr(s.tab)}">
+      <span class="snapshot-icon">${s.icon}</span>
+      <div><strong>${esc(s.label)}</strong><small>${esc(s.stat)}</small></div>
+      <span aria-hidden="true">›</span>
+    </button>
+  `).join(""));
+}
+
+// Pending scheduled broadcasts list — shown under the broadcast form.
+function renderScheduledBroadcastsList() {
+  const el = qs("[data-scheduled-broadcasts]");
+  if (!el) return;
+  const pending = (state.scheduledBroadcasts || []).filter((b) => ["pending", "running"].includes(b.status));
+  if (!pending.length) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = `
+    <h3 class="broadcast-sub-title">Pending sends · ${pending.length}</h3>
+    <ul class="scheduled-list">
+      ${pending.map((b) => {
+        const when = b.send_at ? new Date(b.send_at) : null;
+        const fires = when ? when.toLocaleString("en-PK", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "—";
+        const filters = Object.entries(b.filters || {}).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" · ") || "All eligible";
+        return `
+          <li>
+            <div>
+              <strong>${esc(b.template_id || "Custom")}</strong>
+              <small>${esc(fires)} · ${esc(filters)} · ${b.recipient_count ?? "?"} recipients</small>
+            </div>
+            <button class="button secondary" type="button" data-action="cancel-scheduled" data-broadcast-id="${attr(b.id)}">Cancel</button>
+          </li>
+        `;
+      }).join("")}
+    </ul>
+  `;
+}
+
+// Reply-rate scoreboard for past broadcasts.
+function renderCampaignReplyRates() {
+  const el = qs("[data-campaign-reply-rates]");
+  if (!el) return;
+  const campaigns = (state.broadcastCampaigns || []).slice(0, 8);
+  if (!campaigns.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <h3 class="broadcast-sub-title">Recent reply rates</h3>
+    <ul class="campaign-rates">
+      ${campaigns.map((c) => {
+        const rate = c.sent_count > 0 ? Math.round((Number(c.reply_count || 0) / Number(c.sent_count)) * 100) : 0;
+        const tone = rate >= 15 ? "ok" : rate >= 5 ? "warn" : "info";
+        const when = c.triggered_at ? relativeTime(c.triggered_at) : "—";
+        return `
+          <li class="tone-${tone}">
+            <div>
+              <strong>${esc(c.template_name || c.template_id || "Custom")}</strong>
+              <small>${esc(when)} · ${c.sent_count} sent · ${c.reply_count || 0} replies</small>
+            </div>
+            <span class="rate-badge tone-${tone}">${rate}%</span>
+          </li>
+        `;
+      }).join("")}
+    </ul>
+  `;
 }
 
 // ═══════════════════════════════════════ CASHFLOW PANEL
@@ -1770,9 +2148,12 @@ function renderCashflowBatches(fx) {
           <header>
             <div>
               <strong>${batch.name}</strong>
-              <small>${batchStatusLabel(batch.status)} · ETA ${formatDate(batch.eta_date)}</small>
+              <small>ETA ${formatDate(batch.eta_date)}</small>
             </div>
-            <small>${batchOrders.length} orders · ${items} items</small>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="batch-status-chip ${batch.status}">${batchStatusLabel(batch.status)}</span>
+              <small>${batchOrders.length} orders · ${items} items</small>
+            </div>
           </header>
           <div class="money-bar-track money-bar-track-mini">
             <span class="money-bar-seg money-bar-out" style="width:${((usd * fx) / scale) * 100}%"></span>
@@ -1806,13 +2187,15 @@ function renderCashflowWorklists() {
           .map((o) => {
             const payment = orderPaymentSummary(o);
             const due = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
-            const waNum = String(o.customer_phone || "").replace(/\D/g, "");
-            const waHref = waNum
+            const waNum = canonPhone(o.customer_phone);
+            const waHref = isValidPkMobile(waNum)
               ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${o.customer_name.split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: PKR ${due}. Please transfer before local dispatch.`)}`
               : "#";
+            const days = daysSince(o.arrived_at || o.updated_at || o.created_at);
+            const urgent = days !== null && days >= 3;
             return `
-              <div class="worklist-row">
-                <div><strong>${o.id}</strong><small>${o.customer_name} · ${o.city || ""}</small></div>
+              <div class="worklist-row ${urgent ? "urgent" : ""}">
+                <div><strong>${o.id}</strong><small>${o.customer_name} · ${o.city || ""}${days !== null ? ` · arrived ${days}d ago` : ""}</small></div>
                 <strong>${PKR.format(due)}</strong>
                 <a class="button secondary" href="${waHref}" target="_blank" rel="noreferrer">WhatsApp</a>
               </div>`;
@@ -1833,12 +2216,16 @@ function renderCashflowWorklists() {
     "[data-stale-orders]",
     stale.length
       ? stale
-          .map((o) => `
-            <div class="worklist-row">
-              <div><strong>${o.id}</strong><small>${o.customer_name} · ${daysSince(o.accepted_at || o.created_at)} days</small></div>
+          .map((o) => {
+            const days = daysSince(o.accepted_at || o.created_at) || 0;
+            const urgent = days >= 14;
+            return `
+            <div class="worklist-row ${urgent ? "urgent" : ""}">
+              <div><strong>${o.id}</strong><small>${o.customer_name} · ${days} days accepted${urgent ? " · urgent" : ""}</small></div>
               <strong>${PKR.format(Number(o.total_pkr || 0))}</strong>
               <button class="button secondary" type="button" data-action="view-order" data-order-id="${o.id}">Open</button>
-            </div>`)
+            </div>`;
+          })
           .join("")
       : `<p class="cashflow-empty">No stale accepted orders.</p>`
   );
@@ -1882,6 +2269,12 @@ function renderLedger() {
     return true;
   });
 
+  let totalPkr = 0;
+  let totalUsd = 0;
+  let totalAdvance = 0;
+  let totalBalance = 0;
+  let totalProfit = 0;
+
   tbody.innerHTML = rows
     .map((o) => {
       const payment = orderPaymentSummary(o);
@@ -1890,10 +2283,20 @@ function renderLedger() {
       const balanceLeft = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
       const profit = payment.total - usd * fx;
       const batch = shipmentBatchForOrder(o);
+      const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
+      const waNum = canonPhone(o.customer_phone);
+      const waHref = isValidPkMobile(waNum) && balanceLeft > 0
+        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has a remaining balance of PKR ${balanceLeft.toLocaleString()}. Please transfer when convenient — thank you!`)}`
+        : "";
+      totalPkr += payment.total;
+      totalUsd += usdActual;
+      totalAdvance += Number(o.advance_paid_pkr || 0);
+      totalBalance += balanceLeft;
+      totalProfit += profit;
       return `
-        <tr role="button" tabindex="0" data-action="view-order" data-order-id="${o.id}">
-          <td><strong>${o.id}</strong></td>
-          <td>${o.customer_name}<br><small>${o.customer_phone || ""}</small></td>
+        <tr role="button" tabindex="0" class="order-row" data-action="view-order" data-order-id="${o.id}" data-payment="${o.payment_status}">
+          <td><strong>${o.id}</strong>${waHref ? `<br><a class="ledger-wa-link" href="${waHref}" target="_blank" rel="noreferrer" data-stop-row title="WhatsApp balance reminder">↗ WA</a>` : ""}</td>
+          <td>${esc(o.customer_name || "")}<br><small>${esc(formatPkDisplay(canonPhone(o.customer_phone)) || o.customer_phone || "")}</small></td>
           <td>${batch ? batch.name : "—"}</td>
           <td>${o.status.replaceAll("_", " ")}</td>
           <td>${paymentLabel(o.payment_status)}</td>
@@ -1901,10 +2304,522 @@ function renderLedger() {
           <td>${USD.format(usdActual)}${usdActual < usd ? `<br><small>est ${USD.format(usd)}</small>` : ""}</td>
           <td>${PKR.format(Number(o.advance_paid_pkr || 0))}</td>
           <td>${PKR.format(balanceLeft)}</td>
-          <td>${PKR.format(profit)}</td>
+          <td class="${profitClass}">${PKR.format(profit)}</td>
         </tr>`;
     })
     .join("") || `<tr><td colspan="10"><p class="cashflow-empty">No orders match these filters.</p></td></tr>`;
+
+  const totalProfitClass = totalProfit >= 0 ? "profit-positive" : "profit-negative";
+  const tfootRow = rows.length
+    ? `<tr class="ledger-totals">
+        <td colspan="5"><strong>Totals (${rows.length} orders)</strong></td>
+        <td><strong>${PKR.format(totalPkr)}</strong></td>
+        <td><strong>${USD.format(totalUsd)}</strong></td>
+        <td><strong>${PKR.format(totalAdvance)}</strong></td>
+        <td><strong>${PKR.format(totalBalance)}</strong></td>
+        <td class="${totalProfitClass}"><strong>${PKR.format(totalProfit)}</strong></td>
+       </tr>`
+    : "";
+  const table = tbody.closest("table");
+  if (table) {
+    let tfoot = table.querySelector("tfoot");
+    if (!tfoot) {
+      tfoot = document.createElement("tfoot");
+      table.appendChild(tfoot);
+    }
+    tfoot.innerHTML = tfootRow;
+  }
+
+  // Stash current filtered rows so the CSV export uses exactly what is shown.
+  state._ledgerExport = rows;
+}
+
+// Bulk action bar visibility + selected-count chip + batch picker options.
+// Called whenever the selection set changes.
+function renderBulkActionBar() {
+  const bar = qs("[data-bulk-action-bar]");
+  if (!bar) return;
+  const n = state.selectedOrders?.size || 0;
+  bar.classList.toggle("hidden", n === 0);
+  const count = qs("[data-bulk-selected-count]");
+  if (count) count.textContent = String(n);
+  const batchSel = qs("[data-bulk-batch-select]");
+  if (batchSel) {
+    const current = batchSel.value;
+    batchSel.innerHTML =
+      `<option value="">Assign to batch…</option>` +
+      (state.shipmentBatches || []).filter((b) => b.status !== "arrived").map((b) => `<option value="${attr(b.id)}">${esc(b.name)}</option>`).join("");
+    batchSel.value = current || "";
+  }
+}
+
+// Thin pink progress bar overlay inside the bulk-action-bar — call setBulkProgress(pct)
+// during async loops so the operator can see the bulk-mark inching toward done.
+function setBulkProgress(pct) {
+  const wrap = qs("[data-bulk-progress]");
+  const bar = qs("[data-bulk-progress-bar]");
+  if (!wrap || !bar) return;
+  if (pct == null) { wrap.hidden = true; bar.style.width = "0%"; return; }
+  wrap.hidden = false;
+  bar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+}
+
+// Bulk operations on the selected orders. Currently supports:
+//   • mark-accepted  → PATCH each pending_review row to accepted via acceptOrder
+//   • export         → CSV download of just the selected rows
+//   • clear          → empty selection
+async function bulkOrdersAction(op) {
+  const ids = [...(state.selectedOrders || new Set())];
+  if (op === "clear") {
+    state.selectedOrders = new Set();
+    qsa("[data-order-select]").forEach((cb) => { cb.checked = false; });
+    qsa(".order-row.is-selected").forEach((row) => row.classList.remove("is-selected"));
+    renderBulkActionBar();
+    return;
+  }
+  if (!ids.length) { toast("Select at least one order."); return; }
+  if (op === "export") {
+    const prev = state._ordersExport;
+    state._ordersExport = (state.orders || []).filter((o) => ids.includes(o.id));
+    exportOrdersCsv();
+    state._ordersExport = prev;
+    return;
+  }
+  if (op === "mark-accepted") {
+    if (!window.confirm(`Mark ${ids.length} order(s) as accepted?`)) return;
+    let ok = 0;
+    let processed = 0;
+    setBulkProgress(0);
+    for (const id of ids) {
+      const o = state.orders.find((x) => x.id === id);
+      processed += 1;
+      setBulkProgress((processed / ids.length) * 100);
+      if (!o) continue;
+      if (o.status !== "pending_review") continue;
+      try {
+        await acceptOrder(id);
+        ok += 1;
+      } catch {}
+    }
+    setBulkProgress(null);
+    toast(`Marked ${ok} order(s) as accepted.`);
+    state.selectedOrders = new Set();
+    renderAdminOrders();
+    renderBulkActionBar();
+  }
+  if (op === "assign-batch") {
+    const batchId = qs("[data-bulk-batch-select]")?.value;
+    if (!batchId) { toast("Pick a batch first."); return; }
+    const batch = (state.shipmentBatches || []).find((b) => b.id === batchId);
+    if (!batch) return;
+    if (!window.confirm(`Assign ${ids.length} order(s) to ${batch.name}?`)) return;
+    let ok = 0;
+    let processed = 0;
+    setBulkProgress(0);
+    for (const id of ids) {
+      processed += 1;
+      setBulkProgress((processed / ids.length) * 100);
+      try {
+        await apiFetch(`/api/admin/orders/${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ shipment_batch_id: batchId, note: `Assigned to ${batch.name} via bulk action.` }),
+        }, { ok: true });
+        // Optimistic local update so the UI reflects assignment before
+        // the next dashboard refresh.
+        const local = state.orders.find((x) => x.id === id);
+        if (local) local.shipment_batch_id = batchId;
+        if (!batch.order_ids?.includes(id)) batch.order_ids = [...(batch.order_ids || []), id];
+        ok += 1;
+      } catch {}
+    }
+    setBulkProgress(null);
+    toast(`Assigned ${ok} order(s) to ${batch.name}.`);
+    state.selectedOrders = new Set();
+    renderAdminOrders();
+    renderBulkActionBar();
+  }
+}
+
+// CSV export for the Customers tab. Calls the server endpoint with the
+// current filter as a query string so the file is exactly what's on screen.
+// Falls back to client-side export when offline-preview mode is in effect.
+async function exportCustomersCsv() {
+  const f = state.customerFilters || {};
+  const params = new URLSearchParams();
+  if (f.city && f.city !== "all") params.set("city", f.city);
+  if (f.tier && f.tier !== "all") params.set("vip_tier", f.tier);
+  if (f.search) params.set("search", f.search);
+  const url = `/api/admin/customers/export?${params.toString()}`;
+
+  // Try server-side first. If the admin endpoint isn't configured (local
+  // preview), fall through to a client-side CSV from state.customers.
+  try {
+    const r = await fetch(url, {
+      headers: state.adminToken ? { Authorization: `Bearer ${state.adminToken}` } : {},
+    });
+    if (r.ok) {
+      const blob = await r.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `global-bestie-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      toast(`Exported customers CSV.`);
+      return;
+    }
+  } catch { /* fall through */ }
+
+  // Offline fallback — build from state.customers directly
+  const list = (state.customers || []).filter((c) => {
+    if (f.city && f.city !== "all" && (c.city || "").toLowerCase() !== f.city.toLowerCase()) return false;
+    if (f.tier && f.tier !== "all" && (c.vip_tier || "standard") !== f.tier) return false;
+    if (f.search) {
+      const hay = [c.name, c.phone, c.city, ...(c.tags || [])].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(f.search.toLowerCase())) return false;
+    }
+    return true;
+  });
+  if (!list.length) { toast("No customers in the current view."); return; }
+  const csvEsc = (v) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const headers = ["Phone", "Name", "City", "Total orders", "Lifetime revenue", "VIP tier", "Tags", "WhatsApp opt-in"];
+  const body = list.map((c) => [
+    formatPkDisplay(c.phone) || c.phone || "",
+    c.name || "",
+    c.city || "",
+    Number(c.total_orders || 0),
+    Number(c.total_revenue_pkr || 0),
+    c.vip_tier || "standard",
+    (c.tags || []).join(" | "),
+    c.whatsapp_opt_in === false ? "no" : "yes",
+  ].map(csvEsc).join(","));
+  const csv = [headers.join(","), ...body].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `global-bestie-customers-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+  toast(`Exported ${list.length} customers to CSV.`);
+}
+
+// Counts how many customers match a given segment's filters. Used to badge
+// each chip in the segment bar so the operator knows the size before applying.
+function countMatchingCustomers(filters) {
+  return (state.customers || []).filter((c) => {
+    if (filters.city && (c.city || "").toLowerCase() !== String(filters.city).toLowerCase()) return false;
+    if (filters.vip_tier && (c.vip_tier || "standard") !== filters.vip_tier) return false;
+    if (filters.min_orders && Number(c.total_orders || 0) < Number(filters.min_orders)) return false;
+    if (filters.min_revenue && Number(c.total_revenue_pkr || 0) < Number(filters.min_revenue)) return false;
+    if (filters.tag) {
+      const tags = Array.isArray(c.tags) ? c.tags : [];
+      if (!tags.some((t) => String(t).toLowerCase() === String(filters.tag).toLowerCase())) return false;
+    }
+    if (filters.last_order_days > 0) {
+      const ls = c.last_seen ? new Date(c.last_seen).getTime() : 0;
+      const cutoff = Date.now() - Number(filters.last_order_days) * 86_400_000;
+      if (!ls || ls < cutoff) return false;
+    }
+    return true;
+  }).length;
+}
+
+// Suggests the next-best broadcast for a customer based on their top brand
+// affinity vs the active product catalog. Surfaces "Coach (3 orders) — we
+// have 4 new Coach pieces. Try the Coach drop template." Renders nothing
+// when there's no signal yet.
+function renderNextBestSuggestion(orders) {
+  if (!orders?.length) return "";
+  const brandSpend = new Map();
+  for (const o of orders) {
+    for (const it of orderItems(o)) {
+      const p = state.products.find((x) => x.id === it.product_id);
+      const brand = p?.brand || "";
+      if (!brand) continue;
+      brandSpend.set(brand, (brandSpend.get(brand) || 0) + Number(it.unit_price_pkr || 0) * Number(it.quantity || 1));
+    }
+  }
+  const topBrand = [...brandSpend.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  if (!topBrand) return "";
+  const newPieces = (state.products || []).filter((p) => p.brand === topBrand && p.status !== "archived").length;
+  if (newPieces < 2) return "";
+  return `
+    <aside class="nbb-suggestion">
+      <strong>Next move</strong>
+      <p>This customer's top brand is <strong>${esc(topBrand)}</strong> — we have ${newPieces} active piece${newPieces === 1 ? "" : "s"}. Worth a quick WhatsApp.</p>
+    </aside>
+  `;
+}
+
+// Risk audit banner — counts risk-flagged customers, splits them by city
+// so the team can spot regional concentration ("12 risky · 7 Karachi · 3
+// Lahore"). Toggles its own visibility based on whether anyone's flagged.
+function renderRiskAuditBanner() {
+  const banner = qs("[data-risk-audit-banner]");
+  if (!banner) return;
+  const risky = (state.customers || []).filter((c) => c.risk_flag);
+  banner.classList.toggle("hidden", risky.length === 0);
+  const count = qs("[data-risk-count]");
+  if (count) count.textContent = String(risky.length);
+  // Per-city breakdown — top 3 cities
+  const byCity = new Map();
+  for (const c of risky) {
+    const city = c.city || "Unknown";
+    byCity.set(city, (byCity.get(city) || 0) + 1);
+  }
+  const top = [...byCity.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+  let breakdown = banner.querySelector("[data-risk-breakdown]");
+  if (!breakdown) {
+    breakdown = document.createElement("span");
+    breakdown.dataset.riskBreakdown = "";
+    breakdown.className = "risk-breakdown";
+    banner.insertBefore(breakdown, banner.querySelector("button"));
+  }
+  breakdown.innerHTML = top.length
+    ? top.map(([city, n]) => `<button type="button" class="risk-city-chip" data-action="filter-by-risk-city" data-city="${attr(city)}">${esc(city)} ${n}</button>`).join("")
+    : "";
+}
+
+// CSV export for the Orders tab. Pulls whatever's currently filtered into
+// state._ordersExport (set by renderAdminOrders) so the operator gets
+// exactly the view they're looking at — same date range, same batch, same
+// status filter.
+function exportOrdersCsv() {
+  const rows = state._ordersExport || state.orders || [];
+  if (!rows.length) {
+    toast("No orders in the current view to export.");
+    return;
+  }
+  const headers = [
+    "Order ID",
+    "Created",
+    "Customer",
+    "Phone",
+    "City",
+    "Address",
+    "Batch",
+    "Status",
+    "Payment status",
+    "Total PKR",
+    "Advance due",
+    "Advance paid",
+    "Balance due",
+    "Balance paid",
+    "Tracking",
+    "Courier",
+  ];
+  const esc = (v) => {
+    const s = v == null ? "" : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const body = rows.map((o) => {
+    const batch = shipmentBatchForOrder(o);
+    return [
+      o.id,
+      o.created_at || "",
+      o.customer_name || "",
+      formatPkDisplay(canonPhone(o.customer_phone)) || o.customer_phone || "",
+      o.city || "",
+      (o.address || "").replace(/\n/g, " "),
+      batch ? batch.name : "",
+      (o.status || "").replaceAll("_", " "),
+      paymentLabel(o.payment_status),
+      Number(o.total_pkr || 0),
+      Number(o.advance_due_pkr || 0),
+      Number(o.advance_paid_pkr || 0),
+      Number(o.balance_due_pkr || 0),
+      Number(o.balance_paid_pkr || 0),
+      o.tracking_number || o.usa_tracking || "",
+      o.courier_name || o.local_courier || "",
+    ].map(esc).join(",");
+  });
+  const csv = [headers.join(","), ...body].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  const range = state.orderFilters?.dateRange && state.orderFilters.dateRange !== "all" ? `-${state.orderFilters.dateRange}` : "";
+  a.href = url;
+  a.download = `global-bestie-orders${range}-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} orders to CSV.`);
+}
+
+// Dispatch modal — surfaces every order that's `pakistan_processing` AND
+// paid in full, with inline tracking + courier inputs and a "Dispatch all"
+// button. Server flips status to delivered + fires a WhatsApp tracking
+// message per order.
+function openDispatchModal({ batchId } = {}) {
+  let eligible = (state.orders || []).filter((o) => {
+    if (o.status !== "pakistan_processing") return false;
+    const due = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+    return due === 0;
+  });
+  // Scope to one batch if invoked via the per-batch "Open dispatch" button
+  let scopedBatch = null;
+  if (batchId) {
+    scopedBatch = (state.shipmentBatches || []).find((b) => b.id === batchId);
+    eligible = eligible.filter((o) => (scopedBatch?.order_ids || []).includes(o.id));
+  }
+  if (!eligible.length) {
+    openModal(`
+      <div class="dispatch-modal">
+        <p class="kicker">Bulk dispatch</p>
+        <h2>Nothing ready to dispatch.</h2>
+        <p class="confirmation-sub">Dispatch is available once an order arrives in Pakistan AND the balance is fully paid. Chase any open balances on the Cashflow tab first.</p>
+        <div class="confirmation-actions">
+          <button class="button secondary" type="button" data-action="close-modal">Close</button>
+        </div>
+      </div>
+    `);
+    return;
+  }
+  state.dispatchQueue = eligible.map((o) => ({ order_id: o.id, tracking_number: "", courier_name: o.local_courier || "" }));
+  // Courier options come from store_settings.couriers (comma-separated).
+  // Falls back to a sane default list if the setting hasn't been customized.
+  const couriers = String(state.settings?.couriers || "Leopards,TCS,M&P,OCS,Trax")
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const courierOptions = (selected) => couriers.map((c) => `<option value="${attr(c)}" ${c === selected ? "selected" : ""}>${esc(c)}</option>`).join("");
+  const rows = eligible.map((o, i) => {
+    const phone = formatPkDisplay(canonPhone(o.customer_phone)) || "";
+    return `
+      <li class="dispatch-row" data-dispatch-index="${i}">
+        <div class="dispatch-row-id">
+          <strong>${esc(o.id)}</strong>
+          <small>${esc(o.customer_name || "")} · ${esc(o.city || "")}</small>
+          <small>${esc(phone)}</small>
+        </div>
+        <label class="dispatch-field">
+          <span>Tracking #</span>
+          <input type="text" data-dispatch-tracking placeholder="e.g. LP123456789" />
+        </label>
+        <label class="dispatch-field">
+          <span>Courier</span>
+          <select data-dispatch-courier>${courierOptions(o.local_courier || "")}</select>
+        </label>
+      </li>
+    `;
+  }).join("");
+  openModal(`
+    <div class="dispatch-modal">
+      <p class="kicker">Bulk dispatch · ${eligible.length} ready${scopedBatch ? ` · ${esc(scopedBatch.name)}` : ""}</p>
+      <h2>Mark out for delivery</h2>
+      <p class="confirmation-sub">${scopedBatch ? `Showing only orders in <strong>${esc(scopedBatch.name)}</strong>. ` : ""}Add a tracking number for each order. Customers get an automatic WhatsApp with the tracking link. Leave blank to skip a row.</p>
+      <ul class="dispatch-list">${rows}</ul>
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="dispatch-submit">Dispatch all with tracking</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+  // Wire inputs to state. Listen on both events so the select picker bubbles
+  // correctly across browsers.
+  const handleDispatchChange = (e) => {
+    const row = e.target.closest(".dispatch-row");
+    if (!row) return;
+    const i = Number(row.dataset.dispatchIndex);
+    const item = state.dispatchQueue[i];
+    if (!item) return;
+    if (e.target.matches("[data-dispatch-tracking]")) item.tracking_number = e.target.value.trim();
+    if (e.target.matches("[data-dispatch-courier]")) item.courier_name = e.target.value.trim();
+  };
+  qs(".dispatch-list")?.addEventListener("input", handleDispatchChange);
+  qs(".dispatch-list")?.addEventListener("change", handleDispatchChange);
+}
+
+async function submitDispatch() {
+  const items = (state.dispatchQueue || []).filter((i) => i.tracking_number && i.courier_name);
+  if (!items.length) {
+    toast("Add at least one tracking number first.");
+    return;
+  }
+  const proceed = window.confirm(`Dispatch ${items.length} order(s) and send tracking via WhatsApp?`);
+  if (!proceed) return;
+  try {
+    const result = await apiFetch("/api/admin/dispatch", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    }, { ok: false, sent: 0, failed: 0, results: [] });
+    closeModal();
+    refreshAdmin();
+    toast(`Dispatched ${result.sent || 0} order(s)${result.failed ? `, ${result.failed} failed` : ""}.`);
+  } catch {
+    toast("Dispatch failed — try again.");
+  }
+}
+
+function exportLedgerCsv() {
+  const rows = state._ledgerExport || state.orders || [];
+  if (!rows.length) {
+    toast("No orders in the current view to export.");
+    return;
+  }
+  const fx = Number(state.settings?.fx_rate || 282);
+  const headers = [
+    "Order ID",
+    "Customer",
+    "Phone",
+    "City",
+    "Batch",
+    "Stage",
+    "Payment status",
+    "PKR sale",
+    "USD cost (actual)",
+    "USD cost (est)",
+    "Advance in PKR",
+    "Balance left PKR",
+    "Profit PKR",
+    "Created",
+  ];
+  const escape = (val) => {
+    const s = val == null ? "" : String(val);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const body = rows.map((o) => {
+    const payment = orderPaymentSummary(o);
+    const usd = orderUsdExpected(o);
+    const usdActual = orderUsdSpent(o);
+    const balanceLeft = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
+    const profit = payment.total - usd * fx;
+    const batch = shipmentBatchForOrder(o);
+    return [
+      o.id,
+      o.customer_name,
+      o.customer_phone || "",
+      o.city || "",
+      batch ? batch.name : "",
+      (o.status || "").replaceAll("_", " "),
+      paymentLabel(o.payment_status),
+      payment.total,
+      usdActual,
+      usd,
+      Number(o.advance_paid_pkr || 0),
+      balanceLeft,
+      Math.round(profit),
+      o.created_at || "",
+    ].map(escape).join(",");
+  });
+  const csv = [headers.join(","), ...body].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `global-bestie-ledger-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${rows.length} orders to CSV.`);
 }
 
 function findOrderItem(order, key) {
@@ -1974,6 +2889,199 @@ function renderAdminTabBadges({ pending, balanceDue, handoffs, trendApprovals, l
 // the demo placeholders shipped with the static preview. Catches a real-launch
 // foot-gun: deploying without changing the bank number means customers would
 // try to send advances to a non-existent account.
+// FX-rate staleness banner. Agent file mandates a twice-weekly FX refresh
+// because every PKR price depends on `settings.fx_rate`. If we haven't
+// touched it in 4+ days the team is silently selling at the wrong margin.
+// Global cmd-K (or ctrl-K) palette for the portal. Searches orders by ID/
+// customer/phone, products by title/brand, batches by name. Selecting a hit
+// opens the right modal / jumps to the right tab — no clicking around.
+function openCommandPalette() {
+  if (document.body.dataset.page !== "portal") return;
+  const root = ensureModalRoot();
+  root.innerHTML = `
+    <div class="modal-backdrop cmd-palette-backdrop">
+      <section class="cmd-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+        <input type="search" class="cmd-palette-input" placeholder="Search orders, customers, products, batches…" autofocus />
+        <div class="cmd-palette-results" data-cmd-results></div>
+        <div class="cmd-palette-hint">↑↓ navigate · Enter open · Esc close</div>
+      </section>
+    </div>
+  `;
+  qs(".cmd-palette-backdrop")?.addEventListener("click", (e) => {
+    if (!e.target.closest(".cmd-palette")) closeModal();
+  });
+  const input = qs(".cmd-palette-input");
+  let cursor = 0;
+  const render = (q) => {
+    const needle = q.trim().toLowerCase();
+    const hits = [];
+    if (needle) {
+      // ─── Action mode ───
+      // Typing `>` at the start of the query switches the palette into
+      // action mode: a curated list of common operator commands. Lets the
+      // team do "export orders", "new broadcast", "refresh" without
+      // hunting through tabs.
+      if (needle.startsWith(">")) {
+        const aq = needle.slice(1).trim();
+        const actions = [
+          { label: "Export orders CSV", sub: "Current filter view", run: () => { qs("[data-admin-tab='orders']")?.click(); setTimeout(exportOrdersCsv, 80); } },
+          { label: "Export customers CSV", sub: "Current filter view", run: () => { qs("[data-admin-tab='customers']")?.click(); setTimeout(exportCustomersCsv, 80); } },
+          { label: "Open dispatch", sub: "Bulk mark out for delivery", run: () => openDispatchModal() },
+          { label: "New broadcast", sub: "Pick template + segment", run: () => { qs("[data-admin-tab='growth']")?.click(); setTimeout(() => qs("[data-broadcast-form] [name='template_id']")?.focus(), 100); } },
+          { label: "Refresh data", sub: "Reload from /api/admin/dashboard", run: () => refreshAdmin() },
+          { label: "Jump to Overview", sub: "KPIs + needs-attention queue", run: () => qs("[data-admin-tab='overview']")?.click() },
+          { label: "Jump to Cashflow", sub: "Ledger + balance chase", run: () => qs("[data-admin-tab='cashflow']")?.click() },
+          { label: "Jump to Customers", sub: "Customer 360 + segments", run: () => qs("[data-admin-tab='customers']")?.click() },
+          { label: "Jump to Settings", sub: "FX, bank, couriers", run: () => qs("[data-admin-tab='settings']")?.click() },
+        ];
+        for (const a of actions) {
+          if (!aq || a.label.toLowerCase().includes(aq) || a.sub.toLowerCase().includes(aq)) {
+            hits.push({ type: "Action", label: a.label, sub: a.sub, action: () => { closeModal(); setTimeout(a.run, 30); } });
+          }
+        }
+        cursor = 0;
+        const target = qs("[data-cmd-results]");
+        if (!hits.length) {
+          target.innerHTML = `<div class="cmd-palette-empty">No actions match "${esc(aq)}".</div>`;
+          target._hits = [];
+        } else {
+          target.innerHTML = hits.map((h, i) => `
+            <button class="cmd-palette-row${i === cursor ? " active" : ""}" type="button" data-cmd-index="${i}">
+              <span class="cmd-palette-type tone-action">⌘</span>
+              <span class="cmd-palette-label">${esc(h.label)}</span>
+              <span class="cmd-palette-sub">${esc(h.sub)}</span>
+            </button>
+          `).join("");
+          target._hits = hits;
+        }
+        return;
+      }
+
+      // Phone-shaped queries match exactly against canonicalized customer
+      // numbers — typing "0300" or "+92 300" surfaces the right customer
+      // immediately, not every order that happens to contain "300".
+      const canon = canonPhone(needle);
+      const phoneLike = canon.length >= 4;
+
+      // Customers first — phone is the identity, so it should be the top hit.
+      for (const c of state.customers || []) {
+        const hay = [c.name, c.phone, c.city, c.email].filter(Boolean).join(" ").toLowerCase();
+        const phoneMatch = phoneLike && String(c.phone || "").includes(canon);
+        if (hay.includes(needle) || phoneMatch) {
+          hits.push({
+            type: "Customer",
+            label: c.name || formatPkDisplay(c.phone),
+            sub: `${formatPkDisplay(c.phone)} · ${c.total_orders || 0} orders · ${PKR.format(Number(c.total_revenue_pkr || 0))}${c.vip_tier && c.vip_tier !== "standard" ? ` · ${c.vip_tier}` : ""}`,
+            avatar: customerAvatarHtml(c, { size: "sm" }),
+            action: () => { closeModal(); showCustomerDetails(c.phone); },
+          });
+        }
+        if (hits.length >= 8) break;
+      }
+      for (const o of state.orders || []) {
+        const hay = [o.id, o.customer_name, o.customer_phone].filter(Boolean).join(" ").toLowerCase();
+        const phoneMatch = phoneLike && canonPhone(o.customer_phone).includes(canon);
+        if (hay.includes(needle) || phoneMatch) {
+          hits.push({
+            type: "Order", label: o.id, sub: `${o.customer_name} · ${o.status?.replaceAll("_", " ") || ""}`,
+            action: () => { closeModal(); showOrderDetails(o.id); },
+          });
+        }
+        if (hits.length >= 20) break;
+      }
+      for (const p of state.products || []) {
+        const hay = [p.title, p.brand, p.category].filter(Boolean).join(" ").toLowerCase();
+        if (hay.includes(needle)) {
+          hits.push({
+            type: "Product", label: p.title, sub: `${p.brand || ""} · ${p.category || ""}`,
+            action: () => { closeModal(); showProductDetails(p.id); },
+          });
+        }
+        if (hits.length >= 32) break;
+      }
+      for (const b of state.shipmentBatches || []) {
+        const hay = (b.name || "").toLowerCase();
+        if (hay.includes(needle)) {
+          hits.push({
+            type: "Batch", label: b.name, sub: `${b.status} · ETA ${formatDate(b.eta_date) || "—"}`,
+            action: () => { closeModal(); qs("[data-admin-tab='shipments']")?.click(); },
+          });
+        }
+      }
+    }
+    cursor = 0;
+    const target = qs("[data-cmd-results]");
+    if (!hits.length) {
+      target.innerHTML = needle
+        ? `<div class="cmd-palette-empty">No matches for "${esc(needle)}". Try <code>&gt;</code> for actions.</div>`
+        : `<div class="cmd-palette-empty">Type to search customers, orders, products. Type <code>&gt;</code> for actions.</div>`;
+      target._hits = [];
+      return;
+    }
+    target.innerHTML = hits.map((h, i) => `
+      <button class="cmd-palette-row${i === cursor ? " active" : ""}${h.avatar ? " has-avatar" : ""}" type="button" data-cmd-index="${i}">
+        ${h.avatar || `<span class="cmd-palette-type">${esc(h.type)}</span>`}
+        ${h.avatar ? `<span class="cmd-palette-type subtle">${esc(h.type)}</span>` : ""}
+        <span class="cmd-palette-label">${esc(h.label)}</span>
+        <span class="cmd-palette-sub">${esc(h.sub)}</span>
+      </button>
+    `).join("");
+    target._hits = hits;
+  };
+  render("");
+  input.addEventListener("input", (e) => render(e.target.value));
+  input.addEventListener("keydown", (e) => {
+    const target = qs("[data-cmd-results]");
+    const hits = target?._hits || [];
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      cursor = Math.min(hits.length - 1, cursor + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      cursor = Math.max(0, cursor - 1);
+    } else if (e.key === "Enter" && hits[cursor]) {
+      e.preventDefault();
+      hits[cursor].action();
+      return;
+    } else {
+      return;
+    }
+    qsa(".cmd-palette-row").forEach((row, i) => row.classList.toggle("active", i === cursor));
+  });
+  qs("[data-cmd-results]").addEventListener("click", (e) => {
+    const row = e.target.closest(".cmd-palette-row");
+    if (!row) return;
+    const hits = qs("[data-cmd-results]")._hits || [];
+    const i = Number(row.dataset.cmdIndex);
+    if (hits[i]) hits[i].action();
+  });
+}
+
+function renderFxBanner() {
+  const target = qs("[data-fx-banner]");
+  if (!target) return;
+  const s = state.settings || {};
+  const fx = Number(s.fx_rate || 0);
+  const updated = s.fx_updated_at || s.updated_at || s.fx_rate_updated_at;
+  const ts = updated ? new Date(updated).getTime() : 0;
+  const days = ts ? Math.floor((Date.now() - ts) / 86400000) : null;
+  const stale = !ts || days === null || days >= 4;
+  if (!stale && fx > 0) {
+    target.hidden = true;
+    target.innerHTML = "";
+    return;
+  }
+  target.hidden = false;
+  target.className = "fx-stale-banner";
+  const ageCopy = days === null
+    ? "FX rate has no update timestamp"
+    : `FX rate hasn't been updated in ${days} days`;
+  target.innerHTML = `
+    <strong>⚠️ ${esc(ageCopy)}</strong>
+    <span>Current value: <code>Rs ${fx ? fx.toFixed(0) : "—"} / $1</code>. Refresh it in <a href="#" data-action="jump-settings">Settings</a> twice a week so every product price stays accurate.</span>
+  `;
+}
+
 function renderDemoBanner() {
   const target = qs("[data-demo-banner]");
   if (!target) return;
@@ -2037,16 +3145,134 @@ function renderLaunchChecklist() {
   `).join("");
 }
 
+// SLA windows tuned to the agent file's promise of a 15 min WhatsApp reply.
+// Returns { level: "ok" | "warn" | "danger", label, mins }.
+function orderSlaBadge(order) {
+  if (!order) return null;
+  const status = order.status;
+  const balance = Math.max(0, Number(order.balance_due_pkr || 0) - Number(order.balance_paid_pkr || 0));
+  // Pending review — the team has 15 min to acknowledge, 30 to accept.
+  if (status === "pending_review") {
+    const mins = Math.floor((Date.now() - new Date(order.created_at || 0).getTime()) / 60000);
+    if (mins >= 30) return { level: "danger", label: `${mins} min — overdue`, mins };
+    if (mins >= 15) return { level: "warn", label: `${mins} min — replying late`, mins };
+    return { level: "ok", label: `${mins} min — fresh`, mins };
+  }
+  // Arrived in PK with balance unpaid — courier dispatch can't happen until
+  // paid; >24 h is silent revenue loss.
+  if (status === "pakistan_processing" && balance > 0) {
+    const ref = order.arrived_at || order.updated_at || order.created_at;
+    const hours = Math.floor((Date.now() - new Date(ref || 0).getTime()) / 3_600_000);
+    if (hours >= 48) return { level: "danger", label: `${hours} h — balance overdue`, mins: hours * 60 };
+    if (hours >= 24) return { level: "warn", label: `${hours} h — chase balance`, mins: hours * 60 };
+  }
+  // Accepted but no batch after 7 days — already in stale-orders worklist,
+  // mirror it here so it's visible from the main orders table too.
+  if (status === "accepted" && !shipmentBatchForOrder(order)) {
+    const days = daysSince(order.accepted_at || order.created_at);
+    if (days !== null && days >= 14) return { level: "danger", label: `${days} d — stale, no batch`, mins: days * 1440 };
+    if (days !== null && days >= 7) return { level: "warn", label: `${days} d — assign batch`, mins: days * 1440 };
+  }
+  return null;
+}
+
 function renderAdminOrders() {
   if (!has("[data-admin-orders]")) return;
+  renderOrderViewsChips();
   const filter = qs("[data-admin-order-filter]")?.value || "all";
-  const rows = state.orders.filter((order) => filter === "all" || order.status === filter);
+  const slaFilter = state.adminFilters?.slaOnly || false;
+  qs("[data-sla-filter-banner]")?.classList.toggle("hidden", !slaFilter);
+
+  // ── Batch filter <select> options refresh ──
+  const batchSelect = qs("[data-orders-batch]");
+  if (batchSelect) {
+    const current = batchSelect.value || "all";
+    batchSelect.innerHTML =
+      `<option value="all">All batches</option><option value="__none__">No batch</option>` +
+      (state.shipmentBatches || []).map((b) => `<option value="${attr(b.id)}">${esc(b.name)}</option>`).join("");
+    batchSelect.value = current;
+  }
+  const batchFilter = qs("[data-orders-batch]")?.value || "all";
+  const dateRange = qs("[data-orders-date]")?.value || "all";
+  qs("[data-orders-custom]")?.classList.toggle("hidden", dateRange !== "custom");
+  const customStart = qs("[data-orders-start]")?.value || "";
+  const customEnd = qs("[data-orders-end]")?.value || "";
+  const search = (qs("[data-orders-search]")?.value || "").toLowerCase();
+  // Persist filter state so the CSV export reads the same view.
+  state.orderFilters = { ...(state.orderFilters || {}), dateRange, batch: batchFilter, customStart, customEnd, search };
+
+  // ── Date window helper ──
+  const dateWindow = (() => {
+    const now = new Date();
+    const start = new Date(now); start.setHours(0, 0, 0, 0);
+    if (dateRange === "7") return { from: now.getTime() - 7 * 86_400_000, to: Infinity };
+    if (dateRange === "30") return { from: now.getTime() - 30 * 86_400_000, to: Infinity };
+    if (dateRange === "90") return { from: now.getTime() - 90 * 86_400_000, to: Infinity };
+    if (dateRange === "month") {
+      const m = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from: m.getTime(), to: Infinity };
+    }
+    if (dateRange === "prev_month") {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const end = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { from: start.getTime(), to: end.getTime() };
+    }
+    if (dateRange === "custom") {
+      const from = customStart ? new Date(customStart).getTime() : -Infinity;
+      const end = customEnd ? new Date(customEnd) : null;
+      if (end) end.setHours(23, 59, 59, 999);
+      return { from, to: end ? end.getTime() : Infinity };
+    }
+    return { from: -Infinity, to: Infinity };
+  })();
+
+  const rows = state.orders.filter((order) => {
+    if (filter !== "all" && order.status !== filter) return false;
+    if (slaFilter) {
+      const b = orderSlaBadge(order);
+      if (!b || b.level === "ok") return false;
+    }
+    if (batchFilter !== "all") {
+      const ob = shipmentBatchForOrder(order);
+      if (batchFilter === "__none__" && ob) return false;
+      if (batchFilter !== "__none__" && (!ob || ob.id !== batchFilter)) return false;
+    }
+    if (dateRange !== "all") {
+      const ts = new Date(order.created_at || 0).getTime();
+      if (Number.isNaN(ts) || ts < dateWindow.from || ts > dateWindow.to) return false;
+    }
+    if (search) {
+      const hay = [order.id, order.customer_name, order.customer_phone].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  // Count chip + persist filtered rows so CSV export uses the exact view.
+  const countChip = qs("[data-orders-count-chip]");
+  if (countChip) {
+    const all = state.orders.length;
+    countChip.textContent = `${rows.length} of ${all}`;
+  }
+  state._ordersExport = rows;
+  renderBulkActionBar();
   const tableRows = rows.map((order) => {
     const payment = orderPaymentSummary(order);
     const due = amountDueForOrder(order);
+    const sla = orderSlaBadge(order);
+    const slaClass = sla ? ` sla-${sla.level}` : "";
+    const slaChip = sla
+      ? `<button class="sla-chip sla-${sla.level}" type="button" data-action="toggle-sla-filter" data-stop-row title="Filter to SLA breaches only">${esc(sla.label)}</button>`
+      : "";
+    // VIP gold-border decoration when the ordering customer is gold/vip.
+    const customerCanon = canonPhone(order.customer_phone);
+    const customerRow = (state.customers || []).find((c) => c.phone === customerCanon);
+    const vipClass = customerRow && ["gold", "vip"].includes(customerRow.vip_tier || "") ? " is-vip" : "";
+    const isSelected = state.selectedOrders?.has(order.id);
     return `
-    <tr class="order-row" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
-      <td><strong>${esc(order.id)}</strong><br /><small>${new Date(order.created_at).toLocaleString()}</small></td>
+    <tr class="order-row${slaClass}${vipClass}${isSelected ? " is-selected" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
+      <td class="bulk-col" data-stop-row><input type="checkbox" data-order-select="${attr(order.id)}" ${isSelected ? "checked" : ""} aria-label="Select order ${attr(order.id)}" /></td>
+      <td><strong>${esc(order.id)}</strong>${slaChip}<br /><small>${new Date(order.created_at).toLocaleString()}</small></td>
       <td>${esc(order.customer_name)}<br /><small>${esc(order.customer_phone)} · ${esc(order.city)}</small><br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small></td>
       <td>
         <select data-order-status="${attr(order.id)}" data-stop-row>
@@ -2102,11 +3328,31 @@ function renderAdminOrders() {
 
 function renderShipmentBatches() {
   if (!has("[data-shipment-batches]")) return;
+  const fx = Number(state.settings?.fx_rate || 282);
   setHTML("[data-shipment-batches]", state.shipmentBatches.map((batch) => {
     const assignedOrders = state.orders.filter((order) => (batch.order_ids || []).includes(order.id));
     const used = Number(batch.used ?? assignedOrders.length);
     const capacity = Number(batch.capacity || Math.max(used, 1));
     const fill = Math.min(100, Math.round((used / capacity) * 100));
+    // Per-batch financials: total order value (PKR sale) vs total USD cost
+    // converted at the active FX. Profit = sale − cost × FX. Surfaces the
+    // economic shape of a batch so the team can decide which to close.
+    let saleTotal = 0;
+    let usdCost = 0;
+    for (const o of assignedOrders) {
+      saleTotal += Number(o.total_pkr || 0);
+      usdCost += orderUsdExpected ? orderUsdExpected(o) : 0;
+    }
+    const costPkr = usdCost * fx;
+    const profit = saleTotal - costPkr;
+    const profitTone = profit >= 0 ? "ok" : "warn";
+    // Show "Open dispatch" only when at least one order in this batch is
+    // ready (arrived in PK AND balance fully collected).
+    const dispatchable = assignedOrders.filter((o) => {
+      if (o.status !== "pakistan_processing") return false;
+      const due = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+      return due === 0;
+    }).length;
     return `
       <article class="shipment-card">
         <div class="panel-title-row">
@@ -2114,9 +3360,17 @@ function renderShipmentBatches() {
             <span class="status-pill ${batch.status === "arrived" ? "in_stock" : "preorder"}">${esc(batchStatusLabel(batch.status))}</span>
             <h3>${esc(batch.name)}</h3>
           </div>
-          <strong>${formatDate(batch.eta_date) || "ETA pending"}</strong>
+          <div class="shipment-card-actions">
+            <strong>${formatDate(batch.eta_date) || "ETA pending"}</strong>
+            ${dispatchable > 0 ? `<button class="button secondary" type="button" data-action="dispatch-batch" data-batch-id="${attr(batch.id)}" title="${dispatchable} ready to dispatch">Dispatch ${dispatchable}</button>` : ""}
+          </div>
         </div>
         <p>${esc(batch.note || "No batch note added.")}</p>
+        <div class="batch-financials">
+          <article><span>Sale value</span><strong>${PKR.format(saleTotal)}</strong></article>
+          <article><span>USD cost</span><strong>${USD.format(usdCost)}</strong><small>${PKR.format(costPkr)} @ ${fx.toFixed(0)}</small></article>
+          <article class="tone-${profitTone}"><span>Projected profit</span><strong>${PKR.format(profit)}</strong><small>${saleTotal > 0 ? Math.round((profit / saleTotal) * 100) : 0}% margin</small></article>
+        </div>
         <div class="pipeline-row shipment-capacity">
           <span>Capacity</span>
           <span class="pipeline-bar"><span style="width:${fill}%"></span></span>
@@ -2203,6 +3457,12 @@ function updateProductBulkBar() {
 
 function renderMarketing() {
   if (!has("[data-admin-panel=\"growth\"]")) return;
+
+  // Refresh the broadcast template <select> and live preview every time we
+  // re-render — cheap, and ensures newly seeded templates appear without a
+  // page reload after a Supabase migration.
+  renderBroadcastTemplateOptions();
+  refreshBroadcastPreview();
 
   const productOptions = state.products.map((product) => `
     <option value="${attr(product.id)}">${esc(product.title)}</option>
@@ -2337,6 +3597,7 @@ function fillProductForm(product = {}) {
     fx_rate: state.settings.fx_rate,
     stock_mode: "preorder",
     inventory: 0,
+    low_stock_threshold: 2,
     product_status: "active",
     supplier_cost_pkr: "",
     image_url: "",
@@ -2381,12 +3642,52 @@ function updatePricePreview() {
 }
 
 function renderAll() {
+  renderBatchRibbon();
   renderProducts();
   renderCart();
   renderBankDetails();
   renderSupportLinks();
   renderAdmin();
   renderMarketing();
+}
+
+// Live ribbon under the header. Pulls the current active batch + FX rate so
+// the strip stops lying about a fixed date and starts reflecting reality.
+function renderBatchRibbon() {
+  const el = qs("[data-batch-ribbon]");
+  if (!el) return;
+  const batch = (state.shipmentBatches || []).find((b) =>
+    ["collecting", "sourcing", "shipped", "arriving"].includes(b.status)
+  );
+  const fx = Number(state.settings?.fx_rate || 0);
+  const fxLabel = fx > 0 ? `FX Rs ${fx.toFixed(0)} / $1` : "";
+
+  let lead = "Place your order — we confirm the next batch on WhatsApp";
+  let detail = "";
+  if (batch) {
+    const eta = formatDate(batch.eta_date);
+    const cap = Number(batch.capacity || 0);
+    const used = (batch.order_ids || []).length;
+    const spotsLeft = Math.max(0, cap - used);
+    const statusLabel = {
+      collecting: "Now collecting orders",
+      sourcing: "Sourcing in USA",
+      shipped: "Shipped from USA",
+      arriving: "Arriving in Pakistan",
+    }[batch.status] || batch.status;
+    lead = `${statusLabel} · ${batch.name}${eta ? ` · ETA ${eta}` : ""}`;
+    if (cap > 0 && batch.status === "collecting") {
+      detail = spotsLeft > 0 ? `${spotsLeft} of ${cap} spots left in this batch` : `Batch full — joining next batch`;
+    }
+  }
+
+  el.innerHTML = `
+    <strong>${esc(lead)}</strong>
+    ${detail ? `<span class="announce-sep" aria-hidden="true">·</span><span>${esc(detail)}</span>` : ""}
+    <span class="announce-sep" aria-hidden="true">·</span>
+    <span>50% advance on preorder — balance on Pakistan arrival</span>
+    ${fxLabel ? `<span class="announce-sep" aria-hidden="true">·</span><span class="ribbon-fx">${esc(fxLabel)}</span>` : ""}
+  `;
 }
 
 // Clean-URL router (pushState) — replaces the legacy hashchange routing.
@@ -2537,13 +3838,21 @@ async function setRoute() {
 function addToCart(productId, options = {}) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
+  // Pick up the variant the customer typed into the PDP input (if any).
+  // Falls back to whatever variant is already on an existing cart line.
+  const variantInput = qs(`[data-pdp-variant][data-product-id="${productId}"]`);
+  const typedVariant = variantInput ? variantInput.value.trim() : "";
   const existing = state.cart.find((line) => line.product_id === productId);
   // First add of this product → "fresh" (open drawer, show toast).
   // Subsequent increments from the in-card stepper → "quiet" (just update,
   // no drawer pop, no spam toast — supports rapid tap-tap-tap haul flow).
   const isFreshAdd = !existing;
-  if (existing) existing.quantity += 1;
-  else state.cart.push({ product_id: productId, quantity: 1, product });
+  if (existing) {
+    existing.quantity += 1;
+    if (typedVariant) existing.variant = typedVariant;
+  } else {
+    state.cart.push({ product_id: productId, quantity: 1, product, variant: typedVariant || "" });
+  }
   saveCart();
   renderCart();
   // Re-render product cards/grids so the stepper updates and the +/- shows
@@ -2597,24 +3906,84 @@ async function fileToPayload(file) {
   };
 }
 
+// Max size for the transfer-proof upload BEFORE base64 expansion. 5 MB is
+// well under Netlify Functions' 6 MB synchronous payload limit and covers any
+// reasonable bank-app screenshot. Anything larger we bounce client-side with
+// a helpful message instead of letting the request silently 413.
+const TRANSFER_PROOF_MAX_BYTES = 5 * 1024 * 1024;
+
+// Generates a per-form-mount idempotency key so a double-tap on Place Order
+// resolves to the same server-side row instead of two duplicate orders.
+function ensureIdempotencyKey(form) {
+  if (!form.dataset.idempotencyKey) {
+    form.dataset.idempotencyKey = `idem-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+  return form.dataset.idempotencyKey;
+}
+
 async function handleCheckout(event) {
   event.preventDefault();
+  const form = event.currentTarget;
+  const submitBtn = form.querySelector("button[type='submit']");
+
+  // ─── Guard 1: cart not empty ───────────────────────────────────────────
   if (!state.cart.length) {
     toast("Add at least one product before checkout.");
     navigateTo("shop");
     return;
   }
-  const form = event.currentTarget;
+
   const data = Object.fromEntries(new FormData(form).entries());
+
+  // ─── Guard 2: phone is a valid Pakistani mobile ───────────────────────
+  const canon = canonPhone(data.customer_phone);
+  if (!isValidPkMobile(canon)) {
+    toast("Please enter a valid Pakistani mobile number (e.g. 0300 1234567).");
+    form.elements.customer_phone?.focus();
+    return;
+  }
+  // Replace whatever the user typed with the canonical form so the server
+  // and the local profile cache agree on identity.
+  data.customer_phone = canon;
+
+  // ─── Guard 3: ack checkboxes ──────────────────────────────────────────
   if (!data.balance_ack || !data.terms_ack) {
     toast("Please confirm both checkboxes before placing your order.");
     return;
   }
-  const file = form.elements.transfer_file.files[0];
+
+  // ─── Guard 4: required variants ───────────────────────────────────────
+  const missingVariant = cartLines().find((line) => {
+    const cat = line.product.category;
+    const needsVariant = ["shoes", "makeup", "fragrance"].includes(cat);
+    return needsVariant && !(line.variant && line.variant.trim());
+  });
+  if (missingVariant) {
+    toast(`Please add a ${variantLabel(missingVariant.product)} for ${missingVariant.product.title}.`);
+    setCartDrawerOpen(true);
+    return;
+  }
+
+  // ─── Guard 5: transfer proof file size ────────────────────────────────
+  const file = form.elements.transfer_file?.files?.[0];
+  if (file && file.size > TRANSFER_PROOF_MAX_BYTES) {
+    toast(`Transfer proof is ${(file.size / 1024 / 1024).toFixed(1)} MB — please upload an image under 5 MB or skip and just send the reference.`);
+    return;
+  }
+
+  // ─── Disable submit + spinner state ───────────────────────────────────
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.originalLabel = submitBtn.textContent;
+    submitBtn.textContent = "Placing your order…";
+  }
+
   const payment = cartPaymentSummary();
+  const idempotencyKey = ensureIdempotencyKey(form);
   const order = {
     ...data,
-    transfer_file: await fileToPayload(file),
+    idempotency_key: idempotencyKey,
+    transfer_file: file ? await fileToPayload(file) : null,
     items: cartLines().map((line) => ({
       product_id: line.product_id,
       title: line.product.title,
@@ -2622,7 +3991,8 @@ async function handleCheckout(event) {
       unit_price_pkr: calculatePrice(line.product),
       stock_mode: line.product.stock_mode,
       image_url: line.product.image_url,
-      variant: line.product.variants || "",
+      variant: line.variant || line.product.variants || "",
+      customer_variant_input: line.variant || "",
       source_url: line.product.source_url || "",
       source_status: line.product.stock_mode === "preorder" ? "Pending USA sourcing" : "In-stock verification",
     })),
@@ -2632,40 +4002,1662 @@ async function handleCheckout(event) {
     eta: payment.hasPreorder ? nextShipmentLabel() : "Ready for dispatch after payment match",
     next_action: "Review product availability, source price, and shipment batch before accepting.",
   };
+  // Fallback order ID matches the server's new MMDDXXXX shape so even when
+  // we're in offline-preview mode the format the customer sees is identical.
+  const now = new Date();
+  const mmdd = String(now.getMonth() + 1).padStart(2, "0") + String(now.getDate()).padStart(2, "0");
   const fallbackOrder = {
-    id: `GB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    id: `GB-${now.getFullYear()}-${mmdd}${Math.floor(1000 + Math.random() * 9000)}`,
     ...order,
     status: "pending_review",
     payment_status: data.transfer_reference || file ? "advance_uploaded" : "awaiting_advance",
-    created_at: new Date().toISOString(),
+    created_at: now.toISOString(),
     advance_paid_pkr: 0,
     balance_paid_pkr: 0,
     next_action: order.next_action,
     eta: order.eta,
-    events: [{ status: "pending_review", note: `Order request created. Team must confirm availability before payment is accepted. Estimated order value: ${PKR.format(payment.total)}.`, created_at: new Date().toISOString() }],
+    events: [{ status: "pending_review", note: `Order request created. Estimated value: ${PKR.format(payment.total)}.`, created_at: now.toISOString() }],
   };
+
+  // Race the request against a 30 s timeout so we never leave the customer
+  // staring at "Placing…" forever on a flaky connection.
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error("timeout")), 30_000),
+  );
+
   try {
-    const created = await apiFetch("/api/orders", { method: "POST", body: JSON.stringify(order) }, { order: fallbackOrder });
-    state.orders.unshift(created.order || fallbackOrder);
+    const created = await Promise.race([
+      apiFetch("/api/orders", { method: "POST", body: JSON.stringify(order) }, { order: fallbackOrder }),
+      timeoutPromise,
+    ]);
+    const placedOrder = created.order || fallbackOrder;
+
+    // If the server requoted any item, surface it before the confirmation
+    // screen so the customer knows the total they're paying.
+    if (Array.isArray(created.pricing_notes) && created.pricing_notes.length) {
+      toast(`We requoted at today's rate: ${created.pricing_notes.join(" ")}`);
+    }
+    if (created.duplicate) {
+      toast("This order was already submitted — opening your confirmation.");
+    }
+
+    state.orders.unshift(placedOrder);
     state.cart = [];
     saveCart();
+    rememberCustomerProfile({
+      customer_phone: canon,
+      customer_name: data.customer_name,
+      customer_email: data.customer_email,
+      city: data.city,
+      address: data.address,
+    });
     form.reset();
+    delete form.dataset.idempotencyKey;
     renderAll();
-    toast(`Order ${created.order?.id || fallbackOrder.id} placed. We'll confirm your shipment batch on WhatsApp within ~15 minutes.`);
-    await navigateTo("track");
-    renderTracking(created.order || fallbackOrder);
-  } catch {
-    toast("Checkout could not be submitted. Please try again or message us on WhatsApp.");
+    // Replace the toast-only success with a full confirmation screen.
+    showOrderConfirmation(placedOrder);
+  } catch (err) {
+    const isTimeout = err?.message === "timeout";
+    showSubmitFailureFallback({
+      isTimeout,
+      cart: cartLines(),
+      customer: data,
+    });
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = submitBtn.dataset.originalLabel || "Place order";
+    }
   }
+}
+
+// Full-screen confirmation modal after a successful order POST. Replaces the
+// previous "tiny toast then redirect to /track" pattern, which gave the
+// customer no proof of submission they could screenshot.
+function showOrderConfirmation(order) {
+  const phone = canonPhone(order.customer_phone);
+  const waNum = canonPhone(state.settings?.support_whatsapp || "");
+  const shareMsg = `Hi Global Bestie, my order is ${order.id}. Looking forward to confirming details.`;
+  const waHref = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(shareMsg)}` : "";
+  const items = (order.items || []).map((it) => `<li><strong>${esc(it.title)}</strong>${it.variant ? ` — ${esc(it.variant)}` : ""} <small>× ${it.quantity}</small></li>`).join("");
+  const advance = Number(order.advance_due_pkr || 0);
+  const balance = Number(order.balance_due_pkr || 0);
+  openModal(`
+    <div class="order-confirmation">
+      <div class="confirmation-headline">
+        <svg viewBox="0 0 24 24" class="confirmation-check" aria-hidden="true">
+          <circle cx="12" cy="12" r="11" fill="none" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <p class="kicker">Order received</p>
+        <h2>${esc(order.id)}</h2>
+        <p class="confirmation-sub">We've got your order. The team will confirm shipment batch and availability on WhatsApp within ~15 minutes.</p>
+      </div>
+      <div class="confirmation-grid">
+        <article>
+          <span>Customer</span>
+          <strong>${esc(order.customer_name || "")}</strong>
+          <small>${esc(formatPkDisplay(phone))}</small>
+        </article>
+        <article>
+          <span>Advance due now</span>
+          <strong>${PKR.format(advance)}</strong>
+          ${balance > 0 ? `<small>Balance ${PKR.format(balance)} on PK arrival</small>` : "<small>Pay in full after confirmation</small>"}
+        </article>
+        <article>
+          <span>ETA</span>
+          <strong>${esc(order.eta || "Confirmed on WhatsApp")}</strong>
+        </article>
+      </div>
+      <ul class="confirmation-items">${items}</ul>
+      <div class="confirmation-actions">
+        ${waHref ? `<a class="button primary wide" href="${waHref}" target="_blank" rel="noreferrer">Continue on WhatsApp</a>` : ""}
+        <button class="button secondary" type="button" data-action="track-this-order" data-order-id="${attr(order.id)}">View tracking</button>
+        <button class="button secondary" type="button" data-action="close-modal">Close</button>
+      </div>
+      <p class="confirmation-helper">Screenshot this confirmation — your order ID is your reference for any future questions.</p>
+    </div>
+  `);
+}
+
+// Shown when the POST times out or fails. Doesn't claim success; lets the
+// customer either retry or send their order to WhatsApp as plain text so the
+// team can manually re-key it.
+function showSubmitFailureFallback({ isTimeout, cart, customer }) {
+  const waNum = canonPhone(state.settings?.support_whatsapp || "");
+  const lines = cart.map((line) => `• ${line.product.title}${line.variant ? ` (${line.variant})` : ""} × ${line.quantity}`).join("\n");
+  const total = cart.reduce((sum, line) => sum + line.subtotal, 0);
+  const waText = `Hi Global Bestie, I tried to place an order but had a connection issue. Please book it for me:
+
+Name: ${customer.customer_name}
+Phone: ${customer.customer_phone}
+City: ${customer.city}
+Address: ${customer.address}
+
+Items:
+${lines}
+
+Estimated total: PKR ${total.toLocaleString()}`;
+  const waHref = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(waText)}` : "";
+  openModal(`
+    <div class="submit-failure">
+      <p class="kicker">${isTimeout ? "Took too long" : "Connection issue"}</p>
+      <h2>We're not sure if your order saved.</h2>
+      <p>Rather than risk a duplicate, please ${waHref ? "send your order to us on WhatsApp" : "try again in a moment"}. We'll book it manually within 15 minutes — same prices, same shipment batch.</p>
+      <div class="confirmation-actions">
+        ${waHref ? `<a class="button primary wide" href="${waHref}" target="_blank" rel="noreferrer">Send via WhatsApp</a>` : ""}
+        <button class="button secondary" type="button" data-action="close-modal">Try again</button>
+      </div>
+    </div>
+  `);
+}
+
+// Customer profile recall — keyed by normalized phone digits. Stored locally
+// only; we never sync this anywhere. Used purely to skip retyping name + city
+// + address on repeat checkouts.
+const CUSTOMER_PROFILE_KEY = "gb_customer_profiles";
+
+// === Phone canonicalization ===
+// Mirrors netlify/functions/_shared/phone.js exactly. Canonical form is
+// E.164-without-plus: a PK mobile becomes `923xxxxxxxxx`. Every place we
+// reference a customer (localStorage key, server lookup, WhatsApp link)
+// uses this form so customer identity stays stable across formats.
+function canonPhone(raw) {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("0")) d = "92" + d.slice(1);
+  if (d.length === 10 && d.startsWith("3")) d = "92" + d;
+  return d;
+}
+
+function isValidPkMobile(canon) {
+  return /^923\d{9}$/.test(canon);
+}
+
+function validateAndCanon(raw) {
+  const c = canonPhone(raw);
+  return isValidPkMobile(c) ? c : null;
+}
+
+function formatPkDisplay(canon) {
+  if (!isValidPkMobile(canon)) return canon || "";
+  return `+92 ${canon.slice(2, 5)} ${canon.slice(5)}`;
+}
+
+// Legacy alias — older code paths still call this. Now returns the canon form
+// so localStorage keys and existing call sites converge automatically.
+function normalizePhone(p) {
+  return canonPhone(p) || String(p || "").replace(/\D/g, "");
+}
+
+function rememberCustomerProfile(profile) {
+  const key = normalizePhone(profile.customer_phone);
+  if (!key || key.length < 7) return;
+  try {
+    const store = JSON.parse(localStorage.getItem(CUSTOMER_PROFILE_KEY) || "{}");
+    store[key] = {
+      customer_name: profile.customer_name || store[key]?.customer_name || "",
+      customer_email: profile.customer_email || store[key]?.customer_email || "",
+      city: profile.city || store[key]?.city || "",
+      address: profile.address || store[key]?.address || "",
+      saved_at: new Date().toISOString(),
+    };
+    localStorage.setItem(CUSTOMER_PROFILE_KEY, JSON.stringify(store));
+  } catch {
+    // Storage quota / private mode — silently ignore.
+  }
+}
+
+function recallCustomerProfile(phone) {
+  const key = normalizePhone(phone);
+  if (!key || key.length < 7) return null;
+  try {
+    const store = JSON.parse(localStorage.getItem(CUSTOMER_PROFILE_KEY) || "{}");
+    return store[key] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Customer-detail modal — the panel you land on from cmd-K, the repeat-
+// customer banner, or any future "open customer" link. Shows lifetime
+// summary, all orders, tags, notes, and a quick WA-templates jump for any
+// order. Read-only for now; mutations land in a follow-up if we want to
+// edit tags/notes inline.
+// Saves tag/notes changes back to the server. Debounced so a noisy typer
+// produces one PATCH at the end, not 60. Also patches state.customers in
+// place so subsequent renders show the new values instantly.
+const customerSaveTimers = new Map();
+async function patchCustomer(canon, updates, { silent } = {}) {
+  if (!canon) return;
+  const local = (state.customers || []).find((c) => c.phone === canon);
+  if (local) Object.assign(local, updates);
+  try {
+    await apiFetch(`/api/admin/customers?phone=${encodeURIComponent(canon)}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    }, { ok: true });
+    if (!silent) {
+      const status = qs("[data-notes-status]");
+      if (status) {
+        status.textContent = "Saved";
+        status.classList.add("ok");
+        clearTimeout(customerSaveTimers.get(`${canon}:status`));
+        customerSaveTimers.set(`${canon}:status`, setTimeout(() => {
+          status.textContent = "";
+          status.classList.remove("ok");
+        }, 1400));
+      }
+    }
+  } catch {
+    if (!silent) toast("Couldn't save — check connection.");
+  }
+}
+
+// Wire the message-filter chips inside the customer modal. Re-renders just
+// the history section instead of the whole modal so the customer never sees
+// a full reflow when toggling.
+function bindMessageFilterChips() {
+  const wrap = qs(".msg-filter-chips");
+  if (!wrap) return;
+  wrap.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-msg-filter]");
+    if (!btn) return;
+    state.messageFilter = btn.dataset.msgFilter || "all";
+    const section = qs("[data-message-history]");
+    if (!section) return;
+    section.outerHTML = renderCustomerMessageHistory(btn.dataset.customerPhone);
+    bindMessageFilterChips();
+  });
+}
+
+function bindCustomerEditors() {
+  // Notes — debounced save 700 ms after the last keystroke
+  const notes = qs("[data-customer-notes]");
+  if (notes) {
+    const phone = notes.dataset.customerPhone;
+    const input = notes.querySelector("[data-notes-input]");
+    const status = notes.querySelector("[data-notes-status]");
+    input?.addEventListener("input", () => {
+      if (status) { status.textContent = "Saving…"; status.classList.remove("ok"); }
+      clearTimeout(customerSaveTimers.get(phone));
+      customerSaveTimers.set(phone, setTimeout(() => {
+        patchCustomer(phone, { notes: input.value });
+      }, 700));
+    });
+  }
+
+  // Tag chips — remove on × click, add on Enter / comma in the inline input
+  const tagsEl = qs("[data-customer-tags-editor]");
+  if (tagsEl) {
+    const phone = tagsEl.dataset.customerPhone;
+    const refresh = () => {
+      const customer = (state.customers || []).find((c) => c.phone === phone) || {};
+      const current = (customer.tags || []).filter(Boolean);
+      const wrap = tagsEl.querySelector("[data-customer-tags]");
+      wrap.innerHTML = (current.length
+        ? current.map((t) => `<span class="tag-chip">${esc(t)}<button type="button" data-remove-tag="${attr(t)}" aria-label="Remove ${attr(t)} tag">×</button></span>`).join("")
+        : `<span class="customer-tags-empty">No tags yet — try "VIP Karachi", "Coach fan", "slow payer"</span>`
+      ) + `<input type="text" class="tag-add-input" data-add-tag placeholder="+ add tag" aria-label="Add a tag" />`;
+      // Re-bind the freshly inserted input
+      bindTagInput();
+    };
+    const bindTagInput = () => {
+      const addInput = tagsEl.querySelector("[data-add-tag]");
+      addInput?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          const tag = addInput.value.trim().replace(/,$/, "");
+          if (!tag) return;
+          const customer = (state.customers || []).find((c) => c.phone === phone) || { tags: [] };
+          const next = [...new Set([...(customer.tags || []), tag])];
+          patchCustomer(phone, { tags: next });
+          addInput.value = "";
+          refresh();
+        }
+      });
+    };
+    bindTagInput();
+    tagsEl.addEventListener("click", (e) => {
+      const removeBtn = e.target.closest("[data-remove-tag]");
+      if (!removeBtn) return;
+      const tag = removeBtn.dataset.removeTag;
+      const customer = (state.customers || []).find((c) => c.phone === phone) || { tags: [] };
+      const next = (customer.tags || []).filter((t) => t !== tag);
+      patchCustomer(phone, { tags: next });
+      refresh();
+    });
+  }
+}
+
+// All tags currently in use across every customer. Sorted by frequency
+// (most-used first) so the most common tags surface in the datalist
+// autocomplete before the long-tail entries.
+// Stable 2-letter monogram + pastel background derived from the phone hash.
+// Same phone → same color forever, so the team learns to recognize each
+// regular customer at a glance. The 8 base hues are all on the pink-rose-
+// peach side of the palette so they stay on-brand.
+const AVATAR_HUES = [340, 350, 18, 30, 322, 305, 5, 350];
+
+function hashCode(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    h = (h * 31 + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+function customerAvatarHtml(customer, { size } = { size: "md" }) {
+  const name = customer?.name || "";
+  const initials = name
+    ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+    : "·";
+  const hue = AVATAR_HUES[hashCode(customer?.phone || "x") % AVATAR_HUES.length];
+  const bg = `hsl(${hue}, 64%, 78%)`;
+  const fg = `hsl(${hue}, 70%, 18%)`;
+  return `<span class="customer-avatar avatar-${size}" style="background:${bg};color:${fg}" aria-hidden="true">${esc(initials || "·")}</span>`;
+}
+
+// ═════════════════════ CUSTOMERS TAB ═════════════════════
+// Renders the dedicated customer 360 panel: KPI strip, filter bar, sortable
+// table. Filter state lives on state.customerFilters so the "Broadcast to
+// current view" action can read the same filter without re-asking.
+
+function customerKpis() {
+  const list = state.customers || [];
+  const total = list.length;
+  const totalRevenue = list.reduce((s, c) => s + Number(c.total_revenue_pkr || 0), 0);
+  const ninetyDaysAgo = Date.now() - 90 * 86_400_000;
+  const active90 = list.filter((c) => new Date(c.last_seen || 0).getTime() >= ninetyDaysAgo).length;
+  const vipCount = list.filter((c) => ["gold", "vip"].includes(c.vip_tier || "")).length;
+  const avgLtv = total ? Math.round(totalRevenue / total) : 0;
+  return [
+    { label: "Total customers", value: total.toLocaleString(), sub: `${vipCount} VIP / gold` },
+    { label: "Active (90 days)", value: active90.toLocaleString(), sub: `${total ? Math.round((active90 / total) * 100) : 0}% of book` },
+    { label: "Lifetime revenue", value: PKR.format(totalRevenue), sub: `Avg LTV ${PKR.format(avgLtv)}` },
+    { label: "WA opt-in", value: `${list.filter((c) => c.whatsapp_opt_in !== false).length}/${total}`, sub: "Eligible to broadcast" },
+  ];
+}
+
+function renderKpiHero(slot, kpis, options = {}) {
+  const el = qs(slot);
+  if (!el) return;
+  el.innerHTML = kpis.map((k) => {
+    let trendChip = "";
+    if (k.trend && typeof k.trend.value === "number") {
+      const v = k.trend.value;
+      const positive = (k.trend.invert ? v < 0 : v > 0);
+      const arrow = v > 0 ? "↑" : v < 0 ? "↓" : "·";
+      const tone = v === 0 ? "info" : positive ? "ok" : "warn";
+      trendChip = `<span class="kpi-trend tone-${tone}">${arrow} ${Math.abs(v)}${k.trend.unit || "%"}</span>`;
+    }
+    return `
+    <article class="kpi-card${k.tone ? ` tone-${k.tone}` : ""}${k.action ? " kpi-action" : ""}"
+             ${k.action ? `data-action="${attr(k.action)}"${k.actionFilter ? ` data-action-filter="${attr(k.actionFilter)}"` : ""}` : ""}>
+      <div class="kpi-card-top">
+        <span class="kpi-label">${esc(k.label)}</span>
+        ${trendChip}
+      </div>
+      <strong class="kpi-value">${esc(String(k.value))}</strong>
+      ${k.sub ? `<small class="kpi-sub">${esc(k.sub)}</small>` : ""}
+    </article>
+  `;
+  }).join("");
+}
+
+// Render the segment chip bar above the Customers filter. Pinned segments
+// sort first; the unpinned tail is alphabetised. Each chip is clickable to
+// apply, with a hidden delete button revealed on hover.
+// ═════════════════ SAVED ORDERS VIEWS ═════════════════
+function renderOrderViewsChips() {
+  const chips = qs("[data-order-views-chips]");
+  if (!chips) return;
+  const views = (state.orderViews || []).slice().sort((a, b) => {
+    if (!!a.pinned !== !!b.pinned) return b.pinned ? 1 : -1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+  if (!views.length) {
+    chips.innerHTML = `<span class="segment-empty">No saved views. Set filters, then "Save current view".</span>`;
+    return;
+  }
+  chips.innerHTML = views.map((v) => {
+    const n = countMatchingOrders(v.filters || {});
+    return `
+      <span class="segment-chip${v.pinned ? " pinned" : ""}">
+        <button type="button" data-action="apply-order-view" data-view-id="${attr(v.id)}">
+          ${v.pinned ? "★ " : ""}${esc(v.name)}
+          <span class="segment-count">${n}</span>
+        </button>
+        <button type="button" class="segment-chip-delete" data-action="delete-order-view" data-view-id="${attr(v.id)}" aria-label="Delete ${attr(v.name)}">×</button>
+      </span>
+    `;
+  }).join("");
+}
+
+// Counts how many orders match a saved-view filter. Reused by the chip
+// count badges so the operator knows the size before applying.
+function countMatchingOrders(f = {}) {
+  return (state.orders || []).filter((o) => {
+    if (f.status && o.status !== f.status) return false;
+    if (f.batch && f.batch !== "all") {
+      const ob = shipmentBatchForOrder(o);
+      if (f.batch === "__none__" && ob) return false;
+      if (f.batch !== "__none__" && (!ob || ob.id !== f.batch)) return false;
+    }
+    if (f.search) {
+      const hay = [o.id, o.customer_name, o.customer_phone].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(String(f.search).toLowerCase())) return false;
+    }
+    if (f.dateRange && f.dateRange !== "all") {
+      const ts = new Date(o.created_at || 0).getTime();
+      const now = Date.now();
+      let fromTime = -Infinity, toTime = Infinity;
+      if (f.dateRange === "7") fromTime = now - 7 * 86_400_000;
+      else if (f.dateRange === "30") fromTime = now - 30 * 86_400_000;
+      else if (f.dateRange === "90") fromTime = now - 90 * 86_400_000;
+      else if (f.dateRange === "month") { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(1); fromTime = d.getTime(); }
+      else if (f.dateRange === "prev_month") {
+        const d = new Date(); const start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+        const end = new Date(d.getFullYear(), d.getMonth(), 1);
+        fromTime = start.getTime(); toTime = end.getTime();
+      } else if (f.dateRange === "custom") {
+        if (f.customStart) fromTime = new Date(f.customStart).getTime();
+        if (f.customEnd) toTime = new Date(`${f.customEnd}T23:59:59`).getTime();
+      }
+      if (Number.isNaN(ts) || ts < fromTime || ts > toTime) return false;
+    }
+    return true;
+  }).length;
+}
+
+function applyOrderView(view) {
+  const f = view.filters || {};
+  const statusSel = qs("[data-admin-order-filter]");
+  if (statusSel) statusSel.value = f.status || "all";
+  const batchSel = qs("[data-orders-batch]");
+  if (batchSel) batchSel.value = f.batch || "all";
+  const dateSel = qs("[data-orders-date]");
+  if (dateSel) dateSel.value = f.dateRange || "all";
+  const startEl = qs("[data-orders-start]");
+  if (startEl) startEl.value = f.customStart || "";
+  const endEl = qs("[data-orders-end]");
+  if (endEl) endEl.value = f.customEnd || "";
+  const searchEl = qs("[data-orders-search]");
+  if (searchEl) searchEl.value = f.search || "";
+  state.adminFilters = state.adminFilters || {};
+  state.adminFilters.slaOnly = !!f.slaOnly;
+  renderAdminOrders();
+  toast(`Applied view: ${view.name}`);
+}
+
+function openOrderViewSaveModal() {
+  const f = state.orderFilters || {};
+  const status = qs("[data-admin-order-filter]")?.value || "all";
+  const summary = [
+    status && status !== "all" ? `Status: ${status}` : "",
+    f.batch && f.batch !== "all" ? `Batch: ${f.batch}` : "",
+    f.dateRange && f.dateRange !== "all" ? `Range: ${f.dateRange}` : "",
+    f.search ? `Search: "${f.search}"` : "",
+  ].filter(Boolean).join(" · ") || "All orders";
+  openModal(`
+    <div class="segment-save-modal">
+      <p class="kicker">Save view</p>
+      <h2>Name this orders view</h2>
+      <p class="confirmation-sub">${esc(summary)}</p>
+      <label class="span-2">
+        <span>View name</span>
+        <input type="text" data-order-view-name placeholder="Pending this week · Balance due Karachi · …" autofocus />
+      </label>
+      <label class="check-row">
+        <input type="checkbox" data-order-view-pinned />
+        <span>Pin to the top of the saved-views bar</span>
+      </label>
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="order-view-save-submit">Save</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+async function saveCurrentOrderView() {
+  const name = qs("[data-order-view-name]")?.value.trim();
+  const pinned = !!qs("[data-order-view-pinned]")?.checked;
+  if (!name) { toast("Name required."); return; }
+  const filters = {
+    status: qs("[data-admin-order-filter]")?.value || "all",
+    batch: qs("[data-orders-batch]")?.value || "all",
+    dateRange: qs("[data-orders-date]")?.value || "all",
+    customStart: qs("[data-orders-start]")?.value || "",
+    customEnd: qs("[data-orders-end]")?.value || "",
+    search: qs("[data-orders-search]")?.value || "",
+  };
+  try {
+    const result = await apiFetch("/api/admin/order-views", {
+      method: "POST",
+      body: JSON.stringify({ name, filters, pinned }),
+    }, { ok: true, view: { id: `local-${Date.now()}`, name, filters, pinned } });
+    state.orderViews = [result.view, ...((state.orderViews || []).filter((v) => v.id !== result.view.id))];
+    closeModal();
+    renderOrderViewsChips();
+    toast(`Saved view: ${name}`);
+  } catch {
+    toast("Couldn't save view — try again.");
+  }
+}
+
+async function deleteOrderView(id) {
+  try {
+    await apiFetch(`/api/admin/order-views?id=${encodeURIComponent(id)}`, { method: "DELETE" }, { ok: true });
+    state.orderViews = (state.orderViews || []).filter((v) => v.id !== id);
+    renderOrderViewsChips();
+    toast("View deleted.");
+  } catch {
+    toast("Couldn't delete — try again.");
+  }
+}
+
+// ═════════════════ INLINE TIER EDITOR ═════════════════
+// Pops a 4-option mini-menu next to the VIP pill on the customer modal.
+// Selecting an option PATCHes the customer and re-renders the modal.
+function openTierMenu(anchor, phone, current) {
+  // Remove any existing menu first
+  qsa(".tier-menu").forEach((el) => el.remove());
+  const tiers = ["standard", "silver", "gold", "vip"];
+  const menu = document.createElement("div");
+  menu.className = "tier-menu";
+  menu.innerHTML = tiers.map((t) => `
+    <button type="button" class="tier-option${t === current ? " is-current" : ""}" data-action="set-tier" data-tier="${attr(t)}" data-customer-phone="${attr(phone)}">${esc(t)}</button>
+  `).join("");
+  const rect = anchor.getBoundingClientRect();
+  menu.style.position = "fixed";
+  menu.style.top = `${rect.bottom + 6}px`;
+  menu.style.left = `${rect.left}px`;
+  document.body.appendChild(menu);
+  // Click-outside to dismiss
+  setTimeout(() => {
+    const close = (e) => {
+      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener("click", close); }
+    };
+    document.addEventListener("click", close);
+  }, 50);
+}
+
+function renderSegmentChips() {
+  const chips = qs("[data-segment-chips]");
+  if (!chips) return;
+  const segments = (state.smartSegments || []).slice().sort((a, b) => {
+    if (!!a.pinned !== !!b.pinned) return b.pinned ? 1 : -1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+  if (!segments.length) {
+    chips.innerHTML = `<span class="segment-empty">No saved segments yet. Use the filters and hit "Save current view".</span>`;
+    return;
+  }
+  chips.innerHTML = segments.map((s) => {
+    const n = countMatchingCustomers(s.filters || {});
+    return `
+    <span class="segment-chip${s.pinned ? " pinned" : ""}">
+      <button type="button" data-action="apply-segment" data-segment-id="${attr(s.id)}">
+        ${s.pinned ? "★ " : ""}${esc(s.name)}
+        <span class="segment-count">${n}</span>
+      </button>
+      <button type="button" class="segment-chip-delete" data-action="delete-segment" data-segment-id="${attr(s.id)}" aria-label="Delete ${attr(s.name)}">×</button>
+    </span>
+  `;
+  }).join("");
+}
+
+function applySegment(segment) {
+  const f = segment.filters || {};
+  state.customerFilters = {
+    search: "",
+    city: f.city || "all",
+    tier: f.vip_tier || "all",
+    sort: state.customerFilters?.sort || "revenue",
+  };
+  // Mirror the filter into the form inputs so the operator sees what was applied.
+  const c = qs("[data-customer-city]");
+  if (c) c.value = f.city || "all";
+  const t = qs("[data-customer-tier]");
+  if (t) t.value = f.vip_tier || "all";
+  const s = qs("[data-customer-search]");
+  if (s) s.value = "";
+  renderCustomersTab();
+  // Mirror into broadcast form too so a follow-up broadcast picks up the segment.
+  const bForm = qs("[data-broadcast-form]");
+  if (bForm) {
+    ["city", "tag", "vip_tier", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
+      if (bForm.elements[k]) bForm.elements[k].value = f[k] || "";
+    });
+    if (qs("[data-admin-panel='growth']")?.classList.contains("active")) previewBroadcastCount();
+  }
+  toast(`Applied segment: ${segment.name} · ${countMatchingCustomers(f)} customers`);
+}
+
+function openSegmentSaveModal() {
+  const f = state.customerFilters || {};
+  const summary = [
+    f.city && f.city !== "all" ? `City: ${f.city}` : "",
+    f.tier && f.tier !== "all" ? `Tier: ${f.tier}` : "",
+    f.search ? `Search: "${f.search}"` : "",
+  ].filter(Boolean).join(" · ") || "All customers";
+  openModal(`
+    <div class="segment-save-modal">
+      <p class="kicker">Save segment</p>
+      <h2>Name this view</h2>
+      <p class="confirmation-sub">${esc(summary)}</p>
+      <label class="span-2">
+        <span>Segment name</span>
+        <input type="text" data-segment-name placeholder="VIPs in Karachi · Coach fans · Win-back targets" autofocus />
+      </label>
+      <label class="check-row">
+        <input type="checkbox" data-segment-pinned />
+        <span>Pin to the top of the segment bar</span>
+      </label>
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="segment-save-submit">Save</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+async function saveCurrentSegment() {
+  const name = qs("[data-segment-name]")?.value.trim();
+  const pinned = !!qs("[data-segment-pinned]")?.checked;
+  if (!name) { toast("Name required."); return; }
+  const f = state.customerFilters || {};
+  const filters = {};
+  if (f.city && f.city !== "all") filters.city = f.city;
+  if (f.tier && f.tier !== "all") filters.vip_tier = f.tier;
+  try {
+    const result = await apiFetch("/api/admin/segments", {
+      method: "POST",
+      body: JSON.stringify({ name, filters, pinned }),
+    }, { ok: true, segment: { id: `local-${Date.now()}`, name, filters, pinned } });
+    state.smartSegments = [result.segment, ...((state.smartSegments || []).filter((s) => s.id !== result.segment.id))];
+    closeModal();
+    renderSegmentChips();
+    toast(`Saved segment: ${name}`);
+  } catch {
+    toast("Couldn't save segment — try again.");
+  }
+}
+
+async function deleteSegment(id) {
+  try {
+    await apiFetch(`/api/admin/segments?id=${encodeURIComponent(id)}`, { method: "DELETE" }, { ok: true });
+    state.smartSegments = (state.smartSegments || []).filter((s) => s.id !== id);
+    renderSegmentChips();
+    toast("Segment deleted.");
+  } catch {
+    toast("Couldn't delete — try again.");
+  }
+}
+
+function renderCustomersTab() {
+  if (!has("[data-admin-panel=\"customers\"]")) return;
+  renderSegmentChips();
+  renderRiskAuditBanner();
+  renderKpiHero("[data-customers-kpis]", customerKpis());
+
+  // City <select> — populated from the union of every customer's city
+  const citySelect = qs("[data-customer-city]");
+  if (citySelect) {
+    const seen = new Set();
+    const cities = (state.customers || []).map((c) => c.city).filter((v) => {
+      if (!v) return false;
+      const k = v.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).sort();
+    const current = citySelect.value || "all";
+    citySelect.innerHTML = `<option value="all">All cities</option>` + cities.map((c) => `<option value="${attr(c)}">${esc(c)}</option>`).join("");
+    citySelect.value = cities.includes(current) ? current : "all";
+  }
+
+  const f = state.customerFilters || {};
+  const search = (f.search || "").toLowerCase();
+  const tier = f.tier || "all";
+  const city = f.city || "all";
+  const sort = f.sort || "revenue";
+
+  const riskOnly = !!f.riskOnly;
+  let list = (state.customers || []).filter((c) => {
+    if (riskOnly && !c.risk_flag) return false;
+    if (tier !== "all" && (c.vip_tier || "standard") !== tier) return false;
+    if (city !== "all" && (c.city || "").toLowerCase() !== city.toLowerCase()) return false;
+    if (search) {
+      const hay = [c.name, c.phone, c.city, c.email, ...(c.tags || [])].filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+  list.sort((a, b) => {
+    if (sort === "orders") return Number(b.total_orders || 0) - Number(a.total_orders || 0);
+    if (sort === "recent") return new Date(b.last_seen || 0) - new Date(a.last_seen || 0);
+    if (sort === "dormant") return new Date(a.last_seen || 0) - new Date(b.last_seen || 0);
+    if (sort === "name") return (a.name || "").localeCompare(b.name || "");
+    return Number(b.total_revenue_pkr || 0) - Number(a.total_revenue_pkr || 0);
+  });
+
+  const countChip = qs("[data-customer-count-chip]");
+  if (countChip) countChip.textContent = `${list.length} of ${(state.customers || []).length}`;
+
+  // Pre-bucket every customer's orders by month so the per-row sparkline is
+  // a single sweep across state.orders rather than N×M per render.
+  const monthBuckets = new Map();
+  const now = new Date();
+  for (const o of state.orders || []) {
+    const phone = canonPhone(o.customer_phone);
+    if (!phone) continue;
+    const d = new Date(o.created_at || 0);
+    if (Number.isNaN(d.getTime())) continue;
+    const diffMo = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+    if (diffMo < 0 || diffMo > 5) continue;
+    const bucketIndex = 5 - diffMo; // 0=oldest, 5=current
+    const arr = monthBuckets.get(phone) || new Array(6).fill(0);
+    arr[bucketIndex] += Number(o.total_pkr || 0);
+    monthBuckets.set(phone, arr);
+  }
+
+  setHTML("[data-customers-rows]", list.length ? list.map((c) => {
+    const avatar = customerAvatarHtml(c, { size: "sm" });
+    const tierClass = c.vip_tier && c.vip_tier !== "standard" ? `tier-${c.vip_tier}` : "";
+    const lastWa = c.last_outbound_at ? relativeTime(c.last_outbound_at) : "—";
+    const riskDot = c.risk_flag ? `<span class="risk-dot" title="${attr(c.risk_reason || "Auto-flagged risk")}">●</span>` : "";
+    return `
+      <tr class="customer-row${c.risk_flag ? " is-risky" : ""}" data-action="open-customer" data-customer-phone="${attr(c.phone)}" tabindex="0">
+        <td>
+          <div class="customer-cell-name">${avatar}<div><strong>${riskDot}${esc(c.name || "Unnamed")}</strong>${c.tags?.length ? `<br><small>${c.tags.slice(0, 3).map((t) => esc(t)).join(" · ")}</small>` : ""}</div></div>
+        </td>
+        <td><small class="phone-display">${esc(formatPkDisplay(c.phone) || c.phone || "")}</small></td>
+        <td>${esc(c.city || "—")}</td>
+        <td>${Number(c.total_orders || 0)}</td>
+        <td><strong>${PKR.format(Number(c.total_revenue_pkr || 0))}</strong></td>
+        <td><span class="vip-pill ${tierClass}">${esc(c.vip_tier || "standard")}</span></td>
+        <td>${rowSparkline(monthBuckets.get(c.phone))}</td>
+        <td><small>${esc(c.last_seen ? relativeTime(c.last_seen) : "—")}</small></td>
+        <td><small>${esc(lastWa)}</small></td>
+        <td class="customer-row-actions">
+          <button class="button secondary" type="button" data-action="open-customer" data-customer-phone="${attr(c.phone)}" data-stop-row>Open</button>
+        </td>
+      </tr>
+    `;
+  }).join("") : `<tr><td colspan="10"><p class="cashflow-empty">No customers match these filters.</p></td></tr>`);
+}
+
+function allKnownTags() {
+  const counts = new Map();
+  for (const c of state.customers || []) {
+    for (const t of (c.tags || [])) {
+      if (!t) continue;
+      counts.set(t, (counts.get(t) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([t]) => t);
+}
+
+function showCustomerDetails(phone) {
+  const canon = canonPhone(phone);
+  const customer = (state.customers || []).find((c) => c.phone === canon);
+  const orders = (state.orders || [])
+    .filter((o) => canonPhone(o.customer_phone) === canon)
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  // Derived stats from orders when the customers row hasn't been backfilled
+  // yet (migration window).
+  const totalOrders = customer?.total_orders ?? orders.length;
+  const totalRevenue = customer?.total_revenue_pkr ?? orders.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const firstSeen = customer?.first_seen || orders[orders.length - 1]?.created_at;
+  const lastSeen = customer?.last_seen || orders[0]?.created_at;
+  const vip = customer?.vip_tier || (totalRevenue >= 100000 || totalOrders >= 3 ? "vip" : "standard");
+  const tags = (customer?.tags || []).filter(Boolean);
+
+  const orderRows = orders.length ? orders.map((o) => {
+    const stage = (o.status || "").replaceAll("_", " ");
+    const payment = paymentLabel(o.payment_status);
+    const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+    const created = o.created_at ? new Date(o.created_at).toLocaleDateString("en-PK", { month: "short", day: "numeric", year: "numeric" }) : "";
+    return `
+      <div class="customer-order-row-shell">
+        <button class="customer-order-row" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
+          <div>
+            <strong>${esc(o.id)}</strong>
+            <small>${esc(created)} · ${esc(stage)} · ${esc(payment)}</small>
+          </div>
+          <div class="customer-order-row-totals">
+            <strong>${PKR.format(Number(o.total_pkr || 0))}</strong>
+            ${balance > 0 ? `<small class="balance-due">Balance ${PKR.format(balance)}</small>` : ""}
+          </div>
+        </button>
+        <button class="reorder-btn" type="button" data-action="reorder-from-past" data-order-id="${attr(o.id)}" title="Send a re-quote at today's prices via WhatsApp">↻ Reorder</button>
+      </div>
+    `;
+  }).join("") : `<p class="cashflow-empty">No orders yet — captured as a lead.</p>`;
+
+  const waNum = isValidPkMobile(canon) ? canon : "";
+  const waHref = waNum
+    ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(customer?.name || "").split(" ")[0] || "there"}, this is Global Bestie following up.`)}`
+    : "";
+
+  openModal(`
+    <div class="customer-detail-modal">
+      <div class="drawer-hero customer-hero">
+        ${customerAvatarHtml({ name: customer?.name, phone: canon }, { size: "lg" })}
+        <div>
+          <p class="kicker">Customer · <button class="tier-pill-btn vip-pill ${vip && vip !== "standard" ? `tier-${vip}` : ""}" type="button" data-action="open-tier-editor" data-customer-phone="${attr(canon)}" data-current-tier="${attr(vip)}" title="Click to change tier">${esc(vip)} ▾</button>${customer?.risk_flag ? ` <button class="risk-badge" type="button" data-action="clear-risk-flag" data-customer-phone="${attr(canon)}" title="${attr(customer.risk_reason || "Auto-flagged risk")} — click to clear">⚠ risk · clear</button>` : ""}</p>
+          <h2>${esc(customer?.name || formatPkDisplay(canon))}</h2>
+          <p>${esc(formatPkDisplay(canon))}${customer?.city ? ` · ${esc(customer.city)}` : ""}${customer?.email ? ` · ${esc(customer.email)}` : ""}</p>
+          ${customer?.risk_flag && customer.risk_reason ? `<details class="risk-reason-details"><summary class="risk-reason">${esc(customer.risk_reason)}</summary><p>Risk flags are auto-derived from your notes when they contain words like refund, cancel, angry, late, etc. Clear the flag once you've handled the issue.</p></details>` : ""}
+        </div>
+        <div class="drawer-actions">
+          ${waHref ? `<a class="button primary" href="${waHref}" target="_blank" rel="noreferrer">Open WhatsApp</a>` : ""}
+          <button class="button secondary" type="button" data-action="copy-text" data-copy="${attr(canon)}" data-copy-label="phone">Copy phone</button>
+          <button class="button secondary" type="button" data-action="close-modal">Close</button>
+        </div>
+      </div>
+      <div class="customer-stat-grid">
+        <article><span>Lifetime spend</span><strong>${PKR.format(Number(totalRevenue || 0))}</strong></article>
+        <article><span>Orders</span><strong>${totalOrders}</strong></article>
+        <article><span>Avg order</span><strong>${PKR.format(totalOrders ? Math.round(Number(totalRevenue || 0) / totalOrders) : 0)}</strong></article>
+        <article class="customer-sparkline-card">
+          <span>Last 6 months</span>
+          ${customerSparklineSvg(orders)}
+        </article>
+        <article><span>First seen</span><strong>${firstSeen ? new Date(firstSeen).toLocaleDateString("en-PK", { month: "short", year: "numeric" }) : "—"}</strong></article>
+        <article><span>Last seen</span><strong>${lastSeen ? new Date(lastSeen).toLocaleDateString("en-PK", { month: "short", day: "numeric" }) : "—"}</strong></article>
+      </div>
+      ${renderNextBestSuggestion(orders)}
+      ${renderProductAffinity(orders)}
+      <div class="customer-tags-editor" data-customer-tags-editor data-customer-phone="${attr(canon)}">
+        <strong class="customer-tags-label">Tags</strong>
+        <div class="customer-tags" data-customer-tags>
+          ${tags.length ? tags.map((t) => `
+            <span class="tag-chip">${esc(t)}<button type="button" data-remove-tag="${attr(t)}" aria-label="Remove ${attr(t)} tag">×</button></span>
+          `).join("") : `<span class="customer-tags-empty">No tags yet — try "VIP Karachi", "Coach fan", "slow payer"</span>`}
+          <input type="text" class="tag-add-input" data-add-tag list="customer-tag-suggestions" placeholder="+ add tag" aria-label="Add a tag" />
+        </div>
+        <datalist id="customer-tag-suggestions">${allKnownTags().map((t) => `<option value="${attr(t)}"></option>`).join("")}</datalist>
+      </div>
+      <aside class="customer-notes editable" data-customer-notes data-customer-phone="${attr(canon)}">
+        <strong>Internal notes <small>(click to edit)</small></strong>
+        <textarea data-notes-input rows="3" placeholder="Anything the team should remember about this customer…">${esc(customer?.notes || "")}</textarea>
+        <span class="notes-status" data-notes-status></span>
+      </aside>
+      ${renderCustomerMessageHistory(canon)}
+      <section class="customer-audit">
+        <h3>Internal activity</h3>
+        <ul class="audit-list" data-customer-audit><li class="audit-loading">Loading…</li></ul>
+      </section>
+      <section class="customer-orders">
+        <h3>Order history</h3>
+        <div>${orderRows}</div>
+      </section>
+    </div>
+  `);
+  bindCustomerEditors();
+  bindMessageFilterChips();
+  // Fetch the audit trail in the background so the modal pops instantly
+  // and the timeline fills in shortly after.
+  loadCustomerAudit(canon);
+}
+
+// Pulls /api/admin/customers (GET) with the phone query, expects an `audit`
+// array, then injects the rendered timeline into the modal.
+async function loadCustomerAudit(canon) {
+  try {
+    const result = await apiFetch(`/api/admin/customers?phone=${encodeURIComponent(canon)}`, {}, { audit: [] });
+    const audit = Array.isArray(result.audit) ? result.audit : [];
+    const slot = qs("[data-customer-audit]");
+    if (!slot) return;
+    if (!audit.length) {
+      slot.innerHTML = `<p class="cashflow-empty">No internal changes logged for this customer yet.</p>`;
+      return;
+    }
+    slot.innerHTML = audit.slice(0, 12).map((row) => {
+      const when = row.created_at ? relativeTime(row.created_at) : "—";
+      const action = (row.action || "").replace(/^customer\./, "").replace(/_/g, " ");
+      const updates = row.payload?.updates ? Object.keys(row.payload.updates).join(", ") : "";
+      return `
+        <li class="audit-row">
+          <span class="audit-dot" aria-hidden="true"></span>
+          <div>
+            <strong>${esc(action)}</strong>
+            ${updates ? `<small>${esc(updates)}</small>` : ""}
+          </div>
+          <span class="audit-when" title="${esc(row.created_at || "")}">${esc(when)}</span>
+        </li>
+      `;
+    }).join("");
+  } catch {
+    /* audit panel stays empty on failure — non-critical */
+  }
+}
+
+// Compact 6-bar SVG sparkline for a customer table row. Takes a 6-length
+// numeric array (oldest → newest month) and returns a 60×18 chart. Renders
+// a single gentle dot when the customer has no orders in the window.
+function rowSparkline(buckets) {
+  const safe = Array.isArray(buckets) && buckets.length === 6 ? buckets : new Array(6).fill(0);
+  const max = Math.max(1, ...safe);
+  const w = 60, h = 18, gap = 1;
+  const bw = (w - gap * 5) / 6;
+  const bars = safe.map((v, i) => {
+    const bh = Math.max(1, (v / max) * (h - 2));
+    const x = i * (bw + gap);
+    const y = h - bh;
+    const op = v > 0 ? (0.45 + (v / max) * 0.55) : 0.15;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1" fill="var(--pink)" fill-opacity="${op.toFixed(2)}"/>`;
+  }).join("");
+  return `<svg class="row-sparkline" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>`;
+}
+
+// Product affinity — aggregates this customer's order items by brand and
+// category, sorts by spend, and renders the top 4 as ranked pills. Helps
+// the team see "this person is a Coach buyer" at a glance and feeds
+// future personalized-broadcast targeting.
+function renderProductAffinity(orders) {
+  if (!orders?.length) return "";
+  const byBrand = new Map();
+  const byCategory = new Map();
+  let totalSpend = 0;
+  for (const o of orders) {
+    const items = orderItems(o);
+    for (const it of items) {
+      const product = state.products.find((p) => p.id === it.product_id);
+      const brand = product?.brand || "";
+      const category = product?.category || "";
+      const spend = Number(it.unit_price_pkr || 0) * Number(it.quantity || 1);
+      totalSpend += spend;
+      if (brand) byBrand.set(brand, (byBrand.get(brand) || 0) + spend);
+      if (category) byCategory.set(category, (byCategory.get(category) || 0) + spend);
+    }
+  }
+  const topBrands = [...byBrand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const topCats = [...byCategory.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  if (!topBrands.length && !topCats.length) return "";
+  const renderPills = (entries) => entries.map(([label, spend]) => {
+    const pct = totalSpend ? Math.round((spend / totalSpend) * 100) : 0;
+    return `
+      <li class="affinity-pill" title="${esc(label)} · ${PKR.format(spend)} lifetime · ${pct}% of spend">
+        <strong>${esc(label)}</strong>
+        <span class="affinity-bar"><span style="width:${pct}%"></span></span>
+        <small>${pct}% · ${PKR.format(spend)}</small>
+      </li>
+    `;
+  }).join("");
+  return `
+    <section class="customer-affinity">
+      <header><h3>Buys</h3><small>What this customer has spent on</small></header>
+      <div class="affinity-grid">
+        ${topBrands.length ? `<div><h4>By brand</h4><ul>${renderPills(topBrands)}</ul></div>` : ""}
+        ${topCats.length ? `<div><h4>By category</h4><ul>${renderPills(topCats)}</ul></div>` : ""}
+      </div>
+    </section>
+  `;
+}
+
+// Small SVG bar chart of revenue per month over the last 6 months. Pure
+// inline SVG — no library, scales with parent width. Bars get tinted darker
+// the higher the value so the trend reads at a glance.
+function customerSparklineSvg(orders) {
+  // Build 6 buckets of (year, month) ending with the current month.
+  const buckets = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i -= 1) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    buckets.push({ year: d.getFullYear(), month: d.getMonth(), revenue: 0, label: d.toLocaleDateString("en-PK", { month: "short" }) });
+  }
+  for (const o of orders || []) {
+    const d = new Date(o.created_at || 0);
+    if (Number.isNaN(d.getTime())) continue;
+    const b = buckets.find((x) => x.year === d.getFullYear() && x.month === d.getMonth());
+    if (b) b.revenue += Number(o.total_pkr || 0);
+  }
+  const max = Math.max(1, ...buckets.map((b) => b.revenue));
+  const width = 168;
+  const height = 44;
+  const gap = 4;
+  const barW = (width - gap * (buckets.length - 1)) / buckets.length;
+  const bars = buckets.map((b, i) => {
+    const h = Math.max(1, (b.revenue / max) * (height - 4));
+    const x = i * (barW + gap);
+    const y = height - h;
+    const opacity = 0.45 + (b.revenue / max) * 0.55;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="var(--pink)" fill-opacity="${opacity.toFixed(2)}"><title>${b.label}: ${PKR.format(b.revenue)}</title></rect>`;
+  }).join("");
+  const lastLabel = buckets[buckets.length - 1]?.label || "";
+  const firstLabel = buckets[0]?.label || "";
+  return `
+    <strong class="sparkline-headline">${PKR.format(buckets.reduce((s, b) => s + b.revenue, 0))}</strong>
+    <svg class="customer-sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Revenue per month over last 6 months">${bars}</svg>
+    <small class="sparkline-axis"><span>${firstLabel}</span><span>${lastLabel}</span></small>
+  `;
+}
+
+// Renders a compact recent-WhatsApp panel for the customer modal. Tells the
+// team how often we've messaged this customer recently so they don't fire a
+// 4th broadcast on top of 3 sent yesterday.
+function renderCustomerMessageHistory(canon) {
+  const all = (state.marketingMessages || []).filter((m) => canonPhone(m.customer_phone) === canon);
+  if (!all.length) return "";
+  const last30Cutoff = Date.now() - 30 * 86_400_000;
+  const recent = all.filter((m) => new Date(m.created_at || 0).getTime() >= last30Cutoff);
+  const outbound = recent.filter((m) => m.direction === "outbound");
+  const broadcasts = outbound.filter((m) => String(m.source || "").startsWith("Broadcast"));
+  const inbound = recent.filter((m) => m.direction === "inbound");
+  const last = all[0];
+  const lastDir = last?.direction === "outbound" ? "sent" : "received";
+  const overSaturated = outbound.length >= 6;
+  const headlineTone = overSaturated ? "warn" : "ok";
+
+  // Apply the per-modal filter (state.messageFilter). Chips below the
+  // header toggle this without re-rendering the whole modal.
+  const filter = state.messageFilter || "all";
+  const filtered = all.filter((m) => {
+    if (filter === "all") return true;
+    if (filter === "inbound") return m.direction === "inbound";
+    if (filter === "outbound") return m.direction === "outbound" && !String(m.source || "").startsWith("Broadcast");
+    if (filter === "broadcast") return m.direction === "outbound" && String(m.source || "").startsWith("Broadcast");
+    return true;
+  });
+
+  const recentList = filtered.slice(0, 12).map((m) => {
+    const when = relativeTime(m.created_at);
+    const dir = m.direction === "outbound" ? "→" : "←";
+    const klass = m.direction === "outbound" ? "outbound" : "inbound";
+    const isBroadcast = String(m.source || "").startsWith("Broadcast");
+    return `
+      <li class="msg-row ${klass}${isBroadcast ? " is-broadcast" : ""}">
+        <span class="msg-arrow">${dir}</span>
+        <div class="msg-body">
+          <strong>${esc(m.source || (m.direction === "outbound" ? "Outbound" : "Reply"))}${m.replied_to_broadcast ? ` <small class="msg-reply-tag">↳ reply to broadcast</small>` : ""}</strong>
+          <p>${esc((m.body || "").slice(0, 200))}${m.body?.length > 200 ? "…" : ""}</p>
+        </div>
+        <span class="msg-when">${esc(when)}</span>
+      </li>
+    `;
+  }).join("") || `<li class="msg-empty">No ${filter === "all" ? "" : filter} messages.</li>`;
+
+  return `
+    <section class="customer-messages tone-${headlineTone}" data-message-history>
+      <header>
+        <h3>Recent WhatsApp activity</h3>
+        <div class="msg-counts">
+          <span><strong>${outbound.length}</strong> sent</span>
+          <span><strong>${broadcasts.length}</strong> broadcasts</span>
+          <span><strong>${inbound.length}</strong> replies</span>
+          <span class="msg-last">Last ${esc(lastDir)} ${esc(relativeTime(last?.created_at))}</span>
+        </div>
+        ${overSaturated ? `<p class="msg-warn">⚠️ This customer has received ${outbound.length} messages in the last 30 days — consider skipping the next broadcast.</p>` : ""}
+        <div class="msg-filter-chips" role="tablist" aria-label="Filter messages">
+          <button type="button" class="${filter === "all" ? "active" : ""}" data-msg-filter="all" data-customer-phone="${attr(canon)}">All (${all.length})</button>
+          <button type="button" class="${filter === "inbound" ? "active" : ""}" data-msg-filter="inbound" data-customer-phone="${attr(canon)}">Inbound (${all.filter((m) => m.direction === "inbound").length})</button>
+          <button type="button" class="${filter === "outbound" ? "active" : ""}" data-msg-filter="outbound" data-customer-phone="${attr(canon)}">Direct (${all.filter((m) => m.direction === "outbound" && !String(m.source || "").startsWith("Broadcast")).length})</button>
+          <button type="button" class="${filter === "broadcast" ? "active" : ""}" data-msg-filter="broadcast" data-customer-phone="${attr(canon)}">Broadcasts (${all.filter((m) => String(m.source || "").startsWith("Broadcast")).length})</button>
+        </div>
+      </header>
+      <ul class="msg-list">${recentList}</ul>
+    </section>
+  `;
+}
+
+// When a customer types just their phone and we find multiple orders, this
+// renders a chooser so they can drill into any one. Without it, they'd only
+// ever see the most recent order (worst case: their second order's tracking
+// stays invisible while their first looms forever).
+// Builds a WhatsApp quote message from a past order, re-priced at today's
+// product rates. Drops customers into the same WA template modal we use
+// elsewhere — pre-filled with the quote body, ready to send. We deliberately
+// don't auto-create a draft order: the agent file mandates "team confirms
+// availability, PKR price, and shipment batch before payment is accepted",
+// so the customer must reply confirming before anything becomes real.
+function reorderFromPast(pastOrder) {
+  const canon = canonPhone(pastOrder.customer_phone);
+  if (!isValidPkMobile(canon)) {
+    toast("This customer's phone isn't a valid WhatsApp number.");
+    return;
+  }
+  // Re-price each line item from the live product catalog. If the product
+  // is gone (delisted), keep the original price but flag it inline.
+  const items = orderItems(pastOrder);
+  const lines = items.map((item) => {
+    const product = state.products.find((p) => p.id === item.product_id);
+    const todayUnit = product ? calculatePrice(product) : Number(item.unit_price_pkr || 0);
+    const qty = Number(item.quantity || 1);
+    const subtotal = todayUnit * qty;
+    const note = !product ? " (no longer in catalog — previous price shown)" : "";
+    return {
+      title: item.title,
+      variant: item.variant || "",
+      qty,
+      unit: todayUnit,
+      subtotal,
+      note,
+    };
+  });
+  const total = lines.reduce((s, l) => s + l.subtotal, 0);
+  const advance = Math.ceil(total * 0.5);
+
+  const itemBlock = lines.map((l) => `• ${l.title}${l.variant ? ` (${l.variant})` : ""} × ${l.qty} — PKR ${l.subtotal.toLocaleString()}${l.note}`).join("\n");
+  const firstName = (pastOrder.customer_name || "").split(" ")[0] || "there";
+  const newId = `(new)`; // The real ID is created when the customer confirms.
+  const body =
+`Hi ${firstName}, thank you for considering another Global Bestie order! Here's a re-quote at today's rate:
+
+${itemBlock}
+
+Total: PKR ${total.toLocaleString()}
+50% advance to confirm: PKR ${advance.toLocaleString()}
+
+Reply YES and we'll create your order ${newId} on the next available shipment batch.`;
+
+  // Synthesize a virtual order shape the template modal can consume.
+  const virtual = {
+    id: `re-${pastOrder.id}`,
+    customer_name: pastOrder.customer_name,
+    customer_phone: canon,
+    total_pkr: total,
+    advance_due_pkr: advance,
+    balance_due_pkr: total - advance,
+    advance_paid_pkr: 0,
+    balance_paid_pkr: 0,
+    eta: "Confirmed on reply",
+    status: "pending_review",
+    payment_status: "awaiting_advance",
+    items,
+  };
+  // Inject a one-off "reorder quote" entry so the modal preselects it.
+  const reorderTpl = {
+    id: "tmpl-reorder",
+    name: "Reorder quote (live)",
+    category: "advance_request",
+    body,
+  };
+  const prev = state.waTemplates || [];
+  state.waTemplates = [reorderTpl, ...prev.filter((t) => t.id !== "tmpl-reorder")];
+  showWhatsappTemplateModal(virtual);
+}
+
+// Default WhatsApp templates — used as a fallback when the
+// `whatsapp_templates` Supabase table is empty or unreachable. Same shape as
+// the seed rows in supabase/schema.sql so behavior is identical.
+const DEFAULT_WA_TEMPLATES = [
+  { id: "tmpl-advance", name: "Advance payment request", category: "advance_request",
+    body: "Hi {{name}}, thank you for your Global Bestie order {{order_id}}. Please transfer the 50% advance of PKR {{advance}} to confirm — bank details on the order page. Reply once sent so we can match it. ETA: {{eta}}" },
+  { id: "tmpl-balance", name: "Balance reminder (arrived in PK)", category: "balance_reminder",
+    body: "Hi {{name}}, your order {{order_id}} has arrived in Pakistan. Please transfer the remaining balance of PKR {{balance}} so we can dispatch via courier today. Thank you!" },
+  { id: "tmpl-sourcing", name: "Sourcing update", category: "sourcing_update",
+    body: "Hi {{name}}, quick update on order {{order_id}} — we've sourced your item and it's on its way to the consolidator. ETA: {{eta}}. We'll message again once it lands in Pakistan." },
+  { id: "tmpl-dispatch", name: "Dispatch confirmation", category: "dispatch",
+    body: "Hi {{name}}, your order {{order_id}} is out for delivery 📦 Tracking: {{tracking}}. Please expect a call from the courier within 1–2 working days." },
+];
+
+function interpolateTemplate(body, order) {
+  const payment = orderPaymentSummary ? orderPaymentSummary(order) : {};
+  const advanceLeft = Math.max(0, Number(payment.advanceDue || 0) - Number(order.advance_paid_pkr || 0));
+  const balanceLeft = Math.max(0, Number(payment.balanceDue || 0) - Number(order.balance_paid_pkr || 0));
+  const map = {
+    name: (order.customer_name || "").split(" ")[0] || "there",
+    full_name: order.customer_name || "",
+    order_id: order.id || "",
+    eta: order.eta || "to be confirmed",
+    advance: advanceLeft.toLocaleString(),
+    balance: balanceLeft.toLocaleString(),
+    total: Number(order.total_pkr || 0).toLocaleString(),
+    tracking: order.tracking_number || order.usa_tracking || "to be shared",
+    city: order.city || "",
+  };
+  return body.replace(/\{\{(\w+)\}\}/g, (_, key) => map[key] ?? `{{${key}}}`);
+}
+
+// Modal that lists every WA template, shows a live interpolated preview of
+// the chosen one with the current order's data, and ships the message to
+// WhatsApp on click. The Maychats Cloud API send happens server-side; for
+// now we open `wa.me/{canon}?text=...` so the team can review/send manually.
+// Populate the template <select> on the broadcast form with whatever the
+// portal has loaded (live from /api/admin/dashboard, falling back to the
+// inline DEFAULT_WA_TEMPLATES). Idempotent — safe to call on every render.
+// Template editor in Settings — lists every template with edit/delete
+// buttons. Called from renderAdmin so it refreshes whenever data loads.
+function renderTemplatesEditor() {
+  const slot = qs("[data-templates-editor]");
+  if (!slot) return;
+  const templates = state.waTemplates || [];
+  if (!templates.length) {
+    slot.innerHTML = `<p class="cashflow-empty">No templates yet. Hit "New template" to seed your first WhatsApp script.</p>`;
+    return;
+  }
+  slot.innerHTML = `
+    <ul class="template-list">
+      ${templates.map((t) => `
+        <li class="template-row ${t.is_active === false ? "is-inactive" : ""}">
+          <div class="template-meta">
+            <strong>${esc(t.name)}</strong>
+            <small>${esc(t.category || "custom")}${t.is_active === false ? " · inactive" : ""}</small>
+          </div>
+          <p class="template-body-preview">${esc((t.body || "").slice(0, 180))}${t.body?.length > 180 ? "…" : ""}</p>
+          <div class="template-row-actions">
+            <button class="button secondary" type="button" data-action="edit-wa-template" data-template-id="${attr(t.id)}">Edit</button>
+            <button class="button secondary" type="button" data-action="delete-wa-template" data-template-id="${attr(t.id)}">Delete</button>
+          </div>
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
+function openTemplateEditor(template) {
+  const t = template || { id: "", name: "", category: "custom", body: "", is_active: true };
+  openModal(`
+    <div class="template-editor-modal">
+      <p class="kicker">${template ? "Edit template" : "New template"}</p>
+      <h2>${esc(t.name || "Untitled template")}</h2>
+      <label>
+        <span>Name</span>
+        <input type="text" data-template-name value="${attr(t.name || "")}" placeholder="e.g. Sourcing update — bags" autofocus />
+      </label>
+      <label>
+        <span>Category</span>
+        <select data-template-category>
+          <option value="advance_request" ${t.category === "advance_request" ? "selected" : ""}>Advance request</option>
+          <option value="balance_reminder" ${t.category === "balance_reminder" ? "selected" : ""}>Balance reminder</option>
+          <option value="sourcing_update" ${t.category === "sourcing_update" ? "selected" : ""}>Sourcing update</option>
+          <option value="dispatch" ${t.category === "dispatch" ? "selected" : ""}>Dispatch</option>
+          <option value="in_stock_confirmation" ${t.category === "in_stock_confirmation" ? "selected" : ""}>In-stock confirmation</option>
+          <option value="custom" ${(!t.category || t.category === "custom") ? "selected" : ""}>Custom</option>
+        </select>
+      </label>
+      <label>
+        <span>Body — use {{name}}, {{order_id}}, {{advance}}, {{balance}}, {{eta}}, {{tracking}}</span>
+        <textarea data-template-body rows="6" placeholder="Hi {{name}}, your order {{order_id}}…">${esc(t.body || "")}</textarea>
+      </label>
+      <div class="template-preview-pane">
+        <strong>Live preview</strong>
+        <p data-template-preview></p>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" data-template-active ${t.is_active !== false ? "checked" : ""} />
+        <span>Active (available to send)</span>
+      </label>
+      <input type="hidden" data-template-id value="${attr(t.id || "")}" />
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="template-save-submit">Save</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+  // Live preview — interpolate with realistic sample data so the team can
+  // catch placeholder typos before saving.
+  const bodyEl = qs("[data-template-body]");
+  const previewEl = qs("[data-template-preview]");
+  if (bodyEl && previewEl) {
+    const sample = {
+      name: "Ayesha",
+      full_name: "Ayesha Khan",
+      order_id: `GB-${new Date().getFullYear()}-051501234`,
+      advance: "18,500",
+      balance: "18,500",
+      total: "37,000",
+      eta: "Jun 24",
+      tracking: "LP123456789",
+      city: "Karachi",
+    };
+    const refresh = () => {
+      const text = (bodyEl.value || "").replace(/\{\{(\w+)\}\}/g, (_, k) => sample[k] ?? `{{${k}}}`);
+      previewEl.textContent = text;
+    };
+    bodyEl.addEventListener("input", refresh);
+    refresh();
+  }
+}
+
+async function saveTemplateFromModal() {
+  const name = qs("[data-template-name]")?.value.trim();
+  const body = qs("[data-template-body]")?.value.trim();
+  const category = qs("[data-template-category]")?.value || "custom";
+  const isActive = !!qs("[data-template-active]")?.checked;
+  const id = qs("[data-template-id]")?.value || undefined;
+  if (!name || !body) { toast("Name and body required."); return; }
+  try {
+    const result = await apiFetch("/api/admin/templates", {
+      method: "POST",
+      body: JSON.stringify({ id, name, body, category, is_active: isActive }),
+    }, { ok: true, template: { id: id || `tmpl-${Date.now()}`, name, body, category, is_active: isActive } });
+    // Optimistic upsert
+    const list = state.waTemplates || [];
+    const idx = list.findIndex((t) => t.id === result.template.id);
+    if (idx >= 0) list[idx] = result.template;
+    else list.unshift(result.template);
+    state.waTemplates = list;
+    closeModal();
+    renderTemplatesEditor();
+    renderBroadcastTemplateOptions();
+    refreshBroadcastPreview();
+    toast(`Template saved.`);
+  } catch {
+    toast("Couldn't save template — try again.");
+  }
+}
+
+async function deleteTemplate(id) {
+  try {
+    await apiFetch(`/api/admin/templates?id=${encodeURIComponent(id)}`, { method: "DELETE" }, { ok: true });
+    state.waTemplates = (state.waTemplates || []).filter((t) => t.id !== id);
+    renderTemplatesEditor();
+    renderBroadcastTemplateOptions();
+    toast("Template deleted.");
+  } catch {
+    toast("Couldn't delete — try again.");
+  }
+}
+
+function renderBroadcastTemplateOptions() {
+  const select = qs("[data-broadcast-template]");
+  if (!select) return;
+  const templates = (state.waTemplates && state.waTemplates.length) ? state.waTemplates : DEFAULT_WA_TEMPLATES;
+  const current = select.value;
+  select.innerHTML = templates
+    .map((t) => `<option value="${attr(t.id)}">${esc(t.name)} · ${esc(t.category.replaceAll("_", " "))}</option>`)
+    .join("");
+  if (templates.some((t) => t.id === current)) select.value = current;
+}
+
+// Live preview of the selected template body. Pure client-side; the server
+// re-interpolates per recipient on send.
+function refreshBroadcastPreview() {
+  const select = qs("[data-broadcast-template]");
+  const preview = qs("[data-broadcast-preview]");
+  if (!select || !preview) return;
+  const templates = (state.waTemplates && state.waTemplates.length) ? state.waTemplates : DEFAULT_WA_TEMPLATES;
+  const t = templates.find((x) => x.id === select.value);
+  if (!t) { preview.value = ""; return; }
+  preview.value = t.body.replace(/\{\{(\w+)\}\}/g, (_, k) => {
+    const sample = {
+      name: "Ayesha",
+      order_id: "your order",
+      advance: "—",
+      balance: "—",
+      eta: "—",
+      tracking: "—",
+      city: "Karachi",
+    };
+    return sample[k] ?? `{{${k}}}`;
+  });
+}
+
+// Reads the current filter form values and asks the server how many
+// recipients match. Cheap GET, no sends.
+async function previewBroadcastCount() {
+  const form = qs("[data-broadcast-form]");
+  if (!form) return;
+  const data = new FormData(form);
+  const params = new URLSearchParams();
+  for (const [k, v] of data.entries()) {
+    if (k === "template_id") continue;
+    if (v) params.set(k, String(v));
+  }
+  const countEl = qs("[data-broadcast-count]");
+  if (countEl) countEl.textContent = "Counting…";
+  try {
+    const result = await apiFetch(`/api/admin/broadcast?${params.toString()}`, {}, { count: 0, sample: [] });
+    if (countEl) {
+      const warn = result.count > 200 ? " · ⚠️ over 200 — narrow filters" : "";
+      countEl.textContent = `${result.count} recipient${result.count === 1 ? "" : "s"} match${warn}`;
+      countEl.classList.toggle("over-cap", result.count > 200);
+    }
+  } catch {
+    if (countEl) countEl.textContent = "Couldn't fetch count.";
+  }
+}
+
+async function sendBroadcast(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
+  if (!data.template_id) { toast("Pick a template first."); return; }
+  // Scheduled? Confirm differently and route through scheduling path.
+  const sendAt = data.send_at ? new Date(data.send_at) : null;
+  const isScheduled = sendAt && !Number.isNaN(sendAt.getTime()) && sendAt.getTime() > Date.now() + 30_000;
+  const countEl = qs("[data-broadcast-count]");
+  const countText = countEl?.textContent || "";
+  const verb = isScheduled
+    ? `Schedule this template for ${sendAt.toLocaleString("en-PK")} (${countText})?`
+    : `Send this template to ${countText}? Opt-outs are skipped automatically.`;
+  if (!window.confirm(verb)) return;
+
+  const submitBtn = form.querySelector("button[type='submit']");
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = isScheduled ? "Scheduling…" : "Sending…"; }
+  try {
+    const result = await apiFetch("/api/admin/broadcast", {
+      method: "POST",
+      body: JSON.stringify({
+        template_id: data.template_id,
+        send_at: isScheduled ? sendAt.toISOString() : null,
+        filters: {
+          city: data.city,
+          tag: data.tag,
+          vip_tier: data.vip_tier,
+          last_order_days: Number(data.last_order_days || 0),
+          min_orders: Number(data.min_orders || 0),
+          min_revenue: Number(data.min_revenue || 0),
+        },
+      }),
+    }, { ok: false, sent: 0, failed: 0, count: 0 });
+    if (result.error === "rate_limited") {
+      const wait = result.wait_seconds ? `${result.wait_seconds}s` : `${result.retry_after_minutes || "a few"} min`;
+      toast(`Broadcast paused — please wait ${wait} before sending again.`);
+      return;
+    }
+    if (result.scheduled) {
+      // Optimistically prepend so the pending-sends list shows it before
+      // the next dashboard refresh.
+      state.scheduledBroadcasts = [
+        {
+          id: result.id,
+          template_id: result.template?.id,
+          send_at: result.send_at,
+          recipient_count: result.recipient_count,
+          filters: JSON.parse(JSON.stringify(JSON.parse(JSON.stringify({ city: data.city, tag: data.tag, vip_tier: data.vip_tier })))),
+          status: "pending",
+        },
+        ...(state.scheduledBroadcasts || []),
+      ];
+      renderScheduledBroadcastsList();
+      toast(`Scheduled for ${new Date(result.send_at).toLocaleString("en-PK")} · ${result.recipient_count} recipients`);
+      form.reset();
+      refreshBroadcastPreview();
+      return;
+    }
+    if (result.idempotent_replay) {
+      toast("Same broadcast was just sent — showing previous result.");
+    }
+    showBroadcastResults(result);
+  } catch {
+    toast("Broadcast failed — try again.");
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Send broadcast"; }
+  }
+}
+
+// Result-summary modal shown after a broadcast send. Surfaces sent /
+// failed / skipped counts and a clickable list of failed phones so the
+// team can chase them manually.
+function showBroadcastResults(result) {
+  const sent = Number(result.sent || 0);
+  const failed = Number(result.failed || 0);
+  const skipDaily = Number(result.skipped_daily_cap || 0);
+  const skipOptOut = Number(result.skipped_opt_out || 0);
+  const total = sent + failed + skipDaily;
+  const headlineTone = failed > 0 || skipDaily > 0 ? "warn" : "ok";
+  const fails = Array.isArray(result.failures) ? result.failures : [];
+  const skipped = Array.isArray(result.skipped) ? result.skipped : [];
+  openModal(`
+    <div class="broadcast-results">
+      <div class="confirmation-headline">
+        <p class="kicker">Broadcast complete</p>
+        <h2>${sent} delivered${failed ? ` · ${failed} failed` : ""}</h2>
+        ${result.hard_capped ? `<p class="confirmation-sub">⚠️ Hit the 200-recipient cap — narrow your filters to reach the remaining ${(result.count || 0) - 200} customers.</p>` : ""}
+      </div>
+      <div class="broadcast-stats">
+        <article class="stat-ok"><span>Sent</span><strong>${sent}</strong></article>
+        <article class="stat-warn"><span>Failed</span><strong>${failed}</strong></article>
+        <article class="stat-info"><span>Skipped (daily cap)</span><strong>${skipDaily}</strong></article>
+        <article class="stat-info"><span>Skipped (opted out)</span><strong>${skipOptOut}</strong></article>
+      </div>
+      ${fails.length ? `
+        <section class="broadcast-list">
+          <h3>Failed sends · ${fails.length}${fails.length === 25 && failed > 25 ? " (showing first 25)" : ""}</h3>
+          <ul>
+            ${fails.map((f) => `<li><strong>${esc(formatPkDisplay(f.phone) || f.phone)}</strong>${f.name ? ` <span>${esc(f.name)}</span>` : ""} <small>${esc(String(f.reason || "unknown"))}</small></li>`).join("")}
+          </ul>
+        </section>
+      ` : ""}
+      ${skipped.length ? `
+        <section class="broadcast-list muted">
+          <h3>Skipped recipients</h3>
+          <ul>
+            ${skipped.map((s) => `<li><strong>${esc(formatPkDisplay(s.phone) || s.phone)}</strong>${s.name ? ` <span>${esc(s.name)}</span>` : ""} <small>${s.reason === "daily_cap" ? "Already received 3 messages in 24h" : esc(s.reason)}</small></li>`).join("")}
+          </ul>
+        </section>
+      ` : ""}
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="close-modal">Close</button>
+      </div>
+    </div>
+  `);
+}
+
+function showWhatsappTemplateModal(order) {
+  const canon = canonPhone(order.customer_phone);
+  if (!isValidPkMobile(canon)) {
+    toast("This order's phone number is not in a valid WhatsApp format.");
+    return;
+  }
+  const templates = (state.waTemplates && state.waTemplates.length) ? state.waTemplates : DEFAULT_WA_TEMPLATES;
+  // Sensible default: balance reminder if balance is due, otherwise advance
+  // request, otherwise sourcing.
+  const balanceLeft = Math.max(0, Number(order.balance_due_pkr || 0) - Number(order.balance_paid_pkr || 0));
+  const advanceLeft = Math.max(0, Number(order.advance_due_pkr || 0) - Number(order.advance_paid_pkr || 0));
+  let pickId = templates[0]?.id;
+  if (balanceLeft > 0 && order.status === "pakistan_processing") {
+    pickId = templates.find((t) => t.category === "balance_reminder")?.id || pickId;
+  } else if (advanceLeft > 0) {
+    pickId = templates.find((t) => t.category === "advance_request")?.id || pickId;
+  } else if (order.status === "sourcing" || order.status === "in_transit") {
+    pickId = templates.find((t) => t.category === "sourcing_update")?.id || pickId;
+  } else if (order.status === "delivered") {
+    pickId = templates.find((t) => t.category === "dispatch")?.id || pickId;
+  }
+  openModal(`
+    <div class="wa-template-modal">
+      <p class="kicker">WhatsApp templates</p>
+      <h2>Reply to ${esc(order.customer_name || "customer")}</h2>
+      <p class="wa-template-sub">${esc(formatPkDisplay(canon))} · order ${esc(order.id)}</p>
+      <div class="wa-template-grid">
+        <aside class="wa-template-list" role="listbox">
+          ${templates.map((t) => `
+            <button class="wa-template-row${t.id === pickId ? " active" : ""}" type="button" data-wa-pick="${attr(t.id)}">
+              <strong>${esc(t.name)}</strong>
+              <small>${esc(t.category.replaceAll("_", " "))}</small>
+            </button>
+          `).join("")}
+        </aside>
+        <div class="wa-template-preview">
+          <label>
+            <span>Preview (edit before sending)</span>
+            <textarea data-wa-body rows="9"></textarea>
+          </label>
+          <div class="wa-template-actions">
+            <a class="button primary" data-wa-send target="_blank" rel="noreferrer">Open in WhatsApp</a>
+            <button class="button secondary" type="button" data-action="copy-text" data-copy-label="message">Copy text</button>
+            <button class="button secondary" type="button" data-action="close-modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+  const bodyEl = qs("[data-wa-body]");
+  const sendLink = qs("[data-wa-send]");
+  const copyBtn = qs("[data-wa-template-modal] [data-action='copy-text'], .wa-template-modal [data-action='copy-text']");
+  const setTemplate = (id) => {
+    const t = templates.find((x) => x.id === id) || templates[0];
+    if (!t) return;
+    bodyEl.value = interpolateTemplate(t.body, order);
+    refreshSendLink();
+    qsa(".wa-template-row").forEach((row) => row.classList.toggle("active", row.dataset.waPick === id));
+  };
+  const refreshSendLink = () => {
+    const text = bodyEl.value;
+    sendLink.href = `https://wa.me/${canon}?text=${encodeURIComponent(text)}`;
+    if (copyBtn) copyBtn.dataset.copy = text;
+  };
+  qsa(".wa-template-row").forEach((row) => {
+    row.addEventListener("click", () => setTemplate(row.dataset.waPick));
+  });
+  bodyEl.addEventListener("input", refreshSendLink);
+  setTemplate(pickId);
+}
+
+function renderOrderList(orders, canon) {
+  const target = qs("[data-tracking-result]");
+  if (!target) return;
+  const rows = orders.map((o) => {
+    const stage = (o.status || "").replaceAll("_", " ");
+    const payment = paymentLabel ? paymentLabel(o.payment_status) : (o.payment_status || "").replaceAll("_", " ");
+    const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+    const created = o.created_at ? new Date(o.created_at).toLocaleDateString("en-PK", { month: "short", day: "numeric", year: "numeric" }) : "";
+    return `
+      <button class="order-list-row" type="button" data-action="open-tracking-order" data-order-id="${attr(o.id)}">
+        <div>
+          <strong>${esc(o.id)}</strong>
+          <small>${esc(created)} · ${esc(stage)} · ${esc(payment)}</small>
+        </div>
+        <div class="order-list-row-totals">
+          <strong>${PKR.format(Number(o.total_pkr || 0))}</strong>
+          ${balance > 0 ? `<small>Balance due ${PKR.format(balance)}</small>` : ""}
+        </div>
+      </button>
+    `;
+  }).join("");
+  target.innerHTML = `
+    <div class="order-list-shell">
+      <p class="kicker">Found ${orders.length} orders</p>
+      <h2>${esc(formatPkDisplay(canon))}</h2>
+      <p class="order-list-helper">Choose an order to see status, payment progress, and next steps.</p>
+      <div class="order-list">${rows}</div>
+    </div>
+  `;
 }
 
 async function handleTrack(event) {
   event.preventDefault();
-  const query = new FormData(event.currentTarget).get("query").trim().toLowerCase();
-  const fallback = state.orders.find((order) =>
-    [order.id, order.customer_phone].filter(Boolean).some((value) => String(value).toLowerCase().includes(query))
-  );
-  const result = await apiFetch(`/api/orders?query=${encodeURIComponent(query)}`, {}, { order: fallback || null });
+  const rawQuery = new FormData(event.currentTarget).get("query").trim();
+  // If the input looks like a phone number, canonicalize so we exact-match.
+  // Otherwise treat it as an order ID lookup (case-insensitive).
+  const canon = canonPhone(rawQuery);
+  const looksLikePhone = isValidPkMobile(canon);
+  const query = looksLikePhone ? canon : rawQuery.toLowerCase();
+  const fallbackMatches = state.orders.filter((order) => {
+    if (looksLikePhone) return canonPhone(order.customer_phone) === canon;
+    return [order.id, order.customer_phone].filter(Boolean).some((value) => String(value).toLowerCase().includes(query));
+  });
+  const result = await apiFetch(`/api/orders?query=${encodeURIComponent(query)}`, {}, {
+    order: fallbackMatches[0] || null,
+    orders: fallbackMatches,
+  });
+  // If the lookup was by phone and the customer has multiple orders, render
+  // a list so they can pick the one they want — not just the most recent.
+  const orders = Array.isArray(result.orders) ? result.orders : (result.order ? [result.order] : []);
+  if (looksLikePhone && orders.length > 1) {
+    renderOrderList(orders, canon);
+    return;
+  }
   if (!result.order) {
     // Fallback: customer may have lost their order number or be searching with
     // the wrong phone. Surface the WhatsApp escape hatch directly so they
@@ -2741,12 +5733,29 @@ function handleAdminLogin(event) {
 }
 
 async function refreshAdmin() {
-  const fallback = { orders: state.orders, products: state.products, trends: state.trends, settings: state.settings, shipmentBatches: state.shipmentBatches };
+  const fallback = {
+    orders: state.orders,
+    products: state.products,
+    trends: state.trends,
+    settings: state.settings,
+    shipmentBatches: state.shipmentBatches,
+    customers: state.customers || [],
+    waTemplates: state.waTemplates || [],
+    marketingMessages: state.marketingMessages || [],
+  };
   const data = await apiFetch("/api/admin/dashboard", {}, fallback);
   state.orders = data.orders || state.orders;
   state.products = data.products || state.products;
   state.trends = data.trends || state.trends;
   state.shipmentBatches = data.shipmentBatches || data.shipment_batches || state.shipmentBatches;
+  state.customers = data.customers || state.customers || [];
+  state.waTemplates = data.waTemplates || data.wa_templates || state.waTemplates || [];
+  state.marketingMessages = data.marketingMessages || data.marketing_messages || state.marketingMessages || [];
+  state.broadcastCampaigns = data.broadcastCampaigns || data.broadcast_campaigns || state.broadcastCampaigns || [];
+  state.scheduledBroadcasts = data.scheduledBroadcasts || data.scheduled_broadcasts || state.scheduledBroadcasts || [];
+  state.smartSegments = data.smartSegments || data.smart_segments || state.smartSegments || [];
+  state.orderViews = data.orderViews || data.order_views || state.orderViews || [];
+  state.teamMembers = data.teamMembers || data.team_members || state.teamMembers || [];
   state.settings = { ...state.settings, ...(data.settings || {}) };
   renderAll();
 }
@@ -2761,6 +5770,9 @@ async function saveProduct(event) {
   product.shipping_pkr = Number(product.shipping_pkr);
   product.fx_rate = Number(product.fx_rate);
   product.inventory = Number(product.inventory);
+  product.low_stock_threshold = product.low_stock_threshold !== "" && product.low_stock_threshold != null
+    ? Number(product.low_stock_threshold)
+    : 2;
   if (product.stock_mode === "in_stock" && product.inventory <= 0 && product.product_status === "active") {
     toast("Active in-stock products need inventory above 0.");
     return;
@@ -2966,6 +5978,24 @@ async function acceptOrder(orderId) {
   const order = state.orders.find((item) => item.id === orderId);
   if (!order) return;
   const payment = orderPaymentSummary(order);
+
+  // Margin guard — if projected profit margin is under 20%, force the team
+  // to confirm so we don't silently accept loss-making orders. Margin is
+  // (PKR sale − USD cost × FX) / PKR sale.
+  const fx = Number(state.settings?.fx_rate || 282);
+  const usdCost = orderUsdExpected(order);
+  const projectedProfit = payment.total - usdCost * fx;
+  const marginPct = payment.total > 0 ? (projectedProfit / payment.total) * 100 : 0;
+  if (marginPct < 20) {
+    const msg = projectedProfit < 0
+      ? `⚠️ This order projects a LOSS of ${PKR.format(Math.abs(projectedProfit))} (${marginPct.toFixed(1)}% margin).`
+      : `⚠️ Margin on this order is only ${marginPct.toFixed(1)}% (profit ${PKR.format(projectedProfit)}).`;
+    const ok = window.confirm(`${msg}\n\nSale: ${PKR.format(payment.total)}\nUSD cost × FX: ${PKR.format(usdCost * fx)}\n\nAccept anyway?`);
+    if (!ok) {
+      toast("Accept cancelled — review USD cost or pricing first.");
+      return;
+    }
+  }
   const activeBatch = state.shipmentBatches.find((batch) => ["collecting", "sourcing"].includes(batch.status));
   const eta = payment.hasPreorder && activeBatch
     ? `${activeBatch.name} ETA: ${formatDate(activeBatch.eta_date)}`
@@ -3815,6 +6845,306 @@ function wireEvents() {
     if (action === "reply-lead") return replyLead(target.dataset.leadId);
     if (action === "sync-marketing") return syncMarketing();
     if (action === "new-campaign") return qs("[data-campaign-form] input[name='name']")?.focus();
+    if (action === "export-ledger-csv") return exportLedgerCsv();
+    if (action === "copy-text") {
+      const text = target.dataset.copy || "";
+      const label = target.dataset.copyLabel || "value";
+      if (!text) return;
+      const flash = () => {
+        const original = target.innerHTML;
+        target.innerHTML = "<span>Copied ✓</span>";
+        target.classList.add("copied");
+        setTimeout(() => {
+          target.innerHTML = original;
+          target.classList.remove("copied");
+        }, 1400);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(flash).catch(() => {
+          toast(`${label}: ${text}`);
+        });
+      } else {
+        toast(`${label}: ${text}`);
+      }
+      return;
+    }
+    if (action === "open-cmd-palette") {
+      openCommandPalette();
+      return;
+    }
+    if (action === "export-orders-csv") {
+      exportOrdersCsv();
+      return;
+    }
+    if (action === "export-customers-csv") {
+      exportCustomersCsv();
+      return;
+    }
+    if (action === "filter-risk-only") {
+      state.customerFilters = state.customerFilters || {};
+      state.customerFilters.riskOnly = true;
+      renderCustomersTab();
+      return;
+    }
+    if (action === "filter-clear-risk") {
+      state.customerFilters = state.customerFilters || {};
+      state.customerFilters.riskOnly = false;
+      renderCustomersTab();
+      return;
+    }
+    if (action === "clear-risk-flag") {
+      const phone = target.dataset.customerPhone;
+      if (!phone) return;
+      patchCustomer(phone, { risk_flag: false, risk_reason: "" });
+      toast("Risk flag cleared.");
+      // Re-render the modal so the badge disappears immediately
+      setTimeout(() => showCustomerDetails(phone), 80);
+      return;
+    }
+    if (action === "bulk-orders-action") {
+      bulkOrdersAction(target.dataset.bulkOp);
+      return;
+    }
+    if (action === "toggle-all-orders") {
+      const checked = target.checked;
+      state.selectedOrders = checked ? new Set((state._ordersExport || []).map((o) => o.id)) : new Set();
+      qsa("[data-order-select]").forEach((cb) => { cb.checked = checked; });
+      renderBulkActionBar();
+      return;
+    }
+    if (action === "open-dispatch") {
+      openDispatchModal();
+      return;
+    }
+    if (action === "dispatch-submit") {
+      submitDispatch();
+      return;
+    }
+    if (action === "open-segment-save") {
+      openSegmentSaveModal();
+      return;
+    }
+    if (action === "open-order-view-save") {
+      openOrderViewSaveModal();
+      return;
+    }
+    if (action === "order-view-save-submit") {
+      saveCurrentOrderView();
+      return;
+    }
+    if (action === "apply-order-view") {
+      const id = target.dataset.viewId;
+      const v = (state.orderViews || []).find((x) => x.id === id);
+      if (v) applyOrderView(v);
+      return;
+    }
+    if (action === "delete-order-view") {
+      const id = target.dataset.viewId;
+      if (id && window.confirm("Delete this saved view?")) deleteOrderView(id);
+      return;
+    }
+    if (action === "filter-by-risk-city") {
+      const city = target.dataset.city;
+      if (!city) return;
+      state.customerFilters = state.customerFilters || {};
+      state.customerFilters.riskOnly = true;
+      state.customerFilters.city = city;
+      // Mirror into the visible select
+      const sel = qs("[data-customer-city]");
+      if (sel) sel.value = city;
+      renderCustomersTab();
+      return;
+    }
+    if (action === "dispatch-batch") {
+      const batchId = target.dataset.batchId;
+      openDispatchModal({ batchId });
+      return;
+    }
+    if (action === "open-tier-editor") {
+      const phone = target.dataset.customerPhone;
+      const current = target.dataset.currentTier || "standard";
+      openTierMenu(target, phone, current);
+      return;
+    }
+    if (action === "set-tier") {
+      const phone = target.dataset.customerPhone;
+      const tier = target.dataset.tier;
+      if (phone && tier) {
+        patchCustomer(phone, { vip_tier: tier });
+        toast(`Tier set to ${tier}.`);
+        setTimeout(() => showCustomerDetails(phone), 80);
+      }
+      return;
+    }
+    if (action === "segment-save-submit") {
+      saveCurrentSegment();
+      return;
+    }
+    if (action === "apply-segment") {
+      const id = target.dataset.segmentId;
+      const seg = (state.smartSegments || []).find((s) => s.id === id);
+      if (seg) applySegment(seg);
+      return;
+    }
+    if (action === "delete-segment") {
+      const id = target.dataset.segmentId;
+      if (id && window.confirm("Delete this segment?")) deleteSegment(id);
+      return;
+    }
+    if (action === "jump-tab") {
+      const tab = target.dataset.actionFilter;
+      if (tab) qs(`[data-admin-tab="${tab}"]`)?.click();
+      return;
+    }
+    if (action === "broadcast-from-filter") {
+      // Carries the current Customers-tab filter into the broadcast form on
+      // the Growth Studio tab and immediately refreshes the recipient count.
+      const cf = state.customerFilters || {};
+      qs("[data-admin-tab='growth']")?.click();
+      setTimeout(() => {
+        const form = qs("[data-broadcast-form]");
+        if (!form) return;
+        // Reset any stale filters first so this view is reflected exactly.
+        ["city", "tag", "vip_tier", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
+          if (form.elements[k]) form.elements[k].value = "";
+        });
+        if (cf.city && cf.city !== "all") form.elements.city.value = cf.city;
+        if (cf.tier && cf.tier !== "all") form.elements.vip_tier.value = cf.tier;
+        previewBroadcastCount();
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+      return;
+    }
+    if (action === "cancel-scheduled") {
+      const id = target.dataset.broadcastId;
+      if (!id) return;
+      if (!window.confirm("Cancel this scheduled broadcast?")) return;
+      apiFetch(`/api/admin/broadcast/cancel?id=${encodeURIComponent(id)}`, { method: "POST" }, { ok: true })
+        .then(() => {
+          const item = (state.scheduledBroadcasts || []).find((b) => b.id === id);
+          if (item) item.status = "cancelled";
+          renderScheduledBroadcastsList();
+          toast("Scheduled broadcast cancelled.");
+        })
+        .catch(() => toast("Couldn't cancel — try again."));
+      return;
+    }
+    if (action === "toggle-sla-filter") {
+      state.adminFilters = state.adminFilters || {};
+      state.adminFilters.slaOnly = !state.adminFilters.slaOnly;
+      renderAdminOrders();
+      return;
+    }
+    if (action === "reorder-from-past") {
+      const id = target.dataset.orderId;
+      const past = (state.orders || []).find((x) => x.id === id);
+      if (past) reorderFromPast(past);
+      return;
+    }
+    if (action === "new-wa-template") {
+      openTemplateEditor(null);
+      return;
+    }
+    if (action === "edit-wa-template") {
+      const id = target.dataset.templateId;
+      const t = (state.waTemplates || []).find((x) => x.id === id);
+      openTemplateEditor(t);
+      return;
+    }
+    if (action === "delete-wa-template") {
+      const id = target.dataset.templateId;
+      if (id && window.confirm("Delete this template?")) deleteTemplate(id);
+      return;
+    }
+    if (action === "template-save-submit") {
+      saveTemplateFromModal();
+      return;
+    }
+    if (action === "broadcast-preview") {
+      previewBroadcastCount();
+      return;
+    }
+    if (action === "open-customer") {
+      const ph = target.dataset.customerPhone || "";
+      if (ph) showCustomerDetails(ph);
+      return;
+    }
+    if (action === "open-wa-templates") {
+      const id = target.dataset.orderId;
+      const o = (state.orders || []).find((x) => x.id === id);
+      if (o) showWhatsappTemplateModal(o);
+      return;
+    }
+    if (action === "open-tracking-order") {
+      const id = target.dataset.orderId;
+      const o = (state.orders || []).find((x) => x.id === id);
+      if (o) renderTracking(o);
+      return;
+    }
+    if (action === "track-this-order") {
+      const id = target.dataset.orderId;
+      const o = (state.orders || []).find((x) => x.id === id);
+      closeModal();
+      navigateTo("track").then(() => {
+        if (o) renderTracking(o);
+      });
+      return;
+    }
+    if (action === "ask-about-product") {
+      const id = target.dataset.productId;
+      const product = state.products.find((p) => p.id === id);
+      if (product) {
+        const msg = `Hi Global Bestie, I'd like to ask about: ${product.title}${product.brand ? ` (${product.brand})` : ""}.`;
+        const href = supportWhatsAppHref(msg);
+        if (href) window.open(href, "_blank", "noopener");
+      }
+      return;
+    }
+  });
+
+  // PDP gallery zoom — track cursor position relative to the wrap, set CSS
+  // custom props so transform-origin follows the cursor (proper lens zoom).
+  document.addEventListener("mousemove", (event) => {
+    const wrap = event.target.closest("[data-zoom]");
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    wrap.style.setProperty("--zoom-x", `${x}%`);
+    wrap.style.setProperty("--zoom-y", `${y}%`);
+  });
+
+  // Variant edits on cart lines persist back to the cart.
+  document.addEventListener("input", (event) => {
+    const cartVariant = event.target.closest("[data-cart-variant]");
+    if (cartVariant) {
+      const id = cartVariant.dataset.productId;
+      const line = state.cart.find((l) => l.product_id === id);
+      if (line) {
+        line.variant = cartVariant.value.trim();
+        saveCart();
+      }
+    }
+  });
+
+  // Order-row multi-select — toggle membership in state.selectedOrders,
+  // update the bulk action bar, and add/remove the highlighted row class.
+  document.addEventListener("change", (event) => {
+    const orderSelect = event.target.dataset.orderSelect;
+    if (orderSelect) {
+      state.selectedOrders = state.selectedOrders || new Set();
+      if (event.target.checked) state.selectedOrders.add(orderSelect);
+      else state.selectedOrders.delete(orderSelect);
+      event.target.closest("tr")?.classList.toggle("is-selected", event.target.checked);
+      renderBulkActionBar();
+      return;
+    }
+    // Bulk batch-assign trigger
+    if (event.target.matches("[data-bulk-batch-select]") && event.target.value) {
+      bulkOrdersAction("assign-batch");
+      event.target.value = "";
+      return;
+    }
   });
 
   document.addEventListener("change", (event) => {
@@ -3837,6 +7167,14 @@ function wireEvents() {
   });
 
   document.addEventListener("keydown", (event) => {
+    // cmd/ctrl + K → open portal command palette
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if (document.body.dataset.page === "portal") {
+        event.preventDefault();
+        openCommandPalette();
+        return;
+      }
+    }
     if (event.key === "Escape") closeModal();
     if (event.key === "Enter" && event.target.matches("[data-action='view-order']")) {
       showOrderDetails(event.target.dataset.orderId);
@@ -3892,7 +7230,96 @@ function wireEvents() {
     });
   });
 
+  // FAQ filter — hides any <details class="faq-item"> whose text doesn't match
+  // the typed query. Pure client-side; no rerender or state needed.
+  qs("[data-faq-search]")?.addEventListener("input", (event) => {
+    const q = event.target.value.trim().toLowerCase();
+    const items = qsa(".faq-item");
+    let visible = 0;
+    items.forEach((item) => {
+      const text = item.textContent.toLowerCase();
+      const match = !q || text.includes(q);
+      item.style.display = match ? "" : "none";
+      if (match) visible += 1;
+      if (q && match) item.setAttribute("open", "");
+    });
+    qs("[data-faq-empty]")?.classList.toggle("hidden", visible > 0);
+  });
+
   qs("[data-checkout-form]")?.addEventListener("submit", handleCheckout);
+
+  // Inline phone validation hint + canonical form preview. Fires on input
+  // for live feedback ("becomes +92 300 1234567 ✓") and on blur for the
+  // heavier lead-capture POST.
+  const phoneInput = qs("[data-checkout-form] input[name='customer_phone']");
+  if (phoneInput) {
+    let hint = phoneInput.parentElement.querySelector("[data-phone-hint]");
+    if (!hint) {
+      hint = document.createElement("small");
+      hint.dataset.phoneHint = "";
+      hint.className = "phone-hint";
+      phoneInput.parentElement.appendChild(hint);
+    }
+    const refresh = () => {
+      const raw = phoneInput.value;
+      if (!raw.trim()) { hint.textContent = ""; hint.className = "phone-hint"; return; }
+      const canon = canonPhone(raw);
+      if (isValidPkMobile(canon)) {
+        hint.textContent = `${formatPkDisplay(canon)} ✓`;
+        hint.className = "phone-hint ok";
+      } else {
+        hint.textContent = "Pakistani mobile, e.g. 0300 1234567";
+        hint.className = "phone-hint warn";
+      }
+    };
+    phoneInput.addEventListener("input", refresh);
+    phoneInput.addEventListener("blur", async () => {
+      refresh();
+      const canon = canonPhone(phoneInput.value);
+      if (!isValidPkMobile(canon)) return;
+
+      // Phone recall — autofill name/email/city/address from local profile.
+      const profile = recallCustomerProfile(canon);
+      const form = phoneInput.form;
+      if (profile) {
+        const fields = ["customer_name", "customer_email", "city", "address"];
+        let filled = 0;
+        fields.forEach((name) => {
+          const input = form.elements[name];
+          if (input && !input.value && profile[name]) {
+            input.value = profile[name];
+            filled += 1;
+          }
+        });
+        if (filled) toast(`Welcome back ${profile.customer_name ? profile.customer_name.split(" ")[0] : ""} — autofilled ${filled} field${filled > 1 ? "s" : ""}.`);
+      }
+
+      // Phone-blur abandoned-cart lead capture. Fire-and-forget; the response
+      // doesn't gate the UI. We send what we have at this moment so even if
+      // the customer never finishes, the team has the lead in Growth Studio.
+      const cartSummary = (state.cart || []).map((l) => {
+        const p = state.products.find((x) => x.id === l.product_id) || l.product;
+        return `${p?.title || l.product_id} × ${l.quantity}`;
+      }).join("; ");
+      try {
+        await apiFetch("/api/leads", {
+          method: "POST",
+          body: JSON.stringify({
+            customer_phone: canon,
+            customer_name: form.elements.customer_name?.value || "",
+            customer_email: form.elements.customer_email?.value || "",
+            city: form.elements.city?.value || "",
+            address: form.elements.address?.value || "",
+            source: "checkout",
+            intent: "abandoned_checkout",
+            cart_summary: cartSummary,
+          }),
+        }, { ok: true });
+      } catch {
+        // Lead capture is best-effort; never block checkout on it.
+      }
+    });
+  }
   qs("[data-track-form]")?.addEventListener("submit", handleTrack);
   document.addEventListener("submit", (event) => {
     if (event.target.matches("[data-tracking-proof-form]")) return handleTrackingProof(event);
@@ -3938,6 +7365,52 @@ function wireEvents() {
   qs("[data-shipment-form]")?.addEventListener("submit", createShipmentBatch);
   qs("[data-creative-form]")?.addEventListener("submit", queueCreative);
   qs("[data-campaign-form]")?.addEventListener("submit", createCampaign);
+  qs("[data-broadcast-form]")?.addEventListener("submit", sendBroadcast);
+  qs("[data-broadcast-form]")?.addEventListener("change", (e) => {
+    if (e.target.matches("[data-broadcast-template]")) refreshBroadcastPreview();
+  });
+
+  // Orders-tab filter inputs — change-driven, debounced search
+  ["[data-admin-order-filter]", "[data-orders-batch]", "[data-orders-date]", "[data-orders-start]", "[data-orders-end]"].forEach((sel) => {
+    qs(sel)?.addEventListener("change", () => renderAdminOrders());
+  });
+  const ordersSearchEl = qs("[data-orders-search]");
+  if (ordersSearchEl) {
+    let timer = null;
+    ordersSearchEl.addEventListener("input", () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => renderAdminOrders(), 180);
+    });
+  }
+
+  // Customers-tab filter inputs — debounced search, instant select changes
+  const customerSearchEl = qs("[data-customer-search]");
+  if (customerSearchEl) {
+    let searchTimer = null;
+    customerSearchEl.addEventListener("input", (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.customerFilters = state.customerFilters || {};
+        state.customerFilters.search = e.target.value || "";
+        renderCustomersTab();
+      }, 180);
+    });
+  }
+  qs("[data-customer-city]")?.addEventListener("change", (e) => {
+    state.customerFilters = state.customerFilters || {};
+    state.customerFilters.city = e.target.value || "all";
+    renderCustomersTab();
+  });
+  qs("[data-customer-tier]")?.addEventListener("change", (e) => {
+    state.customerFilters = state.customerFilters || {};
+    state.customerFilters.tier = e.target.value || "all";
+    renderCustomersTab();
+  });
+  qs("[data-customer-sort]")?.addEventListener("change", (e) => {
+    state.customerFilters = state.customerFilters || {};
+    state.customerFilters.sort = e.target.value || "revenue";
+    renderCustomersTab();
+  });
 
   // Cashflow ledger filters — re-render only the table on change so the rest
   // of the panel keeps its scroll position.
