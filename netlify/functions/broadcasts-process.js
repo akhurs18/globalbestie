@@ -173,7 +173,9 @@ export default async (req) => {
   }
 };
 
+// Scheduled-only: Netlify rejects a custom `path` on cron functions. The
+// manual trigger lives at /.netlify/functions/broadcasts-process if the
+// team needs to flush the queue.
 export const config = {
-  path: "/api/admin/broadcasts/process",
   schedule: "*/5 * * * *", // every 5 minutes
 };

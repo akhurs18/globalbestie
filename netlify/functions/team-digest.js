@@ -201,7 +201,8 @@ export default async (req) => {
   }
 };
 
+// Scheduled-only: 04:00 UTC = 09:00 PKT. Manual trigger / dry-run preview
+// is available at /.netlify/functions/team-digest?dry=1
 export const config = {
-  path: "/api/admin/team-digest",
-  schedule: "0 4 * * *", // 04:00 UTC = 09:00 PKT
+  schedule: "0 4 * * *",
 };

@@ -68,7 +68,9 @@ export default async (req) => {
 
 // `schedule` runs this function nightly at 03:30 PKT (22:30 UTC). Adjust the
 // cron string if the team wants to see fresh tiers earlier or later.
+//
+// Netlify forbids a custom `path` on scheduled functions; the manual
+// trigger is available at /.netlify/functions/customers-promote.
 export const config = {
-  path: "/api/admin/customers/promote",
   schedule: "30 22 * * *",
 };
