@@ -7,7 +7,7 @@ import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js
 function sanitizeFilters(raw) {
   if (!raw || typeof raw !== "object") return {};
   const out = {};
-  const keys = ["city", "tag", "vip_tier", "last_order_days", "min_orders", "min_revenue"];
+  const keys = ["city", "tag", "last_order_days", "min_orders", "min_revenue"];
   for (const k of keys) {
     if (raw[k] !== undefined && raw[k] !== "" && raw[k] !== null) out[k] = raw[k];
   }

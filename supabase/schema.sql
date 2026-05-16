@@ -174,7 +174,6 @@ create table if not exists public.customers (
   city text,
   default_address text,
   whatsapp_opt_in boolean default true,
-  vip_tier text default 'standard' check (vip_tier in ('standard', 'silver', 'gold', 'vip')),
   total_orders integer not null default 0,
   total_revenue_pkr numeric(14, 2) not null default 0,
   tags text[] default '{}',
@@ -297,8 +296,9 @@ create index if not exists smart_segments_pinned_idx on public.smart_segments (p
 -- day one. Win-back, VIPs in Karachi, anyone overdue on a balance.
 insert into public.smart_segments (id, name, filters, pinned) values
   ('seg-winback-90', 'Win-back · 90+ days dormant', '{"min_orders": 2, "last_order_days": 9999}'::jsonb, true),
-  ('seg-vip-karachi', 'VIPs in Karachi', '{"city": "Karachi", "vip_tier": "vip"}'::jsonb, true),
-  ('seg-recent-30', 'Active this month', '{"last_order_days": 30}'::jsonb, false)
+  ('seg-karachi', 'Karachi customers', '{"city": "Karachi"}'::jsonb, true),
+  ('seg-recent-30', 'Active this month', '{"last_order_days": 30}'::jsonb, false),
+  ('seg-high-value', 'High-value (≥3 orders)', '{"min_orders": 3}'::jsonb, true)
 on conflict (id) do nothing;
 
 -- Courier choices for the dispatch modal. Stored in store_settings as a
@@ -309,6 +309,12 @@ alter table public.store_settings add column if not exists couriers text default
 -- Products tab chip both compare against this when populated; otherwise
 -- they fall back to the global default of 2.
 alter table public.products add column if not exists low_stock_threshold integer default 2;
+
+-- VIP tier was removed from the app. Drop the check constraint if it
+-- exists on customers.vip_tier so older deployments don't reject writes
+-- that no longer mention the column. The column itself is left in place
+-- for historical data; nothing reads or writes to it.
+alter table public.customers drop constraint if exists customers_vip_tier_check;
 
 -- Optional team member roster — used by the daily digest fan-out (and any
 -- future per-role workflows). Each row's phone is canonical (923xxxxxxxxx).

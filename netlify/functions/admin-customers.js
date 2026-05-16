@@ -8,7 +8,7 @@ import { canonPhone, isValidPkMobile } from "./_shared/phone.js";
 
 // Whitelist of fields we'll PATCH. Anything else in the payload is dropped
 // so a malicious client can't write to `total_revenue_pkr` or similar.
-const ALLOWED_FIELDS = ["name", "email", "city", "default_address", "tags", "notes", "vip_tier", "whatsapp_opt_in", "risk_flag", "risk_reason"];
+const ALLOWED_FIELDS = ["name", "email", "city", "default_address", "tags", "notes", "whatsapp_opt_in", "risk_flag", "risk_reason"];
 
 // Keywords that, if they appear in customer notes, auto-set risk_flag = true.
 // We err on the side of catching too many — false positives just get a red
@@ -35,10 +35,6 @@ function sanitize(updates) {
   // Tags must be an array of strings
   if (Array.isArray(out.tags)) {
     out.tags = out.tags.map((t) => String(t).trim()).filter(Boolean).slice(0, 20);
-  }
-  // VIP tier must be one of the allowed enum values
-  if (out.vip_tier && !["standard", "silver", "gold", "vip"].includes(out.vip_tier)) {
-    delete out.vip_tier;
   }
   return out;
 }

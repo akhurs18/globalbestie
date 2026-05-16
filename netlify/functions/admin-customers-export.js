@@ -1,7 +1,7 @@
 // CSV export of the customers table — accepts the same filter query string
 // as the Customers tab so the team can download exactly what they see.
 //
-// GET /api/admin/customers/export?city=Karachi&vip_tier=vip&min_orders=2
+// GET /api/admin/customers/export?city=Karachi&min_orders=2
 //
 // Returns text/csv with a Content-Disposition header so browsers offer it
 // as a download.
@@ -12,7 +12,6 @@ import { canonPhone, isValidPkMobile, formatPkDisplay } from "./_shared/phone.js
 function matches(c, f) {
   if (!c) return false;
   if (f.city && String(c.city || "").toLowerCase() !== String(f.city).toLowerCase()) return false;
-  if (f.vip_tier && (c.vip_tier || "standard") !== f.vip_tier) return false;
   if (f.min_orders && Number(c.total_orders || 0) < Number(f.min_orders)) return false;
   if (f.min_revenue && Number(c.total_revenue_pkr || 0) < Number(f.min_revenue)) return false;
   if (f.tag) {
@@ -37,7 +36,6 @@ export default async (req) => {
     const url = new URL(req.url);
     const f = {
       city: url.searchParams.get("city") || "",
-      vip_tier: url.searchParams.get("vip_tier") || "",
       min_orders: url.searchParams.get("min_orders") || "",
       min_revenue: url.searchParams.get("min_revenue") || "",
       tag: url.searchParams.get("tag") || "",
@@ -56,7 +54,6 @@ export default async (req) => {
       "City",
       "Total orders",
       "Lifetime revenue (PKR)",
-      "VIP tier",
       "Tags",
       "WhatsApp opt-in",
       "Risk flag",
@@ -74,7 +71,6 @@ export default async (req) => {
       c.city || "",
       Number(c.total_orders || 0),
       Number(c.total_revenue_pkr || 0),
-      c.vip_tier || "standard",
       Array.isArray(c.tags) ? c.tags.join(" | ") : "",
       c.whatsapp_opt_in === false ? "no" : "yes",
       c.risk_flag ? "yes" : "no",

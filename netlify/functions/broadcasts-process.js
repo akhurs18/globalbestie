@@ -21,7 +21,6 @@ function matches(customer, f) {
   if (customer.whatsapp_opt_in === false) return false;
   if (!isValidPkMobile(customer.phone)) return false;
   if (f.city && String(customer.city || "").toLowerCase() !== String(f.city).toLowerCase()) return false;
-  if (f.vip_tier && (customer.vip_tier || "standard") !== f.vip_tier) return false;
   if (f.min_orders && Number(customer.total_orders || 0) < Number(f.min_orders)) return false;
   if (f.min_revenue && Number(customer.total_revenue_pkr || 0) < Number(f.min_revenue)) return false;
   if (f.tag) {
@@ -72,7 +71,7 @@ async function runScheduledBroadcast(row) {
     body: JSON.stringify({ status: "running", updated_at: new Date().toISOString() }),
   }).catch(() => {});
 
-  const customers = await supabase("/rest/v1/customers?select=phone,name,city,total_orders,total_revenue_pkr,vip_tier,tags,whatsapp_opt_in,last_seen&order=last_seen.desc").catch(() => []);
+  const customers = await supabase("/rest/v1/customers?select=phone,name,city,total_orders,total_revenue_pkr,tags,whatsapp_opt_in,last_seen&order=last_seen.desc").catch(() => []);
   const recipients = (customers || []).filter((c) => matches(c, row.filters || {})).slice(0, HARD_CAP);
   const overMessaged = await loadOverMessaged();
 

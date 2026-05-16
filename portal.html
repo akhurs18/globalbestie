@@ -97,6 +97,16 @@
                   </section>
                 </div>
 
+                <!-- SLA dashboard — average time-in-stage over the last 30 days
+                     so the team sees where the bottleneck is. -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Stage timing (last 30 days)</h2>
+                    <small class="kicker">Average days an order spends in each stage</small>
+                  </div>
+                  <div class="sla-dashboard" data-sla-dashboard></div>
+                </section>
+
               </section>
 
               <!-- Cashflow panel: the source of truth for "where is every order
@@ -140,22 +150,28 @@
                   </section>
                 </div>
 
-                <!-- Two side worklists -->
-                <div class="cashflow-worklists">
-                  <section class="ops-panel">
-                    <div class="panel-title-row">
-                      <h2>Arrived in PK · balance not collected</h2>
-                      <span class="status-pill preorder" data-balance-chase-count>0</span>
+                <!-- Consolidated Action items panel. Both worklists (balance
+                     chase + stale orders) live behind tone chips that filter
+                     the shared list, keeping Cashflow visually quieter. -->
+                <section class="ops-panel action-items-panel">
+                  <div class="panel-title-row">
+                    <h2>Action items</h2>
+                    <div class="action-tone-chips" role="tablist">
+                      <button class="active" type="button" data-action="set-action-filter" data-action-filter-key="all">All <span data-action-count-all>0</span></button>
+                      <button type="button" data-action="set-action-filter" data-action-filter-key="balance">Balance due <span data-action-count-balance>0</span></button>
+                      <button type="button" data-action="set-action-filter" data-action-filter-key="stale">Stale orders <span data-action-count-stale>0</span></button>
                     </div>
-                    <div data-balance-chase></div>
-                  </section>
-                  <section class="ops-panel">
-                    <div class="panel-title-row">
-                      <h2>Accepted &gt;7 days · no batch</h2>
-                      <span class="status-pill preorder" data-stale-orders-count>0</span>
-                    </div>
-                    <div data-stale-orders></div>
-                  </section>
+                  </div>
+                  <div data-action-items></div>
+                </section>
+
+                <!-- Legacy mounts kept hidden so existing renderers continue
+                     to write to them; we re-aggregate into action-items below. -->
+                <div hidden>
+                  <span data-balance-chase-count>0</span>
+                  <div data-balance-chase></div>
+                  <span data-stale-orders-count>0</span>
+                  <div data-stale-orders></div>
                 </div>
 
               </section>
@@ -313,15 +329,6 @@
                       </label>
                       <label>Tag filter
                         <input name="tag" placeholder="VIP Karachi, Coach fan, …" autocomplete="off" />
-                      </label>
-                      <label>VIP tier
-                        <select name="vip_tier">
-                          <option value="">Any</option>
-                          <option value="standard">Standard</option>
-                          <option value="silver">Silver</option>
-                          <option value="gold">Gold</option>
-                          <option value="vip">VIP</option>
-                        </select>
                       </label>
                       <label>Ordered in last N days
                         <input name="last_order_days" type="number" min="0" step="1" placeholder="e.g. 30" />
@@ -551,13 +558,6 @@
                 <div class="customer-filter-bar">
                   <input type="search" data-customer-search placeholder="Search by name, phone, city, tag…" autocomplete="off" />
                   <select data-customer-city><option value="all">All cities</option></select>
-                  <select data-customer-tier>
-                    <option value="all">All tiers</option>
-                    <option value="standard">Standard</option>
-                    <option value="silver">Silver</option>
-                    <option value="gold">Gold</option>
-                    <option value="vip">VIP</option>
-                  </select>
                   <select data-customer-sort>
                     <option value="revenue">Sort: Lifetime spend ↓</option>
                     <option value="orders">Sort: Orders ↓</option>
@@ -565,22 +565,22 @@
                     <option value="dormant">Sort: Dormant ↓ (longest gap)</option>
                     <option value="name">Sort: Name A-Z</option>
                   </select>
+                  <button class="button secondary" type="button" data-action="open-customer-columns">Columns</button>
                   <span class="customer-count-chip" data-customer-count-chip>0</span>
                 </div>
 
                 <div class="admin-table-wrap">
                   <table class="admin-table customer-table">
                     <thead>
-                      <tr>
+                      <tr data-customer-headers>
                         <th>Customer</th>
                         <th>Phone</th>
                         <th>City</th>
                         <th>Orders</th>
                         <th>Lifetime spend</th>
-                        <th>Tier</th>
-                        <th>Trend <small>(6 mo)</small></th>
+                        <th data-col-key="trend">Trend <small>(6 mo)</small></th>
                         <th>Last seen</th>
-                        <th>Last WA</th>
+                        <th data-col-key="last_wa">Last WA</th>
                         <th></th>
                       </tr>
                     </thead>

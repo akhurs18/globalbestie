@@ -1363,18 +1363,6 @@ dl div,
   font-size: 0.82rem;
 }
 
-.repeat-customer-banner .repeat-tier {
-  margin-left: auto;
-  padding: 3px 11px;
-  border: 1px solid rgba(255, 216, 232, 0.32);
-  border-radius: 999px;
-  background: rgba(7, 5, 7, 0.6);
-  color: var(--pink-2);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 
 button.repeat-customer-banner {
   width: 100%;
@@ -2275,21 +2263,6 @@ button.repeat-customer-banner:focus-visible {
   letter-spacing: 0.04em;
 }
 
-.vip-pill {
-  display: inline-block;
-  padding: 3px 11px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--muted);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.vip-pill.tier-silver { background: rgba(220, 220, 240, 0.16); color: #e7eaf2; }
-.vip-pill.tier-gold { background: rgba(255, 208, 122, 0.18); color: var(--amber); }
-.vip-pill.tier-vip { background: linear-gradient(135deg, rgba(255, 79, 154, 0.32), rgba(255, 208, 122, 0.28)); color: var(--cream); }
-
 .customer-row-actions { text-align: right; }
 
 /* ═══════════════════════ SPARKLINE ═══════════════════════ */
@@ -2953,15 +2926,6 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 
 .order-row.is-selected td { background: rgba(255, 79, 154, 0.1); }
 
-/* VIP customer order rows — gold left border */
-.order-row.is-vip td:first-child {
-  box-shadow: inset 3px 0 0 var(--amber);
-}
-
-.order-row.is-vip.is-selected td:first-child {
-  box-shadow: inset 3px 0 0 var(--amber), inset 0 0 0 1px rgba(255, 79, 154, 0.2);
-}
-
 /* Sticky filter bar on Orders + Customers tabs */
 .orders-filter-bar,
 .customer-filter-bar {
@@ -3218,10 +3182,7 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
   .customer-table tr.customer-row td:nth-child(3)::before { content: "City"; }
   .customer-table tr.customer-row td:nth-child(4)::before { content: "Orders"; }
   .customer-table tr.customer-row td:nth-child(5)::before { content: "Spend"; }
-  .customer-table tr.customer-row td:nth-child(6)::before { content: "Tier"; }
-  .customer-table tr.customer-row td:nth-child(7)::before { content: "Trend"; }
-  .customer-table tr.customer-row td:nth-child(8)::before { content: "Last seen"; }
-  .customer-table tr.customer-row td:nth-child(9)::before { content: "Last WA"; }
+  .customer-table tr.customer-row td:nth-child(6)::before { content: "Last seen"; }
   .customer-table tr.customer-row td::before {
     position: absolute;
     left: 0;
@@ -3252,51 +3213,54 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
   /* Bulk action bar wraps onto its own row */
   .bulk-action-bar { flex-direction: column; align-items: stretch; }
   .bulk-action-bar button { width: 100%; }
-}
 
-/* ═══════════════════ TIER PILL EDITOR ═══════════════════ */
-button.tier-pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 4px;
-  border: 0;
-  cursor: pointer;
-  transition: filter 140ms var(--ease);
-}
-
-button.tier-pill-btn:hover { filter: brightness(1.18); }
-
-.tier-menu {
-  z-index: 200;
-  display: grid;
-  gap: 2px;
-  padding: 6px;
-  min-width: 140px;
-  border: 1px solid rgba(255, 156, 199, 0.4);
-  border-radius: var(--radius);
-  background: #0b070a;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.55);
-}
-
-.tier-option {
-  padding: 7px 12px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--cream);
-  text-align: left;
-  text-transform: capitalize;
-  font-size: 0.86rem;
-  cursor: pointer;
-  transition: background 120ms var(--ease);
-}
-
-.tier-option:hover { background: rgba(255, 79, 154, 0.18); }
-.tier-option.is-current {
-  background: rgba(255, 79, 154, 0.14);
-  color: var(--rose);
-  font-weight: 800;
+  /* Orders list collapses to a card-per-order layout on small screens.
+     Each row becomes a self-contained card with implicit field labels
+     surfaced via td::before. Sticky thead is hidden. */
+  [data-admin-panel="orders"] .admin-table thead { display: none; }
+  [data-admin-panel="orders"] .admin-table,
+  [data-admin-panel="orders"] .admin-table tbody,
+  [data-admin-panel="orders"] .admin-table tr,
+  [data-admin-panel="orders"] .admin-table td {
+    display: block;
+    width: 100%;
+  }
+  [data-admin-panel="orders"] .admin-table tr.order-row {
+    margin-bottom: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.035);
+  }
+  [data-admin-panel="orders"] .admin-table tr.order-row.sla-warn { border-left: 3px solid var(--amber); }
+  [data-admin-panel="orders"] .admin-table tr.order-row.sla-danger { border-left: 3px solid #fb7185; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td {
+    padding: 4px 0;
+    border: 0;
+    position: relative;
+    padding-left: 120px;
+    min-height: 22px;
+  }
+  [data-admin-panel="orders"] .admin-table tr.order-row td.bulk-col { padding-left: 0; margin-bottom: 6px; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(2) { padding-left: 0; font-size: 1rem; margin-bottom: 4px; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(3)::before { content: "Customer"; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(4)::before { content: "Status"; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(5)::before { content: "Payment"; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(6)::before { content: "Status"; }
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(3)::before,
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(4)::before,
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(5)::before,
+  [data-admin-panel="orders"] .admin-table tr.order-row td:nth-child(6)::before {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  [data-admin-panel="orders"] .admin-table tr.order-row td.table-actions { padding-left: 0; }
 }
 
 /* ═══════════════════ RISK CITY CHIPS ═══════════════════ */
@@ -3703,6 +3667,103 @@ button.tier-pill-btn:hover { filter: brightness(1.18); }
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+/* ═══════════════════════ ACTION ITEMS (Cashflow) ═══════════════════════ */
+.action-items-panel .panel-title-row {
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.action-tone-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.action-tone-chips button {
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 140ms var(--ease), color 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.action-tone-chips button.active,
+.action-tone-chips button:hover {
+  background: rgba(255, 79, 154, 0.16);
+  color: var(--cream);
+  border-color: rgba(255, 79, 154, 0.42);
+}
+
+.action-tone-chips span {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--rose);
+  font-size: 0.66rem;
+}
+
+/* ═══════════════════════ SLA DASHBOARD ═══════════════════════ */
+.sla-dashboard {
+  display: grid;
+  gap: 8px;
+}
+
+.sla-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.sla-row.tone-ok { border-left: 3px solid var(--green); }
+.sla-row.tone-warn { border-left: 3px solid var(--amber); }
+.sla-row.tone-info { border-left: 3px solid var(--pink-2); }
+
+.sla-row .sla-label { color: var(--cream); font-size: 0.86rem; }
+.sla-row .sla-value {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--rose);
+}
+.sla-row.tone-warn .sla-value { color: var(--amber); }
+.sla-row.tone-ok .sla-value { color: var(--green); }
+.sla-row .sla-target { color: var(--muted); font-size: 0.74rem; }
+.sla-row .sla-samples { color: var(--muted); font-size: 0.74rem; font-style: italic; }
+
+@media (max-width: 720px) {
+  .sla-row { grid-template-columns: 1fr auto; row-gap: 4px; }
+  .sla-target, .sla-samples { grid-column: 1 / -1; }
+}
+
+/* ═══════════════════════ POLISH PASS — breathing + zebra ═══════════════════════ */
+.admin-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.ops-panel + .ops-panel,
+.ops-panel + .admin-table-wrap,
+.admin-table-wrap + .ops-panel {
+  margin-top: 16px;
+}
+
+.admin-heading + .ops-panel,
+.admin-heading + .kpi-hero {
+  margin-top: 4px;
 }
 
 /* ═══════════════════════════════════ ACTIVITY RAIL ═══════════════════════════════════ */

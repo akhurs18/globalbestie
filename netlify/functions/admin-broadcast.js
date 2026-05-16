@@ -13,7 +13,6 @@
 //     filters: {
 //       city?: string,
 //       tag?: string,
-//       vip_tier?: "standard"|"silver"|"gold"|"vip",
 //       last_order_days?: number,    // ordered within last N days
 //       min_orders?: number,
 //       min_revenue?: number,
@@ -103,7 +102,6 @@ function parseFilters(src = {}) {
   return {
     city: String(src.city || "").trim().toLowerCase(),
     tag: String(src.tag || "").trim(),
-    vip_tier: String(src.vip_tier || "").trim(),
     last_order_days: Number(src.last_order_days || 0),
     min_orders: Number(src.min_orders || 0),
     min_revenue: Number(src.min_revenue || 0),
@@ -117,7 +115,6 @@ function matches(customer, f) {
   if (!f._ignoreOptOut && customer.whatsapp_opt_in === false) return false;
   if (!isValidPkMobile(customer.phone)) return false;
   if (f.city && String(customer.city || "").toLowerCase() !== f.city) return false;
-  if (f.vip_tier && (customer.vip_tier || "standard") !== f.vip_tier) return false;
   if (f.min_orders && Number(customer.total_orders || 0) < f.min_orders) return false;
   if (f.min_revenue && Number(customer.total_revenue_pkr || 0) < f.min_revenue) return false;
   if (f.tag) {
@@ -134,7 +131,7 @@ function matches(customer, f) {
 
 async function loadRecipients(filters) {
   if (!hasSupabase()) return [];
-  const all = await supabase("/rest/v1/customers?select=phone,name,city,total_orders,total_revenue_pkr,vip_tier,tags,whatsapp_opt_in,last_seen&order=last_seen.desc");
+  const all = await supabase("/rest/v1/customers?select=phone,name,city,total_orders,total_revenue_pkr,tags,whatsapp_opt_in,last_seen&order=last_seen.desc");
   return (all || []).filter((c) => matches(c, filters));
 }
 
@@ -174,7 +171,6 @@ export default async (req) => {
           phone: c.phone,
           name: c.name,
           city: c.city,
-          vip_tier: c.vip_tier,
           total_orders: c.total_orders,
           total_revenue_pkr: c.total_revenue_pkr,
         })),

@@ -531,14 +531,14 @@ const state = {
   smartSegments: [],
   orderViews: [],
   teamMembers: [],
-  customerFilters: { search: "", city: "all", tier: "all", sort: "revenue" },
+  customerFilters: { search: "", city: "all", sort: "revenue" },
   orderFilters: { dateRange: "all", batch: "all", customStart: "", customEnd: "" },
   messageFilter: "all",
   dispatchQueue: [],
   selectedOrders: new Set(),
   watchedOrders: new Set(JSON.parse(localStorage.getItem("gb_watched_orders") || "[]")),
   ordersView: localStorage.getItem("gb_orders_view") || "list",
-  customerColumns: JSON.parse(localStorage.getItem("gb_customer_columns") || "{\"last_wa\":false,\"trend\":false,\"tier\":true}"),
+  customerColumns: JSON.parse(localStorage.getItem("gb_customer_columns") || "{\"last_wa\":false,\"trend\":false}"),
   settings: { ...sampleSettings },
   cart: loadJSON("mm_cart", []),
   adminToken: localStorage.getItem("mm_admin_token") || "",
@@ -1452,7 +1452,6 @@ function showOrderDetails(orderId) {
     <button class="repeat-customer-banner" type="button" data-action="open-customer" data-customer-phone="${attr(canon)}" aria-label="Open ${esc(order.customer_name || "")} customer profile">
       <strong>★ Returning customer · order ${repeatCount}</strong>
       <span>Lifetime spend ${PKR.format(ltv)} · ${customerRow?.city || order.city || ""} · last seen ${customerRow?.last_seen ? new Date(customerRow.last_seen).toLocaleDateString("en-PK", { month: "short", day: "numeric" }) : "this order"}</span>
-      <span class="repeat-tier">${esc(customerRow?.vip_tier || "standard")}</span>
       <span class="repeat-arrow" aria-hidden="true">›</span>
     </button>
   ` : "";
@@ -1731,6 +1730,53 @@ function renderAdmin() {
   renderTodayRibbon();
 }
 
+// SLA dashboard — for each stage, computes the average number of days an
+// order spent in that stage over the last 30 days using order_events
+// timestamps. Highlights bottlenecks (stages > average + slow ones get a
+// warn tone). Falls back gracefully when events history is sparse.
+function renderSlaDashboard() {
+  const slot = qs("[data-sla-dashboard]");
+  if (!slot) return;
+  const stages = [
+    { key: "pending_review", label: "Pending review", target: 0.02 }, // ≤30 min
+    { key: "accepted", label: "Accepted → sourcing", target: 1 },
+    { key: "sourcing", label: "Sourcing → in transit", target: 7 },
+    { key: "in_transit", label: "In transit → PK", target: 14 },
+    { key: "pakistan_processing", label: "Arrived → delivered", target: 2 },
+  ];
+  const cutoff = Date.now() - 30 * 86_400_000;
+  const buckets = new Map(stages.map((s) => [s.key, []]));
+  // For each order, walk events to compute time-in-each-stage. The duration
+  // for stage X is (timestamp of next stage's event − this stage's event).
+  for (const o of state.orders || []) {
+    const events = orderEvents(o).filter((e) => e.created_at).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    for (let i = 0; i < events.length; i += 1) {
+      const ev = events[i];
+      if (!buckets.has(ev.status)) continue;
+      const next = events.slice(i + 1).find((e) => buckets.has(e.status));
+      if (!next) continue;
+      const start = new Date(ev.created_at).getTime();
+      if (start < cutoff) continue;
+      const days = (new Date(next.created_at).getTime() - start) / 86_400_000;
+      if (days >= 0) buckets.get(ev.status).push(days);
+    }
+  }
+  const rows = stages.map((s) => {
+    const samples = buckets.get(s.key);
+    const avg = samples.length ? samples.reduce((sum, v) => sum + v, 0) / samples.length : null;
+    const tone = avg === null ? "info" : avg > s.target * 1.5 ? "warn" : avg > s.target ? "info" : "ok";
+    return { ...s, avg, samples: samples.length, tone };
+  });
+  slot.innerHTML = rows.map((r) => `
+    <div class="sla-row tone-${r.tone}">
+      <span class="sla-label">${esc(r.label)}</span>
+      <span class="sla-value">${r.avg !== null ? `${r.avg.toFixed(r.avg < 1 ? 2 : 1)} d` : "—"}</span>
+      <span class="sla-target">target ≤ ${r.target} d</span>
+      <span class="sla-samples">${r.samples} orders</span>
+    </div>
+  `).join("");
+}
+
 // The sticky Today ribbon — a 4-stat heartbeat shown above every admin
 // panel. Each stat is click-through to the relevant tab/filter so the team
 // can drill into "what needs me now?" without scrolling for it.
@@ -1904,6 +1950,7 @@ function renderOverviewExtras() {
   }
   allEvents.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const top = allEvents.slice(0, 6);
+  renderSlaDashboard();
   setHTML("[data-overview-activity]",
     top.length
       ? top.map((ev) => {
@@ -2379,6 +2426,87 @@ function renderCashflowWorklists() {
           .join("")
       : `<p class="cashflow-empty">No stale accepted orders.</p>`
   );
+  renderActionItems();
+}
+
+// Consolidated Action items panel on the Cashflow tab. Aggregates the two
+// legacy worklists (balance chase + stale orders) into one filterable list
+// so the eye lands on the count + one place to act.
+function renderActionItems() {
+  const slot = qs("[data-action-items]");
+  if (!slot) return;
+  const filter = state._cashflowActionFilter || "all";
+
+  // Balance chase
+  const balanceItems = (state.orders || [])
+    .filter((o) => {
+      if (o.status !== "pakistan_processing") return false;
+      const due = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+      return due > 0;
+    })
+    .map((o) => {
+      const due = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+      const days = daysSince(o.arrived_at || o.updated_at || o.created_at);
+      const urgent = days !== null && days >= 3;
+      const waNum = canonPhone(o.customer_phone);
+      const waHref = isValidPkMobile(waNum)
+        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: PKR ${due.toLocaleString()}. Please transfer before local dispatch.`)}`
+        : "";
+      return {
+        kind: "balance",
+        order: o,
+        urgent,
+        primary: `${o.id} · ${o.customer_name || ""}`,
+        secondary: `${o.city || ""}${days !== null ? ` · arrived ${days}d ago` : ""}`,
+        amount: PKR.format(due),
+        waHref,
+      };
+    });
+
+  // Stale-orders (accepted >7d, no batch)
+  const staleItems = (state.orders || [])
+    .filter((o) => {
+      if (o.status !== "accepted") return false;
+      if (shipmentBatchForOrder(o)) return false;
+      const d = daysSince(o.accepted_at || o.created_at);
+      return d !== null && d >= 7;
+    })
+    .map((o) => {
+      const days = daysSince(o.accepted_at || o.created_at) || 0;
+      const urgent = days >= 14;
+      return {
+        kind: "stale",
+        order: o,
+        urgent,
+        primary: `${o.id} · ${o.customer_name || ""}`,
+        secondary: `${days} days accepted · no batch yet`,
+        amount: PKR.format(Number(o.total_pkr || 0)),
+        waHref: "",
+      };
+    });
+
+  qs("[data-action-count-balance]").textContent = String(balanceItems.length);
+  qs("[data-action-count-stale]").textContent = String(staleItems.length);
+  qs("[data-action-count-all]").textContent = String(balanceItems.length + staleItems.length);
+
+  const all = filter === "balance" ? balanceItems
+    : filter === "stale" ? staleItems
+    : [...balanceItems, ...staleItems];
+
+  slot.innerHTML = all.length
+    ? all.map((item) => `
+        <div class="worklist-row ${item.urgent ? "urgent" : ""}">
+          <div>
+            <strong>${esc(item.primary)}</strong>
+            <small>${esc(item.secondary)} · ${item.kind === "balance" ? "Balance due" : "Stale"}</small>
+          </div>
+          <strong>${esc(item.amount)}</strong>
+          ${item.waHref
+            ? `<a class="button secondary" href="${item.waHref}" target="_blank" rel="noreferrer">WhatsApp</a>`
+            : `<button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(item.order.id)}">Open</button>`}
+        </div>
+      `).join("")
+    : `<p class="cashflow-empty">✓ Nothing needs action right now.</p>`;
 }
 
 function renderLedger() {
@@ -2597,7 +2725,6 @@ async function exportCustomersCsv() {
   const f = state.customerFilters || {};
   const params = new URLSearchParams();
   if (f.city && f.city !== "all") params.set("city", f.city);
-  if (f.tier && f.tier !== "all") params.set("vip_tier", f.tier);
   if (f.search) params.set("search", f.search);
   const url = `/api/admin/customers/export?${params.toString()}`;
 
@@ -2624,7 +2751,6 @@ async function exportCustomersCsv() {
   // Offline fallback — build from state.customers directly
   const list = (state.customers || []).filter((c) => {
     if (f.city && f.city !== "all" && (c.city || "").toLowerCase() !== f.city.toLowerCase()) return false;
-    if (f.tier && f.tier !== "all" && (c.vip_tier || "standard") !== f.tier) return false;
     if (f.search) {
       const hay = [c.name, c.phone, c.city, ...(c.tags || [])].filter(Boolean).join(" ").toLowerCase();
       if (!hay.includes(f.search.toLowerCase())) return false;
@@ -2636,14 +2762,13 @@ async function exportCustomersCsv() {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const headers = ["Phone", "Name", "City", "Total orders", "Lifetime revenue", "VIP tier", "Tags", "WhatsApp opt-in"];
+  const headers = ["Phone", "Name", "City", "Total orders", "Lifetime revenue", "Tags", "WhatsApp opt-in"];
   const body = list.map((c) => [
     formatPkDisplay(c.phone) || c.phone || "",
     c.name || "",
     c.city || "",
     Number(c.total_orders || 0),
     Number(c.total_revenue_pkr || 0),
-    c.vip_tier || "standard",
     (c.tags || []).join(" | "),
     c.whatsapp_opt_in === false ? "no" : "yes",
   ].map(csvEsc).join(","));
@@ -2662,7 +2787,6 @@ async function exportCustomersCsv() {
 function countMatchingCustomers(filters) {
   return (state.customers || []).filter((c) => {
     if (filters.city && (c.city || "").toLowerCase() !== String(filters.city).toLowerCase()) return false;
-    if (filters.vip_tier && (c.vip_tier || "standard") !== filters.vip_tier) return false;
     if (filters.min_orders && Number(c.total_orders || 0) < Number(filters.min_orders)) return false;
     if (filters.min_revenue && Number(c.total_revenue_pkr || 0) < Number(filters.min_revenue)) return false;
     if (filters.tag) {
@@ -3121,7 +3245,7 @@ function openCommandPalette() {
           hits.push({
             type: "Customer",
             label: c.name || formatPkDisplay(c.phone),
-            sub: `${formatPkDisplay(c.phone)} · ${c.total_orders || 0} orders · ${PKR.format(Number(c.total_revenue_pkr || 0))}${c.vip_tier && c.vip_tier !== "standard" ? ` · ${c.vip_tier}` : ""}`,
+            sub: `${formatPkDisplay(c.phone)} · ${c.total_orders || 0} orders · ${PKR.format(Number(c.total_revenue_pkr || 0))}`,
             avatar: customerAvatarHtml(c, { size: "sm" }),
             action: () => { closeModal(); showCustomerDetails(c.phone); },
           });
@@ -3497,13 +3621,9 @@ function renderAdminOrders() {
     const slaChip = sla
       ? `<button class="sla-chip sla-${sla.level}" type="button" data-action="toggle-sla-filter" data-stop-row title="Filter to SLA breaches only">${esc(sla.label)}</button>`
       : "";
-    // VIP gold-border decoration when the ordering customer is gold/vip.
-    const customerCanon = canonPhone(order.customer_phone);
-    const customerRow = (state.customers || []).find((c) => c.phone === customerCanon);
-    const vipClass = customerRow && ["gold", "vip"].includes(customerRow.vip_tier || "") ? " is-vip" : "";
     const isSelected = state.selectedOrders?.has(order.id);
     return `
-    <tr class="order-row${slaClass}${vipClass}${isSelected ? " is-selected" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
+    <tr class="order-row${slaClass}${isSelected ? " is-selected" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
       <td class="bulk-col" data-stop-row><input type="checkbox" data-order-select="${attr(order.id)}" ${isSelected ? "checked" : ""} aria-label="Select order ${attr(order.id)}" /></td>
       <td><strong>${esc(order.id)}</strong>${slaChip}<br /><small>${new Date(order.created_at).toLocaleString()}</small></td>
       <td>${esc(order.customer_name)}<br /><small>${esc(order.customer_phone)} · ${esc(order.city)}</small><br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small></td>
@@ -4603,10 +4723,10 @@ function customerKpis() {
   const totalRevenue = list.reduce((s, c) => s + Number(c.total_revenue_pkr || 0), 0);
   const ninetyDaysAgo = Date.now() - 90 * 86_400_000;
   const active90 = list.filter((c) => new Date(c.last_seen || 0).getTime() >= ninetyDaysAgo).length;
-  const vipCount = list.filter((c) => ["gold", "vip"].includes(c.vip_tier || "")).length;
+  const repeatCount = list.filter((c) => Number(c.total_orders || 0) >= 2).length;
   const avgLtv = total ? Math.round(totalRevenue / total) : 0;
   return [
-    { label: "Total customers", value: total.toLocaleString(), sub: `${vipCount} VIP / gold` },
+    { label: "Total customers", value: total.toLocaleString(), sub: `${repeatCount} repeat buyers` },
     { label: "Active (90 days)", value: active90.toLocaleString(), sub: `${total ? Math.round((active90 / total) * 100) : 0}% of book` },
     { label: "Lifetime revenue", value: PKR.format(totalRevenue), sub: `Avg LTV ${PKR.format(avgLtv)}` },
     { label: "WA opt-in", value: `${list.filter((c) => c.whatsapp_opt_in !== false).length}/${total}`, sub: "Eligible to broadcast" },
@@ -4791,32 +4911,6 @@ async function deleteOrderView(id) {
   }
 }
 
-// ═════════════════ INLINE TIER EDITOR ═════════════════
-// Pops a 4-option mini-menu next to the VIP pill on the customer modal.
-// Selecting an option PATCHes the customer and re-renders the modal.
-function openTierMenu(anchor, phone, current) {
-  // Remove any existing menu first
-  qsa(".tier-menu").forEach((el) => el.remove());
-  const tiers = ["standard", "silver", "gold", "vip"];
-  const menu = document.createElement("div");
-  menu.className = "tier-menu";
-  menu.innerHTML = tiers.map((t) => `
-    <button type="button" class="tier-option${t === current ? " is-current" : ""}" data-action="set-tier" data-tier="${attr(t)}" data-customer-phone="${attr(phone)}">${esc(t)}</button>
-  `).join("");
-  const rect = anchor.getBoundingClientRect();
-  menu.style.position = "fixed";
-  menu.style.top = `${rect.bottom + 6}px`;
-  menu.style.left = `${rect.left}px`;
-  document.body.appendChild(menu);
-  // Click-outside to dismiss
-  setTimeout(() => {
-    const close = (e) => {
-      if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener("click", close); }
-    };
-    document.addEventListener("click", close);
-  }, 50);
-}
-
 function renderSegmentChips() {
   const chips = qs("[data-segment-chips]");
   if (!chips) return;
@@ -4847,21 +4941,18 @@ function applySegment(segment) {
   state.customerFilters = {
     search: "",
     city: f.city || "all",
-    tier: f.vip_tier || "all",
     sort: state.customerFilters?.sort || "revenue",
   };
   // Mirror the filter into the form inputs so the operator sees what was applied.
   const c = qs("[data-customer-city]");
   if (c) c.value = f.city || "all";
-  const t = qs("[data-customer-tier]");
-  if (t) t.value = f.vip_tier || "all";
   const s = qs("[data-customer-search]");
   if (s) s.value = "";
   renderCustomersTab();
   // Mirror into broadcast form too so a follow-up broadcast picks up the segment.
   const bForm = qs("[data-broadcast-form]");
   if (bForm) {
-    ["city", "tag", "vip_tier", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
+    ["city", "tag", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
       if (bForm.elements[k]) bForm.elements[k].value = f[k] || "";
     });
     if (qs("[data-admin-panel='growth']")?.classList.contains("active")) previewBroadcastCount();
@@ -4904,7 +4995,6 @@ async function saveCurrentSegment() {
   const f = state.customerFilters || {};
   const filters = {};
   if (f.city && f.city !== "all") filters.city = f.city;
-  if (f.tier && f.tier !== "all") filters.vip_tier = f.tier;
   try {
     const result = await apiFetch("/api/admin/segments", {
       method: "POST",
@@ -4930,10 +5020,46 @@ async function deleteSegment(id) {
   }
 }
 
+// Toggle the visibility of optional customer columns in the table header
+// based on state.customerColumns. The rows themselves already check the
+// same flags, so the header just needs to mirror them.
+function applyCustomerColumns() {
+  const cols = state.customerColumns || {};
+  qsa("[data-col-key]").forEach((th) => {
+    const key = th.dataset.colKey;
+    th.hidden = !cols[key];
+  });
+}
+
+function openCustomerColumnsModal() {
+  const cols = state.customerColumns || {};
+  const optionalKeys = [
+    { key: "trend", label: "Trend (6 mo sparkline)" },
+    { key: "last_wa", label: "Last WhatsApp sent" },
+  ];
+  openModal(`
+    <div class="segment-save-modal">
+      <p class="kicker">Customers · Columns</p>
+      <h2>Show / hide columns</h2>
+      <p class="confirmation-sub">Hide columns you don't use day-to-day to keep the table scannable. Customer name, phone, city, orders, lifetime spend, and last seen are always visible.</p>
+      ${optionalKeys.map((c) => `
+        <label class="check-row">
+          <input type="checkbox" data-action="toggle-customer-col" data-col-key="${attr(c.key)}" ${cols[c.key] ? "checked" : ""} />
+          <span>${esc(c.label)}</span>
+        </label>
+      `).join("")}
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="close-modal">Done</button>
+      </div>
+    </div>
+  `);
+}
+
 function renderCustomersTab() {
   if (!has("[data-admin-panel=\"customers\"]")) return;
   renderSegmentChips();
   renderRiskAuditBanner();
+  applyCustomerColumns();
   renderKpiHero("[data-customers-kpis]", customerKpis());
 
   // City <select> — populated from the union of every customer's city
@@ -4954,14 +5080,12 @@ function renderCustomersTab() {
 
   const f = state.customerFilters || {};
   const search = (f.search || "").toLowerCase();
-  const tier = f.tier || "all";
   const city = f.city || "all";
   const sort = f.sort || "revenue";
 
   const riskOnly = !!f.riskOnly;
   let list = (state.customers || []).filter((c) => {
     if (riskOnly && !c.risk_flag) return false;
-    if (tier !== "all" && (c.vip_tier || "standard") !== tier) return false;
     if (city !== "all" && (c.city || "").toLowerCase() !== city.toLowerCase()) return false;
     if (search) {
       const hay = [c.name, c.phone, c.city, c.email, ...(c.tags || [])].filter(Boolean).join(" ").toLowerCase();
@@ -4999,9 +5123,9 @@ function renderCustomersTab() {
 
   setHTML("[data-customers-rows]", list.length ? list.map((c) => {
     const avatar = customerAvatarHtml(c, { size: "sm" });
-    const tierClass = c.vip_tier && c.vip_tier !== "standard" ? `tier-${c.vip_tier}` : "";
     const lastWa = c.last_outbound_at ? relativeTime(c.last_outbound_at) : "—";
     const riskDot = c.risk_flag ? `<span class="risk-dot" title="${attr(c.risk_reason || "Auto-flagged risk")}">●</span>` : "";
+    const cols = state.customerColumns || {};
     return `
       <tr class="customer-row${c.risk_flag ? " is-risky" : ""}" data-action="open-customer" data-customer-phone="${attr(c.phone)}" tabindex="0">
         <td>
@@ -5011,16 +5135,15 @@ function renderCustomersTab() {
         <td>${esc(c.city || "—")}</td>
         <td>${Number(c.total_orders || 0)}</td>
         <td><strong>${PKR.format(Number(c.total_revenue_pkr || 0))}</strong></td>
-        <td><span class="vip-pill ${tierClass}">${esc(c.vip_tier || "standard")}</span></td>
-        <td>${rowSparkline(monthBuckets.get(c.phone))}</td>
+        ${cols.trend ? `<td>${rowSparkline(monthBuckets.get(c.phone))}</td>` : ""}
         <td><small>${esc(c.last_seen ? relativeTime(c.last_seen) : "—")}</small></td>
-        <td><small>${esc(lastWa)}</small></td>
+        ${cols.last_wa ? `<td><small>${esc(lastWa)}</small></td>` : ""}
         <td class="customer-row-actions">
           <button class="button secondary" type="button" data-action="open-customer" data-customer-phone="${attr(c.phone)}" data-stop-row>Open</button>
         </td>
       </tr>
     `;
-  }).join("") : `<tr><td colspan="10"><p class="cashflow-empty">No customers match these filters.</p></td></tr>`);
+  }).join("") : `<tr><td colspan="9"><p class="cashflow-empty">No customers match these filters.</p></td></tr>`);
 }
 
 function allKnownTags() {
@@ -5048,7 +5171,6 @@ function showCustomerDetails(phone) {
   const totalRevenue = customer?.total_revenue_pkr ?? orders.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
   const firstSeen = customer?.first_seen || orders[orders.length - 1]?.created_at;
   const lastSeen = customer?.last_seen || orders[0]?.created_at;
-  const vip = customer?.vip_tier || (totalRevenue >= 100000 || totalOrders >= 3 ? "vip" : "standard");
   const tags = (customer?.tags || []).filter(Boolean);
 
   const orderRows = orders.length ? orders.map((o) => {
@@ -5083,7 +5205,7 @@ function showCustomerDetails(phone) {
       <div class="drawer-hero customer-hero">
         ${customerAvatarHtml({ name: customer?.name, phone: canon }, { size: "lg" })}
         <div>
-          <p class="kicker">Customer · <button class="tier-pill-btn vip-pill ${vip && vip !== "standard" ? `tier-${vip}` : ""}" type="button" data-action="open-tier-editor" data-customer-phone="${attr(canon)}" data-current-tier="${attr(vip)}" title="Click to change tier">${esc(vip)} ▾</button>${customer?.risk_flag ? ` <button class="risk-badge" type="button" data-action="clear-risk-flag" data-customer-phone="${attr(canon)}" title="${attr(customer.risk_reason || "Auto-flagged risk")} — click to clear">⚠ risk · clear</button>` : ""}</p>
+          <p class="kicker">Customer${customer?.risk_flag ? ` · <button class="risk-badge" type="button" data-action="clear-risk-flag" data-customer-phone="${attr(canon)}" title="${attr(customer.risk_reason || "Auto-flagged risk")} — click to clear">⚠ risk · clear</button>` : ""}</p>
           <h2>${esc(customer?.name || formatPkDisplay(canon))}</h2>
           <p>${esc(formatPkDisplay(canon))}${customer?.city ? ` · ${esc(customer.city)}` : ""}${customer?.email ? ` · ${esc(customer.email)}` : ""}</p>
           ${customer?.risk_flag && customer.risk_reason ? `<details class="risk-reason-details"><summary class="risk-reason">${esc(customer.risk_reason)}</summary><p>Risk flags are auto-derived from your notes when they contain words like refund, cancel, angry, late, etc. Clear the flag once you've handled the issue.</p></details>` : ""}
@@ -5675,7 +5797,6 @@ async function sendBroadcast(event) {
         filters: {
           city: data.city,
           tag: data.tag,
-          vip_tier: data.vip_tier,
           last_order_days: Number(data.last_order_days || 0),
           min_orders: Number(data.min_orders || 0),
           min_revenue: Number(data.min_revenue || 0),
@@ -5696,7 +5817,7 @@ async function sendBroadcast(event) {
           template_id: result.template?.id,
           send_at: result.send_at,
           recipient_count: result.recipient_count,
-          filters: JSON.parse(JSON.stringify(JSON.parse(JSON.stringify({ city: data.city, tag: data.tag, vip_tier: data.vip_tier })))),
+          filters: JSON.parse(JSON.stringify({ city: data.city, tag: data.tag })),
           status: "pending",
         },
         ...(state.scheduledBroadcasts || []),
@@ -7157,6 +7278,25 @@ function wireEvents() {
       openSegmentSaveModal();
       return;
     }
+    if (action === "set-action-filter") {
+      state._cashflowActionFilter = target.dataset.actionFilterKey || "all";
+      qsa("[data-action='set-action-filter']").forEach((b) => b.classList.toggle("active", b.dataset.actionFilterKey === state._cashflowActionFilter));
+      renderActionItems();
+      return;
+    }
+    if (action === "open-customer-columns") {
+      openCustomerColumnsModal();
+      return;
+    }
+    if (action === "toggle-customer-col") {
+      const key = target.dataset.colKey;
+      if (!key) return;
+      state.customerColumns = { ...(state.customerColumns || {}), [key]: target.checked };
+      localStorage.setItem("gb_customer_columns", JSON.stringify(state.customerColumns));
+      applyCustomerColumns();
+      renderCustomersTab();
+      return;
+    }
     if (action === "open-order-view-save") {
       openOrderViewSaveModal();
       return;
@@ -7193,22 +7333,6 @@ function wireEvents() {
       openDispatchModal({ batchId });
       return;
     }
-    if (action === "open-tier-editor") {
-      const phone = target.dataset.customerPhone;
-      const current = target.dataset.currentTier || "standard";
-      openTierMenu(target, phone, current);
-      return;
-    }
-    if (action === "set-tier") {
-      const phone = target.dataset.customerPhone;
-      const tier = target.dataset.tier;
-      if (phone && tier) {
-        patchCustomer(phone, { vip_tier: tier });
-        toast(`Tier set to ${tier}.`);
-        setTimeout(() => showCustomerDetails(phone), 80);
-      }
-      return;
-    }
     if (action === "segment-save-submit") {
       saveCurrentSegment();
       return;
@@ -7238,11 +7362,10 @@ function wireEvents() {
         const form = qs("[data-broadcast-form]");
         if (!form) return;
         // Reset any stale filters first so this view is reflected exactly.
-        ["city", "tag", "vip_tier", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
+        ["city", "tag", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
           if (form.elements[k]) form.elements[k].value = "";
         });
         if (cf.city && cf.city !== "all") form.elements.city.value = cf.city;
-        if (cf.tier && cf.tier !== "all") form.elements.vip_tier.value = cf.tier;
         previewBroadcastCount();
         form.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 80);
@@ -7659,11 +7782,6 @@ function wireEvents() {
   qs("[data-customer-city]")?.addEventListener("change", (e) => {
     state.customerFilters = state.customerFilters || {};
     state.customerFilters.city = e.target.value || "all";
-    renderCustomersTab();
-  });
-  qs("[data-customer-tier]")?.addEventListener("change", (e) => {
-    state.customerFilters = state.customerFilters || {};
-    state.customerFilters.tier = e.target.value || "all";
     renderCustomersTab();
   });
   qs("[data-customer-sort]")?.addEventListener("change", (e) => {
