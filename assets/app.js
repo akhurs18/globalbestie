@@ -3010,6 +3010,202 @@ function openDispatchModal({ batchId } = {}) {
   qs(".dispatch-list")?.addEventListener("change", handleDispatchChange);
 }
 
+// ═════════════════ MANUAL ORDER ENTRY ═════════════════
+// In-portal form for the team to create an order on a customer's behalf
+// (typically off the back of a WhatsApp / Instagram conversation). Sends
+// to the same /api/orders POST as the storefront so it goes through the
+// canonical-phone + idempotency + auto-WhatsApp pipeline.
+state.manualOrderDraft = state.manualOrderDraft || { lines: [{ product_id: "", quantity: 1 }] };
+
+function openManualOrderModal() {
+  state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
+  renderManualOrderModal();
+}
+
+function renderManualOrderModal() {
+  const products = (state.products || []).filter((p) => (p.status || "active") === "active");
+  const productOptions = products.map((p) =>
+    `<option value="${attr(p.id)}">${esc(p.title)} — ${PKR.format(calculatePrice(p))} ${p.stock_mode === "preorder" ? "(preorder)" : "(in stock)"}</option>`,
+  ).join("");
+  const lines = (state.manualOrderDraft?.lines || []).map((line, i) => {
+    const product = products.find((p) => p.id === line.product_id);
+    const subtotal = product ? calculatePrice(product) * Number(line.quantity || 1) : 0;
+    return `
+      <div class="manual-line" data-line-index="${i}">
+        <select data-manual-product>
+          <option value="">— Pick a product —</option>
+          ${productOptions.replace(`value="${attr(line.product_id)}"`, `value="${attr(line.product_id)}" selected`)}
+        </select>
+        <input type="number" data-manual-qty min="1" step="1" value="${line.quantity || 1}" aria-label="Quantity" />
+        <input type="text" data-manual-variant value="${attr(line.variant || "")}" placeholder="Size / shade / color" aria-label="Variant" />
+        <span class="manual-line-subtotal">${subtotal ? PKR.format(subtotal) : "—"}</span>
+        <button class="button secondary" type="button" data-action="manual-order-remove-line" data-line-index="${i}" aria-label="Remove line">×</button>
+      </div>
+    `;
+  }).join("");
+  // Pre-compute totals from current draft for the running display
+  let total = 0;
+  for (const l of (state.manualOrderDraft?.lines || [])) {
+    const p = products.find((pr) => pr.id === l.product_id);
+    if (p) total += calculatePrice(p) * Number(l.quantity || 1);
+  }
+  openModal(`
+    <div class="manual-order-modal">
+      <p class="kicker">Manual order entry</p>
+      <h2>Create order on behalf of customer</h2>
+      <p class="confirmation-sub">Sends through the standard order pipeline (canonical phone, auto-WhatsApp, audit trail). Customer doesn't see this form.</p>
+
+      <div class="form-grid manual-customer-grid">
+        <label>Customer name<input type="text" data-manual-name autocomplete="off" /></label>
+        <label>WhatsApp phone<input type="text" data-manual-phone placeholder="0300 1234567" autocomplete="off" /></label>
+        <label>City<input type="text" data-manual-city autocomplete="off" /></label>
+        <label>Delivery method
+          <select data-manual-delivery>
+            <option value="standard_courier">Standard courier</option>
+            <option value="insured_courier">Insured courier</option>
+            <option value="pickup_coordination">Pickup coordination</option>
+          </select>
+        </label>
+        <label class="span-2">Address<textarea data-manual-address rows="2"></textarea></label>
+        <label class="span-2">Internal note (optional)<textarea data-manual-note rows="2" placeholder="How the order came in, special instructions, etc."></textarea></label>
+      </div>
+
+      <div class="manual-lines">
+        <div class="manual-lines-header">
+          <strong>Items</strong>
+          <button class="button secondary" type="button" data-action="manual-order-add-line">+ Add item</button>
+        </div>
+        ${lines}
+        <div class="manual-total"><span>Order total</span><strong data-manual-total>${PKR.format(total)}</strong></div>
+      </div>
+
+      <label class="check-row">
+        <input type="checkbox" data-manual-skip-wa />
+        <span>Don't send auto-WhatsApp (use if you've already chatted with them)</span>
+      </label>
+
+      <div class="confirmation-actions">
+        <button class="button primary" type="button" data-action="manual-order-submit">Create order</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+
+  // Wire inputs to the draft so submit reads the latest values.
+  qsa("[data-manual-product]").forEach((el, i) => {
+    el.addEventListener("change", () => {
+      state.manualOrderDraft.lines[i].product_id = el.value;
+      renderManualOrderModal();
+    });
+  });
+  qsa("[data-manual-qty]").forEach((el, i) => {
+    el.addEventListener("input", () => {
+      state.manualOrderDraft.lines[i].quantity = Math.max(1, Number(el.value || 1));
+      renderManualOrderModal();
+    });
+  });
+  qsa("[data-manual-variant]").forEach((el, i) => {
+    el.addEventListener("input", () => {
+      state.manualOrderDraft.lines[i].variant = el.value;
+    });
+  });
+
+  // Phone-recall: when the operator types a phone, autofill the rest from
+  // localStorage customer profile (same mechanism storefront uses).
+  qs("[data-manual-phone]")?.addEventListener("blur", (e) => {
+    const profile = recallCustomerProfile(e.target.value);
+    if (!profile) return;
+    const fields = { name: "[data-manual-name]", city: "[data-manual-city]", address: "[data-manual-address]" };
+    if (profile.customer_name && !qs(fields.name).value) qs(fields.name).value = profile.customer_name;
+    if (profile.city && !qs(fields.city).value) qs(fields.city).value = profile.city;
+    if (profile.address && !qs(fields.address).value) qs(fields.address).value = profile.address;
+  });
+}
+
+function manualOrderAddLine() {
+  state.manualOrderDraft.lines.push({ product_id: "", quantity: 1, variant: "" });
+  renderManualOrderModal();
+}
+
+function manualOrderRemoveLine(index) {
+  const i = Number(index);
+  state.manualOrderDraft.lines.splice(i, 1);
+  if (!state.manualOrderDraft.lines.length) state.manualOrderDraft.lines.push({ product_id: "", quantity: 1, variant: "" });
+  renderManualOrderModal();
+}
+
+async function submitManualOrder() {
+  const name = qs("[data-manual-name]")?.value.trim();
+  const phone = qs("[data-manual-phone]")?.value.trim();
+  const city = qs("[data-manual-city]")?.value.trim();
+  const address = qs("[data-manual-address]")?.value.trim();
+  const delivery = qs("[data-manual-delivery]")?.value || "standard_courier";
+  const note = qs("[data-manual-note]")?.value.trim();
+  const skipWa = !!qs("[data-manual-skip-wa]")?.checked;
+  const canon = canonPhone(phone);
+
+  if (!name) { toast("Customer name is required."); return; }
+  if (!isValidPkMobile(canon)) { toast("Enter a valid Pakistani phone number (e.g. 0300 1234567)."); return; }
+  if (!city || !address) { toast("City and address required."); return; }
+
+  const items = (state.manualOrderDraft.lines || [])
+    .filter((l) => l.product_id)
+    .map((l) => {
+      const p = state.products.find((x) => x.id === l.product_id);
+      if (!p) return null;
+      return {
+        product_id: p.id,
+        title: p.title,
+        quantity: Math.max(1, Number(l.quantity || 1)),
+        unit_price_pkr: calculatePrice(p),
+        stock_mode: p.stock_mode,
+        image_url: p.image_url,
+        variant: l.variant || "",
+        source_url: p.source_url || "",
+      };
+    })
+    .filter(Boolean);
+
+  if (!items.length) { toast("Add at least one item."); return; }
+
+  const payment = splitPaymentFromLines(items.map((i) => ({ ...i, product: state.products.find((p) => p.id === i.product_id) || {}, subtotal: i.unit_price_pkr * i.quantity })));
+  const payload = {
+    customer_name: name,
+    customer_phone: canon,
+    city,
+    address,
+    notes: note ? `[Manual order] ${note}` : "[Manual order — created by team]",
+    items,
+    total_pkr: payment.total,
+    advance_due_pkr: payment.advanceDue,
+    balance_due_pkr: payment.balanceDue,
+    delivery_method: delivery,
+    whatsapp_opt_in: !skipWa,
+    channel: "manual",
+    idempotency_key: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  };
+
+  try {
+    const result = await apiFetch("/api/orders", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }, { order: { ...payload, id: `GB-MANUAL-${Date.now()}`, status: "pending_review", created_at: new Date().toISOString() } });
+    closeModal();
+    if (result.order) {
+      state.orders.unshift(result.order);
+      renderAdmin();
+      toast(`Order ${result.order.id} created. ${skipWa ? "" : "Auto-WhatsApp queued."}`);
+      // Drop straight into the new order's detail view
+      setTimeout(() => showOrderDetails(result.order.id), 200);
+    } else {
+      toast("Order created.");
+      refreshAdmin();
+    }
+  } catch {
+    toast("Couldn't create order — try again.");
+  }
+}
+
 async function submitDispatch() {
   const items = (state.dispatchQueue || []).filter((i) => i.tracking_number && i.courier_name);
   if (!items.length) {
@@ -7418,6 +7614,22 @@ function wireEvents() {
     }
     if (action === "broadcast-preview") {
       previewBroadcastCount();
+      return;
+    }
+    if (action === "open-manual-order") {
+      openManualOrderModal();
+      return;
+    }
+    if (action === "manual-order-add-line") {
+      manualOrderAddLine();
+      return;
+    }
+    if (action === "manual-order-remove-line") {
+      manualOrderRemoveLine(target.dataset.lineIndex);
+      return;
+    }
+    if (action === "manual-order-submit") {
+      submitManualOrder();
       return;
     }
     if (action === "set-orders-view") {

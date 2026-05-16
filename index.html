@@ -115,6 +115,18 @@
       </button>
     </header>
 
+    <!-- Mobile-only quick-action bar — pinned right under the header so the
+         thumb can reach navigation at the top. Hidden on desktop via CSS. -->
+    <nav class="mobile-action-bar" aria-label="Mobile quick actions">
+      <a href="/shop" data-route="shop">Shop</a>
+      <a href="/track" data-route="track">Track</a>
+      <a class="mobile-wa-tab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
+        WhatsApp
+      </a>
+      <button type="button" data-action="open-cart">Bag <strong data-cart-count>0</strong></button>
+    </nav>
+
     <main id="main">
       <section class="view active" id="view-home" data-view="home">
         <div class="hero-shell">
@@ -629,16 +641,6 @@
       <dl class="cart-totals" data-cart-totals></dl>
       <a class="button primary wide" href="/checkout" data-route="checkout" data-action="checkout">Go to checkout</a>
     </aside>
-
-    <nav class="mobile-action-bar" aria-label="Mobile quick actions">
-      <a href="/shop" data-route="shop">Shop</a>
-      <a href="/track" data-route="track">Track</a>
-      <a class="mobile-wa-tab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
-        WhatsApp
-      </a>
-      <button type="button" data-action="open-cart">Bag <strong data-cart-count>0</strong></button>
-    </nav>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
 
