@@ -863,11 +863,14 @@ async function apiFetch(path, options = {}, fallback) {
 }
 
 async function loadRemoteData() {
+  state._productsLoading = true;
+  if (document.body.dataset.page !== "portal") renderProducts(); // paint skeletons
   const catalog = await apiFetch("/api/catalog", {}, {
     products: sampleProducts,
     settings: sampleSettings,
     shipmentBatches: sampleShipmentBatches,
   });
+  state._productsLoading = false;
   state.products = catalog.products?.length ? catalog.products : sampleProducts;
   state.settings = { ...sampleSettings, ...(catalog.settings || {}) };
   if (Array.isArray(catalog.shipmentBatches) && catalog.shipmentBatches.length) {
@@ -990,18 +993,41 @@ function productCard(product, options = {}) {
     product.stock_mode === "preorder" ? nextShipmentLabel() : `${Number(product.inventory || 0)} in stock`,
     product.authenticity_note ? "Source checked" : "Source pending",
   ];
-  const productImageMarkup = product.image_url
-    ? `<img src="${safeUrl(imageUrl(product.image_url), "")}" alt="${attr(product.title)}" loading="lazy" decoding="async" onerror="this.closest('.product-media')?.classList.add('media-missing'); this.remove();" />`
+  const imgUrl = product.image_url ? imageUrl(product.image_url) : "";
+  // Responsive srcset — weserv re-rendering at three widths so 2g phones
+  // don't pull the desktop hero JPG. Falls back to a single source when
+  // the URL can't be transformed.
+  const buildSrcset = (url) => {
+    if (!url) return "";
+    try {
+      const tx = (w) => imageUrl(product.image_url, { width: w });
+      return `${tx(320)} 320w, ${tx(540)} 540w, ${tx(720)} 720w`;
+    } catch { return ""; }
+  };
+  const srcset = imgUrl ? buildSrcset(product.image_url) : "";
+  const productImageMarkup = imgUrl
+    ? `<img src="${safeUrl(imgUrl, "")}" ${srcset ? `srcset="${attr(srcset)}" sizes="(max-width:640px) 48vw, (max-width:1100px) 32vw, 360px"` : ""} alt="${attr(product.title)}" loading="lazy" decoding="async" onerror="this.closest('.product-media')?.classList.add('media-missing'); this.remove();" />`
     : `<div class="media-placeholder" aria-label="Product image missing"><span>Image needed</span></div>`;
+  // "New" badge for products created in the last 14 days
+  const createdAt = new Date(product.created_at || 0).getTime();
+  const isNew = createdAt && (Date.now() - createdAt < 14 * 86_400_000);
+  const isWished = isWishlisted(product.id);
+  const soldoutClass = disabled ? " is-soldout" : "";
   return `
-    <article class="product-card">
+    <article class="product-card${soldoutClass}">
       <div class="product-media" ${!isPortal ? `role="button" tabindex="0" data-action="view-product" data-product-id="${attr(product.id)}" aria-label="View ${attr(product.title)} details"` : ""}>
         ${productImageMarkup}
         <div class="product-badges">
           <span class="status-pill ${attr(product.stock_mode)}">${esc(stockLabel)}</span>
           ${product.stock_mode === "in_stock" && Number(product.inventory || 0) > 0 && Number(product.inventory || 0) <= Number(product.low_stock_threshold ?? 2) ? `<span class="low-stock-chip">${Number(product.inventory)} left</span>` : ""}
+          ${isNew && !isPortal ? `<span class="new-arrival-badge">New</span>` : ""}
           ${product.marketing_badge ? `<span class="marketing-badge">${esc(product.marketing_badge)}</span>` : ""}
         </div>
+        ${!isPortal ? `
+          <button class="wishlist-heart ${isWished ? "is-wished" : ""}" type="button" data-action="toggle-wishlist" data-product-id="${attr(product.id)}" data-stop-row aria-label="${isWished ? "Remove from wishlist" : "Save to wishlist"}" title="${isWished ? "Saved" : "Save for later"}">${isWished ? "♥" : "♡"}</button>
+          ${!disabled ? `<button class="quick-add-btn" type="button" data-action="quick-add-cart" data-product-id="${attr(product.id)}" data-stop-row aria-label="Quick add ${attr(product.title)} to bag" title="Add to bag">+</button>` : ""}
+          ${disabled ? `<span class="soldout-overlay">Sold out</span>` : ""}
+        ` : ""}
       </div>
       <div class="product-body">
         ${product.brand && !isPortal ? `<span class="product-brand">${esc(product.brand)}</span>` : ""}
@@ -1062,7 +1088,29 @@ function filteredProducts() {
   return products;
 }
 
+// Skeleton card — renders a soft pulsing placeholder while products load.
+// Used on first paint (state.products empty AND loading flag set) and
+// when filters change to give immediate feedback.
+function productSkeleton() {
+  return `
+    <article class="product-card skeleton" aria-hidden="true">
+      <div class="product-media skeleton-block"></div>
+      <div class="product-body">
+        <div class="skeleton-line skeleton-line-1"></div>
+        <div class="skeleton-line skeleton-line-2"></div>
+        <div class="skeleton-line skeleton-line-3"></div>
+      </div>
+    </article>
+  `;
+}
+
 function renderProducts() {
+  // Initial-load skeleton — show 4 placeholders while the catalog fetches
+  if (state._productsLoading && !state.products.length) {
+    setHTML("[data-featured-products]", new Array(3).fill(productSkeleton()).join(""));
+    setHTML("[data-shop-products]", new Array(6).fill(productSkeleton()).join(""));
+    return;
+  }
   const featured = state.products.filter((product) => product.featured).slice(0, 3);
   setHTML("[data-featured-products]", featured.map((product) => productCard(product)).join(""));
   setHTML("[data-shop-products]", filteredProducts().map((product) => productCard(product)).join(""));
@@ -1291,6 +1339,8 @@ function closeModal() {
 function showProductDetails(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
+  // Track this open in the storefront's recently-viewed list (no-op on portal)
+  if (document.body.dataset.page !== "portal") recordRecentlyViewed(productId);
   const parts = productPricingParts(product);
   const advanceDue = product.stock_mode === "preorder" ? Math.ceil(parts.total * 0.5) : parts.total;
   const balanceDue = Math.max(0, parts.total - advanceDue);
@@ -1410,6 +1460,7 @@ function showProductDetails(productId) {
           <button class="button secondary" type="button" data-action="close-modal">Done</button>
         </div>
       </div>
+      ${!isPortal ? renderRecentlyViewedStrip(product.id) : ""}
       ${isPortal ? "" : `
         <!-- Mobile sticky bar. Hidden on desktop via CSS. The button itself
              references the same add-cart action as the in-page CTA so we
@@ -1728,6 +1779,150 @@ function renderAdmin() {
   renderCampaignReplyRates();
   renderTemplatesEditor();
   renderTodayRibbon();
+  renderWhatsappInbox();
+  renderProductSalesSparklines();
+  renderChurnAlerts();
+}
+
+// Renders the last 10 inbound WhatsApp/Instagram messages into the
+// Growth Studio inbox pane. Each row offers a one-click WA template
+// reply via the customer modal's WA helper.
+function renderWhatsappInbox() {
+  const slot = qs("[data-lead-inbox]");
+  if (!slot) return;
+  const inbound = (state.marketingMessages || [])
+    .filter((m) => m.direction === "inbound" && m.body)
+    .slice(0, 10);
+  if (!inbound.length) {
+    slot.innerHTML = `<p class="cashflow-empty">No inbound messages in the last 90 days.</p>`;
+    return;
+  }
+  slot.innerHTML = inbound.map((m) => {
+    const canon = canonPhone(m.customer_phone);
+    const phoneLabel = isValidPkMobile(canon) ? formatPkDisplay(canon) : (m.customer_phone || "Unknown");
+    const customer = (state.customers || []).find((c) => c.phone === canon);
+    const name = customer?.name || "—";
+    const isReply = !!m.replied_to_broadcast;
+    return `
+      <article class="inbox-row${isReply ? " is-reply" : ""}">
+        <header>
+          <strong>${esc(name)}</strong>
+          <small>${esc(phoneLabel)} · ${esc(relativeTime(m.created_at))}${isReply ? " · reply to broadcast" : ""}</small>
+        </header>
+        <p>${esc((m.body || "").slice(0, 220))}${m.body?.length > 220 ? "…" : ""}</p>
+        <div class="inbox-row-actions">
+          ${canon ? `<a class="button secondary" href="https://wa.me/${canon}" target="_blank" rel="noreferrer">Reply on WhatsApp</a>` : ""}
+          ${customer ? `<button class="button secondary" type="button" data-action="open-customer" data-customer-phone="${attr(canon)}">Open customer</button>` : ""}
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+// Per-product sales sparkline column on the Products tab — 8-week velocity
+// so the team can see what's selling at a glance.
+function renderProductSalesSparklines() {
+  // We compute the per-product weekly sales bucket once and stash on each
+  // product card via state. The actual render is on the Products tab card
+  // (productCard()), so this function just builds the lookup table.
+  if (!has("[data-admin-products]") && !has("[data-shop-products]")) return;
+  const weeks = new Array(8).fill(0).map(() => new Map());
+  const startOfWeek = Date.now() - 7 * 86_400_000;
+  for (const order of state.orders || []) {
+    const t = new Date(order.created_at || 0).getTime();
+    if (Number.isNaN(t)) continue;
+    const weeksAgo = Math.floor((Date.now() - t) / (7 * 86_400_000));
+    if (weeksAgo < 0 || weeksAgo > 7) continue;
+    const bucketIdx = 7 - weeksAgo; // 0=oldest, 7=newest
+    for (const item of orderItems(order)) {
+      if (!item.product_id) continue;
+      const bucket = weeks[bucketIdx];
+      bucket.set(item.product_id, (bucket.get(item.product_id) || 0) + Number(item.quantity || 1));
+    }
+  }
+  state._productSalesByWeek = weeks;
+}
+
+// Customer churn alert — surfaces a small banner on the Customers tab
+// listing customers with ≥3 orders who haven't bought in 90+ days.
+function renderChurnAlerts() {
+  // The banner lives inside the Customers tab; render only if it's mounted.
+  const customersTab = qs("[data-admin-panel='customers']");
+  if (!customersTab) return;
+  const ninetyDaysAgo = Date.now() - 90 * 86_400_000;
+  const churning = (state.customers || []).filter((c) => {
+    const orders = Number(c.total_orders || 0);
+    if (orders < 3) return false;
+    const last = c.last_seen ? new Date(c.last_seen).getTime() : 0;
+    return last && last < ninetyDaysAgo;
+  });
+  let banner = qs("[data-churn-alert]");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.dataset.churnAlert = "";
+    banner.className = "churn-alert-banner hidden";
+    const segmentBar = qs("[data-segment-bar]");
+    if (segmentBar) segmentBar.parentNode.insertBefore(banner, segmentBar);
+  }
+  if (!churning.length) {
+    banner.classList.add("hidden");
+    return;
+  }
+  banner.classList.remove("hidden");
+  banner.innerHTML = `
+    <strong>${churning.length} repeat customer${churning.length === 1 ? "" : "s"} haven't bought in 90+ days</strong>
+    <span>Win-back targets — broadcast a "we miss you" template to bring them back.</span>
+    <button class="button secondary" type="button" data-action="apply-churn-segment">Open win-back list</button>
+  `;
+}
+
+// Conversion funnel — orders over the last 30 days broken down into the
+// four key states (received → accepted → paid → delivered) so the team
+// can see the drop-off shape at a glance.
+function renderConversionFunnel() {
+  const slot = qs("[data-conversion-funnel]");
+  if (!slot) return;
+  const cutoff = Date.now() - 30 * 86_400_000;
+  const window30 = (state.orders || []).filter((o) => new Date(o.created_at || 0).getTime() >= cutoff);
+  const total = window30.length;
+  const accepted = window30.filter((o) => !["pending_review", "cancelled"].includes(o.status)).length;
+  const paid = window30.filter((o) => ["paid_in_full", "balance_uploaded", "advance_confirmed"].includes(o.payment_status) || o.status === "delivered").length;
+  const delivered = window30.filter((o) => o.status === "delivered").length;
+
+  // Previous 30-day window for comparison
+  const prevCutoff = cutoff - 30 * 86_400_000;
+  const prev30 = (state.orders || []).filter((o) => {
+    const t = new Date(o.created_at || 0).getTime();
+    return t >= prevCutoff && t < cutoff;
+  });
+  const prevDelivered = prev30.filter((o) => o.status === "delivered").length;
+  const prevConvPct = prev30.length ? (prevDelivered / prev30.length) * 100 : 0;
+  const currentConvPct = total ? (delivered / total) * 100 : 0;
+  const trend = currentConvPct - prevConvPct;
+
+  const stages = [
+    { label: "Received", count: total, pct: 100, tone: "info" },
+    { label: "Accepted", count: accepted, pct: total ? (accepted / total) * 100 : 0, tone: "info" },
+    { label: "Paid", count: paid, pct: total ? (paid / total) * 100 : 0, tone: "info" },
+    { label: "Delivered", count: delivered, pct: total ? (delivered / total) * 100 : 0, tone: "ok" },
+  ];
+
+  slot.innerHTML = `
+    <div class="funnel-stages">
+      ${stages.map((s) => `
+        <div class="funnel-stage tone-${s.tone}">
+          <div class="funnel-bar"><span style="width:${s.pct.toFixed(0)}%"></span></div>
+          <strong>${s.count}</strong>
+          <small>${esc(s.label)}<br>${s.pct.toFixed(0)}%</small>
+        </div>
+      `).join("")}
+    </div>
+    <p class="funnel-summary">
+      ${total > 0
+        ? `<strong>${currentConvPct.toFixed(1)}%</strong> received → delivered conversion ${prev30.length ? `· <span class="trend tone-${trend >= 0 ? "ok" : "warn"}">${trend >= 0 ? "↑" : "↓"} ${Math.abs(trend).toFixed(1)}pp vs prior 30 days</span>` : ""}`
+        : "No orders in the last 30 days."}
+    </p>
+  `;
 }
 
 // SLA dashboard — for each stage, computes the average number of days an
@@ -1950,6 +2145,7 @@ function renderOverviewExtras() {
   }
   allEvents.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const top = allEvents.slice(0, 6);
+  renderConversionFunnel();
   renderSlaDashboard();
   setHTML("[data-overview-activity]",
     top.length
@@ -3015,27 +3211,49 @@ function openDispatchModal({ batchId } = {}) {
 // (typically off the back of a WhatsApp / Instagram conversation). Sends
 // to the same /api/orders POST as the storefront so it goes through the
 // canonical-phone + idempotency + auto-WhatsApp pipeline.
-state.manualOrderDraft = state.manualOrderDraft || { lines: [{ product_id: "", quantity: 1 }] };
+const MANUAL_ORDER_DRAFT_KEY = "gb_manual_order_draft";
+function loadManualOrderDraft() {
+  try {
+    const raw = localStorage.getItem(MANUAL_ORDER_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveManualOrderDraft() {
+  try { localStorage.setItem(MANUAL_ORDER_DRAFT_KEY, JSON.stringify(state.manualOrderDraft)); } catch {}
+}
+function clearManualOrderDraft() {
+  try { localStorage.removeItem(MANUAL_ORDER_DRAFT_KEY); } catch {}
+}
+
+state.manualOrderDraft = loadManualOrderDraft() || { lines: [{ product_id: "", quantity: 1 }] };
 
 function openManualOrderModal() {
-  state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
+  // Restore an in-progress draft if there is one; otherwise start fresh.
+  const existing = loadManualOrderDraft();
+  if (existing && existing.lines?.some((l) => l.product_id || l.search || l.variant)) {
+    state.manualOrderDraft = existing;
+  } else {
+    state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
+  }
   renderManualOrderModal();
 }
 
 function renderManualOrderModal() {
   const products = (state.products || []).filter((p) => (p.status || "active") === "active");
-  const productOptions = products.map((p) =>
-    `<option value="${attr(p.id)}">${esc(p.title)} — ${PKR.format(calculatePrice(p))} ${p.stock_mode === "preorder" ? "(preorder)" : "(in stock)"}</option>`,
+  // Datalist-backed typeahead — the operator types a brand or title and the
+  // native browser picker filters. Cleaner than a 100-option <select> when
+  // the catalog grows.
+  const datalistId = "manual-product-options";
+  const datalistOptions = products.map((p) =>
+    `<option value="${attr(p.title)}" data-product-id="${attr(p.id)}">${esc(p.brand || "")} — ${PKR.format(calculatePrice(p))} ${p.stock_mode === "preorder" ? "(preorder)" : "(in stock)"}</option>`,
   ).join("");
   const lines = (state.manualOrderDraft?.lines || []).map((line, i) => {
     const product = products.find((p) => p.id === line.product_id);
     const subtotal = product ? calculatePrice(product) * Number(line.quantity || 1) : 0;
+    const displayValue = product ? product.title : (line.search || "");
     return `
       <div class="manual-line" data-line-index="${i}">
-        <select data-manual-product>
-          <option value="">— Pick a product —</option>
-          ${productOptions.replace(`value="${attr(line.product_id)}"`, `value="${attr(line.product_id)}" selected`)}
-        </select>
+        <input type="search" class="manual-product-search" data-manual-product-search list="${datalistId}" value="${attr(displayValue)}" placeholder="Search by brand or title…" autocomplete="off" />
         <input type="number" data-manual-qty min="1" step="1" value="${line.quantity || 1}" aria-label="Quantity" />
         <input type="text" data-manual-variant value="${attr(line.variant || "")}" placeholder="Size / shade / color" aria-label="Variant" />
         <span class="manual-line-subtotal">${subtotal ? PKR.format(subtotal) : "—"}</span>
@@ -3043,6 +3261,8 @@ function renderManualOrderModal() {
       </div>
     `;
   }).join("");
+  // Datalist rendered once at the end of the modal
+  const productsDatalist = `<datalist id="${datalistId}">${datalistOptions}</datalist>`;
   // Pre-compute totals from current draft for the running display
   let total = 0;
   for (const l of (state.manualOrderDraft?.lines || [])) {
@@ -3088,25 +3308,34 @@ function renderManualOrderModal() {
         <button class="button primary" type="button" data-action="manual-order-submit">Create order</button>
         <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
       </div>
+      ${productsDatalist}
     </div>
   `);
 
-  // Wire inputs to the draft so submit reads the latest values.
-  qsa("[data-manual-product]").forEach((el, i) => {
+  // Wire the typeahead product inputs. On 'change' (fires when the user
+  // picks a datalist suggestion or commits typing), look up the matching
+  // product by title and lock it onto the draft line.
+  qsa("[data-manual-product-search]").forEach((el, i) => {
     el.addEventListener("change", () => {
-      state.manualOrderDraft.lines[i].product_id = el.value;
+      const typed = el.value.trim().toLowerCase();
+      const match = products.find((p) => p.title.toLowerCase() === typed);
+      state.manualOrderDraft.lines[i].product_id = match ? match.id : "";
+      state.manualOrderDraft.lines[i].search = el.value;
+      saveManualOrderDraft();
       renderManualOrderModal();
     });
   });
   qsa("[data-manual-qty]").forEach((el, i) => {
     el.addEventListener("input", () => {
       state.manualOrderDraft.lines[i].quantity = Math.max(1, Number(el.value || 1));
+      saveManualOrderDraft();
       renderManualOrderModal();
     });
   });
   qsa("[data-manual-variant]").forEach((el, i) => {
     el.addEventListener("input", () => {
       state.manualOrderDraft.lines[i].variant = el.value;
+      saveManualOrderDraft();
     });
   });
 
@@ -3191,11 +3420,16 @@ async function submitManualOrder() {
       body: JSON.stringify(payload),
     }, { order: { ...payload, id: `GB-MANUAL-${Date.now()}`, status: "pending_review", created_at: new Date().toISOString() } });
     closeModal();
+    clearManualOrderDraft();
+    state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
     if (result.order) {
       state.orders.unshift(result.order);
+      // Track this as a "recently created" so it pins to the top of the
+      // Orders list for the next 5 minutes (recentlyCreatedOrders set).
+      state._recentlyCreated = state._recentlyCreated || new Map();
+      state._recentlyCreated.set(result.order.id, Date.now());
       renderAdmin();
       toast(`Order ${result.order.id} created. ${skipWa ? "" : "Auto-WhatsApp queued."}`);
-      // Drop straight into the new order's detail view
       setTimeout(() => showOrderDetails(result.order.id), 200);
     } else {
       toast("Order created.");
@@ -3632,12 +3866,12 @@ function renderKanbanBoard(rows) {
   slot.innerHTML = columns.map((col) => {
     const cards = rows.filter((o) => o.status === col.key);
     return `
-      <div class="kanban-col tone-${col.tone}">
+      <div class="kanban-col tone-${col.tone}" data-kanban-col="${attr(col.key)}">
         <header>
           <strong>${esc(col.label)}</strong>
           <span class="kanban-count">${cards.length}</span>
         </header>
-        <div class="kanban-cards">
+        <div class="kanban-cards" data-kanban-drop="${attr(col.key)}">
           ${cards.length
             ? cards.map((o) => {
                 const sla = orderSlaBadge(o);
@@ -3645,7 +3879,7 @@ function renderKanbanBoard(rows) {
                 const ageDays = daysSince(o.created_at);
                 const watched = isWatched(o.id);
                 return `
-                  <button class="kanban-card ${sla ? `sla-${sla.level}` : ""} ${watched ? "is-watched" : ""}" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
+                  <button class="kanban-card ${sla ? `sla-${sla.level}` : ""} ${watched ? "is-watched" : ""}" type="button" draggable="true" data-action="view-order" data-order-id="${attr(o.id)}" data-kanban-drag="${attr(o.id)}">
                     <div class="kanban-card-top">
                       <strong>${esc(o.id)}</strong>
                       ${watched ? `<span class="kanban-star" aria-hidden="true">★</span>` : ""}
@@ -3666,6 +3900,79 @@ function renderKanbanBoard(rows) {
       </div>
     `;
   }).join("");
+}
+
+// Renders a "Recently viewed" horizontal strip at the bottom of the PDP
+// modal. Skipped silently when the customer has no history.
+function renderRecentlyViewedStrip(currentId) {
+  const ids = getRecentlyViewed(currentId);
+  if (!ids.length) return "";
+  const products = ids
+    .map((id) => state.products.find((p) => p.id === id))
+    .filter(Boolean)
+    .slice(0, RECENT_VIEWED_LIMIT);
+  if (!products.length) return "";
+  return `
+    <section class="recently-viewed-strip">
+      <h3>Recently viewed</h3>
+      <div class="recently-viewed-row">
+        ${products.map((p) => {
+          const parts = productPricingParts(p);
+          const img = p.image_url ? `<img src="${safeUrl(imageUrl(p.image_url, { width: 200, height: 200 }), "")}" alt="${attr(p.title)}" loading="lazy" decoding="async" />` : `<span class="recent-placeholder">·</span>`;
+          return `
+            <button class="recently-viewed-tile" type="button" data-action="open-recent-product" data-product-id="${attr(p.id)}" aria-label="Open ${attr(p.title)}">
+              ${img}
+              <strong>${esc(p.title)}</strong>
+              <span class="recent-price">${PKR.format(parts.total)}</span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    </section>
+  `;
+}
+
+// ─── Wishlist (storefront, localStorage-backed) ───
+// Customers who tap the ♥ on a product card store the product id locally
+// so the same browser sees their saved items. No server roundtrip; works
+// fine for the typical "I'll come back to this" pattern.
+const WISHLIST_KEY = "gb_wishlist";
+function loadWishlist() {
+  try { return new Set(JSON.parse(localStorage.getItem(WISHLIST_KEY) || "[]")); }
+  catch { return new Set(); }
+}
+function saveWishlist(set) {
+  try { localStorage.setItem(WISHLIST_KEY, JSON.stringify([...set])); } catch {}
+}
+function isWishlisted(productId) {
+  state._wishlist = state._wishlist || loadWishlist();
+  return state._wishlist.has(productId);
+}
+function toggleWishlist(productId) {
+  state._wishlist = state._wishlist || loadWishlist();
+  if (state._wishlist.has(productId)) state._wishlist.delete(productId);
+  else state._wishlist.add(productId);
+  saveWishlist(state._wishlist);
+  renderProducts();
+}
+
+// ─── Recently viewed products (storefront, localStorage) ───
+// Tracks the last N product IDs the customer opened on the PDP. Surfaced
+// at the bottom of every PDP as a "Recently viewed" strip.
+const RECENT_VIEWED_KEY = "gb_recent_viewed";
+const RECENT_VIEWED_LIMIT = 6;
+function recordRecentlyViewed(productId) {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_VIEWED_KEY) || "[]");
+    const next = [productId, ...list.filter((id) => id !== productId)].slice(0, RECENT_VIEWED_LIMIT);
+    localStorage.setItem(RECENT_VIEWED_KEY, JSON.stringify(next));
+  } catch {}
+}
+function getRecentlyViewed(excludeId) {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENT_VIEWED_KEY) || "[]");
+    return list.filter((id) => id !== excludeId);
+  } catch { return []; }
 }
 
 // Watchlist — pin orders to the top of the operator's view. State lives in
@@ -3795,11 +4102,21 @@ function renderAdminOrders() {
     const all = state.orders.length;
     countChip.textContent = `${rows.length} of ${all}`;
   }
-  // Watched orders surface first, then the rest in chronological order.
+  // Watched orders → recently-created (last 5 min) → chronological. The
+  // recently-created highlight is just for "you just made this" feedback.
+  const now = Date.now();
+  const recentMap = state._recentlyCreated || new Map();
+  const isRecentlyCreated = (id) => {
+    const t = recentMap.get(id);
+    return t && (now - t < 5 * 60_000);
+  };
   rows.sort((a, b) => {
     const aw = isWatched(a.id) ? 0 : 1;
     const bw = isWatched(b.id) ? 0 : 1;
     if (aw !== bw) return aw - bw;
+    const ar = isRecentlyCreated(a.id) ? 0 : 1;
+    const br = isRecentlyCreated(b.id) ? 0 : 1;
+    if (ar !== br) return ar - br;
     return new Date(b.created_at || 0) - new Date(a.created_at || 0);
   });
   state._ordersExport = rows;
@@ -4198,6 +4515,44 @@ function renderAll() {
   renderSupportLinks();
   renderAdmin();
   renderMarketing();
+  renderRecentOrdersRail();
+}
+
+// On the public /track view, surface a "Your recent orders" rail under the
+// search form whenever the customer's browser has a saved profile (i.e.,
+// they've ordered with us before from this device). One-tap to pull that
+// order's tracking info — saves them digging up the order number.
+function renderRecentOrdersRail() {
+  const slot = qs("[data-recent-orders-rail]");
+  if (!slot) return;
+  // Pull every saved phone profile from localStorage, then surface only
+  // orders whose canon phone matches. In offline-preview mode there might
+  // not be any — render nothing in that case.
+  let profiles = {};
+  try { profiles = JSON.parse(localStorage.getItem(CUSTOMER_PROFILE_KEY) || "{}"); } catch {}
+  const knownPhones = Object.keys(profiles);
+  if (!knownPhones.length) { slot.innerHTML = ""; return; }
+  const matches = (state.orders || [])
+    .filter((o) => knownPhones.includes(canonPhone(o.customer_phone)))
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .slice(0, 4);
+  if (!matches.length) { slot.innerHTML = ""; return; }
+  slot.innerHTML = `
+    <h3>Your recent orders</h3>
+    <div class="recent-orders-row">
+      ${matches.map((o) => {
+        const stage = (o.status || "").replaceAll("_", " ");
+        const created = o.created_at ? new Date(o.created_at).toLocaleDateString("en-PK", { month: "short", day: "numeric" }) : "";
+        return `
+          <button class="recent-order-tile" type="button" data-action="track-recent-order" data-order-id="${attr(o.id)}">
+            <strong>${esc(o.id)}</strong>
+            <small>${esc(created)} · ${esc(stage)}</small>
+            <span>${PKR.format(Number(o.total_pkr || 0))}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
 }
 
 // Live ribbon under the header. Pulls the current active batch + FX rate so
@@ -7349,6 +7704,29 @@ function wireEvents() {
     // above, which fires before this one and short-circuits navigation when
     // the cart is empty.
     if (action === "add-cart") return addToCart(productId);
+    if (action === "quick-add-cart") return addToCart(productId, { fromCard: true });
+    if (action === "toggle-wishlist") return toggleWishlist(productId);
+    if (action === "open-recent-product") {
+      const id = target.dataset.productId;
+      if (id) showProductDetails(id);
+      return;
+    }
+    if (action === "track-recent-order") {
+      const id = target.dataset.orderId;
+      const o = (state.orders || []).find((x) => x.id === id);
+      if (o) renderTracking(o);
+      return;
+    }
+    if (action === "open-filter-drawer") {
+      qs("[data-filter-panel]")?.classList.add("is-open");
+      document.body.classList.add("filter-drawer-open");
+      return;
+    }
+    if (action === "close-filter-drawer") {
+      qs("[data-filter-panel]")?.classList.remove("is-open");
+      document.body.classList.remove("filter-drawer-open");
+      return;
+    }
     if (action === "add-checkout") return addToCart(productId, { checkout: true });
     if (action === "decrement-cart") return decrementCart(productId);
     if (action === "remove-cart") return removeFromCart(productId);
@@ -7478,6 +7856,15 @@ function wireEvents() {
       state._cashflowActionFilter = target.dataset.actionFilterKey || "all";
       qsa("[data-action='set-action-filter']").forEach((b) => b.classList.toggle("active", b.dataset.actionFilterKey === state._cashflowActionFilter));
       renderActionItems();
+      return;
+    }
+    if (action === "apply-churn-segment") {
+      state.customerFilters = state.customerFilters || {};
+      // Filter to "≥3 orders, last seen >90d ago" by sorting by dormant
+      state.customerFilters.sort = "dormant";
+      const sel = qs("[data-customer-sort]"); if (sel) sel.value = "dormant";
+      renderCustomersTab();
+      toast("Sorted by dormant first — top of the list is your win-back priority.");
       return;
     }
     if (action === "open-customer-columns") {
@@ -7694,6 +8081,94 @@ function wireEvents() {
     }
   });
 
+  // Kanban drag-and-drop — move an order between columns to change its
+  // status. Confirms before any status with financial implications
+  // (delivered, cancelled) to prevent fat-finger mistakes.
+  let dragOrderId = null;
+  document.addEventListener("dragstart", (event) => {
+    const card = event.target.closest("[data-kanban-drag]");
+    if (!card) return;
+    dragOrderId = card.dataset.kanbanDrag;
+    card.classList.add("kanban-card-dragging");
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", dragOrderId);
+    }
+  });
+  document.addEventListener("dragend", (event) => {
+    const card = event.target.closest("[data-kanban-drag]");
+    if (card) card.classList.remove("kanban-card-dragging");
+    qsa("[data-kanban-drop].is-over").forEach((c) => c.classList.remove("is-over"));
+    dragOrderId = null;
+  });
+  document.addEventListener("dragover", (event) => {
+    const drop = event.target.closest("[data-kanban-drop]");
+    if (!drop) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    qsa("[data-kanban-drop]").forEach((c) => c.classList.toggle("is-over", c === drop));
+  });
+  document.addEventListener("drop", async (event) => {
+    const drop = event.target.closest("[data-kanban-drop]");
+    if (!drop || !dragOrderId) return;
+    event.preventDefault();
+    qsa("[data-kanban-drop]").forEach((c) => c.classList.remove("is-over"));
+    const newStatus = drop.dataset.kanbanDrop;
+    const order = (state.orders || []).find((o) => o.id === dragOrderId);
+    dragOrderId = null;
+    if (!order || order.status === newStatus) return;
+    // Confirm when the move has financial implications
+    const balance = Math.max(0, Number(order.balance_due_pkr || 0) - Number(order.balance_paid_pkr || 0));
+    if (newStatus === "delivered" && balance > 0) {
+      if (!window.confirm(`This order still has ${PKR.format(balance)} balance due. Mark it delivered anyway?`)) return;
+    }
+    if (newStatus === "cancelled") {
+      if (!window.confirm(`Cancel order ${order.id}?`)) return;
+    }
+    // Optimistic update + PATCH
+    const previousStatus = order.status;
+    order.status = newStatus;
+    renderAdminOrders();
+    try {
+      await apiFetch(`/api/admin/orders/${encodeURIComponent(order.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus, note: `Status changed to ${newStatus} via kanban drag.` }),
+      }, { ok: true });
+      toast(`Moved ${order.id} → ${newStatus.replaceAll("_", " ")}`);
+    } catch {
+      order.status = previousStatus;
+      renderAdminOrders();
+      toast("Couldn't update — restored.");
+    }
+  });
+
+  // PDP gallery: touch swipe → previous/next image. The thumbnail buttons
+  // remain as the source of truth (we just simulate a click on them).
+  let touchStartX = null;
+  let touchStartTarget = null;
+  document.addEventListener("touchstart", (event) => {
+    const wrap = event.target.closest("[data-zoom]");
+    if (!wrap) return;
+    touchStartX = event.touches[0]?.clientX;
+    touchStartTarget = wrap;
+  }, { passive: true });
+  document.addEventListener("touchend", (event) => {
+    if (touchStartX == null || !touchStartTarget) return;
+    const endX = event.changedTouches[0]?.clientX;
+    if (endX == null) { touchStartX = null; touchStartTarget = null; return; }
+    const dx = endX - touchStartX;
+    touchStartX = null;
+    touchStartTarget = null;
+    if (Math.abs(dx) < 50) return; // ignore taps/short drags
+    const thumbs = qsa(".gallery-thumb");
+    if (thumbs.length <= 1) return;
+    const activeIdx = thumbs.findIndex((t) => t.classList.contains("active"));
+    const nextIdx = dx < 0
+      ? Math.min(thumbs.length - 1, activeIdx + 1) // swiped left → next
+      : Math.max(0, activeIdx - 1);                // swiped right → previous
+    if (nextIdx !== activeIdx) thumbs[nextIdx]?.click();
+  });
+
   // PDP gallery zoom — track cursor position relative to the wrap, set CSS
   // custom props so transform-origin follows the cursor (proper lens zoom).
   document.addEventListener("mousemove", (event) => {
@@ -7786,6 +8261,13 @@ function wireEvents() {
       state.filters.stock = qs("[data-filter-stock]")?.value || "all";
       state.filters.sort = qs("[data-filter-sort]")?.value || "featured";
       renderProducts();
+      // Update the "Filters & sort (N active)" badge on the mobile trigger
+      const active = ["search", "category", "stock"].filter((k) => {
+        const v = state.filters[k];
+        return v && v !== "all";
+      }).length;
+      const count = qs("[data-active-filter-count]");
+      if (count) count.textContent = active > 0 ? `· ${active}` : "";
     });
   });
 
@@ -8062,7 +8544,35 @@ function init() {
   renderAll();
   animateHeroText();
   initReveal();
+  pruneLocalStorage();
   loadRemoteData();
+}
+
+// One-time cleanup of stale localStorage entries on boot. Prunes customer
+// profiles + watched orders older than 90 days so the browser store
+// doesn't keep growing forever.
+function pruneLocalStorage() {
+  const cutoff = Date.now() - 90 * 86_400_000;
+  try {
+    const profiles = JSON.parse(localStorage.getItem(CUSTOMER_PROFILE_KEY) || "{}");
+    let changed = false;
+    for (const [phone, p] of Object.entries(profiles)) {
+      const saved = p?.saved_at ? new Date(p.saved_at).getTime() : 0;
+      if (saved && saved < cutoff) {
+        delete profiles[phone];
+        changed = true;
+      }
+    }
+    if (changed) localStorage.setItem(CUSTOMER_PROFILE_KEY, JSON.stringify(profiles));
+  } catch {}
+  // Recently viewed: cap at the limit (already enforced on write, but
+  // belt-and-braces in case an old client wrote longer lists).
+  try {
+    const recent = JSON.parse(localStorage.getItem(RECENT_VIEWED_KEY) || "[]");
+    if (recent.length > RECENT_VIEWED_LIMIT) {
+      localStorage.setItem(RECENT_VIEWED_KEY, JSON.stringify(recent.slice(0, RECENT_VIEWED_LIMIT)));
+    }
+  } catch {}
 }
 
 init();

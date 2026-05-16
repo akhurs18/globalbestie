@@ -360,8 +360,17 @@
           <h1>Curated USA branded products.</h1>
           <p>Filter by category, preorder status, and product availability. Each listing shows the final PKR price for the customer.</p>
         </div>
+        <!-- Mobile filter trigger — pinned at the top of the shop grid so
+             customers can adjust filters with a single tap. Slides up the
+             filter panel as a drawer; hidden on desktop via CSS. -->
+        <div class="mobile-filter-trigger">
+          <button class="button secondary" type="button" data-action="open-filter-drawer">
+            <span aria-hidden="true">⇅</span> Filters &amp; sort <span class="active-filter-count" data-active-filter-count></span>
+          </button>
+        </div>
         <div class="shop-layout">
-          <aside class="filter-panel" aria-label="Shop filters">
+          <aside class="filter-panel" aria-label="Shop filters" data-filter-panel>
+            <button class="filter-drawer-close" type="button" data-action="close-filter-drawer" aria-label="Close filters">×</button>
             <label>
               Search
               <input type="search" data-filter-search placeholder="Search bags, shoes, makeup" />
@@ -534,6 +543,9 @@
             <button class="button primary" type="submit">Track</button>
           </form>
           <div class="tracking-result" data-tracking-result aria-live="polite"></div>
+          <!-- "Your recent orders" rail — only populated when a customer
+               has placed an order before (localStorage profile match). -->
+          <div class="recent-orders-rail" data-recent-orders-rail></div>
         </div>
       </section>
 
