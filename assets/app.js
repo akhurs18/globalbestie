@@ -876,9 +876,17 @@ async function apiFetch(path, options = {}, fallback) {
     if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
     // Only attach the admin bearer to endpoints that actually require it.
     // Stops the token from leaking onto customer-facing POSTs (/api/orders,
-    // /api/leads, /api/catalog, /api/public/*) when an operator browses the
-    // storefront in the same tab they're logged into the portal with.
-    const needsAdmin = path.startsWith("/api/admin/") || path === "/api/scraper";
+    // /api/leads, /api/public/*) when an operator browses the storefront
+    // in the same tab they're logged into the portal with.
+    //
+    // /api/catalog and /api/settings have a public GET but admin-only
+    // POST/DELETE/PATCH — gate the token on write methods only.
+    const method = String(options.method || "GET").toUpperCase();
+    const isWrite = method !== "GET" && method !== "HEAD";
+    const needsAdmin =
+      path.startsWith("/api/admin/") ||
+      path === "/api/scraper" ||
+      (isWrite && (path === "/api/catalog" || path === "/api/settings"));
     if (state.adminToken && needsAdmin) headers.set("Authorization", `Bearer ${state.adminToken}`);
     const response = await fetch(path, { ...options, headers });
     if (!response.ok) throw new Error(await response.text());
@@ -6924,8 +6932,21 @@ async function saveProduct(event) {
     renderAll();
     fillProductForm();
     toast("Product saved.");
-  } catch {
-    toast("Product could not be saved. Check the portal key and try again.");
+  } catch (err) {
+    // Surface the real cause so we don't keep guessing. Most common is a
+    // missing-column error from Supabase when the schema migration hasn't
+    // been run yet — that message points the user directly at the fix.
+    const raw = (err && (err.message || err.error || String(err))) || "";
+    let msg = "Product could not be saved.";
+    if (/column .* schema cache|Could not find/i.test(raw)) {
+      msg = "Database is missing a new column. Run the latest supabase/schema.sql in the Supabase SQL editor.";
+    } else if (/Unauthorized/i.test(raw)) {
+      msg = "Portal key rejected. Re-enter the admin token.";
+    } else if (raw) {
+      msg = `Save failed: ${raw}`;
+    }
+    toast(msg);
+    console.error("[saveProduct]", err);
   } finally {
     restore();
   }

@@ -205,18 +205,56 @@ export async function getShipmentBatches() {
   return supabase("/rest/v1/shipment_batches?select=*&order=eta_date.asc,created_at.desc");
 }
 
+// Allowlist of columns the products table can actually have. Anything not
+// in this set is dropped before the Supabase POST so the request never
+// fails with "column X not found in schema cache" if a client sends a
+// stale or future field.
+const PRODUCT_COLUMNS = new Set([
+  "id", "title", "brand", "category", "description",
+  "usa_price_usd", "shipping_pkr", "fx_rate", "markup_rate",
+  "customer_price_pkr", "delivery_days_min", "delivery_days_max",
+  "stock_mode", "inventory", "low_stock_threshold",
+  "image_url", "gallery_urls", "variants", "authenticity_note",
+  "receipt_url", "supplier_cost_pkr", "product_status",
+  "social_proof", "featured", "preorder_weeks", "status", "source_url",
+  "marketing_badge", "variant_display_hint",
+  "created_at", "updated_at",
+]);
+
 export async function upsertProduct(product) {
+  const filtered = {};
+  for (const [key, value] of Object.entries(product || {})) {
+    if (PRODUCT_COLUMNS.has(key) && value !== undefined) filtered[key] = value;
+  }
   const payload = {
-    ...product,
-    status: product.status || "active",
+    ...filtered,
+    status: filtered.status || "active",
     updated_at: new Date().toISOString(),
   };
-  const rows = await supabase("/rest/v1/products?on_conflict=id", {
+  // Retry once: if a brand-new column hasn't been added to the table yet
+  // (e.g. schema.sql hasn't been re-run), Supabase returns a 4xx with the
+  // column name. We strip that one key and try again — the save still
+  // succeeds, just without that field, which is far better than blocking
+  // the entire upload.
+  const attempt = async (body) => supabase("/rest/v1/products?on_conflict=id", {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
-  return rows[0];
+  try {
+    const rows = await attempt(payload);
+    return rows[0];
+  } catch (error) {
+    const msg = String(error && error.message || error || "");
+    const match = msg.match(/column ['"]?([a-z_]+)['"]?/i)
+              || msg.match(/Could not find the ['"]?([a-z_]+)['"]?/i);
+    if (match && payload[match[1]] !== undefined) {
+      delete payload[match[1]];
+      const rows = await attempt(payload);
+      return rows[0];
+    }
+    throw error;
+  }
 }
 
 export async function updateSettings(settings) {
