@@ -3546,6 +3546,21 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
   text-align: center;
 }
 
+.kanban-show-all {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px dashed rgba(255, 156, 199, 0.36);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--rose);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 140ms var(--ease), border-color 140ms var(--ease);
+}
+.kanban-show-all:hover { background: rgba(255, 79, 154, 0.1); border-style: solid; }
+
 @media (max-width: 1200px) {
   .kanban-board { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
 }
@@ -4112,6 +4127,52 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 @media (max-width: 720px) {
   .funnel-stages { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Desktop sticky filter sidebar — already sticky on tablets+, but make
+   the sort dropdown reachable without a full scroll-to-top by giving the
+   left column a max-height + internal scroll when it exceeds the viewport. */
+@media (min-width: 721px) {
+  .filter-panel {
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+}
+
+/* Per-product 8-week sales sparkline (admin product card) */
+.product-sparkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 79, 154, 0.04);
+}
+.product-sparkline svg { width: 96px; height: 18px; }
+.product-sparkline small { color: var(--muted); font-size: 0.7rem; }
+
+/* ═══════════════════════ SUBMIT-BUTTON BUSY STATE ═══════════════════════ */
+button[type="submit"][data-busy] {
+  opacity: 0.7;
+  cursor: progress;
+  position: relative;
+  padding-right: 38px;
+}
+button[type="submit"][data-busy]::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: btn-spin 0.7s linear infinite;
+}
+@keyframes btn-spin { to { transform: rotate(360deg); } }
 
 /* ═══════════════════════ MANUAL ORDER MODAL ═══════════════════════ */
 .manual-order-modal {
@@ -6738,6 +6799,14 @@ body::after {
   body:not([data-page="portal"]) {
     padding-bottom: 0;
     padding-top: 8px;
+  }
+
+  /* When any modal/sheet is open, hide fixed-position chrome that would
+     otherwise overlap the modal's own sticky CTA bar. */
+  body.modal-open .mobile-action-bar,
+  body.modal-open .whatsapp-fab,
+  body.modal-open .today-ribbon {
+    display: none !important;
   }
 
   /* Mobile action bar — moved to the TOP, sticky under the header so

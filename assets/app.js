@@ -1050,6 +1050,7 @@ function productCard(product, options = {}) {
         <div class="product-meta ${isPortal ? "" : "public-listing"}" aria-label="${isPortal ? "Internal pricing details" : "Product details"}">
           ${(isPortal ? adminMeta : publicMeta).map((item) => `<span>${esc(item)}</span>`).join("")}
         </div>
+        ${isPortal && options.admin ? renderProductSparkline(product.id) : ""}
         <div class="product-actions">
           <button class="button secondary" type="button" data-action="view-product" data-product-id="${attr(product.id)}">View details</button>
           ${options.admin ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : renderAddToBag(product, disabled)}
@@ -1325,6 +1326,10 @@ function openModal(html) {
       </section>
     </div>
   `;
+  // Hide the mobile action bar + WhatsApp FAB while a modal is open so
+  // their fixed-positioning never overlaps the modal's CTA buttons on
+  // small screens.
+  document.body.classList.add("modal-open");
   qs(".modal-backdrop")?.addEventListener("click", (e) => {
     if (!e.target.closest(".detail-modal")) closeModal();
   });
@@ -1334,6 +1339,7 @@ function openModal(html) {
 function closeModal() {
   const root = qs("[data-modal-root]");
   if (root) root.innerHTML = "";
+  document.body.classList.remove("modal-open");
 }
 
 function showProductDetails(productId) {
@@ -1461,18 +1467,6 @@ function showProductDetails(productId) {
         </div>
       </div>
       ${!isPortal ? renderRecentlyViewedStrip(product.id) : ""}
-      ${isPortal ? "" : `
-        <!-- Mobile sticky bar. Hidden on desktop via CSS. The button itself
-             references the same add-cart action as the in-page CTA so we
-             have one canonical handler. -->
-        <div class="detail-sticky-cta" role="region" aria-label="Add to bag">
-          <div>
-            <strong>${PKR.format(parts.total)}</strong>
-            <small>${product.stock_mode === "preorder" ? `50% advance ${PKR.format(advanceDue)}` : "Pay in full at checkout"}</small>
-          </div>
-          <button class="button primary" type="button" data-action="add-cart" data-product-id="${attr(product.id)}">Add to bag</button>
-        </div>
-      `}
     </div>
   `);
 }
@@ -1819,6 +1813,34 @@ function renderWhatsappInbox() {
   }).join("");
 }
 
+// Compact 8-week sales sparkline for an admin product card. Reads from the
+// pre-computed state._productSalesByWeek bucket array. Returns empty string
+// when the product has zero sales in the window so we don't show a flat
+// "nothing happened" bar.
+function renderProductSparkline(productId) {
+  const buckets = state._productSalesByWeek;
+  if (!Array.isArray(buckets) || !buckets.length) return "";
+  const series = buckets.map((b) => b?.get?.(productId) || 0);
+  const total = series.reduce((s, v) => s + v, 0);
+  if (!total) return "";
+  const max = Math.max(1, ...series);
+  const w = 96, h = 18, gap = 1;
+  const bw = (w - gap * 7) / 8;
+  const bars = series.map((v, i) => {
+    const bh = Math.max(1, (v / max) * (h - 2));
+    const x = i * (bw + gap);
+    const y = h - bh;
+    const op = v > 0 ? (0.45 + (v / max) * 0.55) : 0.15;
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1" fill="var(--pink)" fill-opacity="${op.toFixed(2)}"/>`;
+  }).join("");
+  return `
+    <div class="product-sparkline" title="${total} units sold in last 8 weeks">
+      <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>
+      <small>${total} sold · 8 wk</small>
+    </div>
+  `;
+}
+
 // Per-product sales sparkline column on the Products tab — 8-week velocity
 // so the team can see what's selling at a glance.
 function renderProductSalesSparklines() {
@@ -2100,7 +2122,8 @@ function renderOverviewExtras() {
     })
     .slice(0, 6);
   const totalAttention = attentionRows.length + lowStock.length;
-  qs("[data-attention-count]").textContent = String(totalAttention);
+  const attentionCountEl = qs("[data-attention-count]");
+  if (attentionCountEl) attentionCountEl.textContent = String(totalAttention);
   const slaRows = attentionRows.slice(0, 10).map(({ order: o, sla }) => `
     <button class="attention-row tone-${sla.level}" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
       <span class="attention-tone">${sla.level === "danger" ? "●" : "▲"}</span>
@@ -2681,9 +2704,12 @@ function renderActionItems() {
       };
     });
 
-  qs("[data-action-count-balance]").textContent = String(balanceItems.length);
-  qs("[data-action-count-stale]").textContent = String(staleItems.length);
-  qs("[data-action-count-all]").textContent = String(balanceItems.length + staleItems.length);
+  const balCount = qs("[data-action-count-balance]");
+  const staleCount = qs("[data-action-count-stale]");
+  const allCount = qs("[data-action-count-all]");
+  if (balCount) balCount.textContent = String(balanceItems.length);
+  if (staleCount) staleCount.textContent = String(staleItems.length);
+  if (allCount) allCount.textContent = String(balanceItems.length + staleItems.length);
 
   const all = filter === "balance" ? balanceItems
     : filter === "stale" ? staleItems
@@ -3752,10 +3778,11 @@ function openCommandPalette() {
     }
     qsa(".cmd-palette-row").forEach((row, i) => row.classList.toggle("active", i === cursor));
   });
-  qs("[data-cmd-results]").addEventListener("click", (e) => {
+  qs("[data-cmd-results]")?.addEventListener("click", (e) => {
     const row = e.target.closest(".cmd-palette-row");
     if (!row) return;
-    const hits = qs("[data-cmd-results]")._hits || [];
+    const target = qs("[data-cmd-results]");
+    const hits = target?._hits || [];
     const i = Number(row.dataset.cmdIndex);
     if (hits[i]) hits[i].action();
   });
@@ -3849,12 +3876,16 @@ function renderLaunchChecklist() {
   `).join("");
 }
 
-// Kanban board view — 6 columns (one per status). Click any card → opens
-// the full-screen order detail. Cards are compact: ID + customer name +
-// total + age + SLA chip + watch star.
+// Kanban board view — 6 columns (one per status). Cards are virtualized
+// when a column has > 50 entries (renders the first 50 + a "Show all"
+// button) so an operator with 300 in-transit orders doesn't pay the cost
+// of building 300 DOM nodes per render. Click any card → full-screen
+// order detail.
+const KANBAN_VISIBLE_LIMIT = 50;
 function renderKanbanBoard(rows) {
   const slot = qs("[data-orders-board]");
   if (!slot) return;
+  const expanded = state._kanbanExpanded || new Set();
   const columns = [
     { key: "pending_review", label: "Pending Review", tone: "warn" },
     { key: "accepted", label: "Accepted", tone: "info" },
@@ -3865,6 +3896,9 @@ function renderKanbanBoard(rows) {
   ];
   slot.innerHTML = columns.map((col) => {
     const cards = rows.filter((o) => o.status === col.key);
+    const isExpanded = expanded.has(col.key);
+    const visible = (cards.length > KANBAN_VISIBLE_LIMIT && !isExpanded) ? cards.slice(0, KANBAN_VISIBLE_LIMIT) : cards;
+    const hiddenCount = cards.length - visible.length;
     return `
       <div class="kanban-col tone-${col.tone}" data-kanban-col="${attr(col.key)}">
         <header>
@@ -3872,8 +3906,8 @@ function renderKanbanBoard(rows) {
           <span class="kanban-count">${cards.length}</span>
         </header>
         <div class="kanban-cards" data-kanban-drop="${attr(col.key)}">
-          ${cards.length
-            ? cards.map((o) => {
+          ${visible.length
+            ? visible.map((o) => {
                 const sla = orderSlaBadge(o);
                 const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
                 const ageDays = daysSince(o.created_at);
@@ -3896,6 +3930,7 @@ function renderKanbanBoard(rows) {
               }).join("")
             : `<p class="kanban-empty">·</p>`
           }
+          ${hiddenCount > 0 ? `<button class="kanban-show-all" type="button" data-action="kanban-expand-col" data-col-key="${attr(col.key)}">Show ${hiddenCount} more</button>` : ""}
         </div>
       </div>
     `;
@@ -4954,6 +4989,9 @@ async function handleCheckout(event) {
       customer_email: data.customer_email,
       city: data.city,
       address: data.address,
+      // The "sender account title" they used last time — saves them
+      // re-typing the bank name on every order.
+      transfer_reference: data.transfer_reference || "",
     });
     form.reset();
     delete form.dataset.idempotencyKey;
@@ -5105,6 +5143,10 @@ function rememberCustomerProfile(profile) {
       customer_email: profile.customer_email || store[key]?.customer_email || "",
       city: profile.city || store[key]?.city || "",
       address: profile.address || store[key]?.address || "",
+      // Save the bank-account name they typed last so the transfer-reference
+      // field can prefill it on their next order. We don't store the
+      // transaction ID itself (always unique per transfer).
+      transfer_reference: profile.transfer_reference || store[key]?.transfer_reference || "",
       saved_at: new Date().toISOString(),
     };
     localStorage.setItem(CUSTOMER_PROFILE_KEY, JSON.stringify(store));
@@ -6688,6 +6730,7 @@ async function saveProduct(event) {
   product.featured = state.products.length < 3;
   product.preorder_weeks = product.stock_mode === "preorder" ? Number(state.settings.preorder_weeks || 4) : 0;
   product.status = product.product_status || "active";
+  const restore = withSubmitState(form, "Saving product…");
   try {
     const saved = await apiFetch("/api/catalog", { method: "POST", body: JSON.stringify(product) }, { product });
     const index = state.products.findIndex((item) => item.id === product.id);
@@ -6698,6 +6741,8 @@ async function saveProduct(event) {
     toast("Product saved.");
   } catch {
     toast("Product could not be saved. Check the portal key and try again.");
+  } finally {
+    restore();
   }
 }
 
@@ -6860,14 +6905,33 @@ async function importProductFromUrl() {
   toast("Autofill complete — review the form before saving.");
 }
 
+// Disables the submit button on a form, swaps its text for a busy state,
+// and returns a restore() callback the caller invokes in finally so the
+// button is always restored even if the request throws.
+function withSubmitState(form, busyText = "Saving…") {
+  const btn = form?.querySelector("button[type='submit']");
+  if (!btn) return () => {};
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.dataset.busy = "1";
+  btn.textContent = busyText;
+  return () => {
+    btn.disabled = false;
+    btn.removeAttribute("data-busy");
+    btn.textContent = original;
+  };
+}
+
 async function saveSettings(event) {
   event.preventDefault();
-  const settings = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const settings = Object.fromEntries(new FormData(form).entries());
   settings.markup_rate = Number(settings.markup_rate);
   if (settings.markup_rate > 1) settings.markup_rate = settings.markup_rate / 100;
   settings.fx_rate = Number(settings.fx_rate);
   settings.preorder_weeks = Number(settings.preorder_weeks);
   settings.response_sla_minutes = Number(settings.response_sla_minutes || 15);
+  const restore = withSubmitState(form, "Saving settings…");
   try {
     const saved = await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(settings) }, { settings });
     state.settings = { ...state.settings, ...(saved.settings || settings) };
@@ -6876,6 +6940,8 @@ async function saveSettings(event) {
     toast("Settings saved.");
   } catch {
     toast("Settings could not be saved. Check the portal key and try again.");
+  } finally {
+    restore();
   }
 }
 
@@ -7107,7 +7173,8 @@ async function saveOrderNote(orderId) {
 
 async function createShipmentBatch(event) {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
   const batch = {
     id: `batch-${Date.now()}`,
     name: data.name,
@@ -7118,13 +7185,20 @@ async function createShipmentBatch(event) {
     note: data.note || shipmentNotice(),
     order_ids: [],
   };
-  const saved = await apiFetch("/api/admin/shipments", { method: "POST", body: JSON.stringify(batch) }, { shipmentBatch: batch });
-  state.shipmentBatches.unshift(saved.shipmentBatch || batch);
-  state.settings.next_shipment_date = batch.eta_date;
-  state.settings.shipment_notice = batch.note;
-  event.currentTarget.reset();
-  renderAll();
-  toast("Shipment batch created and set as the current ETA.");
+  const restore = withSubmitState(form, "Creating batch…");
+  try {
+    const saved = await apiFetch("/api/admin/shipments", { method: "POST", body: JSON.stringify(batch) }, { shipmentBatch: batch });
+    state.shipmentBatches.unshift(saved.shipmentBatch || batch);
+    state.settings.next_shipment_date = batch.eta_date;
+    state.settings.shipment_notice = batch.note;
+    form.reset();
+    renderAll();
+    toast("Shipment batch created and set as the current ETA.");
+  } catch {
+    toast("Couldn't create batch. Check the portal key and try again.");
+  } finally {
+    restore();
+  }
 }
 
 async function runScraper() {
@@ -7140,7 +7214,8 @@ async function runScraper() {
 
 async function queueCreative(event) {
   event.preventDefault();
-  const formData = new FormData(event.currentTarget);
+  const form = event.currentTarget;
+  const formData = new FormData(form);
   const data = Object.fromEntries(formData.entries());
   const product = state.products.find((item) => item.id === data.product_id) || state.products[0];
   const file = formData.get("asset_file");
@@ -7156,19 +7231,27 @@ async function queueCreative(event) {
     source: data.source || "Manual upload",
     preview_url: hasFile && file.type?.startsWith("image/") ? URL.createObjectURL(file) : product?.image_url || "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
   };
-  const saved = await apiFetch("/api/admin/marketing", {
-    method: "POST",
-    body: JSON.stringify({ type: "creative_job", payload: job }),
-  }, { creativeJob: job });
-  state.creativeJobs.unshift(saved.creativeJob || job);
-  event.currentTarget.reset();
-  renderMarketing();
-  toast("Content added to the library.");
+  const restore = withSubmitState(form, "Adding…");
+  try {
+    const saved = await apiFetch("/api/admin/marketing", {
+      method: "POST",
+      body: JSON.stringify({ type: "creative_job", payload: job }),
+    }, { creativeJob: job });
+    state.creativeJobs.unshift(saved.creativeJob || job);
+    form.reset();
+    renderMarketing();
+    toast("Content added to the library.");
+  } catch {
+    toast("Couldn't add content. Try again.");
+  } finally {
+    restore();
+  }
 }
 
 async function createCampaign(event) {
   event.preventDefault();
-  const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const data = Object.fromEntries(new FormData(form).entries());
   const campaign = {
     id: `camp-${Date.now()}`,
     name: data.name,
@@ -7178,14 +7261,21 @@ async function createCampaign(event) {
     leads: 0,
     revenue_pkr: 0,
   };
-  const saved = await apiFetch("/api/admin/marketing", {
-    method: "POST",
-    body: JSON.stringify({ type: "campaign", payload: campaign }),
-  }, { campaign });
-  state.campaigns.unshift(saved.campaign || campaign);
-  event.currentTarget.reset();
-  renderMarketing();
-  toast("Campaign created in draft.");
+  const restore = withSubmitState(form, "Creating…");
+  try {
+    const saved = await apiFetch("/api/admin/marketing", {
+      method: "POST",
+      body: JSON.stringify({ type: "campaign", payload: campaign }),
+    }, { campaign });
+    state.campaigns.unshift(saved.campaign || campaign);
+    form.reset();
+    renderMarketing();
+    toast("Campaign created in draft.");
+  } catch {
+    toast("Couldn't create campaign. Try again.");
+  } finally {
+    restore();
+  }
 }
 
 function approveCreative(creativeId) {
@@ -8019,6 +8109,12 @@ function wireEvents() {
       submitManualOrder();
       return;
     }
+    if (action === "kanban-expand-col") {
+      state._kanbanExpanded = state._kanbanExpanded || new Set();
+      state._kanbanExpanded.add(target.dataset.colKey);
+      renderAdminOrders();
+      return;
+    }
     if (action === "set-orders-view") {
       const view = target.dataset.ordersView || "list";
       state.ordersView = view;
@@ -8368,6 +8464,13 @@ function wireEvents() {
             filled += 1;
           }
         });
+        // Hint the saved bank-account name into the placeholder so they
+        // can re-use it with one keystroke (we don't overwrite an
+        // in-progress value).
+        const refInput = form.elements.transfer_reference;
+        if (refInput && !refInput.value && profile.transfer_reference) {
+          refInput.placeholder = `Last time: ${profile.transfer_reference}`;
+        }
         if (filled) toast(`Welcome back ${profile.customer_name ? profile.customer_name.split(" ")[0] : ""} — autofilled ${filled} field${filled > 1 ? "s" : ""}.`);
       }
 
