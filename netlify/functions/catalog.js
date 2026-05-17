@@ -1,6 +1,9 @@
 import { getProducts, getSettings, hasSupabase, json, requireAdmin, supabase, upsertProduct } from "./_shared/supabase.js";
 
 function customerPrice(product, settings) {
+  // In-stock items priced directly in PKR — no FX or USD math.
+  const direct = Number(product.customer_price_pkr || 0);
+  if (direct > 0) return Math.ceil(direct);
   const fx = Number(product.fx_rate || settings.fx_rate || 282);
   const markup = Number(product.markup_rate ?? settings.markup_rate ?? 0.25);
   const retailPkr = Number(product.usa_price_usd || 0) * fx;
@@ -23,6 +26,8 @@ function publicProduct(product, settings) {
     markup_rate: product.markup_rate,
     stock_mode: product.stock_mode,
     inventory: product.inventory,
+    delivery_days_min: product.delivery_days_min || 0,
+    delivery_days_max: product.delivery_days_max || 0,
     image_url: product.image_url,
     gallery_urls: product.gallery_urls || [],
     variants: product.variants,
@@ -67,9 +72,21 @@ export default async (req) => {
       if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
       const product = await req.json();
       if (!product.title || !product.id) return json({ error: "Product id and title are required." }, { status: 400 });
+      // Reject unknown keys the table doesn't have (defensive — pricing_mode
+      // is a form-only flag, never a column).
+      delete product.pricing_mode;
+      const hasDirectPrice = Number(product.customer_price_pkr || 0) > 0;
+      const hasUsdPrice = Number(product.usa_price_usd || 0) > 0;
+      if (!hasDirectPrice && !hasUsdPrice) {
+        return json({ error: "Set either a USD retail price (preorder) or a PKR customer price (in-stock)." }, { status: 400 });
+      }
       if (!hasSupabase()) return json({ product, configured: false });
-      const saved = await upsertProduct(product);
-      return json({ product: saved, configured: true });
+      try {
+        const saved = await upsertProduct(product);
+        return json({ product: saved, configured: true });
+      } catch (error) {
+        return json({ error: `Save failed: ${error.message}` }, { status: 400 });
+      }
     }
 
     if (req.method === "DELETE") {

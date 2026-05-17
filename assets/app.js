@@ -1011,8 +1011,15 @@ function productCard(product, options = {}) {
     ? `https://wa.me/${waNumber}?text=${encodeURIComponent(`Hi Global Bestie, what are the available options for ${product.title}?`)}`
     : "";
 
+  const dMin = Number(product.delivery_days_min || 0);
+  const dMax = Number(product.delivery_days_max || 0);
+  const inStockDeliveryLabel = dMin && dMax
+    ? `Delivered in ${dMin}-${dMax} days`
+    : (dMax ? `Delivered in ${dMax} days` : "Delivered in 3-5 days");
   const publicMeta = [
-    product.stock_mode === "preorder" ? nextShipmentLabel() : `${Number(product.inventory || 0)} available`,
+    product.stock_mode === "preorder"
+      ? nextShipmentLabel()
+      : `${Number(product.inventory || 0)} available · ${inStockDeliveryLabel}`,
   ].filter(Boolean);
   const adminMeta = [
     `USA ${USD.format(product.usa_price_usd || 0)}`,
@@ -1090,7 +1097,7 @@ function productCard(product, options = {}) {
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="14" height="14"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
               Ask about this
             </button>
-            <small class="cta-helper">${product.stock_mode === "preorder" ? "50% advance at checkout · balance on Pakistan arrival" : "Pay in full after team confirms"}</small>
+            <small class="cta-helper">${product.stock_mode === "preorder" ? "50% advance at checkout · balance on Pakistan arrival" : `Pay in full at checkout · ${inStockDeliveryLabel.toLowerCase()}`}</small>
           </div>
         ` : ""}
       </div>
@@ -4585,6 +4592,18 @@ function fillSettingsForm() {
   });
 }
 
+// Show/hide pricing fields based on the selected mode. Preorder shows USD +
+// FX + shipping (we compute the customer PKR). In-stock hides those and
+// shows a direct PKR price plus the 3-5 day delivery window override.
+function applyPricingModeVisibility(form, mode) {
+  if (!form) return;
+  const active = mode === "in_stock" ? "in_stock" : "preorder";
+  form.querySelectorAll("[data-pricing-field]").forEach((node) => {
+    const show = node.dataset.pricingField === active;
+    node.style.display = show ? "" : "none";
+  });
+}
+
 function fillProductForm(product = {}) {
   const form = qs("[data-product-editor]");
   if (!form) return;
@@ -4594,9 +4613,13 @@ function fillProductForm(product = {}) {
     brand: "",
     marketing_badge: "",
     category: "handbags",
+    pricing_mode: "preorder",
     usa_price_usd: "",
     shipping_pkr: "",
     fx_rate: state.settings.fx_rate,
+    customer_price_pkr: "",
+    delivery_days_min: "",
+    delivery_days_max: "",
     stock_mode: "preorder",
     inventory: 0,
     low_stock_threshold: 2,
@@ -4611,14 +4634,18 @@ function fillProductForm(product = {}) {
     social_proof: "",
     description: "",
   };
+  const inferredMode = product.pricing_mode
+    || (Number(product.customer_price_pkr || 0) > 0 && !Number(product.usa_price_usd || 0) ? "in_stock" : "preorder");
   const prepared = {
     ...defaults,
     ...product,
+    pricing_mode: inferredMode,
     gallery_urls: Array.isArray(product.gallery_urls) ? product.gallery_urls.join("\n") : product.gallery_urls || "",
   };
   Object.entries(prepared).forEach(([key, value]) => {
     if (form.elements[key]) form.elements[key].value = value;
   });
+  applyPricingModeVisibility(form, inferredMode);
   const imagePreview = qs("[data-image-preview]");
   if (imagePreview) {
     const url = prepared.image_url || "";
@@ -6852,11 +6879,40 @@ async function saveProduct(event) {
   const form = event.currentTarget;
   const product = Object.fromEntries(new FormData(form).entries());
   delete product.image_file;
+  if (!product.title || !product.title.trim()) {
+    toast("Product title is required.");
+    return;
+  }
   product.id = product.id || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  product.usa_price_usd = Number(product.usa_price_usd);
-  product.shipping_pkr = Number(product.shipping_pkr);
-  product.fx_rate = Number(product.fx_rate);
-  product.inventory = Number(product.inventory);
+  const pricingMode = product.pricing_mode || (Number(product.customer_price_pkr || 0) > 0 ? "in_stock" : "preorder");
+  delete product.pricing_mode;
+  if (pricingMode === "in_stock") {
+    product.stock_mode = "in_stock";
+    product.customer_price_pkr = Number(product.customer_price_pkr || 0);
+    if (product.customer_price_pkr <= 0) {
+      toast("Set a customer price in PKR for in-stock products.");
+      return;
+    }
+    product.usa_price_usd = 0;
+    product.shipping_pkr = 0;
+    product.fx_rate = Number(state.settings.fx_rate || 282);
+    product.delivery_days_min = Number(product.delivery_days_min || 3);
+    product.delivery_days_max = Number(product.delivery_days_max || 5);
+    product.preorder_weeks = 0;
+  } else {
+    product.usa_price_usd = Number(product.usa_price_usd || 0);
+    product.shipping_pkr = Number(product.shipping_pkr || 0);
+    product.fx_rate = Number(product.fx_rate || state.settings.fx_rate || 282);
+    if (product.usa_price_usd <= 0) {
+      toast("Set the USA retail USD price for preorder products.");
+      return;
+    }
+    product.customer_price_pkr = 0;
+    product.delivery_days_min = 0;
+    product.delivery_days_max = 0;
+    product.preorder_weeks = Number(state.settings.preorder_weeks || 4);
+  }
+  product.inventory = Number(product.inventory || 0);
   product.low_stock_threshold = product.low_stock_threshold !== "" && product.low_stock_threshold != null
     ? Number(product.low_stock_threshold)
     : 2;
@@ -6866,9 +6922,9 @@ async function saveProduct(event) {
   }
   product.supplier_cost_pkr = Number(product.supplier_cost_pkr || 0);
   product.gallery_urls = String(product.gallery_urls || "").split(/\n|,/).map((url) => url.trim()).filter(Boolean);
+  product.image_url = String(product.image_url || "").trim();
   product.markup_rate = state.settings.markup_rate;
   product.featured = state.products.length < 3;
-  product.preorder_weeks = product.stock_mode === "preorder" ? Number(state.settings.preorder_weeks || 4) : 0;
   product.status = product.product_status || "active";
   const restore = withSubmitState(form, "Saving product…");
   try {
@@ -8695,6 +8751,16 @@ function wireEvents() {
   });
   qs("[data-admin-login]")?.addEventListener("submit", handleAdminLogin);
   qs("[data-product-editor]")?.addEventListener("submit", saveProduct);
+  qs("[data-product-editor]")?.addEventListener("change", (e) => {
+    if (e.target.name === "pricing_mode") {
+      applyPricingModeVisibility(e.currentTarget, e.target.value);
+      // Mirror pricing_mode -> stock_mode default so the cards/PDP show
+      // the right delivery copy without an extra click.
+      const stockSelect = e.currentTarget.elements.stock_mode;
+      if (stockSelect) stockSelect.value = e.target.value;
+      updatePricePreview();
+    }
+  });
   qs("[data-product-editor]")?.addEventListener("input", (e) => {
     updatePricePreview();
     if (e.target.name === "image_url") {
@@ -8818,9 +8884,71 @@ function animateHeroText() {
   if (!h1 || h1.dataset.split) return;
   h1.dataset.split = "1";
   const text = h1.textContent.trim();
-  h1.innerHTML = text.split(/\s+/).map((word, i) =>
-    `<span class="hero-word" style="--wi:${i}">${word}</span>`
-  ).join(" ");
+  // Each word lives inside an overflow-clip span; a ::before pseudo
+  // (driven by [data-word]) is what actually rises from below. Splitting
+  // by word — not character — keeps screen-reader output natural.
+  h1.innerHTML = text.split(/\s+/).map((word, i) => {
+    const safe = word.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    return `<span class="hero-word-mask"><span class="hero-word" style="--wi:${i}">${safe}</span></span>`;
+  }).join(" ");
+}
+
+// Cinematic landing — kick the hero cards in once paint is settled so the
+// mask-reveal headline lands first, then the editorial cards stagger in.
+function startCinematicEntrance() {
+  const cards = qsa(".hero-card");
+  if (!cards.length) return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cards.forEach((card) => card.classList.add("is-visible"));
+    });
+  });
+}
+
+// Cursor-following spotlight on the hero stage. Falls back gracefully on
+// touch (no pointermove fires) — the CSS default centers the halo.
+function wireHeroSpotlight() {
+  const stage = qs(".hero-stage");
+  if (!stage || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let raf = 0;
+  stage.addEventListener("pointermove", (e) => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      const rect = stage.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      stage.style.setProperty("--mx", `${x}%`);
+      stage.style.setProperty("--my", `${y}%`);
+      raf = 0;
+    });
+  }, { passive: true });
+  stage.addEventListener("pointerleave", () => {
+    stage.style.setProperty("--mx", "50%");
+    stage.style.setProperty("--my", "40%");
+  });
+}
+
+// Hero parallax — drives a CSS variable --parallax (0..1) as the hero
+// scrolls out, which each hero card consumes at its own translate rate.
+function wireHeroParallax() {
+  const shell = qs(".hero-shell");
+  if (!shell || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let ticking = false;
+  const update = () => {
+    const rect = shell.getBoundingClientRect();
+    // 0 when hero is in view at top of viewport, 1 when fully scrolled past.
+    const total = rect.height + window.innerHeight * 0.2;
+    const progress = Math.min(1, Math.max(0, -rect.top / total));
+    shell.style.setProperty("--parallax", progress.toFixed(3));
+    ticking = false;
+  };
+  update();
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+  window.addEventListener("resize", update, { passive: true });
 }
 
 function init() {
@@ -8834,6 +8962,9 @@ function init() {
   setRoute();
   renderAll();
   animateHeroText();
+  startCinematicEntrance();
+  wireHeroSpotlight();
+  wireHeroParallax();
   initReveal();
   pruneLocalStorage();
   registerServiceWorker();

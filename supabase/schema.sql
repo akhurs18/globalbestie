@@ -93,6 +93,27 @@ alter table public.products add column if not exists social_proof text;
 alter table public.products add column if not exists marketing_badge text;
 alter table public.products add column if not exists variant_display_hint text;
 
+-- Direct PKR price for in-stock items that are already in Pakistan. When
+-- populated, the storefront / portal use this value verbatim instead of
+-- deriving the price from USD × FX × (1+markup) + shipping. Lets the team
+-- sell ready-to-ship inventory without dealing with the import-pricing
+-- pipeline at all.
+alter table public.products add column if not exists customer_price_pkr numeric(12, 2) default 0;
+
+-- Per-product delivery window override. Defaults are sensible (28 days for
+-- preorder, 5 days for in-stock) but the team can tighten or extend it per
+-- product. delivery_days_max == 0 means "use the global default".
+alter table public.products add column if not exists delivery_days_min integer default 0;
+alter table public.products add column if not exists delivery_days_max integer default 0;
+
+-- image_url was not null in the original schema. New uploads that come
+-- with a file (not a URL) need to insert the row before the file lands —
+-- so make this nullable on existing deployments. Old rows keep their
+-- value, new rows can leave it blank temporarily.
+alter table public.products alter column image_url drop not null;
+-- Same for usa_price_usd: in-stock items have no USD cost.
+alter table public.products alter column usa_price_usd drop not null;
+
 create table if not exists public.orders (
   id text primary key,
   customer_name text not null,

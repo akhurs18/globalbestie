@@ -106,7 +106,7 @@ async function repriceItems(items) {
   const inList = ids.map((id) => `"${encodeURIComponent(id)}"`).join(",");
   let products = [];
   try {
-    products = await supabase(`/rest/v1/products?id=in.(${inList})&select=id,title,usa_price_usd,shipping_pkr,markup_rate,fx_rate,stock_mode,inventory,status,image_url,source_url`);
+    products = await supabase(`/rest/v1/products?id=in.(${inList})&select=id,title,usa_price_usd,shipping_pkr,markup_rate,fx_rate,customer_price_pkr,delivery_days_min,delivery_days_max,stock_mode,inventory,status,image_url,source_url`);
   } catch {
     products = [];
   }
@@ -125,7 +125,11 @@ async function repriceItems(items) {
     const margin = Number(product.markup_rate || 0.25);
     const shipping = Number(product.shipping_pkr || 0);
     const usd = Number(product.usa_price_usd || 0);
-    const canonical = Math.ceil(usd * fx * (1 + margin) + shipping);
+    const directPkr = Number(product.customer_price_pkr || 0);
+    // In-stock items priced directly in PKR skip the USD/FX/markup math.
+    const canonical = directPkr > 0
+      ? Math.ceil(directPkr)
+      : Math.ceil(usd * fx * (1 + margin) + shipping);
     const clientPrice = Number(item.unit_price_pkr || 0);
     // Allow ±1% drift to absorb rounding. Anything else, server price wins.
     const drift = clientPrice > 0 ? Math.abs(canonical - clientPrice) / canonical : 1;
