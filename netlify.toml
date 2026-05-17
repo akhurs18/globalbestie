@@ -22,6 +22,13 @@ for = "/*"
   X-Content-Type-Options = "nosniff"
   Referrer-Policy = "strict-origin-when-cross-origin"
   Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+  # Content Security Policy — locks down what the browser can load.
+  # `unsafe-inline` is required because both portal.html and index.html
+  # have inline event handlers (onerror on <img>). 'unsafe-eval' is not
+  # allowed. images.weserv.nl is whitelisted for the proxy image CDN.
+  # Supabase host is whitelisted for direct storage object URLs.
+  Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://images.weserv.nl https://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+  Strict-Transport-Security = "max-age=31536000; includeSubDomains"
 
 [[headers]]
 for = "/assets/*"

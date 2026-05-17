@@ -4138,6 +4138,138 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
   }
 }
 
+/* ═══════════════════════ AUTH MODAL ═══════════════════════ */
+.auth-modal {
+  display: grid;
+  gap: 16px;
+  padding: 14px 6px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+.auth-modal h2 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.8rem;
+}
+.auth-label {
+  display: grid;
+  gap: 6px;
+  color: var(--rose);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.auth-label input {
+  min-height: 50px;
+  padding: 12px 16px;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  font-family: "Archivo", sans-serif;
+  text-transform: none;
+  color: var(--cream);
+}
+.auth-dev-code {
+  padding: 10px 14px;
+  border: 1px dashed var(--amber);
+  border-radius: var(--radius);
+  background: rgba(255, 208, 122, 0.08);
+  color: var(--amber);
+  font-size: 0.84rem;
+}
+.auth-dev-code code { font-size: 1.1rem; font-weight: 800; }
+
+.account-modal .account-orders { display: grid; gap: 8px; }
+.account-modal h3 {
+  margin: 0;
+  color: var(--muted);
+  font-family: "Archivo", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.account-order-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.account-order-list button {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cream);
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 160ms var(--ease), background 160ms var(--ease);
+}
+.account-order-list button:hover {
+  border-color: rgba(255, 79, 154, 0.42);
+  background: rgba(255, 79, 154, 0.08);
+}
+.account-order-list strong { color: var(--cream); }
+.account-order-list small { color: var(--muted); font-size: 0.78rem; }
+.account-order-amount { color: var(--rose); font-weight: 800; font-size: 0.86rem; }
+
+.header-actions { display: inline-flex; gap: 10px; align-items: center; }
+
+/* ═══════════════════════ LAST CONTACT PILL ═══════════════════════ */
+.last-contact-pill {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.last-contact-pill.tone-ok { background: rgba(152, 240, 195, 0.18); color: var(--green); }
+.last-contact-pill.tone-info { background: rgba(255, 156, 199, 0.18); color: var(--rose); }
+
+/* ═══════════════════════ AUTO-WA FAILED BANNER ═══════════════════════ */
+.wa-failed-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(255, 208, 122, 0.42);
+  border-radius: var(--radius);
+  background: rgba(255, 208, 122, 0.08);
+}
+.wa-failed-banner strong { color: var(--amber); font-size: 0.9rem; }
+.wa-failed-banner span { color: var(--cream); font-size: 0.84rem; flex: 1; }
+.wa-failed-banner button { padding: 6px 12px; min-height: 32px; }
+
+/* ═══════════════════════ KANBAN SAVING PULSE ═══════════════════════ */
+.kanban-card-saving {
+  animation: kanban-saving 1.2s ease-in-out infinite;
+}
+@keyframes kanban-saving {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 79, 154, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 79, 154, 0.32); }
+}
+
+/* ═══════════════════════ TOAST WITH UNDO ═══════════════════════ */
+.toast-undo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+}
+.toast-undo-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--pink);
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--black);
+  font-weight: 800;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 140ms var(--ease);
+}
+.toast-undo-btn:hover { background: var(--rose); }
+
 /* Per-product 8-week sales sparkline (admin product card) */
 .product-sparkline {
   display: flex;

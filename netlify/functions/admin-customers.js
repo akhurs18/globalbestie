@@ -102,16 +102,35 @@ export default async (req) => {
         });
       }
       // Audit row — captures who/what/before/after so the team can answer
-      // "who changed Ayesha's tier last week?". Best-effort; never blocks.
+      // "who changed Ayesha's tier last week?". PII is stripped from both
+      // `before` and `updates` so a future audit-log leak doesn't disclose
+      // every customer's address. We keep just the change-relevant scalar
+      // fields and replace anything PII-ish with a placeholder.
+      const AUDIT_PII_FIELDS = new Set(["default_address", "email", "address", "name"]);
+      const redactPayload = (obj) => {
+        if (!obj || typeof obj !== "object") return obj;
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) {
+          if (AUDIT_PII_FIELDS.has(k)) {
+            out[k] = v ? `[redacted ${k}]` : null;
+          } else {
+            out[k] = v;
+          }
+        }
+        return out;
+      };
       try {
+        // Actor: pull from a custom header the portal injects after auth,
+        // falling back to "admin" when no per-user session exists yet.
+        const actor = req.headers.get("x-actor") || "admin";
         await supabase("/rest/v1/admin_audit", {
           method: "POST",
           body: JSON.stringify({
-            actor: "admin",
+            actor,
             action: existing?.length ? "customer.update" : "customer.create",
             entity_type: "customer",
             entity_id: canon,
-            payload: { before, updates },
+            payload: { before: redactPayload(before), updates: redactPayload(updates) },
             created_at: new Date().toISOString(),
           }),
         });

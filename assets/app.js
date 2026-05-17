@@ -539,6 +539,7 @@ const state = {
   watchedOrders: new Set(JSON.parse(localStorage.getItem("gb_watched_orders") || "[]")),
   ordersView: localStorage.getItem("gb_orders_view") || "list",
   customerColumns: JSON.parse(localStorage.getItem("gb_customer_columns") || "{\"last_wa\":false,\"trend\":false}"),
+  me: null, // populated by checkSession() — { phone, name, ... } when logged in
   settings: { ...sampleSettings },
   cart: loadJSON("mm_cart", []),
   adminToken: localStorage.getItem("mm_admin_token") || "",
@@ -607,6 +608,29 @@ function toast(message) {
   node.textContent = message;
   region.append(node);
   setTimeout(() => node.remove(), 3600);
+}
+
+// Toast with an "Undo" button. Stays for 10 seconds. On tap, runs `onUndo`
+// and removes itself immediately. Used for reversible Kanban moves so an
+// accidental drag-to-delivered doesn't require a trip into the order modal.
+function showUndoToast(message, onUndo) {
+  const region = qs("[data-toast-region]");
+  if (!region) return;
+  const node = document.createElement("div");
+  node.className = "toast toast-undo";
+  const msg = document.createElement("span");
+  msg.textContent = message;
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Undo";
+  btn.className = "toast-undo-btn";
+  btn.addEventListener("click", () => {
+    node.remove();
+    try { onUndo(); } catch {}
+  });
+  node.append(msg, btn);
+  region.append(node);
+  setTimeout(() => node.remove(), 10_000);
 }
 
 function calculatePrice(product) {
@@ -850,7 +874,12 @@ async function apiFetch(path, options = {}, fallback) {
   try {
     const headers = new Headers(options.headers || {});
     if (!headers.has("Content-Type") && options.body) headers.set("Content-Type", "application/json");
-    if (state.adminToken) headers.set("Authorization", `Bearer ${state.adminToken}`);
+    // Only attach the admin bearer to endpoints that actually require it.
+    // Stops the token from leaking onto customer-facing POSTs (/api/orders,
+    // /api/leads, /api/catalog, /api/public/*) when an operator browses the
+    // storefront in the same tab they're logged into the portal with.
+    const needsAdmin = path.startsWith("/api/admin/") || path === "/api/scraper";
+    if (state.adminToken && needsAdmin) headers.set("Authorization", `Bearer ${state.adminToken}`);
     const response = await fetch(path, { ...options, headers });
     if (!response.ok) throw new Error(await response.text());
     return await response.json();
@@ -1130,11 +1159,18 @@ function renderProducts() {
 }
 
 function cartLines() {
-  return state.cart.map((line) => {
-    const product = state.products.find((item) => item.id === line.product_id) || line.product;
-    const subtotal = calculatePrice(product) * line.quantity;
-    return { ...line, product, subtotal };
-  });
+  return state.cart
+    .map((line) => {
+      // Restored carts from localStorage may reference products that have
+      // since been deleted/archived. Fall back to the snapshot stored on
+      // the cart line itself; if neither resolves, the line is dropped to
+      // prevent renderCart from crashing on .title / .stock_mode access.
+      const product = state.products.find((item) => item.id === line.product_id) || line.product;
+      if (!product || !product.title) return null;
+      const subtotal = calculatePrice(product) * line.quantity;
+      return { ...line, product, subtotal };
+    })
+    .filter(Boolean);
 }
 
 function cartTotal() {
@@ -1516,7 +1552,7 @@ function showOrderDetails(orderId) {
         <div>
           <p class="kicker">Order command drawer</p>
           <h2>${order.id}</h2>
-          <p>${order.customer_name} · ${esc(formatPkDisplay(canon) || order.customer_phone || "")} · ${order.channel || "Storefront"} · ${order.priority || "Standard"} · Owner ${order.owner || "Unassigned"}</p>
+          <p>${esc(order.customer_name || "")} · ${esc(formatPkDisplay(canon) || order.customer_phone || "")} · ${esc(order.channel || "Storefront")} · ${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</p>
         </div>
         <div class="drawer-actions">
           ${order.status === "pending_review" ? `<button class="button primary" type="button" data-action="accept-order" data-order-id="${order.id}">Accept order</button>` : ""}
@@ -1526,6 +1562,22 @@ function showOrderDetails(orderId) {
         </div>
       </div>
       ${repeatBanner}
+      ${(() => {
+        // If the auto-WhatsApp on this order failed silently, surface it
+        // here as a yellow banner so the operator can manually resend.
+        const failed = events.find((e) => e.status === "auto_whatsapp_failed");
+        const succeeded = events.find((e) => e.status === "auto_whatsapp_sent" && new Date(e.created_at) > new Date(failed?.created_at || 0));
+        if (failed && !succeeded) {
+          return `
+            <div class="wa-failed-banner">
+              <strong>⚠ Auto-WhatsApp didn't send</strong>
+              <span>${esc(failed.note || "Maychats returned an error.")}</span>
+              <button class="button secondary" type="button" data-action="open-wa-templates" data-order-id="${attr(order.id)}">Send manually</button>
+            </div>
+          `;
+        }
+        return "";
+      })()}
       <div class="payment-ledger">
         <article><span>Total order value</span><strong>${PKR.format(payment.total)}</strong></article>
         <article><span>Advance due / paid</span><strong>${PKR.format(payment.advanceDue)} / ${PKR.format(advancePaid)}</strong></article>
@@ -1554,7 +1606,7 @@ function showOrderDetails(orderId) {
         <section class="detail-panel">
           <h3>Customer</h3>
           <dl class="detail-list">
-            <div><dt>Name</dt><dd>${order.customer_name}</dd></div>
+            <div><dt>Name</dt><dd>${esc(order.customer_name || "")}</dd></div>
             <div><dt>WhatsApp</dt><dd>${esc(formatPkDisplay(canonPhone(order.customer_phone)) || order.customer_phone || "")}</dd></div>
             <div><dt>Instagram</dt><dd>${order.customer_instagram || "Not linked"}</dd></div>
             <div><dt>Email</dt><dd>${order.customer_email || "Not added"}</dd></div>
@@ -1571,7 +1623,7 @@ function showOrderDetails(orderId) {
           <dl class="detail-list">
             <div><dt>Status</dt><dd>${order.status.replaceAll("_", " ")}</dd></div>
             <div><dt>Shipment ETA</dt><dd>${order.eta || (payment.hasPreorder ? nextShipmentLabel() : "Set after dispatch")}</dd></div>
-            <div><dt>Assigned batch</dt><dd>${batch ? `${batch.name} · ${batchStatusLabel(batch.status)}` : "Not assigned"}</dd></div>
+            <div><dt>Assigned batch</dt><dd>${batch ? `${esc(batch.name)} · ${esc(batchStatusLabel(batch.status))}` : "Not assigned"}</dd></div>
             <div><dt>Source retailer</dt><dd>${order.source_retailer || "Not assigned"}</dd></div>
             <div><dt>Source URL</dt><dd>${order.source_url ? `<a href="${order.source_url}" target="_blank" rel="noreferrer">${order.source_url}</a>` : "Not added"}</dd></div>
             <div><dt>USA purchase ID</dt><dd>${order.source_purchase_id || "Not purchased yet"}</dd></div>
@@ -1582,7 +1634,7 @@ function showOrderDetails(orderId) {
           <label>Assign shipment batch
             <select data-order-batch="${order.id}">
               <option value="">Select batch</option>
-              ${state.shipmentBatches.map((item) => `<option value="${item.id}" ${batch?.id === item.id ? "selected" : ""}>${item.name} · ${formatDate(item.eta_date)} · ${Number(item.used || 0)}/${Number(item.capacity || 0)}</option>`).join("")}
+              ${state.shipmentBatches.map((item) => `<option value="${attr(item.id)}" ${batch?.id === item.id ? "selected" : ""}>${esc(item.name)} · ${esc(formatDate(item.eta_date))} · ${Number(item.used || 0)}/${Number(item.capacity || 0)}</option>`).join("")}
             </select>
           </label>
           <button class="button secondary wide" type="button" data-action="assign-shipment-batch" data-order-id="${order.id}">Assign batch</button>
@@ -1607,11 +1659,11 @@ function showOrderDetails(orderId) {
             const product = relatedProductForItem(item);
             return `
               <div class="order-item-line">
-                <img src="${imageUrlThumb(item.image_url || product.image_url || "")}" alt="${item.title}" loading="lazy" decoding="async" />
+                <img src="${safeUrl(imageUrlThumb(item.image_url || product.image_url || ""), "")}" alt="${attr(item.title || "")}" loading="lazy" decoding="async" />
                 <div>
-                  <strong>${item.title}</strong>
-                  <small>${item.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${item.quantity || 1} · ${item.variant || product.variants || "Variant not set"}</small>
-                  <small>${item.source_status || "Source status pending"} · ${item.source_url || product.source_url || "No source URL"}</small>
+                  <strong>${esc(item.title || "")}</strong>
+                  <small>${item.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${Number(item.quantity || 1)} · ${esc(item.variant || product.variants || "Variant not set")}</small>
+                  <small>${esc(item.source_status || "Source status pending")} · ${esc(item.source_url || product.source_url || "No source URL")}</small>
                 </div>
                 <strong>${PKR.format(itemSubtotal(item))}</strong>
               </div>
@@ -1625,9 +1677,9 @@ function showOrderDetails(orderId) {
           <div class="message-thread">
             ${messages.map((message) => `
               <article class="${message.direction === "outbound" ? "outbound" : "inbound"}">
-                <strong>${message.source} · ${message.direction}</strong>
-                <p>${message.body}</p>
-                <small>${new Date(message.created_at).toLocaleString()}</small>
+                <strong>${esc(message.source || "")} · ${esc(message.direction || "")}</strong>
+                <p>${esc(message.body || "")}</p>
+                <small>${esc(new Date(message.created_at).toLocaleString())}</small>
               </article>
             `).join("") || "<p>No messages synced yet.</p>"}
           </div>
@@ -1742,8 +1794,8 @@ function renderAdmin() {
       const payment = orderPaymentSummary(order);
       const due = amountDueForOrder(order);
       return `
-      <div class="order-line" role="button" tabindex="0" data-action="view-order" data-order-id="${order.id}">
-        <div><strong>${order.id}</strong><small>${order.customer_name} · ${order.owner || "Unassigned"} · ${orderCompletionRisk(order)}</small></div>
+      <div class="order-line" role="button" tabindex="0" data-action="view-order" data-order-id="${attr(order.id)}">
+        <div><strong>${esc(order.id)}</strong><small>${esc(order.customer_name || "")} · ${esc(order.owner || "Unassigned")} · ${esc(orderCompletionRisk(order))}</small></div>
         <strong>${PKR.format(due || payment.total)} ${due ? "due" : "review"}</strong>
       </div>
     `;
@@ -3261,6 +3313,10 @@ function openManualOrderModal() {
   } else {
     state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
   }
+  // Fresh idempotency key per modal open — every click of "Create order"
+  // inside one modal session reuses this same key so the server can
+  // catch double-clicks.
+  state._manualOrderIdemKey = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   renderManualOrderModal();
 }
 
@@ -3390,6 +3446,11 @@ function manualOrderRemoveLine(index) {
 }
 
 async function submitManualOrder() {
+  // Guard against double-click: a submit currently in-flight pins this
+  // flag, and the early-return below stops a second click from issuing
+  // a second POST with a new idempotency_key.
+  if (state._manualOrderSubmitting) return;
+  const submitBtn = qs("[data-action='manual-order-submit']");
   const name = qs("[data-manual-name]")?.value.trim();
   const phone = qs("[data-manual-phone]")?.value.trim();
   const city = qs("[data-manual-city]")?.value.trim();
@@ -3437,9 +3498,19 @@ async function submitManualOrder() {
     delivery_method: delivery,
     whatsapp_opt_in: !skipWa,
     channel: "manual",
-    idempotency_key: `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    // STABLE idempotency key per modal-open. If the operator double-clicks,
+    // the second submit goes to the server with the SAME key, and the
+    // server's recentSubmissions map returns the original orderId instead
+    // of inserting a duplicate row. Cleared after the modal closes.
+    idempotency_key: state._manualOrderIdemKey || (state._manualOrderIdemKey = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
   };
 
+  state._manualOrderSubmitting = true;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.dataset.busy = "1";
+    submitBtn.textContent = "Creating order…";
+  }
   try {
     const result = await apiFetch("/api/orders", {
       method: "POST",
@@ -3448,10 +3519,19 @@ async function submitManualOrder() {
     closeModal();
     clearManualOrderDraft();
     state.manualOrderDraft = { lines: [{ product_id: "", quantity: 1, variant: "" }] };
-    if (result.order) {
-      state.orders.unshift(result.order);
-      // Track this as a "recently created" so it pins to the top of the
-      // Orders list for the next 5 minutes (recentlyCreatedOrders set).
+    state._manualOrderIdemKey = null; // fresh key for the next manual order
+    if (result.duplicate) {
+      // Server caught the dupe: open the original order instead of inserting
+      // a half-empty stub row.
+      toast(`This order was just submitted — opening it.`);
+      setTimeout(() => showOrderDetails(result.order?.id || result.order_id), 200);
+    } else if (result.order) {
+      // ID-dedupe on insert. If state.orders somehow already has this id
+      // (e.g., a race with refreshAdmin), update in place instead of pushing
+      // a second row.
+      const existingIndex = state.orders.findIndex((o) => o.id === result.order.id);
+      if (existingIndex >= 0) state.orders[existingIndex] = result.order;
+      else state.orders.unshift(result.order);
       state._recentlyCreated = state._recentlyCreated || new Map();
       state._recentlyCreated.set(result.order.id, Date.now());
       renderAdmin();
@@ -3463,10 +3543,18 @@ async function submitManualOrder() {
     }
   } catch {
     toast("Couldn't create order — try again.");
+  } finally {
+    state._manualOrderSubmitting = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.removeAttribute("data-busy");
+      submitBtn.textContent = "Create order";
+    }
   }
 }
 
 async function submitDispatch() {
+  if (state._dispatchSubmitting) return;
   const items = (state.dispatchQueue || []).filter((i) => i.tracking_number && i.courier_name);
   if (!items.length) {
     toast("Add at least one tracking number first.");
@@ -3474,6 +3562,9 @@ async function submitDispatch() {
   }
   const proceed = window.confirm(`Dispatch ${items.length} order(s) and send tracking via WhatsApp?`);
   if (!proceed) return;
+  state._dispatchSubmitting = true;
+  const btn = qs("[data-action='dispatch-submit']");
+  if (btn) { btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Dispatching…"; }
   try {
     const result = await apiFetch("/api/admin/dispatch", {
       method: "POST",
@@ -3484,6 +3575,13 @@ async function submitDispatch() {
     toast(`Dispatched ${result.sent || 0} order(s)${result.failed ? `, ${result.failed} failed` : ""}.`);
   } catch {
     toast("Dispatch failed — try again.");
+  } finally {
+    state._dispatchSubmitting = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute("data-busy");
+      btn.textContent = "Dispatch all with tracking";
+    }
   }
 }
 
@@ -3637,6 +3735,9 @@ function openCommandPalette() {
       </section>
     </div>
   `;
+  // Match openModal()'s body class so any sticky/fixed chrome that hides
+  // for regular modals also hides for the palette.
+  document.body.classList.add("modal-open");
   qs(".cmd-palette-backdrop")?.addEventListener("click", (e) => {
     if (!e.target.closest(".cmd-palette")) closeModal();
   });
@@ -4977,10 +5078,25 @@ async function handleCheckout(event) {
       toast(`We requoted at today's rate: ${created.pricing_notes.join(" ")}`);
     }
     if (created.duplicate) {
+      // Server returned a duplicate marker — the original order already
+      // exists. Don't insert the half-empty stub object; just show the
+      // confirmation toast and skip ahead to the confirmation screen
+      // using whatever order data we already have locally.
       toast("This order was already submitted — opening your confirmation.");
+      const existing = state.orders.find((o) => o.id === placedOrder.id) || placedOrder;
+      form.reset();
+      delete form.dataset.idempotencyKey;
+      renderAll();
+      showOrderConfirmation(existing);
+      return;
     }
 
-    state.orders.unshift(placedOrder);
+    // ID-dedupe on insert. Refresh races or replay loops can result in
+    // an order with this id already being in state.orders — update in
+    // place instead of pushing a second row.
+    const existingIndex = state.orders.findIndex((o) => o.id === placedOrder.id);
+    if (existingIndex >= 0) state.orders[existingIndex] = placedOrder;
+    else state.orders.unshift(placedOrder);
     state.cart = [];
     saveCart();
     rememberCustomerProfile({
@@ -5801,6 +5917,7 @@ function showCustomerDetails(phone) {
           <p class="kicker">Customer${customer?.risk_flag ? ` · <button class="risk-badge" type="button" data-action="clear-risk-flag" data-customer-phone="${attr(canon)}" title="${attr(customer.risk_reason || "Auto-flagged risk")} — click to clear">⚠ risk · clear</button>` : ""}</p>
           <h2>${esc(customer?.name || formatPkDisplay(canon))}</h2>
           <p>${esc(formatPkDisplay(canon))}${customer?.city ? ` · ${esc(customer.city)}` : ""}${customer?.email ? ` · ${esc(customer.email)}` : ""}</p>
+          ${renderLastContactPill(canon)}
           ${customer?.risk_flag && customer.risk_reason ? `<details class="risk-reason-details"><summary class="risk-reason">${esc(customer.risk_reason)}</summary><p>Risk flags are auto-derived from your notes when they contain words like refund, cancel, angry, late, etc. Clear the flag once you've handled the issue.</p></details>` : ""}
         </div>
         <div class="drawer-actions">
@@ -5840,7 +5957,7 @@ function showCustomerDetails(phone) {
       ${renderCustomerMessageHistory(canon)}
       <section class="customer-audit">
         <h3>Internal activity</h3>
-        <ul class="audit-list" data-customer-audit><li class="audit-loading">Loading…</li></ul>
+        <ul class="audit-list" data-customer-audit data-customer-phone="${attr(canon)}"><li class="audit-loading">Loading…</li></ul>
       </section>
       <section class="customer-orders">
         <h3>Order history</h3>
@@ -5855,14 +5972,37 @@ function showCustomerDetails(phone) {
   loadCustomerAudit(canon);
 }
 
+// Renders a "Last contact" pill on the customer modal hero — shows the
+// most recent inbound/outbound WhatsApp activity for this customer with
+// a direction icon + relative time. Helps the operator avoid double-
+// messaging someone they just replied to.
+function renderLastContactPill(canon) {
+  const messages = (state.marketingMessages || []).filter((m) => canonPhone(m.customer_phone) === canon);
+  if (!messages.length) return "";
+  const last = messages[0]; // already sorted desc on the server
+  const dir = last.direction === "outbound" ? "→ Sent" : "← Replied";
+  const tone = last.direction === "outbound" ? "info" : "ok";
+  return `<small class="last-contact-pill tone-${tone}">${esc(dir)} ${esc(relativeTime(last.created_at))}</small>`;
+}
+
 // Pulls /api/admin/customers (GET) with the phone query, expects an `audit`
 // array, then injects the rendered timeline into the modal.
 async function loadCustomerAudit(canon) {
+  // Race guard: if the operator closed this modal and opened a different
+  // customer before our fetch returned, we'd otherwise overwrite the new
+  // customer's audit with this one's. Stamp the in-flight phone and bail
+  // out if the slot no longer belongs to this canon when we return.
+  state._auditInflight = canon;
   try {
     const result = await apiFetch(`/api/admin/customers?phone=${encodeURIComponent(canon)}`, {}, { audit: [] });
+    if (state._auditInflight !== canon) return;
     const audit = Array.isArray(result.audit) ? result.audit : [];
     const slot = qs("[data-customer-audit]");
     if (!slot) return;
+    // Belt-and-braces: the slot itself carries the phone it was rendered
+    // for, so even if a third party swapped the modal mid-flight we still
+    // refuse to write into a foreign audit panel.
+    if (slot.dataset.customerPhone && slot.dataset.customerPhone !== canon) return;
     if (!audit.length) {
       slot.innerHTML = `<p class="cashflow-empty">No internal changes logged for this customer yet.</p>`;
       return;
@@ -7188,7 +7328,10 @@ async function createShipmentBatch(event) {
   const restore = withSubmitState(form, "Creating batch…");
   try {
     const saved = await apiFetch("/api/admin/shipments", { method: "POST", body: JSON.stringify(batch) }, { shipmentBatch: batch });
-    state.shipmentBatches.unshift(saved.shipmentBatch || batch);
+    const finalBatch = saved.shipmentBatch || batch;
+    const existingIdx = state.shipmentBatches.findIndex((b) => b.id === finalBatch.id);
+    if (existingIdx >= 0) state.shipmentBatches[existingIdx] = finalBatch;
+    else state.shipmentBatches.unshift(finalBatch);
     state.settings.next_shipment_date = batch.eta_date;
     state.settings.shipment_notice = batch.note;
     form.reset();
@@ -7237,7 +7380,10 @@ async function queueCreative(event) {
       method: "POST",
       body: JSON.stringify({ type: "creative_job", payload: job }),
     }, { creativeJob: job });
-    state.creativeJobs.unshift(saved.creativeJob || job);
+    const finalJob = saved.creativeJob || job;
+    const existingJobIdx = state.creativeJobs.findIndex((j) => j.id === finalJob.id);
+    if (existingJobIdx >= 0) state.creativeJobs[existingJobIdx] = finalJob;
+    else state.creativeJobs.unshift(finalJob);
     form.reset();
     renderMarketing();
     toast("Content added to the library.");
@@ -7267,7 +7413,10 @@ async function createCampaign(event) {
       method: "POST",
       body: JSON.stringify({ type: "campaign", payload: campaign }),
     }, { campaign });
-    state.campaigns.unshift(saved.campaign || campaign);
+    const finalCampaign = saved.campaign || campaign;
+    const existingCampIdx = state.campaigns.findIndex((c) => c.id === finalCampaign.id);
+    if (existingCampIdx >= 0) state.campaigns[existingCampIdx] = finalCampaign;
+    else state.campaigns.unshift(finalCampaign);
     form.reset();
     renderMarketing();
     toast("Campaign created in draft.");
@@ -7290,11 +7439,12 @@ function replyLead(leadId) {
   const lead = state.leads.find((item) => item.id === leadId);
   if (!lead) return;
   const product = state.products.find((item) => item.title === lead.product);
-  const suggested = `Hi ${lead.name.split(" ")[0]}, yes bestie. Please share your city, WhatsApp number, and exact ${product?.category === "makeup" ? "shade" : "size/color"} so we can confirm availability and final PKR price before payment.`;
+  const firstName = String(lead.name || "bestie").split(" ")[0] || "bestie";
+  const suggested = `Hi ${firstName}, yes bestie. Please share your city, WhatsApp number, and exact ${product?.category === "makeup" ? "shade" : "size/color"} so we can confirm availability and final PKR price before payment.`;
   openModal(`
     <div class="lead-reply-modal">
-      <p class="kicker">${lead.source} · ${lead.sla || "SLA pending"}</p>
-      <h2>${lead.name}</h2>
+      <p class="kicker">${esc(lead.source || "")} · ${esc(lead.sla || "SLA pending")}</p>
+      <h2>${esc(lead.name || "Lead")}</h2>
       <div class="payment-ledger">
         <article><span>Product</span><strong>${lead.product || "Not captured"}</strong></article>
         <article><span>Stage</span><strong>${lead.stage.replaceAll("_", " ")}</strong></article>
@@ -7801,6 +7951,23 @@ function wireEvents() {
       if (id) showProductDetails(id);
       return;
     }
+    if (action === "open-account") {
+      if (state.me) openAccountModal();
+      else openLoginModal();
+      return;
+    }
+    if (action === "request-otp-submit") {
+      requestOtpSubmit();
+      return;
+    }
+    if (action === "verify-otp-submit") {
+      verifyOtpSubmit();
+      return;
+    }
+    if (action === "logout") {
+      logoutAccount();
+      return;
+    }
     if (action === "track-recent-order") {
       const id = target.dataset.orderId;
       const o = (state.orders || []).find((x) => x.id === id);
@@ -8221,16 +8388,37 @@ function wireEvents() {
     if (newStatus === "cancelled") {
       if (!window.confirm(`Cancel order ${order.id}?`)) return;
     }
-    // Optimistic update + PATCH
+    // Optimistic update + PATCH. The optimistic insert flips state
+    // immediately so the card looks moved; we then PATCH; on success a
+    // 10-second "Undo" toast offers a one-tap revert. On failure we
+    // restore silently.
     const previousStatus = order.status;
     order.status = newStatus;
     renderAdminOrders();
+    // Visual pulse on the card while the network is in flight
+    const movedCard = qs(`[data-kanban-drag="${order.id}"]`);
+    if (movedCard) movedCard.classList.add("kanban-card-saving");
     try {
       await apiFetch(`/api/admin/orders/${encodeURIComponent(order.id)}`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus, note: `Status changed to ${newStatus} via kanban drag.` }),
       }, { ok: true });
-      toast(`Moved ${order.id} → ${newStatus.replaceAll("_", " ")}`);
+      if (movedCard) movedCard.classList.remove("kanban-card-saving");
+      showUndoToast(`Moved ${order.id} → ${newStatus.replaceAll("_", " ")}`, async () => {
+        const card = qs(`[data-kanban-drag="${order.id}"]`);
+        if (card) card.classList.add("kanban-card-saving");
+        order.status = previousStatus;
+        renderAdminOrders();
+        try {
+          await apiFetch(`/api/admin/orders/${encodeURIComponent(order.id)}`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: previousStatus, note: `Undid kanban move (restored to ${previousStatus}).` }),
+          }, { ok: true });
+          toast(`Restored ${order.id} → ${previousStatus.replaceAll("_", " ")}`);
+        } catch {
+          toast("Couldn't undo — try again from the order page.");
+        }
+      });
     } catch {
       order.status = previousStatus;
       renderAdminOrders();
@@ -8648,7 +8836,214 @@ function init() {
   animateHeroText();
   initReveal();
   pruneLocalStorage();
+  registerServiceWorker();
   loadRemoteData();
+  checkSession();
+}
+
+// ═════════════════════ CUSTOMER ACCOUNT (storefront) ═════════════════════
+// Phone-OTP auth: customer enters phone → server sends a 6-digit code via
+// WhatsApp → customer enters code → session cookie. state.me is populated
+// from /api/auth/me on every page load.
+
+async function checkSession() {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return;
+    const data = await res.json();
+    state.me = data.customer || data.team || null;
+    state._meDisplayPhone = data.display_phone || "";
+    renderAccountChip();
+  } catch {
+    /* offline / dev — leave state.me as null */
+  }
+}
+
+function renderAccountChip() {
+  const label = qs("[data-account-label]");
+  if (!label) return;
+  if (state.me?.name) {
+    label.textContent = state.me.name.split(" ")[0];
+  } else if (state.me?.phone) {
+    label.textContent = "Account";
+  } else {
+    label.textContent = "Sign in";
+  }
+}
+
+function openLoginModal(prefilledPhone = "") {
+  state._otpPhone = prefilledPhone || "";
+  openModal(`
+    <div class="auth-modal">
+      <p class="kicker">Sign in</p>
+      <h2>One-tap login via WhatsApp</h2>
+      <p class="confirmation-sub">Enter your phone number and we'll send a 6-digit code to your WhatsApp. No password needed.</p>
+      <label class="auth-label">
+        <span>Phone (Pakistani mobile)</span>
+        <input type="tel" data-otp-phone value="${attr(prefilledPhone)}" placeholder="0300 1234567" autocomplete="tel" autofocus />
+      </label>
+      <div class="confirmation-actions">
+        <button class="button primary wide" type="button" data-action="request-otp-submit">Send code on WhatsApp</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+async function requestOtpSubmit() {
+  const phoneInput = qs("[data-otp-phone]");
+  const phone = phoneInput?.value || "";
+  const canon = canonPhone(phone);
+  if (!isValidPkMobile(canon)) {
+    toast("Please enter a valid Pakistani mobile number.");
+    return;
+  }
+  const btn = qs("[data-action='request-otp-submit']");
+  if (btn) { btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Sending…"; }
+  try {
+    const res = await fetch("/api/auth/request-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: canon }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || "Couldn't send code.");
+      return;
+    }
+    state._otpPhone = canon;
+    openOtpVerifyModal(data.dev_code);
+  } catch {
+    toast("Couldn't reach the server. Try again.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.removeAttribute("data-busy"); btn.textContent = "Send code on WhatsApp"; }
+  }
+}
+
+function openOtpVerifyModal(devCode) {
+  openModal(`
+    <div class="auth-modal">
+      <p class="kicker">Check WhatsApp</p>
+      <h2>Enter the 6-digit code</h2>
+      <p class="confirmation-sub">We sent a code to <strong>${esc(formatPkDisplay(state._otpPhone))}</strong>. Valid for 5 minutes.</p>
+      ${devCode ? `<p class="auth-dev-code">Dev mode: <code>${esc(devCode)}</code></p>` : ""}
+      <label class="auth-label">
+        <span>Code</span>
+        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" data-otp-code placeholder="123456" autocomplete="one-time-code" autofocus />
+      </label>
+      <div class="confirmation-actions">
+        <button class="button primary wide" type="button" data-action="verify-otp-submit">Verify &amp; sign in</button>
+        <button class="button secondary" type="button" data-action="request-otp-submit">Resend code</button>
+        <button class="button secondary" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+async function verifyOtpSubmit() {
+  const code = qs("[data-otp-code]")?.value?.trim() || "";
+  if (!/^\d{6}$/.test(code)) {
+    toast("Enter the 6-digit code.");
+    return;
+  }
+  const btn = qs("[data-action='verify-otp-submit']");
+  if (btn) { btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = "Verifying…"; }
+  try {
+    const res = await fetch("/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone: state._otpPhone, code }),
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || "Couldn't verify.");
+      return;
+    }
+    state.me = data.customer || data.team || null;
+    state._meDisplayPhone = formatPkDisplay(state.me?.phone || "");
+    renderAccountChip();
+    closeModal();
+    toast(`Signed in as ${formatPkDisplay(state.me?.phone || "")}.`);
+    // Open My Account so they see their orders right away
+    setTimeout(() => openAccountModal(), 200);
+  } catch {
+    toast("Couldn't reach the server. Try again.");
+  } finally {
+    if (btn) { btn.disabled = false; btn.removeAttribute("data-busy"); btn.textContent = "Verify & sign in"; }
+  }
+}
+
+async function openAccountModal() {
+  if (!state.me) return openLoginModal();
+  openModal(`
+    <div class="auth-modal account-modal">
+      <p class="kicker">My account</p>
+      <h2>${esc(state.me.name || formatPkDisplay(state.me.phone))}</h2>
+      <p class="confirmation-sub">${esc(formatPkDisplay(state.me.phone))}${state.me.city ? ` · ${esc(state.me.city)}` : ""}</p>
+      <div class="account-orders" data-account-orders><p class="cashflow-empty">Loading your orders…</p></div>
+      <div class="confirmation-actions">
+        <button class="button secondary" type="button" data-action="logout">Sign out</button>
+        <button class="button secondary" type="button" data-action="close-modal">Close</button>
+      </div>
+    </div>
+  `);
+  try {
+    const res = await fetch("/api/me/orders", { credentials: "include" });
+    if (!res.ok) {
+      qs("[data-account-orders]").innerHTML = `<p class="cashflow-empty">Couldn't load orders. Try again.</p>`;
+      return;
+    }
+    const data = await res.json();
+    const orders = data.orders || [];
+    const slot = qs("[data-account-orders]");
+    if (!slot) return;
+    if (!orders.length) {
+      slot.innerHTML = `<p class="cashflow-empty">No orders yet. <a href="/shop" data-route="shop">Start shopping →</a></p>`;
+      return;
+    }
+    slot.innerHTML = `
+      <h3>Your orders</h3>
+      <ul class="account-order-list">
+        ${orders.map((o) => {
+          const stage = (o.status || "").replaceAll("_", " ");
+          const balance = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+          return `
+            <li>
+              <button type="button" data-action="track-recent-order" data-order-id="${attr(o.id)}">
+                <strong>${esc(o.id)}</strong>
+                <small>${esc(stage)} · ${esc(o.eta || "")}</small>
+                <span class="account-order-amount">${PKR.format(Number(o.total_pkr || 0))}${balance > 0 ? ` · ${PKR.format(balance)} due` : ""}</span>
+              </button>
+            </li>
+          `;
+        }).join("")}
+      </ul>
+    `;
+  } catch {
+    qs("[data-account-orders]").innerHTML = `<p class="cashflow-empty">Couldn't load orders. Try again.</p>`;
+  }
+}
+
+async function logoutAccount() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  } catch {}
+  state.me = null;
+  renderAccountChip();
+  closeModal();
+  toast("Signed out.");
+}
+
+// Registers the storefront service worker for offline-first product
+// browsing + stale-while-revalidate on the catalog. Skipped on the
+// portal page (admin shouldn't run from cache) and on localhost
+// (avoids dev-time confusion).
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  if (document.body.dataset.page === "portal") return;
+  if (["localhost", "127.0.0.1"].includes(location.hostname)) return;
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
 }
 
 // One-time cleanup of stale localStorage entries on boot. Prunes customer

@@ -109,10 +109,15 @@
         <a href="/faq" data-route="faq">FAQ</a>
       </nav>
 
-      <button class="icon-button" type="button" data-action="open-cart" aria-label="Open bag">
-        <span aria-hidden="true">Bag</span>
-        <strong data-cart-count>0</strong>
-      </button>
+      <div class="header-actions">
+        <button class="icon-button plain" type="button" data-action="open-account" aria-label="My account">
+          <span aria-hidden="true" data-account-label>Sign in</span>
+        </button>
+        <button class="icon-button" type="button" data-action="open-cart" aria-label="Open bag">
+          <span aria-hidden="true">Bag</span>
+          <strong data-cart-count>0</strong>
+        </button>
+      </div>
     </header>
 
     <!-- Mobile-only quick-action bar — pinned right under the header so the

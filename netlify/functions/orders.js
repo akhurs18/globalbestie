@@ -1,6 +1,7 @@
 import { getOrders, getSettings, hasSupabase, json, makeOrderId, supabase, uploadTransferProof } from "./_shared/supabase.js";
 import { canonPhone, isValidPkMobile, formatPkDisplay } from "./_shared/phone.js";
 import { sendWhatsappMessage, interpolate } from "./_shared/whatsapp.js";
+import { currentCustomer } from "./_shared/auth.js";
 
 // Default body used when the whatsapp_templates table is empty / unreachable.
 // Mirrors `tmpl-advance` in supabase/schema.sql so a fresh deployment without
@@ -156,6 +157,33 @@ function splitPayment(items = [], total = 0) {
   };
 }
 
+// Per-IP rate limit on /api/orders POST. Public endpoint; without this
+// anyone could mash submit and fill the customers + orders tables with
+// junk. 10 successful POSTs per IP per hour is plenty for any legitimate
+// customer. The map evicts old entries when it grows past 5 min.
+const ipPostHistory = new Map(); // ip → [timestamps]
+const IP_RATE_LIMIT = 10;
+const IP_RATE_WINDOW_MS = 60 * 60 * 1000;
+function clientIp(req) {
+  return (
+    req.headers.get("x-nf-client-connection-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "anon"
+  );
+}
+function checkIpRate(req) {
+  const ip = clientIp(req);
+  const now = Date.now();
+  const hist = (ipPostHistory.get(ip) || []).filter((t) => now - t < IP_RATE_WINDOW_MS);
+  if (hist.length >= IP_RATE_LIMIT) {
+    return { ok: false, ip, retry_after_minutes: Math.ceil((IP_RATE_WINDOW_MS - (now - hist[0])) / 60_000) };
+  }
+  return { ok: true, ip, recordHit: () => {
+    hist.push(now);
+    ipPostHistory.set(ip, hist);
+  } };
+}
+
 // Idempotency: simple in-memory map (per function instance). Good enough to
 // catch a double-tap within seconds; a longer window needs a DB-backed
 // dedupe key. Keyed by `${canonPhone}:${idempotency_key}`.
@@ -165,6 +193,29 @@ function rememberSubmission(key, orderId) {
   // Best-effort eviction of anything older than 5 min.
   for (const [k, v] of recentSubmissions) {
     if (Date.now() - v.at > 5 * 60_000) recentSubmissions.delete(k);
+  }
+}
+
+// Fallback dedupe — even when the client forgets to send (or mishandles)
+// the idempotency_key, the same phone + same total within 60 s is almost
+// certainly a double-click. Returns the existing orderId so the server
+// never inserts the same order twice. Distinct from the keyed map above
+// so a sniped retry across function instances still gets caught.
+const recentByPhoneTotal = new Map();
+function dedupeByPhoneTotal(phone, total) {
+  if (!phone || !total) return null;
+  const key = `${phone}:${total}`;
+  const prev = recentByPhoneTotal.get(key);
+  if (prev && Date.now() - prev.at < 60_000) {
+    return prev.orderId;
+  }
+  return null;
+}
+function rememberPhoneTotal(phone, total, orderId) {
+  if (!phone || !total) return;
+  recentByPhoneTotal.set(`${phone}:${total}`, { orderId, at: Date.now() });
+  for (const [k, v] of recentByPhoneTotal) {
+    if (Date.now() - v.at > 5 * 60_000) recentByPhoneTotal.delete(k);
   }
 }
 
@@ -238,13 +289,27 @@ export default async (req) => {
     }
 
     if (req.method === "POST") {
+      const rate = checkIpRate(req);
+      if (!rate.ok) {
+        return json({
+          error: "Too many orders from this network in the last hour. Please WhatsApp us if this is a mistake.",
+          retry_after_minutes: rate.retry_after_minutes,
+        }, { status: 429 });
+      }
       const payload = await req.json();
       if (!payload.customer_name || !payload.customer_phone || !payload.items?.length) {
         return json({ error: "Customer name, phone, and order items are required." }, { status: 400 });
       }
+      rate.recordHit();
 
       // === Canonicalize and validate the phone first thing ===
-      const canon = canonPhone(payload.customer_phone);
+      // If the customer is logged in, the session's phone takes precedence
+      // over whatever the form submitted — prevents a logged-in user from
+      // accidentally (or deliberately) placing an order against a
+      // different identity.
+      const session = await currentCustomer(req).catch(() => null);
+      const submittedCanon = canonPhone(payload.customer_phone);
+      const canon = session?.phone || submittedCanon;
       if (!isValidPkMobile(canon)) {
         return json({
           error: "Please enter a valid Pakistani mobile number (e.g. 0300 1234567).",
@@ -268,6 +333,19 @@ export default async (req) => {
       // === Server-trusted pricing: re-price from product rows ===
       const { items: pricedItems, notes: pricingNotes } = await repriceItems(payload.items);
       const payment = splitPayment(pricedItems, payload.total_pkr);
+
+      // === Fallback dedupe: same phone + same total within 60 s ===
+      // Catches the case where the client forgets the idempotency key or
+      // a network retry re-uses an expired one. Returns the original
+      // orderId instead of inserting another row.
+      const dupeId = dedupeByPhoneTotal(canon, payment.total);
+      if (dupeId) {
+        return json({
+          order: { id: dupeId, duplicate: true },
+          duplicate: true,
+          message: "Same order was just submitted — using the existing one.",
+        });
+      }
 
       const id = makeOrderId();
       const now = new Date().toISOString();
@@ -310,6 +388,7 @@ export default async (req) => {
 
       if (!hasSupabase()) {
         if (idemKey) rememberSubmission(`${canon}:${idemKey}`, id);
+        rememberPhoneTotal(canon, payment.total, id);
         // Best-effort auto WhatsApp even in offline-preview mode (lets local
         // smoke tests verify Maychats credentials when set).
         sendAutoAdvanceMessage({ order, hasPreorder }).catch(() => {});
@@ -380,6 +459,7 @@ export default async (req) => {
       });
 
       if (idemKey) rememberSubmission(`${canon}:${idemKey}`, id);
+      rememberPhoneTotal(canon, payment.total, id);
 
       // Fire-and-forget Maychats notification — the customer gets a
       // WhatsApp confirmation seconds after submit. Failures land as an

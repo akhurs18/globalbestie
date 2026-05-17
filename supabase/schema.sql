@@ -327,6 +327,55 @@ create table if not exists public.team_members (
 );
 
 -- =========================================================================
+-- AUTH — phone-OTP sessions for both customers and team members.
+-- We don't use Supabase Auth directly because we already canonicalize
+-- phones ourselves and want one identity model. The flow:
+--   1. POST /api/auth/request-otp { phone }
+--        → server generates 6-digit code, stores hash in otp_codes,
+--          sends via Maychats template
+--   2. POST /api/auth/verify-otp { phone, code }
+--        → server matches the hash, deletes the otp row, creates a
+--          session row, returns Set-Cookie: gb_session=<token>
+--   3. Every request: server reads cookie → looks up session →
+--          identifies the user
+-- Sessions expire after 30 days for customers, 7 days for team.
+-- =========================================================================
+create table if not exists public.otp_codes (
+  phone text not null,
+  code_hash text not null,
+  attempts integer not null default 0,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  primary key (phone)
+);
+
+create table if not exists public.customer_sessions (
+  token text primary key,
+  phone text not null,
+  user_agent text,
+  ip_address text,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz not null default now()
+);
+create index if not exists customer_sessions_phone_idx on public.customer_sessions (phone);
+create index if not exists customer_sessions_expires_idx on public.customer_sessions (expires_at);
+
+create table if not exists public.team_sessions (
+  token text primary key,
+  phone text not null,
+  name text,
+  role text default 'team',
+  user_agent text,
+  ip_address text,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz not null default now()
+);
+create index if not exists team_sessions_phone_idx on public.team_sessions (phone);
+create index if not exists team_sessions_expires_idx on public.team_sessions (expires_at);
+
+-- =========================================================================
 -- ORDER VIEWS — saved filter combinations for the Orders tab. Mirrors the
 -- smart_segments pattern (city/tier/etc) but with order-specific fields.
 -- =========================================================================

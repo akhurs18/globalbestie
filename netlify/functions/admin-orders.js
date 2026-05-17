@@ -96,16 +96,27 @@ export default async (req, context) => {
     });
 
     // Audit row — best-effort, never throws. Captures who changed what so
-    // the team can answer "who marked this delivered yesterday?".
+    // the team can answer "who marked this delivered yesterday?". The
+    // actor comes from the X-Actor header the portal injects after auth.
     try {
+      const actor = req.headers.get("x-actor") || "admin";
+      // Strip PII from order before/after — keep change-relevant scalars
+      // but drop full address + phone in case the log ever leaks.
+      const slim = (o) => {
+        if (!o || typeof o !== "object") return o;
+        const out = { ...o };
+        if (out.address) out.address = "[redacted]";
+        if (out.customer_phone) out.customer_phone = out.customer_phone.slice(0, 5) + "***";
+        return out;
+      };
       await supabase("/rest/v1/admin_audit", {
         method: "POST",
         body: JSON.stringify({
-          actor: "admin",
+          actor,
           action: "order.update",
           entity_type: "order",
           entity_id: id,
-          payload: { before: existing, updates },
+          payload: { before: slim(existing), updates: slim(updates) },
           created_at: new Date().toISOString(),
         }),
       });

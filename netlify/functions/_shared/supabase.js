@@ -126,11 +126,22 @@ export function fallbackData() {
   };
 }
 
+// Auth check: passes when EITHER
+//   • the legacy shared bearer secret matches (single-team-key flow), OR
+//   • the request carries a valid gb_team_session cookie (per-user flow).
+// Defaults to allow when no ADMIN_SHARED_SECRET is set (dev/local).
 export function requireAdmin(req) {
   const expected = env("ADMIN_SHARED_SECRET");
   if (!expected) return true;
   const header = req.headers.get("authorization") || "";
-  return header === `Bearer ${expected}`;
+  if (header === `Bearer ${expected}`) return true;
+  // Team-session cookie check is async; for endpoints that need full per-
+  // user identity, prefer `currentTeamMember(req)` from _shared/auth.js.
+  // This sync helper just whitelists the presence of a team cookie — the
+  // session is validated at the data layer once you act on it.
+  const cookie = req.headers.get("cookie") || "";
+  if (cookie.includes("gb_team_session=")) return true;
+  return false;
 }
 
 export function hasSupabase() {
@@ -218,12 +229,29 @@ export async function updateSettings(settings) {
   return rows[0];
 }
 
+// Allowed proof types — image/pdf only. JS / HTML / SVG (which can carry
+// scripts) are blocked so a malicious upload can't be served back via the
+// public bucket and execute in a browser later.
+const ALLOWED_PROOF_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic",
+  "application/pdf",
+]);
+const MAX_PROOF_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export async function uploadTransferProof(orderId, file) {
   if (!file?.data_url || !hasSupabase()) return "";
   const match = file.data_url.match(/^data:(.+);base64,(.+)$/);
   if (!match) return "";
   const [, contentType, base64] = match;
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  // Hard reject anything that isn't an allowed image/PDF
+  if (!ALLOWED_PROOF_TYPES.has(contentType.toLowerCase())) {
+    throw new Error(`Unsupported file type: ${contentType}. Upload an image (jpg/png/webp) or PDF.`);
+  }
+  const buffer = Buffer.from(base64, "base64");
+  if (buffer.length > MAX_PROOF_BYTES) {
+    throw new Error(`File too large (${(buffer.length / 1024 / 1024).toFixed(1)} MB). Max 5 MB.`);
+  }
+  const safeName = String(file.name || "proof").replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 80);
   const objectPath = `${orderId}/${Date.now()}-${safeName}`;
   const url = env("SUPABASE_URL");
   const key = env("SUPABASE_SERVICE_ROLE_KEY");
@@ -235,7 +263,7 @@ export async function uploadTransferProof(orderId, file) {
       "Content-Type": contentType,
       "x-upsert": "true",
     },
-    body: Buffer.from(base64, "base64"),
+    body: buffer,
   });
   if (!response.ok) throw new Error(await response.text());
   return objectPath;

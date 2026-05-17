@@ -25,7 +25,10 @@ export default async (req) => {
       getShipmentBatches(),
       safeFetch("/rest/v1/customers?select=*&order=last_seen.desc", []),
       safeFetch("/rest/v1/whatsapp_templates?select=*&order=category.asc", []),
-      safeFetch(`/rest/v1/marketing_messages?created_at=gte.${encodeURIComponent(since)}&select=*&order=created_at.desc&limit=2000`, []),
+      // Capped at 300 rows: the dashboard only needs recent inbox + last-7d
+      // reply attribution. Older messages can be loaded on demand from a
+      // dedicated endpoint if/when needed.
+      safeFetch(`/rest/v1/marketing_messages?created_at=gte.${encodeURIComponent(since)}&select=*&order=created_at.desc&limit=300`, []),
       safeFetch(`/rest/v1/broadcast_campaigns?triggered_at=gte.${encodeURIComponent(since)}&select=*&order=triggered_at.desc&limit=200`, []),
       safeFetch(`/rest/v1/scheduled_broadcasts?status=in.(pending,running)&select=*&order=send_at.asc&limit=50`, []),
       safeFetch("/rest/v1/smart_segments?select=*&order=pinned.desc,updated_at.desc&limit=50", []),
