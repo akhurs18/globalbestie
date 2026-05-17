@@ -1436,21 +1436,10 @@ function showProductDetails(productId) {
     <div><dt>Source URL</dt><dd>${product.source_url ? `<a href="${safeUrl(product.source_url)}" target="_blank" rel="noreferrer">${esc(product.source_url)}</a>` : "Not added"}</dd></div>
   `;
   const sourcedFrom = retailerFromUrl(product.source_url);
-  const fxUsed = Number(product.fx_rate || state.settings?.fx_rate || 282);
-  const usaInPkr = Math.round(Number(product.usa_price_usd || 0) * fxUsed);
-  const priceBreakdown = `
-    <details class="price-breakdown">
-      <summary><span>Why this price?</span><span class="price-breakdown-toggle" aria-hidden="true">+</span></summary>
-      <dl>
-        <div><dt>USA retail</dt><dd>${USD.format(product.usa_price_usd || 0)}</dd></div>
-        <div><dt>FX (Rs ${fxUsed.toFixed(0)} / $1)</dt><dd>${PKR.format(usaInPkr)}</dd></div>
-        <div><dt>25% concierge margin</dt><dd>${PKR.format(parts.margin)}</dd></div>
-        <div><dt>USA → Pakistan shipping</dt><dd>${PKR.format(parts.shipping)}</dd></div>
-        <div class="price-breakdown-total"><dt>Final PKR</dt><dd>${PKR.format(parts.total)}</dd></div>
-      </dl>
-      <p class="price-breakdown-note">Google rate conversions won't match — our quote covers live FX, USA payment costs, sourcing time, and door-to-door shipping.</p>
-    </details>
-  `;
+  // Public-facing price breakdown intentionally omitted — customers see the
+  // final all-inclusive PKR figure only. Admin/portal still gets the full
+  // breakdown via the admin meta panel above.
+  const priceBreakdown = "";
   openModal(`
     <div class="modal-grid product-detail-modal">
       <div class="product-gallery">

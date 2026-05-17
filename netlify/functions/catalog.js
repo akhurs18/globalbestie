@@ -18,12 +18,9 @@ function publicProduct(product, settings) {
     category: product.category,
     description: product.description,
     customer_price_pkr: customerPrice(product, settings),
-    // Frontend pricing helper expects these to compute the same number client
-    // side; they're not secret.
-    usa_price_usd: product.usa_price_usd,
-    shipping_pkr: product.shipping_pkr,
-    fx_rate: product.fx_rate,
-    markup_rate: product.markup_rate,
+    // Public response intentionally omits usa_price_usd / fx_rate /
+    // markup_rate / shipping_pkr. The customer sees the final all-inclusive
+    // PKR figure only — never our cost-construction inputs.
     stock_mode: product.stock_mode,
     inventory: product.inventory,
     delivery_days_min: product.delivery_days_min || 0,
