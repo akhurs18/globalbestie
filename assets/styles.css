@@ -9907,6 +9907,62 @@ body:not([data-page="portal"]) .track-card p:not(.kicker) {
   line-height: 1.6;
 }
 
+body:not([data-page="portal"]) .tracking-progress {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+  margin: 22px 0 18px;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 11px 12px;
+  text-align: left;
+  border: 1px solid rgba(139, 76, 95, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 250, 251, 0.76);
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step::before {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  background: #fff;
+  border-color: rgba(139, 76, 95, 0.2);
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.done {
+  border-color: rgba(189, 102, 120, 0.34);
+  background: #fff5f8;
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.done::before {
+  background: var(--pink-3);
+  border-color: var(--pink-3);
+  color: #fff;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.current {
+  border-color: rgba(31, 9, 20, 0.22);
+  background: var(--ink);
+  color: #fff;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.current::before {
+  background: #fff;
+  border-color: #fff;
+  color: var(--ink);
+}
+
 body:not([data-page="portal"]) .checkout-layout {
   align-items: start;
 }

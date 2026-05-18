@@ -14,6 +14,10 @@ const OTP_TTL_MS = 5 * 60 * 1000;
 // down SMS-pumping-style abuse (free WhatsApp messages aren't paid per-
 // request but bulk requests will still get our number flagged).
 const requestHistory = new Map();
+function isMissingAuthTable(error) {
+  return /Could not find the table 'public\.otp_codes'|PGRST205/i.test(String(error?.message || error || ""));
+}
+
 function checkOtpRate(phone) {
   const now = Date.now();
   const hist = (requestHistory.get(phone) || []).filter((t) => now - t < 15 * 60_000);
@@ -73,6 +77,11 @@ export default async (req) => {
     }
     return json(response);
   } catch (error) {
+    if (isMissingAuthTable(error)) {
+      return json({
+        error: "Account login is still being set up. Please track your order by order number or WhatsApp us for help.",
+      }, { status: 503 });
+    }
     return json({ error: error.message }, { status: 500 });
   }
 };

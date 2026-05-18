@@ -16,6 +16,10 @@ import { hashOtp, generateSessionToken, sessionCookie } from "./_shared/auth.js"
 const CUSTOMER_SESSION_TTL_DAYS = 30;
 const TEAM_SESSION_TTL_DAYS = 7;
 
+function isMissingAuthTable(error) {
+  return /Could not find the table 'public\.(otp_codes|customer_sessions|team_sessions)'|PGRST205/i.test(String(error?.message || error || ""));
+}
+
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
   if (!hasSupabase()) return json({ error: "Auth requires Supabase configured." }, { status: 503 });
@@ -130,6 +134,11 @@ export default async (req) => {
       },
     });
   } catch (error) {
+    if (isMissingAuthTable(error)) {
+      return json({
+        error: "Account login is still being set up. Please track your order by order number or WhatsApp us for help.",
+      }, { status: 503 });
+    }
     return json({ error: error.message }, { status: 500 });
   }
 };
