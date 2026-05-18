@@ -1123,6 +1123,7 @@ function filteredProducts() {
   products.sort((a, b) => {
     if (sort === "price_asc") return calculatePrice(a) - calculatePrice(b);
     if (sort === "price_desc") return calculatePrice(b) - calculatePrice(a);
+    if (sort === "newest") return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     if (sort === "margin") return productPricingParts(b).margin - productPricingParts(a).margin;
     return Number(b.featured) - Number(a.featured);
   });
@@ -4833,6 +4834,90 @@ function navigateTo(route, params) {
   return setRoute();
 }
 
+const SHOP_FILTER_OPTIONS = {
+  category: new Set(["all", "handbags", "shoes", "makeup", "fragrance", "accessories"]),
+  stock: new Set(["all", "in_stock", "preorder"]),
+  sort: new Set(["featured", "price_asc", "price_desc", "newest"]),
+};
+
+function cleanShopFilter(key, value) {
+  const raw = String(value || "").trim();
+  if (key === "search") return raw;
+  return SHOP_FILTER_OPTIONS[key]?.has(raw) ? raw : "all";
+}
+
+function shopFiltersFromParams(params) {
+  return {
+    search: cleanShopFilter("search", params.get("q") || params.get("search") || ""),
+    category: cleanShopFilter("category", params.get("category") || "all"),
+    stock: cleanShopFilter("stock", params.get("stock") || "all"),
+    sort: SHOP_FILTER_OPTIONS.sort.has(params.get("sort") || "") ? params.get("sort") : "featured",
+  };
+}
+
+function shopFiltersFromControls() {
+  return {
+    search: cleanShopFilter("search", qs("[data-filter-search]")?.value || ""),
+    category: cleanShopFilter("category", qs("[data-filter-category]")?.value || "all"),
+    stock: cleanShopFilter("stock", qs("[data-filter-stock]")?.value || "all"),
+    sort: SHOP_FILTER_OPTIONS.sort.has(qs("[data-filter-sort]")?.value || "") ? qs("[data-filter-sort]")?.value : "featured",
+  };
+}
+
+function applyShopFiltersToControls() {
+  const controls = [
+    ["[data-filter-search]", state.filters.search || ""],
+    ["[data-filter-category]", state.filters.category || "all"],
+    ["[data-filter-stock]", state.filters.stock || "all"],
+    ["[data-filter-sort]", state.filters.sort || "featured"],
+  ];
+  controls.forEach(([selector, value]) => {
+    const control = qs(selector);
+    if (control && control.value !== value) control.value = value;
+  });
+  updateShopFilterBadge();
+}
+
+function activeShopFilterCount() {
+  return ["search", "category", "stock"].filter((key) => {
+    const value = state.filters[key];
+    return value && value !== "all";
+  }).length;
+}
+
+function updateShopFilterBadge() {
+  const count = qs("[data-active-filter-count]");
+  if (count) {
+    const active = activeShopFilterCount();
+    count.textContent = active > 0 ? `· ${active}` : "";
+  }
+}
+
+function syncShopFiltersFromRoute(params) {
+  const hasFilterParams = ["q", "search", "category", "stock", "sort"].some((key) => params.has(key));
+  state.filters = hasFilterParams ? shopFiltersFromParams(params) : shopFiltersFromControls();
+  applyShopFiltersToControls();
+}
+
+function syncShopFilterUrl() {
+  if (parseRoute().viewName !== "shop") return;
+  const params = new URLSearchParams(location.search);
+  params.delete("q");
+  params.delete("search");
+  params.delete("category");
+  params.delete("stock");
+  params.delete("sort");
+  if (state.filters.search) params.set("q", state.filters.search);
+  if (state.filters.category && state.filters.category !== "all") params.set("category", state.filters.category);
+  if (state.filters.stock && state.filters.stock !== "all") params.set("stock", state.filters.stock);
+  if (state.filters.sort && state.filters.sort !== "featured") params.set("sort", state.filters.sort);
+  const query = params.toString();
+  const nextUrl = `${location.pathname}${query ? `?${query}` : ""}`;
+  if (nextUrl !== `${location.pathname}${location.search}`) {
+    history.replaceState({ route: "shop" }, "", nextUrl);
+  }
+}
+
 let _transitioning = false;
 let _firstLoad = true;
 
@@ -4871,9 +4956,7 @@ async function setRoute() {
   });
 
   if (safeView === "shop") {
-    state.filters.category = params.get("category") || "all";
-    const category = qs("[data-filter-category]");
-    if (category) category.value = state.filters.category;
+    syncShopFiltersFromRoute(params);
     renderProducts();
   }
   setCartDrawerOpen(false);
@@ -8596,21 +8679,15 @@ function wireEvents() {
   // FAQ items are now native <details>/<summary>, so the browser handles open
   // state and keyboard interactions for free. No JS wiring needed.
 
+  const handleShopFilterChange = () => {
+    state.filters = shopFiltersFromControls();
+    updateShopFilterBadge();
+    syncShopFilterUrl();
+    renderProducts();
+  };
   qsa("[data-filter-search], [data-filter-category], [data-filter-stock], [data-filter-sort]").forEach((control) => {
-    control.addEventListener("input", () => {
-      state.filters.search = qs("[data-filter-search]")?.value || "";
-      state.filters.category = qs("[data-filter-category]")?.value || "all";
-      state.filters.stock = qs("[data-filter-stock]")?.value || "all";
-      state.filters.sort = qs("[data-filter-sort]")?.value || "featured";
-      renderProducts();
-      // Update the "Filters & sort (N active)" badge on the mobile trigger
-      const active = ["search", "category", "stock"].filter((k) => {
-        const v = state.filters[k];
-        return v && v !== "all";
-      }).length;
-      const count = qs("[data-active-filter-count]");
-      if (count) count.textContent = active > 0 ? `· ${active}` : "";
-    });
+    control.addEventListener("input", handleShopFilterChange);
+    control.addEventListener("change", handleShopFilterChange);
   });
 
   qsa("[data-admin-tab]").forEach((tab) => {
