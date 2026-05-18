@@ -1174,16 +1174,35 @@ dl div,
   border-bottom: 1px solid var(--line);
 }
 
-.faq-hero h1 {
+.faq-hero h1,
+.faq-hero h2 {
   max-width: 620px;
+  color: #fff7f9;
+  text-shadow: 0 10px 34px rgba(26, 14, 20, 0.38);
+}
+
+.faq-hero h1 {
   font-size: clamp(2.35rem, 5vw, 4.3rem);
+}
+
+.faq-hero h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4.2vw, 3.6rem);
+}
+
+.preorder-faq-hero {
+  margin-top: clamp(30px, 5vw, 58px);
 }
 
 .faq-hero p:not(.kicker) {
   max-width: 620px;
   margin: 12px auto 0;
-  color: var(--muted);
+  color: rgba(255, 247, 249, 0.78);
   line-height: 1.7;
+}
+
+.faq-hero .kicker {
+  color: var(--pink);
 }
 
 .breadcrumb {
@@ -9414,6 +9433,11 @@ body:not([data-page="portal"]) h2 {
   letter-spacing: -0.015em;
   max-width: 26ch;
   margin: 0 0 14px;
+}
+
+body:not([data-page="portal"]) .faq-hero h1,
+body:not([data-page="portal"]) .faq-hero h2 {
+  color: #fff7f9;
 }
 
 body:not([data-page="portal"]) h3 {

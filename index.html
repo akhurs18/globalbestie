@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260518-storefront-flow" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260518-preorder-faq" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -104,9 +104,8 @@
 
       <nav class="main-nav" aria-label="Primary navigation">
         <a href="/shop" data-route="shop">Shop</a>
-        <a href="/preorder" data-route="preorder">Preorder</a>
+        <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
         <a href="/track" data-route="track">Track</a>
-        <a href="/faq" data-route="faq">FAQ</a>
       </nav>
 
       <div class="header-actions">
@@ -393,7 +392,7 @@
         <div class="page-intro preorder-intro">
           <p class="kicker">Preorder concierge</p>
           <h1>Batch-based USA sourcing, made visible.</h1>
-          <p>Most products are preordered from the USA. Shipment timing is estimated because products move in batches, and we confirm the current batch ETA on WhatsApp after your order.</p>
+          <p>How preorder, payment, delivery, and common product questions work in one place. Shipment timing is estimated because products move in batches, and we confirm the current batch ETA on WhatsApp after your order.</p>
         </div>
         <div class="timeline-panel">
           <ol>
@@ -437,6 +436,87 @@
               <span>Once a parcel is dispatched locally, it is handled by a third-party courier. We do not control their timeline. Parcels being dispatched does not mean immediate delivery — please be patient and allow time for local transit.</span>
             </li>
           </ul>
+        </div>
+
+        <div class="faq-hero preorder-faq-hero">
+          <p class="kicker">Frequently asked</p>
+          <h2>Common questions, answered.</h2>
+          <p>Search ordering, payment, shipping, authenticity, and product request details without leaving the preorder guide.</p>
+          <label class="faq-search-label">
+            <span class="visually-hidden">Search FAQ</span>
+            <input type="search" data-faq-search placeholder="Search questions — try 'shoes box' or 'refund'" autocomplete="off" />
+          </label>
+          <p class="faq-empty hidden" data-faq-empty>No questions matched. <a href="https://wa.me/923001234567" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.</p>
+        </div>
+
+        <div class="faq-shell" aria-label="Frequently asked questions">
+          <section class="faq-column" aria-labelledby="faq-ordering-title">
+            <div class="faq-column-heading">
+              <h2 id="faq-ordering-title">Ordering & payment</h2>
+            </div>
+            <div class="faq-list">
+              <details class="faq-item">
+                <summary>How do I place an order?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then place your order with the advance payment reference.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>What payment methods do you accept?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>We accept direct bank deposits. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>When do I pay the remaining preorder balance?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Is bank transfer safe?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. You can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Can I cancel my order?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>You can request cancellation before an order is accepted or sourced. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Do you offer refunds or returns?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Refunds and returns depend on order stage, product type, and the USA retailer policy. We review issues case by case before sourcing and after delivery.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Is the PKR price on the site the final price?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. Every product is listed in PKR with everything included — sourcing, international shipping, and our service. No conversion math, no surprise add-ons at checkout.</p></div>
+              </details>
+            </div>
+          </section>
+
+          <section class="faq-column" aria-labelledby="faq-shipping-title">
+            <div class="faq-column-heading">
+              <h2 id="faq-shipping-title">Shipping & products</h2>
+            </div>
+            <div class="faq-list">
+              <details class="faq-item">
+                <summary>How long does delivery take?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment matching. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA after checkout.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Are customs or duties included?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>The PKR price includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms it with you on WhatsApp.</p></div>
+              </details>
+              <details class="faq-item" open>
+                <summary>Do you deliver to my city?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you are unsure about your area.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Are your products authentic?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Do shoes come with the original box?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
+              </details>
+              <details class="faq-item">
+                <summary>Can I request a specific product?<span class="faq-toggle" aria-hidden="true"></span></summary>
+                <div class="faq-answer"><p>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price.</p></div>
+              </details>
+            </div>
+          </section>
         </div>
       </section>
 
@@ -528,94 +608,6 @@
         </div>
       </section>
 
-      <section class="view" id="view-faq" data-view="faq">
-        <div class="faq-hero">
-          <p class="kicker">Frequently asked</p>
-          <h1>Got questions?</h1>
-          <p>Everything you need to know about ordering from Global Bestie.</p>
-          <nav class="breadcrumb" aria-label="Breadcrumb">
-            <a href="/" data-route="home">Home</a>
-            <span aria-hidden="true">›</span>
-            <span>FAQ</span>
-          </nav>
-          <label class="faq-search-label">
-            <span class="visually-hidden">Search FAQ</span>
-            <input type="search" data-faq-search placeholder="Search questions — try 'shoes box' or 'refund'" autocomplete="off" />
-          </label>
-          <p class="faq-empty hidden" data-faq-empty>No questions matched. <a href="https://wa.me/923001234567" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.</p>
-        </div>
-
-        <div class="faq-shell" aria-label="Frequently asked questions">
-          <section class="faq-column" aria-labelledby="faq-ordering-title">
-            <div class="faq-column-heading">
-              <h2 id="faq-ordering-title">Ordering & payment</h2>
-            </div>
-            <div class="faq-list">
-              <details class="faq-item">
-                <summary>How do I place an order?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then place your order with the advance payment reference.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>What payment methods do you accept?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>We accept direct bank deposits. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>When do I pay the remaining preorder balance?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Is bank transfer safe?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. You can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Can I cancel my order?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>You can request cancellation before an order is accepted or sourced. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Do you offer refunds or returns?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Refunds and returns depend on order stage, product type, and the USA retailer policy. We review issues case by case before sourcing and after delivery.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Is the PKR price on the site the final price?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. Every product is listed in PKR with everything included — sourcing, international shipping, and our service. No conversion math, no surprise add-ons at checkout.</p></div>
-              </details>
-            </div>
-          </section>
-
-          <section class="faq-column" aria-labelledby="faq-shipping-title">
-            <div class="faq-column-heading">
-              <h2 id="faq-shipping-title">Shipping & products</h2>
-            </div>
-            <div class="faq-list">
-              <details class="faq-item">
-                <summary>How long does delivery take?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment matching. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA after checkout.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Are customs or duties included?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>The PKR price includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms it with you on WhatsApp.</p></div>
-              </details>
-              <details class="faq-item" open>
-                <summary>Do you deliver to my city?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you are unsure about your area.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Are your products authentic?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Do shoes come with the original box?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Can I request a specific product?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price.</p></div>
-              </details>
-            </div>
-          </section>
-        </div>
-      </section>
-
     </main>
 
     <a class="whatsapp-fab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp" data-support-whatsapp>
@@ -657,10 +649,9 @@
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Orders</h3>
-          <a href="/preorder" data-route="preorder">How preorder works</a>
+          <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
           <a href="/track" data-route="track">Track your order</a>
           <a href="/checkout" data-route="checkout">Checkout</a>
-          <a href="/faq" data-route="faq">FAQ</a>
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Get in touch</h3>
@@ -683,6 +674,6 @@
 
     <div id="page-curtain" aria-hidden="true"></div>
 
-    <script type="module" src="./assets/app.js?v=20260518-storefront-flow"></script>
+    <script type="module" src="./assets/app.js?v=20260518-preorder-faq"></script>
   </body>
 </html>

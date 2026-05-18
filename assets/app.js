@@ -4749,8 +4749,8 @@ function renderBatchRibbon() {
 }
 
 // Clean-URL router (pushState) — replaces the legacy hashchange routing.
-// Each public view has its own URL (/shop, /preorder, /track, /checkout,
-// /faq), which lets Google index them and gives us per-route <title>/meta
+// Each public view has its own URL (/shop, /preorder, /track, /checkout),
+// which lets Google index them and gives us per-route <title>/meta
 // description for SEO. Netlify's catch-all redirect (in netlify.toml) sends
 // every path back to /index.html so the SPA boots normally.
 
@@ -4760,7 +4760,7 @@ const ROUTE_TO_PATH = {
   preorder: "/preorder",
   checkout: "/checkout",
   track: "/track",
-  faq: "/faq",
+  faq: "/preorder",
 };
 
 const PATH_TO_ROUTE = {
@@ -4770,7 +4770,7 @@ const PATH_TO_ROUTE = {
   "/preorder": "preorder",
   "/checkout": "checkout",
   "/track": "track",
-  "/faq": "faq",
+  "/faq": "preorder",
 };
 
 const ROUTE_META = {
@@ -4783,8 +4783,8 @@ const ROUTE_META = {
     description: "Browse Global Bestie's curated USA-sourced handbags, shoes, and makeup with transparent PKR pricing.",
   },
   preorder: {
-    title: "How Preorder Works | Global Bestie",
-    description: "USA-to-Pakistan batch sourcing with 50% advance at checkout and the balance on Pakistan arrival.",
+    title: "Preorder & FAQ | Global Bestie",
+    description: "How Global Bestie's USA preorder batches, payment, delivery, authenticity, and product requests work.",
   },
   checkout: {
     title: "Checkout | Global Bestie",
@@ -4793,10 +4793,6 @@ const ROUTE_META = {
   track: {
     title: "Track Your Order | Global Bestie",
     description: "Follow your Global Bestie order from USA sourcing to Pakistan delivery.",
-  },
-  faq: {
-    title: "FAQ | Global Bestie",
-    description: "Common questions about Global Bestie's USA preorder service, payment, delivery, and authenticity.",
   },
   admin: {
     title: "Global Bestie Portal",
@@ -4814,7 +4810,7 @@ function parseRoute() {
   let viewName = PATH_TO_ROUTE[path];
   let params = new URLSearchParams(location.search);
   // Backward compatibility: any old #shop?category=foo link still works.
-  if (!viewName && fromHash) {
+  if ((!viewName || viewName === "home") && fromHash) {
     const [hashView, hashQuery] = fromHash.split("?");
     if (PATH_TO_ROUTE[`/${hashView}`] || hashView === "home") {
       viewName = hashView === "home" ? "home" : PATH_TO_ROUTE[`/${hashView}`];
@@ -8726,15 +8722,16 @@ function wireEvents() {
     });
   });
 
-  // FAQ filter — hides any <details class="faq-item"> whose text doesn't match
-  // the typed query. Pure client-side; no rerender or state needed.
+  // FAQ filter — every typed word must appear somewhere in the answer, so
+  // searches like "shoes box" still find "Do shoes come with the original box?"
   qs("[data-faq-search]")?.addEventListener("input", (event) => {
     const q = event.target.value.trim().toLowerCase();
+    const terms = q.split(/\s+/).filter(Boolean);
     const items = qsa(".faq-item");
     let visible = 0;
     items.forEach((item) => {
       const text = item.textContent.toLowerCase();
-      const match = !q || text.includes(q);
+      const match = terms.length === 0 || terms.every((term) => text.includes(term));
       item.style.display = match ? "" : "none";
       if (match) visible += 1;
       if (q && match) item.setAttribute("open", "");
