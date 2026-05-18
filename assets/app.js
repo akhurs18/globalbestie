@@ -859,15 +859,11 @@ function formatDate(value) {
 }
 
 function nextShipmentLabel() {
-  const date = formatDate(state.settings.next_shipment_date);
-  const activeBatch = state.shipmentBatches.find((batch) => ["collecting", "sourcing", "shipped", "arriving"].includes(batch.status));
-  const batchDate = formatDate(activeBatch?.eta_date);
-  if (activeBatch && batchDate) return `${activeBatch.name} ETA: ${batchDate}`;
-  return date ? `Next shipment ETA: ${date}` : `Next shipment ETA: shared once your order is placed`;
+  return "New orders estimated around mid-June";
 }
 
 function shipmentNotice() {
-  return state.settings.shipment_notice || "Preorder timelines vary because USA shipments are consolidated in batches. We confirm your exact shipment ETA on WhatsApp after your order.";
+  return "Current batch doorstep delivery is expected May 25-27. Preorder timing can vary slightly because USA shipments move in batches.";
 }
 
 async function apiFetch(path, options = {}, fallback) {
@@ -1344,7 +1340,7 @@ function customerProofForm(order) {
 function customerNextStep(order) {
   const payment = orderPaymentSummary(order);
   const status = activePaymentStatusForOrder(order);
-  if (order.status === "pending_review") return "Wait for team approval before sending any payment.";
+  if (order.status === "pending_review") return "Your order and payment reference are being matched. We will confirm the batch ETA on WhatsApp.";
   if (["awaiting_advance", "payment_rejected"].includes(status)) {
     return payment.hasPreorder
       ? `Send the 50% advance: ${PKR.format(payment.advanceDue)}.`
@@ -1372,7 +1368,7 @@ function openModal(html) {
   root.innerHTML = `
     <div class="modal-backdrop">
       <section class="detail-modal" role="dialog" aria-modal="true">
-        <button class="icon-button plain modal-close" type="button" data-action="close-modal" aria-label="Close details">Close</button>
+        <button class="icon-button plain modal-close" type="button" data-action="close-modal" aria-label="Close details"><span aria-hidden="true">×</span></button>
         ${html}
       </section>
     </div>
@@ -1425,7 +1421,7 @@ function showProductDetails(productId) {
     ? `${nextShipmentLabel()}. ${shipmentNotice()}`
     : `In stock in Pakistan. Dispatched once your payment is matched.`;
   const publicDetails = `
-    <div><dt>Availability</dt><dd>${product.stock_mode === "preorder" ? "Preorder, confirmed by team after request" : `${Number(product.inventory || 0)} in stock, verified before acceptance`}</dd></div>
+    <div><dt>Availability</dt><dd>${product.stock_mode === "preorder" ? "Preorder, sourced through the next USA batch" : `${Number(product.inventory || 0)} in stock, ready after payment match`}</dd></div>
     <div><dt>Variants</dt><dd>${esc(product.variants || "Confirm size, shade, or color in checkout notes.")}</dd></div>
     <div><dt>Authenticity</dt><dd>${esc(product.authenticity_note || "Team verifies the source before accepting the order.")}</dd></div>
   `;
@@ -1484,7 +1480,7 @@ function showProductDetails(productId) {
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
-          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? nextShipmentLabel() : "Local dispatch"}</strong></article>
+          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? "Est. mid-June" : "Local dispatch"}</strong></article>
         </div>
         <dl class="detail-list">
           ${isPortal ? portalDetails : publicDetails}
@@ -4715,42 +4711,18 @@ function renderRecentOrdersRail() {
   `;
 }
 
-// Live ribbon under the header. Pulls the current active batch + FX rate so
-// the strip stops lying about a fixed date and starts reflecting reality.
+// Live ribbon under the header. Keep this customer-facing and simple:
+// current doorstep timing plus the estimate for new orders.
 function renderBatchRibbon() {
   const el = qs("[data-batch-ribbon]");
   if (!el) return;
-  const batch = (state.shipmentBatches || []).find((b) =>
-    ["collecting", "sourcing", "shipped", "arriving"].includes(b.status)
-  );
-  const fx = Number(state.settings?.fx_rate || 0);
-  const fxLabel = fx > 0 ? `FX Rs ${fx.toFixed(0)} / $1` : "";
-
-  let lead = "Place your order — we confirm the next batch on WhatsApp";
-  let detail = "";
-  if (batch) {
-    const eta = formatDate(batch.eta_date);
-    const cap = Number(batch.capacity || 0);
-    const used = (batch.order_ids || []).length;
-    const spotsLeft = Math.max(0, cap - used);
-    const statusLabel = {
-      collecting: "Now collecting orders",
-      sourcing: "Sourcing in USA",
-      shipped: "Shipped from USA",
-      arriving: "Arriving in Pakistan",
-    }[batch.status] || batch.status;
-    lead = `${statusLabel} · ${batch.name}${eta ? ` · ETA ${eta}` : ""}`;
-    if (cap > 0 && batch.status === "collecting") {
-      detail = spotsLeft > 0 ? `${spotsLeft} of ${cap} spots left in this batch` : `Batch full — joining next batch`;
-    }
-  }
 
   el.innerHTML = `
-    <strong>${esc(lead)}</strong>
-    ${detail ? `<span class="announce-sep" aria-hidden="true">·</span><span>${esc(detail)}</span>` : ""}
+    <strong>USA sourcing for Pakistan</strong>
     <span class="announce-sep" aria-hidden="true">·</span>
-    <span>50% advance on preorder — balance on Pakistan arrival</span>
-    ${fxLabel ? `<span class="announce-sep" aria-hidden="true">·</span><span class="ribbon-fx">${esc(fxLabel)}</span>` : ""}
+    <span>Current batch doorstep delivery: May 25-27</span>
+    <span class="announce-sep" aria-hidden="true">·</span>
+    <span>New orders estimated around mid-June</span>
   `;
 }
 
@@ -4852,8 +4824,9 @@ async function setRoute() {
   const safeView = qs(`[data-view="${viewName}"]`) ? viewName : fallbackView;
 
   const curtain = qs("#page-curtain");
+  const isFirstLoad = _firstLoad;
 
-  if (!_firstLoad && curtain) {
+  if (!isFirstLoad && curtain) {
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(0%)";
     await new Promise((r) => setTimeout(r, 440));
@@ -4882,12 +4855,10 @@ async function setRoute() {
     if (category) category.value = state.filters.category;
     renderProducts();
   }
-  if (safeView === "checkout") {
-    setCartDrawerOpen(false);
-  }
+  setCartDrawerOpen(false);
   window.scrollTo({ top: 0 });
 
-  if (curtain) {
+  if (!isFirstLoad && curtain) {
     await new Promise((r) => setTimeout(r, 16));
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(101%)";
