@@ -9610,6 +9610,37 @@ body:not([data-page="portal"]) .product-card:focus-within {
   box-shadow: 0 20px 42px rgba(139, 76, 95, 0.12);
 }
 
+body:not([data-page="portal"]) .product-empty-state {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-height: 280px;
+  padding: 36px;
+  border: 1px solid rgba(139, 76, 95, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 245, 248, 0.86)),
+    radial-gradient(circle at 92% 18%, rgba(189, 102, 120, 0.14), transparent 36%);
+  box-shadow: 0 18px 44px rgba(139, 76, 95, 0.08);
+}
+
+body:not([data-page="portal"]) .product-empty-state h2 {
+  max-width: 12ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 0.98;
+}
+
+body:not([data-page="portal"]) .product-empty-state p:not(.kicker) {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
 body:not([data-page="portal"]) .product-card .product-media {
   height: clamp(220px, 27vw, 292px);
   aspect-ratio: auto;

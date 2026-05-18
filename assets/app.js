@@ -1145,6 +1145,24 @@ function productSkeleton() {
   `;
 }
 
+function productEmptyState() {
+  const query = state.filters.search?.trim();
+  const waNumber = String(state.settings?.support_whatsapp || "").replace(/\D/g, "");
+  const waHref = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent(query
+      ? `Hi Global Bestie, can you source ${query} from the USA?`
+      : "Hi Global Bestie, I need help finding a USA product.")}`
+    : "";
+  return `
+    <div class="product-empty-state">
+      <p class="kicker">Concierge search</p>
+      <h2>No matching drops yet.</h2>
+      <p>${query ? `We do not have “${esc(query)}” listed right now, but we can still source it from the USA.` : "Try a different category, or send us the exact product you want sourced."}</p>
+      ${waHref ? `<a class="button primary" href="${safeUrl(waHref)}" target="_blank" rel="noreferrer">DM us the product</a>` : ""}
+    </div>
+  `;
+}
+
 function renderProducts() {
   // Initial-load skeleton — show 4 placeholders while the catalog fetches
   if (state._productsLoading && !state.products.length) {
@@ -1153,8 +1171,11 @@ function renderProducts() {
     return;
   }
   const featured = state.products.filter((product) => product.featured).slice(0, 3);
+  const visibleProducts = filteredProducts();
   setHTML("[data-featured-products]", featured.map((product) => productCard(product)).join(""));
-  setHTML("[data-shop-products]", filteredProducts().map((product) => productCard(product)).join(""));
+  setHTML("[data-shop-products]", visibleProducts.length
+    ? visibleProducts.map((product) => productCard(product)).join("")
+    : productEmptyState());
   const adminGrid = qs("[data-admin-products]");
   if (adminGrid) {
     adminGrid.innerHTML = state.products.map((product) => `
