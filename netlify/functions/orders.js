@@ -267,6 +267,46 @@ async function upsertCustomer({ phone, name, email, city, address, orderValue })
   }
 }
 
+function missingColumnFromSupabaseError(error) {
+  const text = String(error?.message || error || "");
+  const match = text.match(/Could not find the '([^']+)' column/i);
+  return match?.[1] || "";
+}
+
+function stripColumn(payload, column) {
+  if (!column) return false;
+  let stripped = false;
+  const stripOne = (row) => {
+    if (row && Object.prototype.hasOwnProperty.call(row, column)) {
+      delete row[column];
+      stripped = true;
+    }
+  };
+  if (Array.isArray(payload)) payload.forEach(stripOne);
+  else stripOne(payload);
+  return stripped;
+}
+
+async function insertStrippingMissingColumns(path, rows, options = {}) {
+  const payload = Array.isArray(rows)
+    ? rows.map((row) => ({ ...row }))
+    : { ...rows };
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      return await supabase(path, {
+        ...options,
+        method: options.method || "POST",
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      const column = missingColumnFromSupabaseError(error);
+      if (!stripColumn(payload, column)) throw error;
+    }
+  }
+  throw new Error("Could not insert row because the live database schema is missing too many expected columns.");
+}
+
 export default async (req) => {
   try {
     if (req.method === "GET") {
@@ -408,10 +448,8 @@ export default async (req) => {
       }
 
       const proofPath = await uploadTransferProof(id, payload.transfer_file);
-      const [createdOrder] = await supabase("/rest/v1/orders", {
-        method: "POST",
+      const [createdOrder] = await insertStrippingMissingColumns("/rest/v1/orders", order, {
         headers: { Prefer: "return=representation" },
-        body: JSON.stringify(order),
       });
 
       const items = pricedItems.map((item) => ({
@@ -427,7 +465,7 @@ export default async (req) => {
         source_url: item.source_url || "",
         source_status: item.source_status || "",
       }));
-      await supabase("/rest/v1/order_items", { method: "POST", body: JSON.stringify(items) });
+      await insertStrippingMissingColumns("/rest/v1/order_items", items);
 
       await supabase("/rest/v1/order_events", {
         method: "POST",
