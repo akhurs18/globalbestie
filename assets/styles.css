@@ -9471,3 +9471,421 @@ body:not([data-page="portal"]) .footer-hours {
   color: var(--pink-3);
   letter-spacing: 0.04em;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SOURCING TRAY (admin portal)
+   Bulk URL paste + per-URL fetch result queue. Same visual language as
+   the admin tables — soft white cards, pink accents, dense rows.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.sourcing-tray {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.sourcing-tray-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sourcing-tray-head strong {
+  display: block;
+  font-family: "Playfair Display", serif;
+  font-size: 1.08rem;
+  color: var(--ink);
+}
+
+.sourcing-tray-head span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  max-width: 56ch;
+}
+
+.sourcing-tray-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sourcing-tray-input textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.sourcing-tray-status {
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-height: 18px;
+}
+
+.sourcing-tray-status.is-busy::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--pink-2);
+  border-top-color: transparent;
+  animation: sourcing-spin 0.8s linear infinite;
+  vertical-align: -1px;
+}
+
+@keyframes sourcing-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sourcing-queue {
+  display: grid;
+  gap: 8px;
+}
+
+.sourcing-row {
+  display: grid;
+  grid-template-columns: auto 56px 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  transition: border-color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.sourcing-row:hover {
+  border-color: var(--line-strong);
+}
+
+.sourcing-row.is-blocked,
+.sourcing-row.is-error {
+  background: rgba(196, 80, 106, 0.04);
+  border-color: rgba(196, 80, 106, 0.28);
+}
+
+.sourcing-row.is-duplicate {
+  background: rgba(211, 154, 53, 0.06);
+  border-color: rgba(211, 154, 53, 0.36);
+}
+
+.sourcing-row.is-partial {
+  background: rgba(211, 154, 53, 0.04);
+}
+
+.sourcing-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pink-2);
+  cursor: pointer;
+}
+
+.sourcing-row .row-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+.sourcing-row .row-image-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sourcing-row .row-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sourcing-row .row-title {
+  font-family: "Playfair Display", serif;
+  font-size: 0.98rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sourcing-row .row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.sourcing-row .row-meta strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.sourcing-row .row-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sourcing-row .row-status-chip {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--rose);
+  color: var(--pink-3);
+}
+
+.sourcing-row.is-blocked .row-status-chip,
+.sourcing-row.is-error .row-status-chip {
+  background: rgba(196, 80, 106, 0.14);
+  color: var(--red);
+}
+
+.sourcing-row.is-duplicate .row-status-chip {
+  background: rgba(211, 154, 53, 0.16);
+  color: var(--amber);
+}
+
+.sourcing-row.is-partial .row-status-chip {
+  background: rgba(211, 154, 53, 0.12);
+  color: var(--amber);
+}
+
+.sourcing-row .row-mini {
+  padding: 5px 10px;
+  font-size: 0.76rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.sourcing-row .row-mini:hover {
+  border-color: var(--pink-2);
+  background: var(--rose);
+}
+
+.sourcing-tray-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.sourcing-tray-footer .sourcing-select-all,
+.sourcing-tray-footer .sourcing-publish-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: var(--ink);
+}
+
+.sourcing-tray-footer .sourcing-selected-count {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.sourcing-tray-footer select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   "SOURCE ANY USA PRODUCT" — PUBLIC MODAL + CART CHIP
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.source-cta-band {
+  display: grid;
+  grid-template-columns: 1.4fr auto;
+  align-items: center;
+  gap: 24px;
+  width: var(--page);
+  margin: 24px auto;
+  padding: 28px 32px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(120deg, var(--rose) 0%, var(--surface-2) 60%);
+  border: 1px solid var(--line);
+}
+
+.source-cta-band .kicker {
+  margin: 0;
+}
+
+.source-cta-band h3 {
+  margin: 6px 0 4px;
+  font-family: "Playfair Display", serif;
+  font-size: 1.4rem;
+  color: var(--ink);
+}
+
+.source-cta-band p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.source-modal {
+  display: grid;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.source-modal h3 {
+  margin: 0;
+  font-family: "Playfair Display", serif;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.source-modal .source-modal-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.source-modal label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+.source-modal input[type="url"],
+.source-modal input[type="text"] {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 0.95rem;
+}
+
+.source-modal-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.source-result {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.source-result.is-match {
+  border-color: var(--pink-2);
+  background: var(--rose);
+}
+
+.source-result.is-blocked {
+  border-color: rgba(196, 80, 106, 0.32);
+  background: rgba(196, 80, 106, 0.06);
+}
+
+.source-result-title {
+  font-family: "Playfair Display", serif;
+  font-size: 1.16rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+.source-result-price {
+  font-family: "Playfair Display", serif;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.source-result-meta {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.source-result-note {
+  display: block;
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(211, 154, 53, 0.12);
+  color: var(--amber);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+/* Cart chip for sourcing requests — quietly different from regular lines. */
+.cart-line[data-kind="sourcing_request"] {
+  border-left: 3px solid var(--pink-2);
+}
+
+.cart-line .cart-estimate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--rose);
+  color: var(--pink-3);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
+/* Sourcing-request chip on Kanban cards — pink dot so the team spots
+   customer-pasted URL requests that need a quote before going through
+   the normal preorder flow. */
+.kanban-card.is-sourcing {
+  border-left: 3px solid var(--pink-2);
+}
+
+.kanban-sourcing-chip {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: var(--surface);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}

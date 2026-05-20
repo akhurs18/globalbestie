@@ -101,8 +101,23 @@ async function repriceItems(items) {
   if (!hasSupabase()) {
     return { items: items.map((i) => ({ ...i })), notes: [] };
   }
-  const ids = [...new Set(items.map((i) => i.product_id).filter(Boolean))];
-  if (!ids.length) return { items: items.map((i) => ({ ...i })), notes: [] };
+  // Sourcing-request items don't have a catalog row — skip them for reprice
+  // but pass them through so the team can quote them on accept.
+  const sourcingItems = items.filter((i) => i.kind === "sourcing_request" || i.is_sourcing_request);
+  const catalogItems = items.filter((i) => !(i.kind === "sourcing_request" || i.is_sourcing_request));
+  const ids = [...new Set(catalogItems.map((i) => i.product_id).filter(Boolean))];
+  if (!ids.length) {
+    // Still tag the sourcing items so the team can recognize them.
+    return {
+      items: items.map((i) => ({
+        ...i,
+        ...(i.kind === "sourcing_request" || i.is_sourcing_request
+          ? { source_status: "Sourcing request · team will confirm final price" }
+          : {}),
+      })),
+      notes: sourcingItems.length ? [`${sourcingItems.length} sourcing request${sourcingItems.length === 1 ? "" : "s"} — team will confirm final price.`] : [],
+    };
+  }
   const inList = ids.map((id) => `"${encodeURIComponent(id)}"`).join(",");
   let products = [];
   try {
@@ -112,7 +127,18 @@ async function repriceItems(items) {
   }
   const byId = new Map(products.map((p) => [p.id, p]));
   const notes = [];
+  if (sourcingItems.length) {
+    notes.push(`${sourcingItems.length} sourcing request${sourcingItems.length === 1 ? "" : "s"} — team will confirm final price.`);
+  }
   const repriced = items.map((item) => {
+    // Sourcing-request items pass through with the estimate intact —
+    // the team will set the real price when accepting.
+    if (item.kind === "sourcing_request" || item.is_sourcing_request) {
+      return {
+        ...item,
+        source_status: "Sourcing request · team will confirm final price",
+      };
+    }
     const product = byId.get(item.product_id);
     if (!product) {
       notes.push(`Product ${item.product_id} not found — used client price.`);
@@ -386,6 +412,13 @@ export default async (req) => {
         whatsapp_opt_in: payload.whatsapp_opt_in !== false,
         pricing_note: pricingNotes.length ? pricingNotes.join(" ") : "",
         idempotency_key: idemKey || null,
+        // Surfaced for the team portal Kanban — if any item is a customer
+        // URL-paste sourcing request, the order needs quoting before it
+        // joins the regular preorder flow.
+        has_sourcing_request: Boolean(
+          payload.has_sourcing_request ||
+          pricedItems.some((it) => it.kind === "sourcing_request" || it.is_sourcing_request)
+        ),
         created_at: now,
         updated_at: now,
       };

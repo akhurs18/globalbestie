@@ -647,6 +647,46 @@
                     <input type="file" data-product-import accept="application/json,.json" />
                   </label>
                 </div>
+
+                <!-- ═══ SOURCING TRAY ═══════════════════════════════════════
+                  Bulk URL importer. Paste up to 50 retailer links, hit
+                  "Fetch all". Each row shows title + USD + suggested PKR
+                  + dedupe status. Select rows + Save selected for one-
+                  shot bulk publish. -->
+                <section class="sourcing-tray" data-sourcing-tray>
+                  <div class="sourcing-tray-head">
+                    <div>
+                      <strong>Sourcing Tray</strong>
+                      <span>Paste up to 50 retailer URLs (one per line). We'll fetch each one and queue them for review.</span>
+                    </div>
+                    <div class="sourcing-tray-actions">
+                      <button class="button secondary" type="button" data-action="sourcing-fetch">Fetch all</button>
+                      <button class="button ghost" type="button" data-action="sourcing-clear">Clear</button>
+                    </div>
+                  </div>
+                  <label class="sourcing-tray-input">
+                    <span class="sr-only">Retailer URLs</span>
+                    <textarea data-sourcing-urls rows="4" placeholder="https://www.coach.com/products/...&#10;https://www.sephora.com/product/...&#10;https://www.charlottetilbury.com/us/..."></textarea>
+                  </label>
+                  <div class="sourcing-tray-status" data-sourcing-status></div>
+                  <div class="sourcing-queue" data-sourcing-queue hidden></div>
+                  <div class="sourcing-tray-footer" data-sourcing-footer hidden>
+                    <label class="sourcing-select-all">
+                      <input type="checkbox" data-sourcing-select-all />
+                      Select all parseable
+                    </label>
+                    <span class="sourcing-selected-count" data-sourcing-selected>0 selected</span>
+                    <label class="sourcing-publish-state">
+                      Save as:
+                      <select data-sourcing-publish>
+                        <option value="draft">Draft</option>
+                        <option value="active">Active</option>
+                      </select>
+                    </label>
+                    <button class="button primary" type="button" data-action="sourcing-save">Save selected</button>
+                    <button class="button ghost" type="button" data-action="sourcing-discard">Discard queue</button>
+                  </div>
+                </section>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
                   <!-- Paste a retailer URL (Coach / Sephora / Nordstrom / etc.)

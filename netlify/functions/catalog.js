@@ -67,23 +67,46 @@ export default async (req) => {
 
     if (req.method === "POST") {
       if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
-      const product = await req.json();
-      if (!product.title || !product.id) return json({ error: "Product id and title are required." }, { status: 400 });
-      // Reject unknown keys the table doesn't have (defensive — pricing_mode
-      // is a form-only flag, never a column).
-      delete product.pricing_mode;
-      const hasDirectPrice = Number(product.customer_price_pkr || 0) > 0;
-      const hasUsdPrice = Number(product.usa_price_usd || 0) > 0;
-      if (!hasDirectPrice && !hasUsdPrice) {
-        return json({ error: "Set either a USD retail price (preorder) or a PKR customer price (in-stock)." }, { status: 400 });
+      const body = await req.json();
+
+      // Single-product path (legacy + form save). Returns { product, configured }.
+      const saveOne = async (product) => {
+        if (!product.title || !product.id) {
+          return { error: "Product id and title are required." };
+        }
+        delete product.pricing_mode;
+        const hasDirectPrice = Number(product.customer_price_pkr || 0) > 0;
+        const hasUsdPrice = Number(product.usa_price_usd || 0) > 0;
+        if (!hasDirectPrice && !hasUsdPrice) {
+          return { error: "Set either a USD retail price (preorder) or a PKR customer price (in-stock)." };
+        }
+        if (!hasSupabase()) return { product };
+        try {
+          const saved = await upsertProduct(product);
+          return { product: saved };
+        } catch (err) {
+          return { error: `Save failed: ${err.message}` };
+        }
+      };
+
+      // Bulk path — array of products. Returns { results: [...], saved, failed }.
+      if (Array.isArray(body.products)) {
+        const items = body.products.slice(0, 50);
+        const results = [];
+        let saved = 0;
+        let failed = 0;
+        for (const product of items) {
+          const r = await saveOne(product);
+          if (r.error) { failed++; results.push({ id: product.id, ok: false, error: r.error }); }
+          else { saved++; results.push({ id: r.product?.id || product.id, ok: true, product: r.product }); }
+        }
+        return json({ results, saved, failed, configured: hasSupabase() });
       }
-      if (!hasSupabase()) return json({ product, configured: false });
-      try {
-        const saved = await upsertProduct(product);
-        return json({ product: saved, configured: true });
-      } catch (error) {
-        return json({ error: `Save failed: ${error.message}` }, { status: 400 });
-      }
+
+      // Single product (legacy shape)
+      const r = await saveOne(body);
+      if (r.error) return json({ error: r.error }, { status: 400 });
+      return json({ product: r.product, configured: hasSupabase() });
     }
 
     if (req.method === "DELETE") {

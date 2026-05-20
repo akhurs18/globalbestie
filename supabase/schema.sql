@@ -184,6 +184,12 @@ alter table public.orders add column if not exists pricing_note text;
 alter table public.orders add column if not exists idempotency_key text;
 create index if not exists orders_idempotency_idx on public.orders (idempotency_key);
 
+-- True when at least one item in the order is a customer-pasted-URL
+-- sourcing request rather than an existing catalog product. The team
+-- portal's Kanban surfaces these orders in a dedicated swimlane so
+-- they're quoted before the regular preorder flow proceeds.
+alter table public.orders add column if not exists has_sourcing_request boolean not null default false;
+
 -- =========================================================================
 -- CUSTOMERS — keyed by canonical phone (923xxxxxxxxx). One row per unique
 -- buyer. Counters maintained from /api/orders POST and /api/leads.

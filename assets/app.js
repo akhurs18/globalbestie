@@ -1201,22 +1201,35 @@ function renderCart() {
   qsa("[data-cart-count]").forEach((count) => { count.textContent = cartCount; });
   const lines = cartLines();
   const empty = `<p class="muted">Your bag is empty.</p>`;
-  const html = lines.map((line) => `
-    <div class="order-line">
-      <div>
-        <strong>${esc(line.product.title)}</strong>
-        <small>${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}${line.variant ? ` · ${esc(line.variant)}` : ""}</small>
-        <label class="cart-variant-edit">
+  const html = lines.map((line) => {
+    const isSourcing = line.kind === "sourcing_request" || line.product.is_sourcing_request;
+    const statusCopy = isSourcing
+      ? `Sourcing request · Qty ${line.quantity}`
+      : `${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}`;
+    const variantBlock = isSourcing
+      ? (line.variant ? `<small>Variant: ${esc(line.variant)}</small>` : "")
+      : `<label class="cart-variant-edit">
           <span>${esc(variantLabel(line.product))}</span>
           <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}" />
-        </label>
+        </label>`;
+    const sourceLine = isSourcing && line.product.source_url
+      ? `<small><a href="${safeUrl(line.product.source_url)}" target="_blank" rel="noopener noreferrer">View source link →</a></small>`
+      : "";
+    return `
+    <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
+      <div>
+        <strong>${esc(line.product.title)}${isSourcing ? `<span class="cart-estimate-chip">Estimate</span>` : ""}</strong>
+        <small>${statusCopy}${line.variant && !isSourcing ? ` · ${esc(line.variant)}` : ""}</small>
+        ${sourceLine}
+        ${variantBlock}
       </div>
       <div class="mini-actions">
         <strong>${PKR.format(line.subtotal)}</strong>
         <button class="icon-button plain" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}">Remove</button>
       </div>
     </div>
-  `).join("");
+  `;
+  }).join("");
   setHTML("[data-cart-items]", html || empty);
   setHTML("[data-checkout-items]", html || empty);
 
@@ -4018,9 +4031,10 @@ function renderKanbanBoard(rows) {
                 const ageDays = daysSince(o.created_at);
                 const watched = isWatched(o.id);
                 return `
-                  <button class="kanban-card ${sla ? `sla-${sla.level}` : ""} ${watched ? "is-watched" : ""}" type="button" draggable="true" data-action="view-order" data-order-id="${attr(o.id)}" data-kanban-drag="${attr(o.id)}">
+                  <button class="kanban-card ${sla ? `sla-${sla.level}` : ""} ${watched ? "is-watched" : ""} ${o.has_sourcing_request ? "is-sourcing" : ""}" type="button" draggable="true" data-action="view-order" data-order-id="${attr(o.id)}" data-kanban-drag="${attr(o.id)}">
                     <div class="kanban-card-top">
                       <strong>${esc(o.id)}</strong>
+                      ${o.has_sourcing_request ? `<span class="kanban-sourcing-chip" title="Customer-pasted URL — needs quote">SRC</span>` : ""}
                       ${watched ? `<span class="kanban-star" aria-hidden="true">★</span>` : ""}
                     </div>
                     <small>${esc((o.customer_name || "").split(" ").slice(0, 2).join(" "))}</small>
@@ -5048,18 +5062,28 @@ async function handleCheckout(event) {
     ...data,
     idempotency_key: idempotencyKey,
     transfer_file: file ? await fileToPayload(file) : null,
-    items: cartLines().map((line) => ({
-      product_id: line.product_id,
-      title: line.product.title,
-      quantity: line.quantity,
-      unit_price_pkr: calculatePrice(line.product),
-      stock_mode: line.product.stock_mode,
-      image_url: line.product.image_url,
-      variant: line.variant || line.product.variants || "",
-      customer_variant_input: line.variant || "",
-      source_url: line.product.source_url || "",
-      source_status: line.product.stock_mode === "preorder" ? "Pending USA sourcing" : "In-stock verification",
-    })),
+    items: cartLines().map((line) => {
+      const isSourcing = line.kind === "sourcing_request" || line.product.is_sourcing_request;
+      return {
+        product_id: line.product_id,
+        title: line.product.title,
+        quantity: line.quantity,
+        unit_price_pkr: calculatePrice(line.product),
+        stock_mode: line.product.stock_mode,
+        image_url: line.product.image_url,
+        variant: line.variant || line.product.variants || "",
+        customer_variant_input: line.variant || "",
+        source_url: line.product.source_url || "",
+        source_status: isSourcing
+          ? "Sourcing request · awaiting team quote"
+          : (line.product.stock_mode === "preorder" ? "Pending USA sourcing" : "In-stock verification"),
+        // Sourcing-request flag travels with the item so the team's
+        // portal Kanban can route it into the dedicated swimlane.
+        is_sourcing_request: isSourcing ? true : undefined,
+        kind: isSourcing ? "sourcing_request" : undefined,
+      };
+    }),
+    has_sourcing_request: cartLines().some((line) => line.kind === "sourcing_request" || line.product.is_sourcing_request),
     total_pkr: payment.total,
     advance_due_pkr: payment.advanceDue,
     balance_due_pkr: payment.balanceDue,
@@ -7111,6 +7135,445 @@ async function importProductFromUrl() {
   toast("Autofill complete — review the form before saving.");
 }
 
+// ═══════════════════════ SOURCING TRAY (admin bulk URL importer) ═════════
+// Paste up to 50 retailer URLs, hit Fetch All. Each parsed row gets a
+// queue card with title, USD, suggested PKR, and dedupe info. Admin
+// checks the rows they want and clicks Save selected — server bulk-
+// upserts them in one round trip.
+
+const sourcingState = {
+  queue: [],         // array of { url, status, candidate?, existing? }
+  fetching: false,
+  saving: false,
+};
+
+function slugify(text) {
+  return String(text || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 80) || `item-${Date.now().toString(36)}`;
+}
+
+async function sourcingFetchAll() {
+  const textarea = qs("[data-sourcing-urls]");
+  const status = qs("[data-sourcing-status]");
+  const queueWrap = qs("[data-sourcing-queue]");
+  const footer = qs("[data-sourcing-footer]");
+  if (!textarea) return;
+  const raw = String(textarea.value || "").trim();
+  if (!raw) {
+    toast("Paste at least one retailer URL.");
+    return;
+  }
+  const urls = [...new Set(raw.split(/\r?\n/).map((line) => line.trim()).filter((line) => /^https?:\/\//i.test(line)))].slice(0, 50);
+  if (!urls.length) {
+    toast("No valid http(s) URLs found in the box.");
+    return;
+  }
+  sourcingState.fetching = true;
+  if (status) {
+    status.textContent = `Fetching ${urls.length} URL${urls.length === 1 ? "" : "s"}…`;
+    status.classList.add("is-busy");
+  }
+  let payload;
+  try {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    if (state.adminToken) headers.set("Authorization", `Bearer ${state.adminToken}`);
+    const response = await fetch("/api/admin/fetch-product", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ urls }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    payload = await response.json();
+  } catch (err) {
+    if (status) {
+      status.textContent = `Fetch failed: ${err.message || err}`;
+      status.classList.remove("is-busy");
+    }
+    sourcingState.fetching = false;
+    return;
+  }
+  sourcingState.fetching = false;
+  if (status) status.classList.remove("is-busy");
+  sourcingState.queue = (payload.results || []).map((row) => ({
+    ...row,
+    selected: row.status === "ok" || row.status === "partial",
+  }));
+  const ok = sourcingState.queue.filter((r) => r.status === "ok").length;
+  const blocked = sourcingState.queue.filter((r) => r.status === "blocked" || r.status === "error").length;
+  const dupes = sourcingState.queue.filter((r) => r.status === "duplicate").length;
+  if (status) {
+    status.textContent = `Fetched ${ok} ok · ${dupes} already in catalog · ${blocked} blocked. Review and save selected.`;
+  }
+  if (queueWrap) queueWrap.hidden = false;
+  if (footer) footer.hidden = false;
+  renderSourcingTrayQueue();
+}
+
+function renderSourcingTrayQueue() {
+  const queueWrap = qs("[data-sourcing-queue]");
+  if (!queueWrap) return;
+  if (!sourcingState.queue.length) {
+    queueWrap.hidden = true;
+    return;
+  }
+  queueWrap.hidden = false;
+  queueWrap.innerHTML = sourcingState.queue.map((row, i) => {
+    const c = row.candidate || {};
+    const img = c.image_url
+      ? `<img class="row-image" src="${safeUrl(imageUrl(c.image_url, { width: 120, height: 120 }), "")}" alt="" loading="lazy" />`
+      : `<div class="row-image row-image-fallback">no img</div>`;
+    const checkable = row.status === "ok" || row.status === "partial";
+    const statusChip = {
+      ok: "Ready",
+      partial: "Partial",
+      duplicate: "Already in catalog",
+      blocked: "Bot-blocked",
+      error: "Error",
+    }[row.status] || row.status;
+    const titleLine = row.status === "duplicate"
+      ? esc(row.existing_title || "Existing product")
+      : esc(c.title || row.url);
+    const metaParts = [];
+    if (row.status === "ok" || row.status === "partial") {
+      if (c.brand) metaParts.push(esc(c.brand));
+      if (c.category) metaParts.push(esc(c.category));
+      if (c.suggested_customer_price_pkr) {
+        metaParts.push(`Suggested <strong>${PKR.format(c.suggested_customer_price_pkr)}</strong>`);
+      }
+    } else if (row.status === "duplicate") {
+      metaParts.push(`<a href="#" data-action="sourcing-open-existing" data-product-id="${attr(row.existing_product_id)}">Open existing product →</a>`);
+    } else {
+      metaParts.push(esc(row.error || "Could not fetch this URL"));
+    }
+    return `
+      <div class="sourcing-row is-${esc(row.status)}" data-sourcing-tray-row="${i}">
+        <input type="checkbox" data-sourcing-check ${row.selected && checkable ? "checked" : ""} ${checkable ? "" : "disabled"} aria-label="Select row" />
+        ${img}
+        <div class="row-body">
+          <div class="row-title">${titleLine}</div>
+          <div class="row-meta">${metaParts.join(" · ")}</div>
+        </div>
+        <div class="row-actions">
+          <span class="row-status-chip">${esc(statusChip)}</span>
+          ${checkable ? `<button class="row-mini" type="button" data-action="sourcing-edit" data-row="${i}">Edit</button>` : ""}
+          <button class="row-mini" type="button" data-action="sourcing-remove" data-row="${i}" aria-label="Remove row">×</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+  updateSourcingSelectedCount();
+}
+
+function updateSourcingSelectedCount() {
+  const target = qs("[data-sourcing-selected]");
+  if (!target) return;
+  const n = sourcingState.queue.filter((r) => r.selected && (r.status === "ok" || r.status === "partial")).length;
+  target.textContent = `${n} selected`;
+}
+
+function sourcingToggleSelectAll(checked) {
+  sourcingState.queue.forEach((row) => {
+    if (row.status === "ok" || row.status === "partial") row.selected = checked;
+  });
+  renderSourcingTrayQueue();
+}
+
+function sourcingClear() {
+  const textarea = qs("[data-sourcing-urls]");
+  if (textarea) textarea.value = "";
+  sourcingState.queue = [];
+  renderSourcingTrayQueue();
+  const status = qs("[data-sourcing-status]");
+  if (status) status.textContent = "";
+  const queueWrap = qs("[data-sourcing-queue]");
+  const footer = qs("[data-sourcing-footer]");
+  if (queueWrap) queueWrap.hidden = true;
+  if (footer) footer.hidden = true;
+}
+
+// "Edit" — drops the row into the main product editor form so admin can
+// tweak before saving. Removes the row from the tray (it's now "live" in
+// the form).
+function sourcingEditRow(index) {
+  const row = sourcingState.queue[index];
+  if (!row || !row.candidate) return;
+  const c = row.candidate;
+  fillProductForm({
+    id: slugify(c.title),
+    title: c.title,
+    brand: c.brand,
+    category: c.category,
+    description: c.description,
+    image_url: c.image_url,
+    gallery_urls: (c.gallery_urls || []).join("\n"),
+    source_url: c.source_url,
+    variants: c.variants,
+    authenticity_note: c.authenticity_note,
+    usa_price_usd: c.usa_price_usd,
+    shipping_pkr: c.suggested_shipping_pkr,
+    pricing_mode: "preorder",
+    stock_mode: "preorder",
+    fx_rate: state.settings.fx_rate || 282,
+    inventory: 0,
+    product_status: "draft",
+  });
+  // Scroll the form into view so admin sees the change immediately.
+  qs("[data-product-editor]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  sourcingState.queue.splice(index, 1);
+  renderSourcingTrayQueue();
+  toast("Loaded into editor. Adjust and save.");
+}
+
+function sourcingRemoveRow(index) {
+  sourcingState.queue.splice(index, 1);
+  renderSourcingTrayQueue();
+}
+
+// Bulk save — sends all selected rows in one POST to /api/catalog with
+// { products: [...] }. Server upserts each and returns a results array.
+async function sourcingSaveSelected() {
+  const publishSelect = qs("[data-sourcing-publish]");
+  const publishAs = publishSelect?.value === "active" ? "active" : "draft";
+  const selected = sourcingState.queue.filter((r) => r.selected && (r.status === "ok" || r.status === "partial"));
+  if (!selected.length) {
+    toast("Select at least one row to save.");
+    return;
+  }
+  const fx = Number(state.settings.fx_rate || 282);
+  const markup = Number(state.settings.markup_rate ?? 0.25);
+  const products = selected.map((row) => {
+    const c = row.candidate;
+    return {
+      id: slugify(c.title),
+      title: c.title,
+      brand: c.brand,
+      category: c.category,
+      description: c.description,
+      usa_price_usd: Number(c.usa_price_usd || 0),
+      shipping_pkr: Number(c.suggested_shipping_pkr || 0),
+      fx_rate: fx,
+      markup_rate: markup,
+      stock_mode: "preorder",
+      inventory: 0,
+      low_stock_threshold: 2,
+      image_url: c.image_url || "",
+      gallery_urls: c.gallery_urls || [],
+      variants: c.variants,
+      authenticity_note: c.authenticity_note,
+      source_url: c.source_url,
+      product_status: publishAs,
+      status: publishAs,
+      preorder_weeks: Number(state.settings.preorder_weeks || 4),
+      featured: false,
+    };
+  });
+  sourcingState.saving = true;
+  const status = qs("[data-sourcing-status]");
+  if (status) {
+    status.textContent = `Saving ${products.length} product${products.length === 1 ? "" : "s"}…`;
+    status.classList.add("is-busy");
+  }
+  try {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    if (state.adminToken) headers.set("Authorization", `Bearer ${state.adminToken}`);
+    const response = await fetch("/api/catalog", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ products }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const payload = await response.json();
+    // Merge saved products into local state so admin can see them
+    // immediately in the grid below.
+    (payload.results || []).forEach((r) => {
+      if (!r.ok || !r.product) return;
+      const idx = state.products.findIndex((p) => p.id === r.product.id);
+      if (idx >= 0) state.products[idx] = r.product;
+      else state.products.unshift(r.product);
+    });
+    renderAll();
+    // Drop the saved rows from the queue, leave failed rows for retry.
+    const failedIds = new Set((payload.results || []).filter((r) => !r.ok).map((r) => r.id));
+    sourcingState.queue = sourcingState.queue.filter((r) => {
+      const id = slugify(r.candidate?.title || "");
+      return failedIds.has(id) || r.status === "duplicate" || r.status === "blocked" || r.status === "error";
+    });
+    renderSourcingTrayQueue();
+    if (status) status.textContent = `Saved ${payload.saved} · failed ${payload.failed}.`;
+    toast(`Saved ${payload.saved} product${payload.saved === 1 ? "" : "s"} as ${publishAs}.`);
+  } catch (err) {
+    if (status) status.textContent = `Save failed: ${err.message || err}`;
+    toast("Bulk save failed. Check the portal key and try again.");
+  } finally {
+    sourcingState.saving = false;
+    if (status) status.classList.remove("is-busy");
+  }
+}
+
+// ═══════════════════════ SOURCING REQUEST (public storefront) ═════════════
+// Customer pastes a USA retailer URL on /shop. We hit /api/source-estimate
+// and surface one of:
+//   • existing in catalog → "View it" button (routes to PDP)
+//   • parsed → estimate card with "Add to cart for team review"
+//   • blocked → WhatsApp deeplink with the URL pre-filled
+
+// Temp state for the modal — we hold the last estimate so the add-to-cart
+// button can use it without re-fetching.
+let lastSourceEstimate = null;
+
+function openSourceRequestModal() {
+  lastSourceEstimate = null;
+  openModal(`
+    <div class="source-modal">
+      <h3>Source any USA product</h3>
+      <p class="source-modal-intro">Paste a US retailer link below. We'll quote the final PKR price for sourcing, USA shipping, and delivery to your door in Pakistan.</p>
+      <label>
+        Retailer URL
+        <input type="url" data-source-url placeholder="https://www.coach.com/products/..." autofocus />
+      </label>
+      <label>
+        Variant / size / shade (optional)
+        <input type="text" data-source-variant placeholder="e.g. Size 38, shade Pillow Talk" maxlength="280" />
+      </label>
+      <div class="source-modal-actions">
+        <button class="button primary" type="button" data-action="source-quote">Get instant quote</button>
+        <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+      </div>
+      <div class="source-modal-result" data-source-result></div>
+    </div>
+  `);
+}
+
+async function submitSourceRequest() {
+  const urlInput = qs("[data-source-url]");
+  const variantInput = qs("[data-source-variant]");
+  const resultBox = qs("[data-source-result]");
+  if (!urlInput || !resultBox) return;
+  const url = String(urlInput.value || "").trim();
+  if (!url) {
+    resultBox.innerHTML = `<div class="source-result is-blocked">Paste a product URL first.</div>`;
+    return;
+  }
+  resultBox.innerHTML = `<div class="source-result">Reaching out to the retailer… this usually takes a few seconds.</div>`;
+  let payload;
+  try {
+    const response = await fetch("/api/source-estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, variant_note: variantInput?.value || "" }),
+    });
+    payload = await response.json();
+    if (response.status === 429) {
+      resultBox.innerHTML = `<div class="source-result is-blocked">${esc(payload.error || "Too many quotes — try again later.")}</div>`;
+      return;
+    }
+    if (!response.ok && !payload) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+  } catch (err) {
+    resultBox.innerHTML = `<div class="source-result is-blocked">Couldn't reach our quote service. Try again, or send the URL on WhatsApp.</div>`;
+    return;
+  }
+
+  // Already in catalog — surface "view it"
+  if (payload.matched_product_id) {
+    resultBox.innerHTML = `
+      <div class="source-result is-match">
+        <p class="source-result-title">We already carry this!</p>
+        <p class="source-result-meta">${esc(payload.matched_title || "Match found")}</p>
+        <div class="source-modal-actions">
+          <button class="button primary" type="button" data-action="source-open-existing" data-product-id="${attr(payload.matched_product_id)}">View product</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Blocked path — WhatsApp fallback
+  if (payload.blocked) {
+    const waNumber = (payload.support_whatsapp || state.settings?.support_whatsapp || "").replace(/\D/g, "");
+    const waText = `Hi Global Bestie, can you source this for me?\n${url}${variantInput?.value ? `\nVariant: ${variantInput.value}` : ""}`;
+    const waHref = waNumber ? `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}` : "";
+    resultBox.innerHTML = `
+      <div class="source-result is-blocked">
+        <p class="source-result-title">Couldn't auto-quote this one</p>
+        <p class="source-result-meta">${esc(payload.message || "Send the link on WhatsApp and we'll quote within 15 minutes.")}</p>
+        <div class="source-modal-actions">
+          ${waHref ? `<a class="button primary" href="${attr(waHref)}" target="_blank" rel="noopener noreferrer">Send on WhatsApp</a>` : ""}
+          <button class="button ghost" type="button" data-action="close-modal">Close</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Good estimate path
+  const c = payload.candidate || {};
+  lastSourceEstimate = {
+    source_url: c.source_url || url,
+    title: c.title || url,
+    image_url: c.image_url || "",
+    category: c.category || "accessories",
+    variant_note: c.variant_note || "",
+    estimated_pkr: Number(payload.estimated_pkr || 0),
+    preorder_weeks: Number(payload.preorder_weeks || 4),
+  };
+  const img = c.image_url
+    ? `<img src="${safeUrl(imageUrl(c.image_url, { width: 320, height: 320 }), "")}" alt="${attr(c.title || "")}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--line);" />`
+    : "";
+  resultBox.innerHTML = `
+    <div class="source-result is-match">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        ${img}
+        <div style="flex:1;min-width:0;">
+          <p class="source-result-title">${esc(c.title || url)}</p>
+          <p class="source-result-price">Estimated total: ${PKR.format(lastSourceEstimate.estimated_pkr)}</p>
+          <p class="source-result-meta">Includes sourcing, international shipping, and our service. ~${lastSourceEstimate.preorder_weeks}-week preorder · 50% advance after team confirms.</p>
+        </div>
+      </div>
+      <small class="source-result-note">${esc(payload.notes || "Estimate. Team confirms the final PKR price within 15 min before any payment is collected.")}</small>
+      <div class="source-modal-actions">
+        <button class="button primary" type="button" data-action="add-sourcing-to-cart">Add to cart for team review</button>
+        <button class="button ghost" type="button" data-action="close-modal">Close</button>
+      </div>
+    </div>
+  `;
+}
+
+function addSourcingRequestToCart() {
+  if (!lastSourceEstimate) return;
+  const id = `sourcing-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  state.cart = state.cart || [];
+  state.cart.push({
+    product_id: id,
+    quantity: 1,
+    kind: "sourcing_request",
+    is_estimate: true,
+    variant: lastSourceEstimate.variant_note || "",
+    // Synthetic product so the existing cart rendering keeps working.
+    product: {
+      id,
+      title: lastSourceEstimate.title,
+      brand: "Sourcing request",
+      category: lastSourceEstimate.category,
+      customer_price_pkr: lastSourceEstimate.estimated_pkr,
+      stock_mode: "preorder",
+      image_url: lastSourceEstimate.image_url,
+      source_url: lastSourceEstimate.source_url,
+      preorder_weeks: lastSourceEstimate.preorder_weeks,
+      is_sourcing_request: true,
+    },
+  });
+  saveCart();
+  renderCart();
+  closeModal();
+  setCartDrawerOpen(true);
+  toast("Added to cart as a sourcing request — team will confirm the final price.");
+}
+
 // Disables the submit button on a form, swaps its text for a busy state,
 // and returns a restore() callback the caller invokes in finally so the
 // button is always restored even if the request throws.
@@ -8004,6 +8467,52 @@ function wireEvents() {
       event.preventDefault();
       return importProductFromUrl();
     }
+    // Sourcing tray (admin bulk URL importer)
+    if (action === "sourcing-fetch") {
+      event.preventDefault();
+      return sourcingFetchAll();
+    }
+    if (action === "sourcing-clear" || action === "sourcing-discard") {
+      event.preventDefault();
+      return sourcingClear();
+    }
+    if (action === "sourcing-save") {
+      event.preventDefault();
+      return sourcingSaveSelected();
+    }
+    if (action === "sourcing-edit") {
+      event.preventDefault();
+      return sourcingEditRow(Number(target.dataset.row));
+    }
+    if (action === "sourcing-remove") {
+      event.preventDefault();
+      return sourcingRemoveRow(Number(target.dataset.row));
+    }
+    if (action === "sourcing-open-existing") {
+      event.preventDefault();
+      const id = target.dataset.productId;
+      if (id) showProductDetails(id);
+      return;
+    }
+    if (action === "open-source-modal") {
+      event.preventDefault();
+      return openSourceRequestModal();
+    }
+    if (action === "source-quote") {
+      event.preventDefault();
+      return submitSourceRequest();
+    }
+    if (action === "add-sourcing-to-cart") {
+      event.preventDefault();
+      return addSourcingRequestToCart();
+    }
+    if (action === "source-open-existing") {
+      event.preventDefault();
+      const id = target.dataset.productId;
+      closeModal();
+      if (id) navigateTo("product", { id });
+      return;
+    }
     if (action === "open-cart") return setCartDrawerOpen(true);
     if (action === "close-cart") return setCartDrawerOpen(false);
     // Note: action="checkout" guard is handled in the anchor click handler
@@ -8785,6 +9294,21 @@ function wireEvents() {
     importProductsFromFile(event.target.files?.[0]).finally(() => {
       event.target.value = "";
     });
+  });
+  // Sourcing Tray — per-row checkbox + select-all
+  qs("[data-sourcing-tray]")?.addEventListener("change", (event) => {
+    const target = event.target;
+    if (target.matches("[data-sourcing-select-all]")) {
+      return sourcingToggleSelectAll(target.checked);
+    }
+    if (target.matches("[data-sourcing-check]")) {
+      const row = target.closest("[data-sourcing-tray-row]");
+      const idx = Number(row?.dataset.sourcingTrayRow);
+      if (!Number.isNaN(idx) && sourcingState.queue[idx]) {
+        sourcingState.queue[idx].selected = target.checked;
+        updateSourcingSelectedCount();
+      }
+    }
   });
   qs("[data-product-image-upload]")?.addEventListener("change", (event) => {
     uploadProductImage(event.target.files?.[0]).finally(() => {
