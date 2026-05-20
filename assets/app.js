@@ -859,15 +859,11 @@ function formatDate(value) {
 }
 
 function nextShipmentLabel() {
-  const date = formatDate(state.settings.next_shipment_date);
-  const activeBatch = state.shipmentBatches.find((batch) => ["collecting", "sourcing", "shipped", "arriving"].includes(batch.status));
-  const batchDate = formatDate(activeBatch?.eta_date);
-  if (activeBatch && batchDate) return `${activeBatch.name} ETA: ${batchDate}`;
-  return date ? `Next shipment ETA: ${date}` : `Next shipment ETA: shared once your order is placed`;
+  return "New orders estimated around mid-June";
 }
 
 function shipmentNotice() {
-  return state.settings.shipment_notice || "Preorder timelines vary because USA shipments are consolidated in batches. We confirm your exact shipment ETA on WhatsApp after your order.";
+  return "Current batch doorstep delivery is expected May 25-27. Preorder timing can vary slightly because USA shipments move in batches.";
 }
 
 async function apiFetch(path, options = {}, fallback) {
@@ -1127,6 +1123,7 @@ function filteredProducts() {
   products.sort((a, b) => {
     if (sort === "price_asc") return calculatePrice(a) - calculatePrice(b);
     if (sort === "price_desc") return calculatePrice(b) - calculatePrice(a);
+    if (sort === "newest") return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     if (sort === "margin") return productPricingParts(b).margin - productPricingParts(a).margin;
     return Number(b.featured) - Number(a.featured);
   });
@@ -1149,6 +1146,24 @@ function productSkeleton() {
   `;
 }
 
+function productEmptyState() {
+  const query = state.filters.search?.trim();
+  const waNumber = String(state.settings?.support_whatsapp || "").replace(/\D/g, "");
+  const waHref = waNumber
+    ? `https://wa.me/${waNumber}?text=${encodeURIComponent(query
+      ? `Hi Global Bestie, can you source ${query} from the USA?`
+      : "Hi Global Bestie, I need help finding a USA product.")}`
+    : "";
+  return `
+    <div class="product-empty-state">
+      <p class="kicker">Concierge search</p>
+      <h2>No matching drops yet.</h2>
+      <p>${query ? `We do not have “${esc(query)}” listed right now, but we can still source it from the USA.` : "Try a different category, or send us the exact product you want sourced."}</p>
+      ${waHref ? `<a class="button primary" href="${safeUrl(waHref)}" target="_blank" rel="noreferrer">DM us the product</a>` : ""}
+    </div>
+  `;
+}
+
 function renderProducts() {
   // Initial-load skeleton — show 4 placeholders while the catalog fetches
   if (state._productsLoading && !state.products.length) {
@@ -1157,8 +1172,11 @@ function renderProducts() {
     return;
   }
   const featured = state.products.filter((product) => product.featured).slice(0, 3);
+  const visibleProducts = filteredProducts();
   setHTML("[data-featured-products]", featured.map((product) => productCard(product)).join(""));
-  setHTML("[data-shop-products]", filteredProducts().map((product) => productCard(product)).join(""));
+  setHTML("[data-shop-products]", visibleProducts.length
+    ? visibleProducts.map((product) => productCard(product)).join("")
+    : productEmptyState());
   const adminGrid = qs("[data-admin-products]");
   if (adminGrid) {
     adminGrid.innerHTML = state.products.map((product) => `
@@ -1357,7 +1375,7 @@ function customerProofForm(order) {
 function customerNextStep(order) {
   const payment = orderPaymentSummary(order);
   const status = activePaymentStatusForOrder(order);
-  if (order.status === "pending_review") return "Wait for team approval before sending any payment.";
+  if (order.status === "pending_review") return "Your order and payment reference are being matched. We will confirm the batch ETA on WhatsApp.";
   if (["awaiting_advance", "payment_rejected"].includes(status)) {
     return payment.hasPreorder
       ? `Send the 50% advance: ${PKR.format(payment.advanceDue)}.`
@@ -1385,7 +1403,7 @@ function openModal(html) {
   root.innerHTML = `
     <div class="modal-backdrop">
       <section class="detail-modal" role="dialog" aria-modal="true">
-        <button class="icon-button plain modal-close" type="button" data-action="close-modal" aria-label="Close details">Close</button>
+        <button class="icon-button plain modal-close" type="button" data-action="close-modal" aria-label="Close details"><span aria-hidden="true">×</span></button>
         ${html}
       </section>
     </div>
@@ -1438,7 +1456,7 @@ function showProductDetails(productId) {
     ? `${nextShipmentLabel()}. ${shipmentNotice()}`
     : `In stock in Pakistan. Dispatched once your payment is matched.`;
   const publicDetails = `
-    <div><dt>Availability</dt><dd>${product.stock_mode === "preorder" ? "Preorder, confirmed by team after request" : `${Number(product.inventory || 0)} in stock, verified before acceptance`}</dd></div>
+    <div><dt>Availability</dt><dd>${product.stock_mode === "preorder" ? "Preorder, sourced through the next USA batch" : `${Number(product.inventory || 0)} in stock, ready after payment match`}</dd></div>
     <div><dt>Variants</dt><dd>${esc(product.variants || "Confirm size, shade, or color in checkout notes.")}</dd></div>
     <div><dt>Authenticity</dt><dd>${esc(product.authenticity_note || "Team verifies the source before accepting the order.")}</dd></div>
   `;
@@ -1497,7 +1515,7 @@ function showProductDetails(productId) {
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
-          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? nextShipmentLabel() : "Local dispatch"}</strong></article>
+          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? "Est. mid-June" : "Local dispatch"}</strong></article>
         </div>
         <dl class="detail-list">
           ${isPortal ? portalDetails : publicDetails}
@@ -4729,48 +4747,24 @@ function renderRecentOrdersRail() {
   `;
 }
 
-// Live ribbon under the header. Pulls the current active batch + FX rate so
-// the strip stops lying about a fixed date and starts reflecting reality.
+// Live ribbon under the header. Keep this customer-facing and simple:
+// current doorstep timing plus the estimate for new orders.
 function renderBatchRibbon() {
   const el = qs("[data-batch-ribbon]");
   if (!el) return;
-  const batch = (state.shipmentBatches || []).find((b) =>
-    ["collecting", "sourcing", "shipped", "arriving"].includes(b.status)
-  );
-  const fx = Number(state.settings?.fx_rate || 0);
-  const fxLabel = fx > 0 ? `FX Rs ${fx.toFixed(0)} / $1` : "";
-
-  let lead = "Place your order — we confirm the next batch on WhatsApp";
-  let detail = "";
-  if (batch) {
-    const eta = formatDate(batch.eta_date);
-    const cap = Number(batch.capacity || 0);
-    const used = (batch.order_ids || []).length;
-    const spotsLeft = Math.max(0, cap - used);
-    const statusLabel = {
-      collecting: "Now collecting orders",
-      sourcing: "Sourcing in USA",
-      shipped: "Shipped from USA",
-      arriving: "Arriving in Pakistan",
-    }[batch.status] || batch.status;
-    lead = `${statusLabel} · ${batch.name}${eta ? ` · ETA ${eta}` : ""}`;
-    if (cap > 0 && batch.status === "collecting") {
-      detail = spotsLeft > 0 ? `${spotsLeft} of ${cap} spots left in this batch` : `Batch full — joining next batch`;
-    }
-  }
 
   el.innerHTML = `
-    <strong>${esc(lead)}</strong>
-    ${detail ? `<span class="announce-sep" aria-hidden="true">·</span><span>${esc(detail)}</span>` : ""}
+    <strong>USA sourcing for Pakistan</strong>
     <span class="announce-sep" aria-hidden="true">·</span>
-    <span>50% advance on preorder — balance on Pakistan arrival</span>
-    ${fxLabel ? `<span class="announce-sep" aria-hidden="true">·</span><span class="ribbon-fx">${esc(fxLabel)}</span>` : ""}
+    <span>Current batch doorstep delivery: May 25-27</span>
+    <span class="announce-sep" aria-hidden="true">·</span>
+    <span>New orders estimated around mid-June</span>
   `;
 }
 
 // Clean-URL router (pushState) — replaces the legacy hashchange routing.
-// Each public view has its own URL (/shop, /preorder, /track, /checkout,
-// /faq), which lets Google index them and gives us per-route <title>/meta
+// Each public view has its own URL (/shop, /preorder, /track, /checkout),
+// which lets Google index them and gives us per-route <title>/meta
 // description for SEO. Netlify's catch-all redirect (in netlify.toml) sends
 // every path back to /index.html so the SPA boots normally.
 
@@ -4780,7 +4774,7 @@ const ROUTE_TO_PATH = {
   preorder: "/preorder",
   checkout: "/checkout",
   track: "/track",
-  faq: "/faq",
+  faq: "/preorder",
 };
 
 const PATH_TO_ROUTE = {
@@ -4790,7 +4784,7 @@ const PATH_TO_ROUTE = {
   "/preorder": "preorder",
   "/checkout": "checkout",
   "/track": "track",
-  "/faq": "faq",
+  "/faq": "preorder",
 };
 
 const ROUTE_META = {
@@ -4803,8 +4797,8 @@ const ROUTE_META = {
     description: "Browse Global Bestie's curated USA-sourced handbags, shoes, and makeup with transparent PKR pricing.",
   },
   preorder: {
-    title: "How Preorder Works | Global Bestie",
-    description: "USA-to-Pakistan batch sourcing with 50% advance at checkout and the balance on Pakistan arrival.",
+    title: "Preorder & FAQ | Global Bestie",
+    description: "How Global Bestie's USA preorder batches, payment, delivery, authenticity, and product requests work.",
   },
   checkout: {
     title: "Checkout | Global Bestie",
@@ -4813,10 +4807,6 @@ const ROUTE_META = {
   track: {
     title: "Track Your Order | Global Bestie",
     description: "Follow your Global Bestie order from USA sourcing to Pakistan delivery.",
-  },
-  faq: {
-    title: "FAQ | Global Bestie",
-    description: "Common questions about Global Bestie's USA preorder service, payment, delivery, and authenticity.",
   },
   admin: {
     title: "Global Bestie Portal",
@@ -4834,7 +4824,7 @@ function parseRoute() {
   let viewName = PATH_TO_ROUTE[path];
   let params = new URLSearchParams(location.search);
   // Backward compatibility: any old #shop?category=foo link still works.
-  if (!viewName && fromHash) {
+  if ((!viewName || viewName === "home") && fromHash) {
     const [hashView, hashQuery] = fromHash.split("?");
     if (PATH_TO_ROUTE[`/${hashView}`] || hashView === "home") {
       viewName = hashView === "home" ? "home" : PATH_TO_ROUTE[`/${hashView}`];
@@ -4854,6 +4844,90 @@ function navigateTo(route, params) {
   return setRoute();
 }
 
+const SHOP_FILTER_OPTIONS = {
+  category: new Set(["all", "handbags", "shoes", "makeup", "fragrance", "accessories"]),
+  stock: new Set(["all", "in_stock", "preorder"]),
+  sort: new Set(["featured", "price_asc", "price_desc", "newest"]),
+};
+
+function cleanShopFilter(key, value) {
+  const raw = String(value || "").trim();
+  if (key === "search") return raw;
+  return SHOP_FILTER_OPTIONS[key]?.has(raw) ? raw : "all";
+}
+
+function shopFiltersFromParams(params) {
+  return {
+    search: cleanShopFilter("search", params.get("q") || params.get("search") || ""),
+    category: cleanShopFilter("category", params.get("category") || "all"),
+    stock: cleanShopFilter("stock", params.get("stock") || "all"),
+    sort: SHOP_FILTER_OPTIONS.sort.has(params.get("sort") || "") ? params.get("sort") : "featured",
+  };
+}
+
+function shopFiltersFromControls() {
+  return {
+    search: cleanShopFilter("search", qs("[data-filter-search]")?.value || ""),
+    category: cleanShopFilter("category", qs("[data-filter-category]")?.value || "all"),
+    stock: cleanShopFilter("stock", qs("[data-filter-stock]")?.value || "all"),
+    sort: SHOP_FILTER_OPTIONS.sort.has(qs("[data-filter-sort]")?.value || "") ? qs("[data-filter-sort]")?.value : "featured",
+  };
+}
+
+function applyShopFiltersToControls() {
+  const controls = [
+    ["[data-filter-search]", state.filters.search || ""],
+    ["[data-filter-category]", state.filters.category || "all"],
+    ["[data-filter-stock]", state.filters.stock || "all"],
+    ["[data-filter-sort]", state.filters.sort || "featured"],
+  ];
+  controls.forEach(([selector, value]) => {
+    const control = qs(selector);
+    if (control && control.value !== value) control.value = value;
+  });
+  updateShopFilterBadge();
+}
+
+function activeShopFilterCount() {
+  return ["search", "category", "stock"].filter((key) => {
+    const value = state.filters[key];
+    return value && value !== "all";
+  }).length;
+}
+
+function updateShopFilterBadge() {
+  const count = qs("[data-active-filter-count]");
+  if (count) {
+    const active = activeShopFilterCount();
+    count.textContent = active > 0 ? `· ${active}` : "";
+  }
+}
+
+function syncShopFiltersFromRoute(params) {
+  const hasFilterParams = ["q", "search", "category", "stock", "sort"].some((key) => params.has(key));
+  state.filters = hasFilterParams ? shopFiltersFromParams(params) : shopFiltersFromControls();
+  applyShopFiltersToControls();
+}
+
+function syncShopFilterUrl() {
+  if (parseRoute().viewName !== "shop") return;
+  const params = new URLSearchParams(location.search);
+  params.delete("q");
+  params.delete("search");
+  params.delete("category");
+  params.delete("stock");
+  params.delete("sort");
+  if (state.filters.search) params.set("q", state.filters.search);
+  if (state.filters.category && state.filters.category !== "all") params.set("category", state.filters.category);
+  if (state.filters.stock && state.filters.stock !== "all") params.set("stock", state.filters.stock);
+  if (state.filters.sort && state.filters.sort !== "featured") params.set("sort", state.filters.sort);
+  const query = params.toString();
+  const nextUrl = `${location.pathname}${query ? `?${query}` : ""}`;
+  if (nextUrl !== `${location.pathname}${location.search}`) {
+    history.replaceState({ route: "shop" }, "", nextUrl);
+  }
+}
+
 let _transitioning = false;
 let _firstLoad = true;
 
@@ -4866,8 +4940,9 @@ async function setRoute() {
   const safeView = qs(`[data-view="${viewName}"]`) ? viewName : fallbackView;
 
   const curtain = qs("#page-curtain");
+  const isFirstLoad = _firstLoad;
 
-  if (!_firstLoad && curtain) {
+  if (!isFirstLoad && curtain) {
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(0%)";
     await new Promise((r) => setTimeout(r, 440));
@@ -4891,17 +4966,13 @@ async function setRoute() {
   });
 
   if (safeView === "shop") {
-    state.filters.category = params.get("category") || "all";
-    const category = qs("[data-filter-category]");
-    if (category) category.value = state.filters.category;
+    syncShopFiltersFromRoute(params);
     renderProducts();
   }
-  if (safeView === "checkout") {
-    setCartDrawerOpen(false);
-  }
+  setCartDrawerOpen(false);
   window.scrollTo({ top: 0 });
 
-  if (curtain) {
+  if (!isFirstLoad && curtain) {
     await new Promise((r) => setTimeout(r, 16));
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(101%)";
@@ -9113,21 +9184,15 @@ function wireEvents() {
   // FAQ items are now native <details>/<summary>, so the browser handles open
   // state and keyboard interactions for free. No JS wiring needed.
 
+  const handleShopFilterChange = () => {
+    state.filters = shopFiltersFromControls();
+    updateShopFilterBadge();
+    syncShopFilterUrl();
+    renderProducts();
+  };
   qsa("[data-filter-search], [data-filter-category], [data-filter-stock], [data-filter-sort]").forEach((control) => {
-    control.addEventListener("input", () => {
-      state.filters.search = qs("[data-filter-search]")?.value || "";
-      state.filters.category = qs("[data-filter-category]")?.value || "all";
-      state.filters.stock = qs("[data-filter-stock]")?.value || "all";
-      state.filters.sort = qs("[data-filter-sort]")?.value || "featured";
-      renderProducts();
-      // Update the "Filters & sort (N active)" badge on the mobile trigger
-      const active = ["search", "category", "stock"].filter((k) => {
-        const v = state.filters[k];
-        return v && v !== "all";
-      }).length;
-      const count = qs("[data-active-filter-count]");
-      if (count) count.textContent = active > 0 ? `· ${active}` : "";
-    });
+    control.addEventListener("input", handleShopFilterChange);
+    control.addEventListener("change", handleShopFilterChange);
   });
 
   qsa("[data-admin-tab]").forEach((tab) => {
@@ -9166,15 +9231,16 @@ function wireEvents() {
     });
   });
 
-  // FAQ filter — hides any <details class="faq-item"> whose text doesn't match
-  // the typed query. Pure client-side; no rerender or state needed.
+  // FAQ filter — every typed word must appear somewhere in the answer, so
+  // searches like "shoes box" still find "Do shoes come with the original box?"
   qs("[data-faq-search]")?.addEventListener("input", (event) => {
     const q = event.target.value.trim().toLowerCase();
+    const terms = q.split(/\s+/).filter(Boolean);
     const items = qsa(".faq-item");
     let visible = 0;
     items.forEach((item) => {
       const text = item.textContent.toLowerCase();
-      const match = !q || text.includes(q);
+      const match = terms.length === 0 || terms.every((term) => text.includes(term));
       item.style.display = match ? "" : "none";
       if (match) visible += 1;
       if (q && match) item.setAttribute("open", "");

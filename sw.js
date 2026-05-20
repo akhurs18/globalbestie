@@ -6,12 +6,10 @@
 // Bump CACHE_VERSION when index.html / assets change shape so users get
 // the new shell.
 
-const CACHE_VERSION = "gb-v3";
+const CACHE_VERSION = "gb-v4";
 const SHELL_URLS = [
   "/",
   "/index.html",
-  "/assets/app.js",
-  "/assets/styles.css",
 ];
 const SWR_PATHS = [
   "/api/catalog",
@@ -51,9 +49,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets (immutable hashes already from netlify cache headers): cache-first.
+  // Assets are fixed filenames, not content-hashed, so use network-first.
   if (url.pathname.startsWith("/assets/")) {
-    event.respondWith(cacheFirst(req));
+    event.respondWith(networkFirst(req));
     return;
   }
 });

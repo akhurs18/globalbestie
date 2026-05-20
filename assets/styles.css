@@ -1174,16 +1174,35 @@ dl div,
   border-bottom: 1px solid var(--line);
 }
 
-.faq-hero h1 {
+.faq-hero h1,
+.faq-hero h2 {
   max-width: 620px;
+  color: #fff7f9;
+  text-shadow: 0 10px 34px rgba(26, 14, 20, 0.38);
+}
+
+.faq-hero h1 {
   font-size: clamp(2.35rem, 5vw, 4.3rem);
+}
+
+.faq-hero h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4.2vw, 3.6rem);
+}
+
+.preorder-faq-hero {
+  margin-top: clamp(30px, 5vw, 58px);
 }
 
 .faq-hero p:not(.kicker) {
   max-width: 620px;
   margin: 12px auto 0;
-  color: var(--muted);
+  color: rgba(255, 247, 249, 0.78);
   line-height: 1.7;
+}
+
+.faq-hero .kicker {
+  color: var(--pink);
 }
 
 .breadcrumb {
@@ -9416,6 +9435,11 @@ body:not([data-page="portal"]) h2 {
   margin: 0 0 14px;
 }
 
+body:not([data-page="portal"]) .faq-hero h1,
+body:not([data-page="portal"]) .faq-hero h2 {
+  color: #fff7f9;
+}
+
 body:not([data-page="portal"]) h3 {
   font-family: "Playfair Display", Georgia, serif;
   font-weight: 600;
@@ -9453,6 +9477,725 @@ body:not([data-page="portal"]) .button {
   min-height: 48px;
 }
 
+/* ═══════════════════════════════════════ HOMEPAGE COMMENT FIXES
+   Final storefront pass for the review notes: warmer contrast, calmer hero
+   type, no public approval block, and process cards that do not overflow. */
+body:not([data-page="portal"]) {
+  --bg: #fbf6f7;
+  --surface: #fffefe;
+  --surface-2: #f8eef1;
+  --ink: #201018;
+  --ink-soft: #50323d;
+  --muted: #684a56;
+  --line: rgba(139, 76, 95, 0.2);
+  --line-strong: rgba(139, 76, 95, 0.36);
+  --pink: #d98b9a;
+  --pink-2: #bd6678;
+  --pink-3: #9d4559;
+  background:
+    radial-gradient(ellipse 760px 520px at 92% 8%, rgba(217, 139, 154, 0.16), transparent 62%),
+    linear-gradient(180deg, #fbf6f7 0%, #fffefe 44%, #fbf6f7 100%);
+}
+
+body:not([data-page="portal"]) .announce-bar {
+  background: #f6e4e8;
+  border-bottom-color: rgba(157, 69, 89, 0.22);
+  color: #5b3f4a;
+}
+
+body:not([data-page="portal"]) .announce-bar strong {
+  color: #8e374c;
+}
+
+body:not([data-page="portal"]) .site-header {
+  background: rgba(255, 252, 253, 0.94);
+  border-bottom-color: rgba(139, 76, 95, 0.16);
+}
+
+body:not([data-page="portal"]) .brand small {
+  color: #a5485c;
+}
+
+body:not([data-page="portal"]) .hero-shell {
+  grid-template-columns: minmax(0, 0.78fr) minmax(430px, 1fr);
+  gap: clamp(34px, 5vw, 68px);
+  min-height: clamp(560px, calc(100vh - 90px), 700px);
+  padding: 42px 0 62px;
+}
+
+body:not([data-page="portal"]) .hero-copy h1 {
+  max-width: 12ch;
+  font-size: clamp(2.45rem, 5.1vw, 4.2rem);
+  line-height: 1.08;
+  letter-spacing: -0.014em;
+}
+
+body:not([data-page="portal"]) .hero-copy p:not(.kicker) {
+  max-width: 48ch;
+  color: #624753;
+}
+
+body:not([data-page="portal"]) .editorial-band {
+  grid-template-columns: minmax(250px, 0.42fr) minmax(0, 1fr);
+  gap: 28px;
+  padding: 48px 0 42px;
+}
+
+body:not([data-page="portal"]) .editorial-band > div:first-child {
+  background: transparent;
+}
+
+body:not([data-page="portal"]) .process-rail {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: visible;
+  background: var(--surface);
+}
+
+body:not([data-page="portal"]) .process-rail article {
+  min-width: 0;
+  padding: 22px 20px;
+}
+
+body:not([data-page="portal"]) .process-rail h3 {
+  font-size: clamp(0.96rem, 1.35vw, 1.08rem);
+}
+
+body:not([data-page="portal"]) .process-rail p {
+  color: #684a56;
+  overflow-wrap: normal;
+}
+
+body:not([data-page="portal"]) .order-clarity-band {
+  display: none;
+}
+
+body:not([data-page="portal"]) .trust-band {
+  width: var(--page);
+  margin: 0 auto;
+  padding: 52px 58px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #fbf2f4 0%, #fffefe 58%, #f6e6ea 100%);
+  box-shadow: var(--shadow-soft);
+}
+
+body:not([data-page="portal"]) .trust-card {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(139, 76, 95, 0.18);
+  box-shadow: 0 14px 34px rgba(139, 76, 95, 0.1);
+}
+
+body:not([data-page="portal"]) .trust-quote {
+  color: #2a141d;
+}
+
+body:not([data-page="portal"]) .trust-meta,
+body:not([data-page="portal"]) .trust-stats span {
+  color: #684a56;
+}
+
+body:not([data-page="portal"]) .trust-stats strong {
+  color: #a5485c;
+}
+
+body:not([data-page="portal"]) .product-showcase .section-heading {
+  align-items: center;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+body:not([data-page="portal"]) .product-showcase .section-heading h2 {
+  color: var(--ink);
+  margin-bottom: 0;
+}
+
+body:not([data-page="portal"]) .product-showcase .section-heading .kicker {
+  margin-bottom: 0;
+}
+
+/* Storefront product cards + product popup
+   Keep product browsing dense enough to scan, and keep PDP surfaces in the
+   same light luxury palette as the rest of the public site. */
+body:not([data-page="portal"]) .product-grid {
+  gap: 16px;
+}
+
+body:not([data-page="portal"]) .product-card {
+  min-height: 0;
+  border-color: rgba(139, 76, 95, 0.18);
+  background: rgba(255, 254, 254, 0.92);
+  box-shadow: 0 14px 30px rgba(139, 76, 95, 0.08);
+}
+
+body:not([data-page="portal"]) .product-card:hover,
+body:not([data-page="portal"]) .product-card:focus-within {
+  border-color: rgba(157, 69, 89, 0.32);
+  background: #fff;
+  box-shadow: 0 20px 42px rgba(139, 76, 95, 0.12);
+}
+
+body:not([data-page="portal"]) .product-empty-state {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  min-height: 280px;
+  padding: 36px;
+  border: 1px solid rgba(139, 76, 95, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(255, 245, 248, 0.86)),
+    radial-gradient(circle at 92% 18%, rgba(189, 102, 120, 0.14), transparent 36%);
+  box-shadow: 0 18px 44px rgba(139, 76, 95, 0.08);
+}
+
+body:not([data-page="portal"]) .product-empty-state h2 {
+  max-width: 12ch;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  line-height: 0.98;
+}
+
+body:not([data-page="portal"]) .product-empty-state p:not(.kicker) {
+  max-width: 42ch;
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+body:not([data-page="portal"]) .product-card .product-media {
+  height: clamp(220px, 27vw, 292px);
+  aspect-ratio: auto;
+  background: #f3e9ed;
+}
+
+body:not([data-page="portal"]) .shop-grid .product-media {
+  height: clamp(210px, 24vw, 270px);
+}
+
+body:not([data-page="portal"]) .product-card .product-media img {
+  object-position: center 58%;
+}
+
+body:not([data-page="portal"]) .product-body {
+  flex: 0 0 auto;
+  gap: 8px;
+  padding: 12px 14px 14px;
+}
+
+body:not([data-page="portal"]) .product-title-row strong {
+  font-size: 1rem;
+  line-height: 1.16;
+}
+
+body:not([data-page="portal"]) .price {
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .product-description-line {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+body:not([data-page="portal"]) .product-payment-chips span,
+body:not([data-page="portal"]) .product-meta span {
+  border-color: rgba(139, 76, 95, 0.16);
+  background: #fbf4f6;
+  color: var(--ink-soft);
+}
+
+body:not([data-page="portal"]) .product-payment-chips small {
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .status-pill,
+body:not([data-page="portal"]) .price-chip {
+  border-color: rgba(139, 76, 95, 0.18);
+  background: rgba(32, 16, 24, 0.82);
+}
+
+body:not([data-page="portal"]) .quick-add-btn,
+body:not([data-page="portal"]) .wishlist-heart {
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(32, 16, 24, 0.72);
+  color: #fff;
+}
+
+body:not([data-page="portal"]) .modal-backdrop {
+  padding: 26px;
+  background: rgba(40, 23, 31, 0.34);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+body:not([data-page="portal"]) .detail-modal {
+  width: min(980px, calc(100vw - 44px));
+  max-height: min(88vh, 780px);
+  padding: 18px;
+  overflow: auto;
+  outline: none;
+  border-color: rgba(139, 76, 95, 0.2);
+  border-radius: 18px;
+  background: #fffdfd;
+  color: var(--ink);
+  box-shadow: 0 34px 90px rgba(40, 23, 31, 0.22);
+}
+
+body:not([data-page="portal"]) .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 8;
+  float: none;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(139, 76, 95, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  box-shadow: 0 12px 28px rgba(139, 76, 95, 0.12);
+}
+
+body:not([data-page="portal"]) .modal-close span {
+  display: block;
+  font-size: 1.45rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+body:not([data-page="portal"]) .product-detail-modal {
+  grid-template-columns: minmax(300px, 0.82fr) minmax(0, 1fr);
+  gap: 22px;
+}
+
+body:not([data-page="portal"]) .product-gallery {
+  position: sticky;
+  top: 0;
+}
+
+body:not([data-page="portal"]) .gallery-main-wrap {
+  border: 1px solid rgba(139, 76, 95, 0.16);
+  border-radius: 14px;
+  background: #f7eef1;
+}
+
+body:not([data-page="portal"]) .gallery-main {
+  aspect-ratio: 0.92;
+  max-height: 520px;
+  object-position: center 58%;
+  border: 0;
+  border-radius: 14px;
+}
+
+body:not([data-page="portal"]) .gallery-thumb {
+  border-color: rgba(139, 76, 95, 0.12);
+  background: #fbf4f6;
+}
+
+body:not([data-page="portal"]) .product-detail-info {
+  gap: 12px;
+  max-height: none;
+  overflow: visible;
+  padding: 4px 48px 0 0;
+}
+
+body:not([data-page="portal"]) .product-detail-info .kicker {
+  margin-bottom: 0;
+}
+
+body:not([data-page="portal"]) .product-detail-info h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(2rem, 4.4vw, 3.4rem);
+  line-height: 0.98;
+}
+
+body:not([data-page="portal"]) .price-large,
+body:not([data-page="portal"]) .payment-ledger strong,
+body:not([data-page="portal"]) .detail-list dd,
+body:not([data-page="portal"]) .variant-callout strong,
+body:not([data-page="portal"]) .recently-viewed-strip h3 {
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .trust-strip span,
+body:not([data-page="portal"]) .payment-ledger article,
+body:not([data-page="portal"]) .detail-list div,
+body:not([data-page="portal"]) .variant-callout,
+body:not([data-page="portal"]) .recently-viewed-tile {
+  border-color: rgba(139, 76, 95, 0.16);
+  background: #fbf4f6;
+  color: var(--ink-soft);
+}
+
+body:not([data-page="portal"]) .trust-strip span {
+  padding: 9px 11px;
+}
+
+body:not([data-page="portal"]) .product-ledger {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+body:not([data-page="portal"]) .payment-ledger article {
+  padding: 10px;
+  border-radius: 8px;
+}
+
+body:not([data-page="portal"]) .payment-ledger span,
+body:not([data-page="portal"]) .detail-list dt {
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .detail-list {
+  gap: 8px;
+  margin: 4px 0;
+}
+
+body:not([data-page="portal"]) .detail-list div {
+  grid-template-columns: 116px minmax(0, 1fr);
+  padding: 9px 10px;
+  border-radius: 8px;
+}
+
+body:not([data-page="portal"]) .variant-callout {
+  margin: 6px 0;
+  padding: 12px;
+  border-radius: 10px;
+}
+
+body:not([data-page="portal"]) .variant-input-label input {
+  background: #fff;
+  color: var(--ink);
+  border-color: rgba(139, 76, 95, 0.22);
+}
+
+body:not([data-page="portal"]) .sourced-badge {
+  border-color: rgba(139, 76, 95, 0.22);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .product-modal-cta {
+  position: sticky;
+  bottom: -18px;
+  margin: 8px -18px -18px;
+  padding: 12px 18px;
+  border-top-color: rgba(139, 76, 95, 0.16);
+  background: rgba(255, 253, 253, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body:not([data-page="portal"]) .product-modal-cta .cta-helper {
+  flex-basis: 100%;
+  color: var(--muted);
+}
+
+body:not([data-page="portal"]) .auth-modal {
+  max-width: 520px;
+  padding: 28px 18px 18px;
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .auth-modal h2 {
+  color: var(--ink);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.02;
+}
+
+body:not([data-page="portal"]) .auth-modal .confirmation-sub {
+  color: var(--muted);
+}
+
+body:not([data-page="portal"]) .auth-label {
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .auth-label input {
+  border: 1px solid rgba(139, 76, 95, 0.22);
+  background: #fff;
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .track-shell {
+  grid-template-columns: minmax(300px, 0.62fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  padding-top: 42px;
+}
+
+body:not([data-page="portal"]) .track-card,
+body:not([data-page="portal"]) .tracking-result {
+  border-color: rgba(139, 76, 95, 0.16);
+  background: rgba(255, 254, 254, 0.9);
+  box-shadow: 0 18px 44px rgba(139, 76, 95, 0.08);
+}
+
+body:not([data-page="portal"]) .track-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 28px 30px;
+}
+
+body:not([data-page="portal"]) .track-card h1 {
+  max-width: 9ch;
+  font-size: clamp(2.4rem, 4.4vw, 3.8rem);
+}
+
+body:not([data-page="portal"]) .track-card p:not(.kicker) {
+  max-width: 32ch;
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+body:not([data-page="portal"]) .tracking-progress {
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 10px;
+  margin: 22px 0 18px;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 11px 12px;
+  text-align: left;
+  border: 1px solid rgba(139, 76, 95, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 250, 251, 0.76);
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step::before {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  background: #fff;
+  border-color: rgba(139, 76, 95, 0.2);
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.done {
+  border-color: rgba(189, 102, 120, 0.34);
+  background: #fff5f8;
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.done::before {
+  background: var(--pink-3);
+  border-color: var(--pink-3);
+  color: #fff;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.current {
+  border-color: rgba(31, 9, 20, 0.22);
+  background: var(--ink);
+  color: #fff;
+}
+
+body:not([data-page="portal"]) .tracking-progress-step.current::before {
+  background: #fff;
+  border-color: #fff;
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .checkout-layout {
+  align-items: start;
+}
+
+body:not([data-page="portal"]) .checkout-form,
+body:not([data-page="portal"]) .order-summary {
+  border-color: rgba(139, 76, 95, 0.18);
+  background: rgba(255, 254, 254, 0.94);
+  box-shadow: 0 18px 44px rgba(139, 76, 95, 0.08);
+}
+
+body:not([data-page="portal"]) .checkout-form .page-intro p {
+  color: var(--ink-soft);
+}
+
+body:not([data-page="portal"]) .checkout-progress li {
+  border-color: rgba(139, 76, 95, 0.18);
+  background: #fbf4f6;
+  color: var(--ink-soft);
+}
+
+body:not([data-page="portal"]) .checkout-progress li.active {
+  border-color: rgba(157, 69, 89, 0.34);
+  background: #fff;
+}
+
+body:not([data-page="portal"]) .checkout-progress strong {
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .checkout-progress span {
+  color: var(--muted);
+}
+
+body:not([data-page="portal"]) fieldset {
+  border-color: rgba(139, 76, 95, 0.2);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body:not([data-page="portal"]) legend,
+body:not([data-page="portal"]) label {
+  color: var(--pink-3);
+}
+
+body:not([data-page="portal"]) input,
+body:not([data-page="portal"]) select,
+body:not([data-page="portal"]) textarea {
+  background: #fff;
+  color: var(--ink);
+  border-color: rgba(139, 76, 95, 0.24);
+}
+
+body:not([data-page="portal"]) input:focus,
+body:not([data-page="portal"]) select:focus,
+body:not([data-page="portal"]) textarea:focus {
+  outline: 2px solid rgba(189, 102, 120, 0.35);
+  outline-offset: 2px;
+  border-color: rgba(157, 69, 89, 0.46);
+}
+
+body:not([data-page="portal"]) .check-row {
+  color: var(--ink-soft);
+}
+
+body:not([data-page="portal"]) .track-card label {
+  display: grid;
+  gap: 8px;
+  color: var(--pink-3);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+body:not([data-page="portal"]) .tracking-result:empty {
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  padding: 28px;
+}
+
+body:not([data-page="portal"]) .tracking-result:empty::before {
+  display: none;
+}
+
+body:not([data-page="portal"]) .tracking-result:empty::after {
+  max-width: 38ch;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 1180px) {
+  body:not([data-page="portal"]) .editorial-band {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .process-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  body:not([data-page="portal"]) .hero-shell {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .hero-copy h1 {
+    max-width: 13ch;
+  }
+}
+
+@media (max-width: 720px) {
+  body:not([data-page="portal"]) .process-rail {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .product-card .product-media {
+    height: clamp(220px, 62vw, 320px);
+  }
+
+  body:not([data-page="portal"]) .modal-backdrop {
+    padding: 0;
+  }
+
+  body:not([data-page="portal"]) .detail-modal {
+    width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    padding: 14px 16px 96px;
+  }
+
+  body:not([data-page="portal"]) .product-detail-modal {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .product-detail-info {
+    padding-right: 0;
+  }
+
+  body:not([data-page="portal"]) .product-gallery {
+    position: static;
+  }
+
+  body:not([data-page="portal"]) .product-ledger {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .detail-list div {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .product-modal-cta {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+  }
+
+  body:not([data-page="portal"]) .trust-band {
+    padding: 34px 20px;
+  }
+
+  body:not([data-page="portal"]) .track-shell {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .track-card h1 {
+    max-width: 12ch;
+  }
+}
+
 /* Footer chip + meta typography */
 body:not([data-page="portal"]) .footer-col a,
 body:not([data-page="portal"]) .footer-tagline,
@@ -9461,7 +10204,7 @@ body:not([data-page="portal"]) .footer-hours {
   line-height: 1.7;
 }
 
-/* "By kkR" footer tag — small italic sign-off mirroring the logo's wordmark. */
+/* "By HAR" footer tag — small italic sign-off mirroring the logo's wordmark. */
 .brand-signature {
   display: block;
   margin-top: 2px;
