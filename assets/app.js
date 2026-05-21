@@ -8123,6 +8123,124 @@ function addSourcingRequestToCart() {
   toast("Added to cart as a sourcing request — team will confirm the final price.");
 }
 
+// Inline version of submitSourceRequest() that targets the /quote page's
+// own DOM ([data-quote-url] / [data-quote-variant] / [data-quote-url-result])
+// instead of the modal's. Same backend (/api/source-estimate), same three
+// branches (matched / blocked / good estimate). Reuses lastSourceEstimate
+// so the "Add to cart" CTA on the quote page can call
+// addSourcingRequestToCart() without re-fetching.
+async function submitQuoteFromUrl() {
+  const urlInput = qs("[data-quote-url]");
+  const variantInput = qs("[data-quote-variant]");
+  const resultBox = qs("[data-quote-url-result]");
+  if (!urlInput || !resultBox) return;
+  const url = String(urlInput.value || "").trim();
+  if (!url) {
+    resultBox.innerHTML = `<div class="source-result is-blocked">Paste a USA retailer link first.</div>`;
+    urlInput.focus();
+    return;
+  }
+  resultBox.innerHTML = `<div class="source-result is-loading">
+    <span class="quote-spinner" aria-hidden="true"></span>
+    Reaching out to the retailer… this usually takes a few seconds.
+  </div>`;
+
+  let payload;
+  try {
+    const response = await fetch("/api/source-estimate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, variant_note: variantInput?.value || "" }),
+    });
+    payload = await response.json().catch(() => null);
+    if (response.status === 429) {
+      resultBox.innerHTML = `<div class="source-result is-blocked">${esc(payload?.error || "Too many quotes right now — try again in an hour, or send the link on WhatsApp.")}</div>`;
+      return;
+    }
+    if (!response.ok && !payload) throw new Error(`HTTP ${response.status}`);
+  } catch (err) {
+    resultBox.innerHTML = `<div class="source-result is-blocked">
+      <p class="source-result-title">Couldn't reach our quote service</p>
+      <p class="source-result-meta">Your connection might be flaky — try again, or send us the link on WhatsApp and we'll quote it for you.</p>
+      <div class="source-modal-actions">
+        <a class="button primary" href="https://wa.me/13362556023?text=${encodeURIComponent(`Hi Global Bestie, can you quote this?\n${url}`)}" target="_blank" rel="noopener noreferrer">Send on WhatsApp</a>
+      </div>
+    </div>`;
+    return;
+  }
+
+  // Branch 1 — already in catalog. Surface "view product" deeplink.
+  if (payload.matched_product_id) {
+    resultBox.innerHTML = `
+      <div class="source-result is-match">
+        <p class="source-result-title">We already carry this!</p>
+        <p class="source-result-meta">${esc(payload.matched_title || "Match found in our catalog")}</p>
+        <div class="source-modal-actions">
+          <button class="button primary" type="button" data-action="source-open-existing" data-product-id="${attr(payload.matched_product_id)}">View product</button>
+          <a class="button ghost" href="/shop" data-route="shop">Keep browsing</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Branch 2 — blocked or off-allowlist. Offer WhatsApp deeplink with the URL
+  // pre-filled so the customer doesn't have to retype anything.
+  if (payload.blocked) {
+    const waNumber = (payload.support_whatsapp || state.settings?.support_whatsapp || "13362556023").replace(/\D/g, "");
+    const waText = `Hi Global Bestie, can you source this for me?\n${url}${variantInput?.value ? `\nVariant: ${variantInput.value}` : ""}`;
+    const waHref = `https://wa.me/${waNumber}?text=${encodeURIComponent(waText)}`;
+    resultBox.innerHTML = `
+      <div class="source-result is-blocked">
+        <p class="source-result-title">Couldn't auto-quote this one</p>
+        <p class="source-result-meta">${esc(payload.message || "Send the link on WhatsApp and we'll quote within 15 minutes — same workflow, just done by hand.")}</p>
+        <div class="source-modal-actions">
+          <a class="button primary" href="${attr(waHref)}" target="_blank" rel="noopener noreferrer">Send on WhatsApp</a>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Branch 3 — successful estimate. Stash in lastSourceEstimate so the
+  // "Add to cart for team review" button has everything it needs.
+  const c = payload.candidate || {};
+  lastSourceEstimate = {
+    source_url: c.source_url || url,
+    title: c.title || url,
+    image_url: c.image_url || "",
+    category: c.category || "accessories",
+    variant_note: c.variant_note || variantInput?.value || "",
+    estimated_pkr: Number(payload.estimated_pkr || 0),
+    preorder_weeks: Number(payload.preorder_weeks || 4),
+  };
+  const img = c.image_url
+    ? `<img src="${safeUrl(imageUrl(c.image_url, { width: 320, height: 320 }), "")}" alt="${attr(c.title || "")}" loading="lazy" />`
+    : `<div class="quote-result-img-fallback" aria-hidden="true">img</div>`;
+  resultBox.innerHTML = `
+    <div class="source-result is-match quote-result-card">
+      <div class="quote-result-head">
+        ${img}
+        <div class="quote-result-meta">
+          <p class="source-result-title">${esc(c.title || "USA product")}</p>
+          <p class="source-result-price">${PKR.format(lastSourceEstimate.estimated_pkr)}</p>
+          <p class="quote-result-sub">Estimated total · includes sourcing, international shipping &amp; door-to-door delivery.</p>
+        </div>
+      </div>
+      <ul class="quote-includes" aria-label="What's included">
+        <li>USA sourcing</li>
+        <li>International shipping</li>
+        <li>Delivery to your door</li>
+      </ul>
+      <small class="source-result-note">${esc(payload.notes || "Estimate. Team confirms the final PKR price within 15 minutes — no payment until we confirm.")}</small>
+      <div class="source-modal-actions">
+        <button class="button primary" type="button" data-action="add-sourcing-to-cart">Add to cart for team review</button>
+        <a class="button ghost" href="https://wa.me/13362556023?text=${encodeURIComponent(`Hi Global Bestie, can you confirm this quote?\n${url}\nVariant: ${variantInput?.value || ""}\nPKR estimate shown: ${PKR.format(lastSourceEstimate.estimated_pkr)}`)}" target="_blank" rel="noopener noreferrer">Confirm on WhatsApp</a>
+      </div>
+    </div>
+  `;
+}
+
 // Disables the submit button on a form, swaps its text for a busy state,
 // and returns a restore() callback the caller invokes in finally so the
 // button is always restored even if the request throws.
@@ -9061,6 +9179,12 @@ function wireEvents() {
       event.preventDefault();
       return submitSourceRequest();
     }
+    if (action === "quote-from-url") {
+      // Inline /quote-page URL paste path. Same backend as the modal,
+      // different target DOM.
+      event.preventDefault();
+      return submitQuoteFromUrl();
+    }
     if (action === "add-sourcing-to-cart") {
       event.preventDefault();
       return addSourcingRequestToCart();
@@ -9745,6 +9869,16 @@ function wireEvents() {
   });
   qs("[data-quote-form]")?.addEventListener("change", (event) => {
     updateQuoteEstimator({ resetShipping: event.target?.name === "category" });
+  });
+
+  // Enter key in the URL input submits the quote — saves the customer
+  // a click on /quote, and matches the muscle memory of every other
+  // "paste URL → go" interaction on the web.
+  qs("[data-quote-url]")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitQuoteFromUrl();
+    }
   });
 
   qs("[data-checkout-form]")?.addEventListener("submit", handleCheckout);

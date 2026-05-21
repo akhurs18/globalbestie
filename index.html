@@ -638,50 +638,79 @@
         <div class="quote-estimator-shell">
           <section class="quote-estimator-hero">
             <p class="kicker">Quote Concierge</p>
-            <h1>Price your USA find before you DM.</h1>
-            <p>Use the USA retail price to preview the PKR range with Global Bestie's markup and typical category shipping. Your final quote is confirmed by the team before sourcing.</p>
+            <h1>Want something we don't carry? Paste the link.</h1>
+            <p>Drop any USA retailer link — Coach, Sephora, Nike, Nordstrom, anywhere. We'll quote the final PKR price for sourcing &amp; delivery to your doorstep in ~4 weeks.</p>
             <div class="quote-proof-strip" aria-label="Quote notes">
-              <span>PKR estimate</span>
-              <span>Category shipping</span>
-              <span>50% preorder split</span>
+              <span>Final PKR</span>
+              <span>15-min reply</span>
+              <span>50% advance · balance on arrival</span>
             </div>
           </section>
 
-          <form class="quote-estimator-card" data-quote-form>
-            <div class="quote-form-grid">
-              <label>USA retail price
-                <span class="input-prefix">$</span>
-                <input name="usa_price_usd" type="number" min="1" step="0.01" value="100" required />
-              </label>
-              <label>Category
-                <select name="category">
-                  <option value="handbags">Handbag</option>
-                  <option value="shoes">Shoes</option>
-                  <option value="makeup">Makeup</option>
-                  <option value="fragrance">Fragrance</option>
-                  <option value="accessories">Accessories</option>
-                </select>
-              </label>
-              <!-- Shipping + FX are intentionally NOT shown to the customer
-                   on this page. Exposing the working FX or category shipping
-                   bands turns the estimator into a margin-reverse-engineering
-                   tool. The JS still reads these hidden fields to compute
-                   the estimate; they're populated from store_settings at
-                   render time and the customer never sees the values. -->
-              <input type="hidden" name="shipping_pkr" data-quote-shipping />
-              <input type="hidden" name="fx_rate" data-quote-fx />
-            </div>
-            <label class="quote-check-row">
-              <input name="shoe_box" type="checkbox" />
-              Add original shoe box fee when ordering shoes
+          <!-- PRIMARY PATH — paste a retailer URL, hit Quote it. Hits
+               /api/source-estimate which is IP-rate-limited and returns
+               either matched_product_id, a buffered PKR estimate, or
+               a WhatsApp fallback when the retailer blocks us. -->
+          <section class="quote-url-card" data-quote-url-card>
+            <label class="quote-url-label">
+              Paste a USA retailer link
+              <div class="quote-url-row">
+                <input type="url" data-quote-url placeholder="https://www.coach.com/products/..." inputmode="url" autocomplete="url" />
+                <button class="button primary" type="button" data-action="quote-from-url">Quote it for me</button>
+              </div>
             </label>
-            <div class="quote-result" data-quote-result aria-live="polite"></div>
-            <div class="quote-actions">
-              <button class="button secondary" type="button" data-action="add-quote-estimate">Add quote to bag</button>
-              <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-quote-whatsapp data-support-whatsapp>DM us this quote</a>
-              <a class="button ghost" href="/preorder" data-route="preorder">How preorder works</a>
-            </div>
-          </form>
+            <label class="quote-variant-label">
+              Variant / size / shade (optional)
+              <input type="text" data-quote-variant placeholder="e.g. Size 38 EU, shade Pillow Talk" maxlength="280" />
+            </label>
+            <div class="quote-url-result" data-quote-url-result aria-live="polite"></div>
+          </section>
+
+          <!-- SECONDARY PATH — same USD estimator as before, hidden behind
+               a disclosure. Customers without a link (e.g. browsing a US
+               store on their phone, or quoting something seen in person)
+               can still type the USD price in. Same backend math. -->
+          <details class="quote-manual-disclosure">
+            <summary>
+              <span>Don't have a link? Estimate from the USA retail price</span>
+              <span class="quote-manual-chev" aria-hidden="true">+</span>
+            </summary>
+            <form class="quote-estimator-card" data-quote-form>
+              <div class="quote-form-grid">
+                <label>USA retail price
+                  <span class="input-prefix">$</span>
+                  <input name="usa_price_usd" type="number" min="1" step="0.01" value="100" required />
+                </label>
+                <label>Category
+                  <select name="category">
+                    <option value="handbags">Handbag</option>
+                    <option value="shoes">Shoes</option>
+                    <option value="makeup">Makeup</option>
+                    <option value="fragrance">Fragrance</option>
+                    <option value="accessories">Accessories</option>
+                  </select>
+                </label>
+                <!-- Shipping + FX are intentionally NOT shown to the customer
+                     on this page. Exposing the working FX or category shipping
+                     bands turns the estimator into a margin-reverse-engineering
+                     tool. The JS still reads these hidden fields to compute
+                     the estimate; they're populated from store_settings at
+                     render time and the customer never sees the values. -->
+                <input type="hidden" name="shipping_pkr" data-quote-shipping />
+                <input type="hidden" name="fx_rate" data-quote-fx />
+              </div>
+              <label class="quote-check-row">
+                <input name="shoe_box" type="checkbox" />
+                Add original shoe box fee when ordering shoes
+              </label>
+              <div class="quote-result" data-quote-result aria-live="polite"></div>
+              <div class="quote-actions">
+                <button class="button secondary" type="button" data-action="add-quote-estimate">Add quote to bag</button>
+                <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-quote-whatsapp data-support-whatsapp>DM us this quote</a>
+                <a class="button ghost" href="/preorder" data-route="preorder">How preorder works</a>
+              </div>
+            </form>
+          </details>
         </div>
       </section>
 

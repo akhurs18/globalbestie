@@ -77,14 +77,22 @@ function allowedHost(url, settings) {
 
 // Final customer-facing PKR figure. Adds a 5% buffer so the team's
 // confirmed quote almost always comes in AT or BELOW the estimate.
+//
+// Shipping bands MUST stay in sync with SHIPPING_DEFAULTS_PKR in
+// admin-fetch-product.js — otherwise the customer's quote and the
+// team's autofill quote will disagree, and the team will end up
+// quoting a higher number than the customer was shown.
 function customerEstimatePkr(usd, category, settings) {
   const fx = Number(settings.fx_rate || 282);
   const markup = Number(settings.markup_rate || 0.25);
   const SHIPPING_BY_CAT = {
-    handbags: 4500, shoes: 5500, makeup: 2500,
-    fragrance: 3500, accessories: 2500,
+    handbags: 15000,
+    shoes: 11000,
+    makeup: 4800,
+    fragrance: 6500,
+    accessories: 8500,
   };
-  const shipping = SHIPPING_BY_CAT[category] || 3500;
+  const shipping = SHIPPING_BY_CAT[category] || 8500;
   const retailPkr = Number(usd || 0) * fx;
   const base = retailPkr + retailPkr * markup + shipping;
   const buffered = base * 1.05; // 5% safety buffer
@@ -124,7 +132,10 @@ export default async (req) => {
   }
 
   const settings = hasSupabase() ? await getSettings().catch(() => ({})) : {};
-  const supportWa = settings.support_whatsapp || process.env.STORE_SUPPORT_WHATSAPP || "";
+  // Hardcoded fallback matches the rest of the storefront — the support
+  // WhatsApp number lives in code in many places (footer, FAQ JSON-LD,
+  // FAB) so use it here too if Supabase + env are both empty.
+  const supportWa = settings.support_whatsapp || process.env.STORE_SUPPORT_WHATSAPP || "13362556023";
 
   // 1. Already in catalog? Redirect.
   const existing = await findExistingProductByUrl(url);
