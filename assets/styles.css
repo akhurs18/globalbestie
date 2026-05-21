@@ -12286,3 +12286,316 @@ html.theme-dark body[data-page="portal"] .admin-tab:hover {
     transition: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SUGGEST 10 — rich product-card grid for the bulk uploader
+   Replaces the URL-paste list with a curated 10-product grid where each
+   card has an image gallery, inline-editable title/brand/category/PKR,
+   description preview, and source link.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.suggest-ten .sourcing-tray-head strong {
+  font-size: 1.16rem;
+}
+
+.sourcing-queue.suggest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 14px 0;
+}
+
+.suggest-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  transition: border-color 220ms var(--ease), transform 220ms var(--ease), box-shadow 220ms var(--ease);
+  animation: suggest-card-in 480ms var(--ease-cinema, ease-out) both;
+}
+
+.suggest-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(216, 142, 155, 0.16);
+}
+
+.suggest-card.is-selected {
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 3px rgba(232, 166, 176, 0.18), var(--shadow);
+}
+
+@keyframes suggest-card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger card entrance by row position — uses the implicit grid order */
+.suggest-card:nth-child(1)  { animation-delay: 0ms; }
+.suggest-card:nth-child(2)  { animation-delay: 50ms; }
+.suggest-card:nth-child(3)  { animation-delay: 100ms; }
+.suggest-card:nth-child(4)  { animation-delay: 150ms; }
+.suggest-card:nth-child(5)  { animation-delay: 200ms; }
+.suggest-card:nth-child(6)  { animation-delay: 250ms; }
+.suggest-card:nth-child(7)  { animation-delay: 300ms; }
+.suggest-card:nth-child(8)  { animation-delay: 350ms; }
+.suggest-card:nth-child(9)  { animation-delay: 400ms; }
+.suggest-card:nth-child(10) { animation-delay: 450ms; }
+
+.suggest-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.suggest-select {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.suggest-select input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pink-2);
+  cursor: pointer;
+}
+
+.suggest-img-count {
+  flex: 1;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--pink-3);
+  background: var(--rose);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.suggest-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 200ms var(--ease), border-color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.suggest-remove:hover {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(196, 80, 106, 0.06);
+}
+
+.suggest-hero {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+.suggest-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms var(--ease-cinema, ease-out);
+}
+
+.suggest-card:hover .suggest-hero img {
+  transform: scale(1.04);
+}
+
+.suggest-hero-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.suggest-thumb-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.suggest-thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  overflow: hidden;
+  aspect-ratio: 1;
+  transition: border-color 220ms var(--ease), transform 220ms var(--ease);
+}
+
+.suggest-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.suggest-thumb:hover {
+  transform: translateY(-1px);
+  border-color: var(--pink-2);
+}
+
+.suggest-thumb.is-active {
+  border-color: var(--pink-3);
+  box-shadow: 0 4px 12px rgba(216, 142, 155, 0.22);
+}
+
+.suggest-body {
+  display: grid;
+  gap: 10px;
+}
+
+.suggest-field {
+  display: grid;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.suggest-field input[type="text"],
+.suggest-field input[type="number"],
+.suggest-field select {
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink);
+  transition: border-color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.suggest-field input:focus,
+.suggest-field select:focus {
+  outline: none;
+  border-color: var(--pink-2);
+  background: var(--surface);
+}
+
+.suggest-field-title input {
+  font-family: "Playfair Display", serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.suggest-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.suggest-field-price {
+  background: linear-gradient(180deg, var(--rose) 0%, var(--surface) 100%);
+  padding: 10px 12px;
+  border: 1px solid var(--pink-2);
+  border-radius: 10px;
+}
+
+.suggest-price-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 6px;
+}
+
+.suggest-price-prefix {
+  font-family: "Playfair Display", serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--pink-3);
+}
+
+.suggest-field-price input[type="number"] {
+  font-family: "Playfair Display", serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-color: var(--line);
+}
+
+.suggest-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.suggest-source {
+  font-size: 0.74rem;
+  color: var(--pink-3);
+  text-decoration: none;
+}
+
+.suggest-source:hover {
+  text-decoration: underline;
+}
+
+/* URL fallback disclosure underneath the suggest grid */
+.suggest-url-fallback {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.suggest-url-fallback summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+  list-style: none;
+}
+
+.suggest-url-fallback summary::-webkit-details-marker { display: none; }
+
+.suggest-fallback-chev {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-weight: 700;
+  transition: transform 240ms var(--ease-cinema, ease-out);
+}
+
+.suggest-url-fallback[open] .suggest-fallback-chev {
+  transform: rotate(45deg);
+}
+
+.suggest-url-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Reduced motion — kill the staggered entrance */
+@media (prefers-reduced-motion: reduce) {
+  .suggest-card { animation: none !important; }
+  .suggest-hero img { transition: none !important; }
+}

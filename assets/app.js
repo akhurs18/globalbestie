@@ -8030,6 +8030,100 @@ function slugify(text) {
     .slice(0, 80) || `item-${Date.now().toString(36)}`;
 }
 
+// "Suggest 10 products" — primary bulk-upload flow. Hits /api/scraper
+// (which has been seeded with 18 curated products spanning all 5 categories
+// with a 5-image gallery per item) and renders the response as rich cards
+// in the same queue the URL-paste flow uses. Each candidate arrives with
+// title, brand, category, USD, suggested PKR, description, and asset_urls.
+async function suggestTenProducts() {
+  const status = qs("[data-sourcing-status]");
+  const queueWrap = qs("[data-sourcing-queue]");
+  const footer = qs("[data-sourcing-footer]");
+  const clearBtn = qs("[data-suggest-clear-btn]");
+
+  if (status) {
+    status.textContent = "Curating 10 review-ready products…";
+    status.classList.add("is-busy");
+  }
+
+  let payload;
+  try {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    if (state.adminToken) headers.set("Authorization", `Bearer ${state.adminToken}`);
+    const response = await fetch("/api/scraper", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ target_count: 10, batch_id: `suggest-${Date.now().toString(36)}` }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    payload = await response.json();
+  } catch (err) {
+    if (status) {
+      status.textContent = `Couldn't suggest products: ${err.message || err}`;
+      status.classList.remove("is-busy");
+    }
+    return;
+  }
+  if (status) status.classList.remove("is-busy");
+
+  const trends = payload.trends || [];
+  if (!trends.length) {
+    if (status) status.textContent = "No suggestions returned. Try again in a moment.";
+    return;
+  }
+
+  // Mirror trend candidates into the sourcing queue shape so the existing
+  // bulk-save pipeline (POST /api/catalog with { products: [...] }) just
+  // works. Compute a suggested customer_price_pkr server-side equivalent
+  // client-side using current store settings.
+  const fx = Number(state.settings?.fx_rate || 282);
+  const markup = Number(state.settings?.markup_rate ?? 0.25);
+  sourcingState.queue = trends.map((t) => {
+    const usd = Number(t.usa_price_usd || 0);
+    const shipping = Number(t.shipping_pkr || 0);
+    const retail = usd * fx;
+    const suggestedPkr = Math.ceil(retail + retail * markup + shipping);
+    const gallery = Array.isArray(t.asset_urls) && t.asset_urls.length
+      ? t.asset_urls
+      : (t.image_url ? [t.image_url] : []);
+    return {
+      url: t.source_url || "",
+      ok: true,
+      status: "ok",
+      selected: true,
+      // The candidate shape the existing renderer / save flow already
+      // understands, plus a few extras for the rich card.
+      candidate: {
+        title: t.title,
+        brand: t.brand,
+        category: t.category || "accessories",
+        description: t.suggested_description || "",
+        usa_price_usd: usd,
+        shipping_pkr: shipping,
+        image_url: gallery[0] || "",
+        gallery_urls: gallery,
+        source_url: t.source_url || "",
+        variants: t.variants || "Confirm size, shade, color, or volume before approval.",
+        authenticity_note: t.authenticity_note || "Verify official retailer source and attach receipt before publishing.",
+        suggested_customer_price_pkr: suggestedPkr,
+        suggested_shipping_pkr: shipping,
+        // Hero-index lets the admin click thumbnails to swap which image
+        // becomes the saved product's hero. Defaults to 0.
+        _heroIdx: 0,
+      },
+    };
+  });
+
+  if (queueWrap) {
+    queueWrap.hidden = false;
+    queueWrap.classList.add("suggest-grid");
+  }
+  if (footer) footer.hidden = false;
+  if (clearBtn) clearBtn.hidden = false;
+  if (status) status.textContent = `${trends.length} review-ready products curated. Tweak anything, pick hero images, then save.`;
+  renderSourcingTrayQueue();
+}
+
 async function sourcingFetchAll() {
   const textarea = qs("[data-sourcing-urls]");
   const status = qs("[data-sourcing-status]");
@@ -8095,51 +8189,127 @@ function renderSourcingTrayQueue() {
     return;
   }
   queueWrap.hidden = false;
-  queueWrap.innerHTML = sourcingState.queue.map((row, i) => {
-    const c = row.candidate || {};
-    const img = c.image_url
-      ? `<img class="row-image" src="${safeUrl(imageUrl(c.image_url, { width: 120, height: 120 }), "")}" alt="" loading="lazy" />`
-      : `<div class="row-image row-image-fallback">no img</div>`;
-    const checkable = row.status === "ok" || row.status === "partial";
-    const statusChip = {
-      ok: "Ready",
-      partial: "Partial",
-      duplicate: "Already in catalog",
-      blocked: "Bot-blocked",
-      error: "Error",
-    }[row.status] || row.status;
-    const titleLine = row.status === "duplicate"
-      ? esc(row.existing_title || "Existing product")
-      : esc(c.title || row.url);
-    const metaParts = [];
-    if (row.status === "ok" || row.status === "partial") {
-      if (c.brand) metaParts.push(esc(c.brand));
-      if (c.category) metaParts.push(esc(c.category));
-      if (c.suggested_customer_price_pkr) {
-        metaParts.push(`Suggested <strong>${PKR.format(c.suggested_customer_price_pkr)}</strong>`);
-      }
-    } else if (row.status === "duplicate") {
-      metaParts.push(`<a href="#" data-action="sourcing-open-existing" data-product-id="${attr(row.existing_product_id)}">Open existing product →</a>`);
-    } else {
-      metaParts.push(esc(row.error || "Could not fetch this URL"));
-    }
-    return `
-      <div class="sourcing-row is-${esc(row.status)}" data-sourcing-tray-row="${i}">
-        <input type="checkbox" data-sourcing-check ${row.selected && checkable ? "checked" : ""} ${checkable ? "" : "disabled"} aria-label="Select row" />
-        ${img}
-        <div class="row-body">
-          <div class="row-title">${titleLine}</div>
-          <div class="row-meta">${metaParts.join(" · ")}</div>
-        </div>
-        <div class="row-actions">
-          <span class="row-status-chip">${esc(statusChip)}</span>
-          ${checkable ? `<button class="row-mini" type="button" data-action="sourcing-edit" data-row="${i}">Edit</button>` : ""}
-          <button class="row-mini" type="button" data-action="sourcing-remove" data-row="${i}" aria-label="Remove row">×</button>
-        </div>
-      </div>
-    `;
-  }).join("");
+  // Two render modes:
+  //   • Rich card grid — when every row is a parseable candidate. Used
+  //     by "Suggest 10" and by URL-paste rows that came back ok.
+  //   • Compact row list — for rows that need attention (duplicate /
+  //     blocked / error). Mixed queues fall back to the row list.
+  const allRich = sourcingState.queue.every((r) => (r.status === "ok" || r.status === "partial") && r.candidate?.gallery_urls?.length);
+  queueWrap.classList.toggle("suggest-grid", allRich);
+  queueWrap.innerHTML = sourcingState.queue.map((row, i) => allRich ? renderSuggestCard(row, i) : renderSuggestRow(row, i)).join("");
   updateSourcingSelectedCount();
+}
+
+// Rich suggestion card — used by the Suggest 10 grid. Each card shows:
+//   • Image gallery: big hero on top, thumbnail strip below.
+//   • Editable title, brand, category, suggested PKR.
+//   • Description preview + source link.
+//   • Select checkbox + remove button.
+function renderSuggestCard(row, i) {
+  const c = row.candidate || {};
+  const gallery = Array.isArray(c.gallery_urls) ? c.gallery_urls : [];
+  const heroIdx = Math.max(0, Math.min(gallery.length - 1, c._heroIdx || 0));
+  const hero = gallery[heroIdx] || c.image_url || "";
+  const thumbs = gallery.length > 1
+    ? gallery.map((g, gi) => `
+        <button type="button" class="suggest-thumb${gi === heroIdx ? " is-active" : ""}"
+                data-action="suggest-set-hero" data-row="${i}" data-img-idx="${gi}"
+                aria-label="Use image ${gi + 1} as hero">
+          <img src="${safeUrl(imageUrl(g, { width: 100, height: 100 }), "")}" alt="" loading="lazy" />
+        </button>
+      `).join("")
+    : "";
+  const categoryOptions = ["handbags", "shoes", "makeup", "fragrance", "accessories"]
+    .map((cat) => `<option value="${cat}"${cat === c.category ? " selected" : ""}>${cat[0].toUpperCase() + cat.slice(1)}</option>`)
+    .join("");
+  return `
+    <article class="suggest-card${row.selected ? " is-selected" : ""}" data-sourcing-tray-row="${i}">
+      <header class="suggest-card-head">
+        <label class="suggest-select">
+          <input type="checkbox" data-sourcing-check ${row.selected ? "checked" : ""} aria-label="Select" />
+        </label>
+        <span class="suggest-img-count">${gallery.length} photo${gallery.length === 1 ? "" : "s"}</span>
+        <button type="button" class="suggest-remove" data-action="sourcing-remove" data-row="${i}" aria-label="Remove">×</button>
+      </header>
+      <div class="suggest-hero">
+        ${hero
+          ? `<img src="${safeUrl(imageUrl(hero, { width: 600, height: 600 }), "")}" alt="${attr(c.title || "")}" loading="lazy" />`
+          : `<div class="suggest-hero-fallback">No image</div>`}
+      </div>
+      ${thumbs ? `<div class="suggest-thumb-strip">${thumbs}</div>` : ""}
+      <div class="suggest-body">
+        <label class="suggest-field suggest-field-title">
+          <span>Title</span>
+          <input type="text" data-suggest-edit data-row="${i}" data-field="title" value="${attr(c.title || "")}" />
+        </label>
+        <div class="suggest-field-grid">
+          <label class="suggest-field">
+            <span>Brand</span>
+            <input type="text" data-suggest-edit data-row="${i}" data-field="brand" value="${attr(c.brand || "")}" />
+          </label>
+          <label class="suggest-field">
+            <span>Category</span>
+            <select data-suggest-edit data-row="${i}" data-field="category">${categoryOptions}</select>
+          </label>
+        </div>
+        <label class="suggest-field suggest-field-price">
+          <span>Customer price PKR (final)</span>
+          <div class="suggest-price-wrap">
+            <span class="suggest-price-prefix">Rs</span>
+            <input type="number" min="0" step="100" data-suggest-edit data-row="${i}" data-field="suggested_customer_price_pkr" value="${attr(c.suggested_customer_price_pkr || 0)}" />
+          </div>
+        </label>
+        <p class="suggest-description">${esc((c.description || "").slice(0, 200))}${(c.description || "").length > 200 ? "…" : ""}</p>
+        ${c.source_url ? `<a class="suggest-source" href="${safeUrl(c.source_url)}" target="_blank" rel="noopener noreferrer">View source →</a>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+// Compact row used for mixed queues (e.g. URL paste with duplicates/blocks).
+function renderSuggestRow(row, i) {
+  const c = row.candidate || {};
+  const img = c.image_url
+    ? `<img class="row-image" src="${safeUrl(imageUrl(c.image_url, { width: 120, height: 120 }), "")}" alt="" loading="lazy" />`
+    : `<div class="row-image row-image-fallback">no img</div>`;
+  const checkable = row.status === "ok" || row.status === "partial";
+  const statusChip = {
+    ok: "Ready",
+    partial: "Partial",
+    duplicate: "Already in catalog",
+    blocked: "Bot-blocked",
+    error: "Error",
+  }[row.status] || row.status;
+  const titleLine = row.status === "duplicate"
+    ? esc(row.existing_title || "Existing product")
+    : esc(c.title || row.url);
+  const metaParts = [];
+  if (row.status === "ok" || row.status === "partial") {
+    if (c.brand) metaParts.push(esc(c.brand));
+    if (c.category) metaParts.push(esc(c.category));
+    if (c.suggested_customer_price_pkr) {
+      metaParts.push(`Suggested <strong>${PKR.format(c.suggested_customer_price_pkr)}</strong>`);
+    }
+  } else if (row.status === "duplicate") {
+    metaParts.push(`<a href="#" data-action="sourcing-open-existing" data-product-id="${attr(row.existing_product_id)}">Open existing product →</a>`);
+  } else {
+    metaParts.push(esc(row.error || "Could not fetch this URL"));
+  }
+  return `
+    <div class="sourcing-row is-${esc(row.status)}" data-sourcing-tray-row="${i}">
+      <input type="checkbox" data-sourcing-check ${row.selected && checkable ? "checked" : ""} ${checkable ? "" : "disabled"} aria-label="Select row" />
+      ${img}
+      <div class="row-body">
+        <div class="row-title">${titleLine}</div>
+        <div class="row-meta">${metaParts.join(" · ")}</div>
+      </div>
+      <div class="row-actions">
+        <span class="row-status-chip">${esc(statusChip)}</span>
+        ${checkable ? `<button class="row-mini" type="button" data-action="sourcing-edit" data-row="${i}">Edit</button>` : ""}
+        <button class="row-mini" type="button" data-action="sourcing-remove" data-row="${i}" aria-label="Remove row">×</button>
+      </div>
+    </div>
+  `;
 }
 
 function updateSourcingSelectedCount() {
@@ -8221,6 +8391,12 @@ async function sourcingSaveSelected() {
   const markup = Number(state.settings.markup_rate ?? 0.25);
   const products = selected.map((row) => {
     const c = row.candidate;
+    // Hero image follows _heroIdx (admin clicked a thumbnail). Falls
+    // back to the existing image_url (which suggest-set-hero keeps in
+    // sync) or the first gallery image.
+    const gallery = Array.isArray(c.gallery_urls) ? c.gallery_urls : [];
+    const heroIdx = Math.max(0, Math.min(gallery.length - 1, c._heroIdx || 0));
+    const hero = gallery[heroIdx] || c.image_url || gallery[0] || "";
     return {
       id: slugify(c.title),
       title: c.title,
@@ -8228,14 +8404,17 @@ async function sourcingSaveSelected() {
       category: c.category,
       description: c.description,
       usa_price_usd: Number(c.usa_price_usd || 0),
-      shipping_pkr: Number(c.suggested_shipping_pkr || 0),
+      shipping_pkr: Number(c.suggested_shipping_pkr || c.shipping_pkr || 0),
       fx_rate: fx,
       markup_rate: markup,
+      // PKR-first: the inline-edited customer price wins. Falls back to
+      // the server's suggested figure if the admin didn't touch it.
+      customer_price_pkr: Number(c.suggested_customer_price_pkr || c.customer_price_pkr || 0),
       stock_mode: "preorder",
       inventory: 0,
       low_stock_threshold: 2,
-      image_url: c.image_url || "",
-      gallery_urls: c.gallery_urls || [],
+      image_url: hero,
+      gallery_urls: gallery,
       variants: c.variants,
       authenticity_note: c.authenticity_note,
       source_url: c.source_url,
@@ -9494,6 +9673,21 @@ function wireEvents() {
       return;
     }
     // Sourcing tray (admin bulk URL importer)
+    if (action === "suggest-ten") {
+      event.preventDefault();
+      return suggestTenProducts();
+    }
+    if (action === "suggest-set-hero") {
+      event.preventDefault();
+      const idx = Number(target.dataset.row);
+      const imgIdx = Number(target.dataset.imgIdx);
+      const row = sourcingState.queue[idx];
+      if (!row || !row.candidate) return;
+      row.candidate._heroIdx = imgIdx;
+      row.candidate.image_url = row.candidate.gallery_urls?.[imgIdx] || row.candidate.image_url;
+      renderSourcingTrayQueue();
+      return;
+    }
     if (action === "sourcing-fetch") {
       event.preventDefault();
       return sourcingFetchAll();
@@ -10441,7 +10635,7 @@ function wireEvents() {
       event.target.value = "";
     });
   });
-  // Sourcing Tray — per-row checkbox + select-all
+  // Sourcing Tray — per-row checkbox + select-all + inline card edits
   qs("[data-sourcing-tray]")?.addEventListener("change", (event) => {
     const target = event.target;
     if (target.matches("[data-sourcing-select-all]")) {
@@ -10452,9 +10646,36 @@ function wireEvents() {
       const idx = Number(row?.dataset.sourcingTrayRow);
       if (!Number.isNaN(idx) && sourcingState.queue[idx]) {
         sourcingState.queue[idx].selected = target.checked;
+        // Update the card's visual selected state without a full re-render.
+        const card = target.closest(".suggest-card");
+        if (card) card.classList.toggle("is-selected", target.checked);
         updateSourcingSelectedCount();
       }
+      return;
     }
+    // Inline edit of the suggest-card fields. Writes directly into the
+    // queue state so the bulk-save flow picks the latest values.
+    if (target.matches("[data-suggest-edit]")) {
+      const idx = Number(target.dataset.row);
+      const field = target.dataset.field;
+      const row = sourcingState.queue[idx];
+      if (!row || !row.candidate || !field) return;
+      const val = target.type === "number" ? Number(target.value) : target.value;
+      row.candidate[field] = val;
+      // If the customer-PKR field changes, that's the value the bulk save
+      // sends as `customer_price_pkr` — no re-render needed.
+    }
+  });
+  // Also catch live edits (text fields) so the queue stays in sync as
+  // the admin types, without forcing a blur first.
+  qs("[data-sourcing-tray]")?.addEventListener("input", (event) => {
+    const target = event.target;
+    if (!target.matches("[data-suggest-edit]")) return;
+    const idx = Number(target.dataset.row);
+    const field = target.dataset.field;
+    const row = sourcingState.queue[idx];
+    if (!row || !row.candidate || !field) return;
+    row.candidate[field] = target.type === "number" ? Number(target.value) : target.value;
   });
   qs("[data-product-image-upload]")?.addEventListener("change", (event) => {
     uploadProductImage(event.target.files?.[0]).finally(() => {

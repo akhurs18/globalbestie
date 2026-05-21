@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260521-dashboard-w1w2w3" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260521-suggest-ten" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -484,29 +484,36 @@
                   "Fetch all". Each row shows title + USD + suggested PKR
                   + dedupe status. Select rows + Save selected for one-
                   shot bulk publish. -->
-                <section class="sourcing-tray" data-sourcing-tray>
+                <!-- ═══ SUGGEST 10 ═══════════════════════════════════════════
+                  One-click bulk uploader. Hit "Suggest 10 products" — the
+                  daily-marketing-agent's curated seed pool (rotated by
+                  category) delivers 10 fully-formed candidates: title,
+                  brand, category, USD, suggested PKR, description, +
+                  a 5-image gallery per product. Admin reviews inline,
+                  tweaks anything, picks the hero image, then saves the
+                  selected as drafts or active in one go.
+
+                  URL paste lives below as a smaller fallback for the rare
+                  case the admin wants to spec a specific retailer link. -->
+                <section class="sourcing-tray suggest-ten" data-sourcing-tray>
                   <div class="sourcing-tray-head">
                     <div>
-                      <strong>Sourcing Tray</strong>
-                      <span>Paste up to 50 retailer URLs (one per line). We'll fetch each one and queue them for review.</span>
+                      <strong>Suggest 10 products</strong>
+                      <span>Curated picks across handbags, shoes, makeup, fragrance, and accessories — each with brand, suggested PKR price, description, and a 5-image gallery ready to review.</span>
                     </div>
                     <div class="sourcing-tray-actions">
-                      <button class="button secondary" type="button" data-action="sourcing-fetch">Fetch all</button>
-                      <button class="button ghost" type="button" data-action="sourcing-clear">Clear</button>
+                      <button class="button primary" type="button" data-action="suggest-ten">✦ Suggest 10 products</button>
+                      <button class="button ghost" type="button" data-action="sourcing-clear" hidden data-suggest-clear-btn>Discard queue</button>
                     </div>
                   </div>
-                  <label class="sourcing-tray-input">
-                    <span class="sr-only">Retailer URLs</span>
-                    <textarea data-sourcing-urls rows="4" placeholder="https://www.coach.com/products/...&#10;https://www.sephora.com/product/...&#10;https://www.charlottetilbury.com/us/..."></textarea>
-                  </label>
                   <div class="sourcing-tray-status" data-sourcing-status></div>
-                  <div class="sourcing-queue" data-sourcing-queue hidden></div>
+                  <div class="sourcing-queue suggest-grid" data-sourcing-queue hidden></div>
                   <div class="sourcing-tray-footer" data-sourcing-footer hidden>
                     <label class="sourcing-select-all">
-                      <input type="checkbox" data-sourcing-select-all />
-                      Select all parseable
+                      <input type="checkbox" data-sourcing-select-all checked />
+                      Select all
                     </label>
-                    <span class="sourcing-selected-count" data-sourcing-selected>0 selected</span>
+                    <span class="sourcing-selected-count" data-sourcing-selected>10 selected</span>
                     <label class="sourcing-publish-state">
                       Save as:
                       <select data-sourcing-publish>
@@ -517,6 +524,23 @@
                     <button class="button primary" type="button" data-action="sourcing-save">Save selected</button>
                     <button class="button ghost" type="button" data-action="sourcing-discard">Discard queue</button>
                   </div>
+
+                  <!-- Secondary path — manual URL paste for the rare case
+                       admin wants a specific retailer link. Collapsed by
+                       default; opens to reveal the textarea. -->
+                  <details class="suggest-url-fallback">
+                    <summary>
+                      <span>Have a specific product link? Paste it instead</span>
+                      <span class="suggest-fallback-chev" aria-hidden="true">+</span>
+                    </summary>
+                    <label class="sourcing-tray-input">
+                      <span class="sr-only">Retailer URLs</span>
+                      <textarea data-sourcing-urls rows="3" placeholder="https://www.coach.com/products/...&#10;https://www.sephora.com/product/..."></textarea>
+                    </label>
+                    <div class="suggest-url-actions">
+                      <button class="button secondary" type="button" data-action="sourcing-fetch">Fetch URL(s)</button>
+                    </div>
+                  </details>
                 </section>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
@@ -681,6 +705,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260521-dashboard-w1w2w3"></script>
+    <script type="module" src="./assets/app.js?v=20260521-suggest-ten"></script>
   </body>
 </html>

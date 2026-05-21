@@ -226,6 +226,13 @@ function makeSeedCandidates(batchId = "", targetCount = 10) {
     const variant = variantList[Math.floor(cursor / seeds.length) % variantList.length];
     const title = `${seed.brand} ${seed.title} · ${variant}`;
     const id = `trend-${slugify(title).slice(0, 48)}-${String(cursor).padStart(3, "0")}`;
+    // Give each candidate the FULL category image pool (5 images), with
+    // the hero rotated so consecutive candidates don't all start on the
+    // same shot. Each suggested card then shows a proper gallery — hero
+    // plus thumbnail strip — instead of one lonely image.
+    const pool = IMAGES[seed.category] || IMAGES.handbags;
+    const heroOffset = cursor % pool.length;
+    const gallery = [...pool.slice(heroOffset), ...pool.slice(0, heroOffset)];
     candidates.push({
       id,
       batch_id: batchId,
@@ -237,7 +244,7 @@ function makeSeedCandidates(batchId = "", targetCount = 10) {
       shipping_pkr: seed.ship,
       score: Math.max(70, seed.score - Math.floor(candidates.length / 8)),
       status: "pending",
-      image_url: (IMAGES[seed.category] || IMAGES.handbags)[cursor % (IMAGES[seed.category] || IMAGES.handbags).length],
+      image_url: gallery[0],
       suggested_description: buildProductDescription({
         title,
         category: seed.category,
@@ -245,7 +252,7 @@ function makeSeedCandidates(batchId = "", targetCount = 10) {
         variant,
         source: seed.url,
       }),
-      asset_urls: [(IMAGES[seed.category] || IMAGES.handbags)[cursor % (IMAGES[seed.category] || IMAGES.handbags).length]],
+      asset_urls: gallery,
       production_status: "ready_for_review",
       variants: variant,
       authenticity_note: "Verify official retailer source and attach receipt before publishing.",
