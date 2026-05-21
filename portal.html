@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260521-pkr-first" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260521-dashboard-w1w2w3" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -40,6 +40,14 @@
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="settings">Settings <span data-tab-badge="settings"></span></button>
+            <button class="admin-tab admin-theme-toggle" type="button" data-action="toggle-theme" aria-label="Toggle dark mode" title="Toggle dark mode">
+              <span class="theme-toggle-track" aria-hidden="true">
+                <span class="theme-toggle-thumb"></span>
+                <span class="theme-toggle-glyph theme-toggle-sun" aria-hidden="true">☀</span>
+                <span class="theme-toggle-glyph theme-toggle-moon" aria-hidden="true">☾</span>
+              </span>
+              <span class="theme-toggle-label">Dark mode</span>
+            </button>
           </aside>
 
           <div class="admin-main">
@@ -673,6 +681,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260521-pkr-first"></script>
+    <script type="module" src="./assets/app.js?v=20260521-dashboard-w1w2w3"></script>
   </body>
 </html>

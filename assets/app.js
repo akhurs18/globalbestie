@@ -2226,15 +2226,60 @@ function renderConversionFunnel() {
     { label: "Delivered", count: delivered, pct: total ? (delivered / total) * 100 : 0, tone: "ok" },
   ];
 
+  // True funnel SVG — each stage is a horizontal band with width
+  // proportional to its volume vs received. Drop-off labels sit between
+  // bands. Animated draw on first render so the eye follows top-to-bottom.
+  const FUNNEL_W = 540;
+  const FUNNEL_H = 220;
+  const PADDING_X = 30;
+  const BAND_GAP = 6;
+  const bands = stages.length;
+  const bandH = (FUNNEL_H - (bands - 1) * BAND_GAP) / bands;
+  const maxWidth = FUNNEL_W - PADDING_X * 2;
+  const dropOffs = stages.slice(1).map((s, i) => {
+    const prev = stages[i].count;
+    if (!prev) return null;
+    const lost = prev - s.count;
+    const lostPct = (lost / prev) * 100;
+    return { from: stages[i].label, to: s.label, lost, lostPct };
+  });
+
+  const bandsSvg = stages.map((s, i) => {
+    const widthPct = Math.max(2, s.pct); // floor so 0%/very-low still visible
+    const width = (widthPct / 100) * maxWidth;
+    const x = (FUNNEL_W - width) / 2;
+    const y = i * (bandH + BAND_GAP);
+    const fill = s.tone === "ok"
+      ? "url(#funnelGradOk)"
+      : "url(#funnelGradInfo)";
+    return `<g class="funnel-band" style="--bi:${i}">
+      <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${width.toFixed(1)}" height="${bandH.toFixed(1)}" rx="8" fill="${fill}" />
+      <text x="${(FUNNEL_W / 2).toFixed(0)}" y="${(y + bandH / 2 + 5).toFixed(0)}" text-anchor="middle" class="funnel-band-label">
+        ${esc(s.label)} · ${s.count} · ${s.pct.toFixed(0)}%
+      </text>
+    </g>`;
+  }).join("");
+
   slot.innerHTML = `
-    <div class="funnel-stages">
-      ${stages.map((s) => `
-        <div class="funnel-stage tone-${s.tone}">
-          <div class="funnel-bar"><span style="width:${s.pct.toFixed(0)}%"></span></div>
-          <strong>${s.count}</strong>
-          <small>${esc(s.label)}<br>${s.pct.toFixed(0)}%</small>
-        </div>
-      `).join("")}
+    <div class="funnel-canvas">
+      <svg viewBox="0 0 ${FUNNEL_W} ${FUNNEL_H}" class="funnel-svg" role="img" aria-label="Conversion funnel for the last 30 days">
+        <defs>
+          <linearGradient id="funnelGradInfo" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="var(--pink-2)" stop-opacity="0.85" />
+            <stop offset="100%" stop-color="var(--pink-3)" stop-opacity="0.95" />
+          </linearGradient>
+          <linearGradient id="funnelGradOk" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="var(--ink)" stop-opacity="0.78" />
+            <stop offset="100%" stop-color="var(--ink)" stop-opacity="0.95" />
+          </linearGradient>
+        </defs>
+        ${bandsSvg}
+      </svg>
+      <div class="funnel-dropoffs">
+        ${dropOffs.map((d) => d ? `
+          <div class="funnel-drop"><span>${esc(d.from)} → ${esc(d.to)}</span><strong>−${d.lost} (${d.lostPct.toFixed(0)}%)</strong></div>
+        ` : "").join("")}
+      </div>
     </div>
     <p class="funnel-summary">
       ${total > 0
@@ -2330,6 +2375,29 @@ function renderTodayRibbon() {
     return eta && eta <= oneWeek && eta >= Date.now() - 86_400_000;
   }).length;
 
+  // "Day X of Y" progress for the next-arriving (open) batch. Anchors the
+  // team to the current sourcing cycle — the bigger the number, the more
+  // urgent it gets to nudge sourcing along.
+  const nextBatch = (state.shipmentBatches || [])
+    .filter((b) => b.status !== "arrived" && b.status !== "cancelled" && b.eta_date)
+    .sort((a, b) => new Date(a.eta_date) - new Date(b.eta_date))[0];
+  let batchProgress = null;
+  if (nextBatch) {
+    const eta = new Date(`${nextBatch.eta_date}T12:00:00`).getTime();
+    const created = new Date(nextBatch.created_at || Date.now()).getTime();
+    const totalDays = Math.max(1, Math.round((eta - created) / 86_400_000));
+    const elapsedDays = Math.max(0, Math.min(totalDays, Math.round((Date.now() - created) / 86_400_000)));
+    const pct = Math.round((elapsedDays / totalDays) * 100);
+    batchProgress = {
+      name: nextBatch.name || nextBatch.id,
+      elapsedDays,
+      totalDays,
+      pct,
+      capacity: Number(nextBatch.capacity || 0),
+      used: Number(nextBatch.used || 0),
+    };
+  }
+
   el.innerHTML = `
     <button class="today-stat ${pending > 0 ? "tone-warn" : "tone-ok"}" type="button" data-action="jump-tab" data-action-filter="orders" title="Open Orders tab">
       <span class="today-label">Pending now</span>
@@ -2338,7 +2406,7 @@ function renderTodayRibbon() {
     </button>
     <button class="today-stat tone-info" type="button" data-action="jump-tab" data-action-filter="orders" title="Today's orders">
       <span class="today-label">Revenue today</span>
-      <strong>${PKR.format(revenueToday)}</strong>
+      <strong>${shortPkr(revenueToday)}</strong>
       <small class="today-trend tone-${trendTone}">${trendArrow} ${Math.abs(trend)}% vs yesterday</small>
     </button>
     <button class="today-stat ${balanceOverdue > 0 ? "tone-warn" : "tone-ok"}" type="button" data-action="jump-tab" data-action-filter="cashflow" title="Open Cashflow">
@@ -2351,7 +2419,52 @@ function renderTodayRibbon() {
       <strong>${arrivingSoon}</strong>
       <small>${arrivingSoon === 1 ? "batch" : "batches"} due</small>
     </button>
+    ${batchProgress ? `
+      <button class="today-stat today-batch-progress tone-info" type="button" data-action="jump-tab" data-action-filter="shipments" title="Open current batch in Shipments">
+        <span class="today-label">${esc(batchProgress.name)}</span>
+        <strong>Day ${batchProgress.elapsedDays} of ${batchProgress.totalDays}</strong>
+        <div class="batch-progress-track" aria-hidden="true">
+          <span class="batch-progress-fill" style="width:${batchProgress.pct}%"></span>
+        </div>
+        <small>${batchProgress.used}/${batchProgress.capacity || "?"} reserved · ${batchProgress.pct}% through</small>
+      </button>
+    ` : ""}
+    <div class="today-freshness" data-today-freshness aria-live="polite" title="Data refresh status">
+      <span class="freshness-dot" aria-hidden="true"></span>
+      <span class="freshness-text" data-freshness-text>Updated just now</span>
+    </div>
   `;
+  // Remember when this render happened so the freshness ticker can read
+  // it. Stamps every render — the ticker re-runs on a 5s interval.
+  state._lastAdminRenderAt = Date.now();
+}
+
+// 5-second ticker that updates the "Updated Xs ago" label inside the
+// today ribbon. Single global interval — restarts itself idempotently.
+let _freshnessTickerId = null;
+function startFreshnessTicker() {
+  if (_freshnessTickerId) return;
+  _freshnessTickerId = setInterval(() => {
+    const target = qs("[data-freshness-text]");
+    if (!target) return;
+    const stampedAt = state._lastAdminRenderAt;
+    if (!stampedAt) {
+      target.textContent = "Waiting for data…";
+      return;
+    }
+    const secs = Math.floor((Date.now() - stampedAt) / 1000);
+    target.textContent =
+      secs < 5  ? "Updated just now" :
+      secs < 60 ? `Updated ${secs}s ago` :
+      secs < 3600 ? `Updated ${Math.floor(secs / 60)}m ago` :
+      `Updated ${Math.floor(secs / 3600)}h ago`;
+    // Stale flag drops the dot's animation to red if it's been > 5 min
+    // since last refresh — visual nudge to hit Refresh.
+    const wrap = qs("[data-today-freshness]");
+    if (wrap) {
+      wrap.classList.toggle("is-stale", secs > 300);
+    }
+  }, 5_000);
 }
 
 // ─── Overview rewrites ───
@@ -2372,29 +2485,56 @@ function renderOverviewExtras() {
   const orders = state.orders || [];
   const pending = orders.filter((o) => o.status === "pending_review").length;
   const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
-  const startOfYesterday = new Date(startOfDay.getTime() - 86_400_000);
   const ordersToday = orders.filter((o) => new Date(o.created_at || 0) >= startOfDay);
-  const ordersYesterday = orders.filter((o) => {
-    const t = new Date(o.created_at || 0).getTime();
-    return t >= startOfYesterday.getTime() && t < startOfDay.getTime();
-  });
   const revenueToday = ordersToday.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
-  const revenueYesterday = ordersYesterday.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
-  const balanceOutstanding = orders.reduce((s, o) => s + Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0)), 0);
   const inTransit = orders.filter((o) => ["in_transit", "sourcing", "pakistan_processing"].includes(o.status)).length;
 
-  // Yesterday-comparison trend % — capped at ±999 to avoid jarring numbers
-  // when the previous value was 0 or near-0.
-  const trendPct = (current, prior) => {
-    if (!prior) return current ? 100 : 0;
-    return Math.max(-999, Math.min(999, Math.round(((current - prior) / prior) * 100)));
-  };
+  // 14-day daily series for sparklines + 7-day trend deltas. The recent
+  // 7 days vs prior 7 days is a much stabler signal than today-vs-yesterday
+  // (which swings wildly when one Karachi customer drops a 80k bag order).
+  const ordersSeries  = dailySeries(orders, 14, () => 1);
+  const revenueSeries = dailySeries(orders, 14, (o) => Number(o.total_pkr || 0));
 
   renderKpiHero("[data-overview-kpis]", [
-    { label: "Pending review", value: String(pending), sub: pending ? "Approve or reject" : "All caught up", tone: pending > 3 ? "warn" : "ok", action: "jump-tab", actionFilter: "orders" },
-    { label: "Orders today", value: String(ordersToday.length), sub: PKR.format(revenueToday) + " revenue", trend: { value: trendPct(ordersToday.length, ordersYesterday.length) } },
-    { label: "Revenue today", value: PKR.format(revenueToday), sub: `vs ${PKR.format(revenueYesterday)} yesterday`, trend: { value: trendPct(revenueToday, revenueYesterday) } },
-    { label: "Active in pipeline", value: String(inTransit), sub: "Sourcing → arrived" },
+    {
+      label: "Pending review",
+      value: String(pending),
+      numeric: pending,
+      format: "raw",
+      key: "pending-review",
+      sub: pending ? "Approve or reject" : "All caught up",
+      tone: pending > 3 ? "warn" : "ok",
+      action: "jump-tab",
+      actionFilter: "orders",
+    },
+    {
+      label: "Orders · 7d",
+      value: String(ordersSeries.slice(-7).reduce((s, v) => s + v, 0)),
+      numeric: ordersSeries.slice(-7).reduce((s, v) => s + v, 0),
+      format: "raw",
+      key: "orders-7d",
+      sub: `${ordersToday.length} today`,
+      sparkline: ordersSeries,
+      trend: { value: trend7d(ordersSeries) ?? 0, title: "vs previous 7 days" },
+    },
+    {
+      label: "Revenue · 7d",
+      value: shortPkr(revenueSeries.slice(-7).reduce((s, v) => s + v, 0)),
+      numeric: revenueSeries.slice(-7).reduce((s, v) => s + v, 0),
+      format: "short-pkr",
+      key: "revenue-7d",
+      sub: `${shortPkr(revenueToday)} today`,
+      sparkline: revenueSeries,
+      trend: { value: trend7d(revenueSeries) ?? 0, title: "vs previous 7 days" },
+    },
+    {
+      label: "Active in pipeline",
+      value: String(inTransit),
+      numeric: inTransit,
+      format: "raw",
+      key: "active-pipeline",
+      sub: "Sourcing → arrived",
+    },
   ]);
 
   // Action queue — every order with an SLA badge, sorted by severity then age
@@ -2637,57 +2777,69 @@ function renderCashflow() {
   const orders = state.orders || [];
   const agg = cashflowAggregate(orders, fx);
 
-  const stripCards = [
+  // Cashflow KPIs now flow through renderKpiHero so they pick up the
+  // count-up animation + drill-down hooks. Each card carries an
+  // action="jump-tab" so clicking it routes to Orders with a filter
+  // preset — finally surfaces the underlying rows for any metric.
+  renderKpiHero("[data-cashflow-strip]", [
     {
       label: "PKR in hand",
-      value: PKR.format(agg.pkrInHand),
-      hint: `${PKR.format(agg.advanceCollected)} collected − ${PKR.format(agg.usdSpent * fx)} USD spend`,
-      tone: agg.pkrInHand < 0 ? "negative" : "positive",
+      value: shortPkr(agg.pkrInHand),
+      numeric: agg.pkrInHand,
+      format: "short-pkr",
+      key: "pkr-in-hand",
+      sub: `${shortPkr(agg.advanceCollected)} collected − ${shortPkr(agg.usdSpent * fx)} USD spend`,
+      tone: agg.pkrInHand < 0 ? "warn" : "ok",
     },
     {
-      label: "USD spent (open)",
-      value: USD.format(agg.usdSpent),
-      hint: `On your card, awaiting recovery`,
-      tone: "neutral",
+      label: "USD on card",
+      value: USD.format(Math.round(agg.usdSpent)),
+      numeric: agg.usdSpent,
+      format: "usd",
+      key: "usd-on-card",
+      sub: "Awaiting recovery from PK collections",
     },
     {
-      label: "PKR balance to collect",
-      value: PKR.format(agg.balanceToCollect),
-      hint: "Arrived in PK, awaiting balance",
-      tone: agg.balanceToCollect > 0 ? "attention" : "neutral",
+      label: "Balance to collect",
+      value: shortPkr(agg.balanceToCollect),
+      numeric: agg.balanceToCollect,
+      format: "short-pkr",
+      key: "balance-to-collect",
+      sub: "Arrived in PK · chase customers",
+      tone: agg.balanceToCollect > 0 ? "warn" : "ok",
+      action: "jump-tab",
+      actionFilter: "orders:pakistan_processing",
     },
     {
-      label: "PKR future balance",
-      value: PKR.format(agg.futureBalance),
-      hint: "Not yet arrived in PK",
-      tone: "neutral",
+      label: "Future balance",
+      value: shortPkr(agg.futureBalance),
+      numeric: agg.futureBalance,
+      format: "short-pkr",
+      key: "future-balance",
+      sub: "Not yet arrived in PK",
+      action: "jump-tab",
+      actionFilter: "orders:in_transit",
     },
     {
       label: "Expected profit",
-      value: PKR.format(agg.expectedProfit),
-      hint: "If every open order pays in full",
-      tone: agg.expectedProfit < 0 ? "negative" : "positive",
+      value: shortPkr(agg.expectedProfit),
+      numeric: agg.expectedProfit,
+      format: "short-pkr",
+      key: "expected-profit",
+      sub: "If every open order pays in full",
+      tone: agg.expectedProfit < 0 ? "warn" : "ok",
     },
     {
       label: "Open orders",
       value: String(agg.openCount),
-      hint: "Across all open stages",
-      tone: "neutral",
+      numeric: agg.openCount,
+      format: "raw",
+      key: "open-orders",
+      sub: "Across all open stages",
+      action: "jump-tab",
+      actionFilter: "orders",
     },
-  ];
-  setHTML(
-    "[data-cashflow-strip]",
-    stripCards
-      .map(
-        (c) => `
-        <article class="cashflow-card cashflow-tone-${c.tone}">
-          <span>${c.label}</span>
-          <strong>${c.value}</strong>
-          <small>${c.hint}</small>
-        </article>`
-      )
-      .join("")
-  );
+  ]);
 
   // The money stripe: 4 segments showing where capital sits.
   // Left to right: USD already on card (red, outflow); PKR collected (green, inflow);
@@ -2702,22 +2854,35 @@ function renderCashflow() {
     ["PKR balance to collect", agg.balanceToCollect, "near"],
     ["PKR future balance", agg.futureBalance, "far"],
   ];
+  // Money bar — segments fill left-to-right with a staggered animation
+  // on render. CSS does the work (transition on width); we render with
+  // width:0 and bump to the real width on next frame.
   setHTML(
     "[data-cashflow-money-bar]",
-    `<div class="money-bar-track">
+    `<div class="money-bar-track" data-money-bar-track>
       ${segments
         .map(
-          ([label, value, tone]) => `
-        <span class="money-bar-seg money-bar-${tone}" style="width:${(value / totalScale) * 100}%" title="${label}: ${PKR.format(value)}"></span>`
+          ([label, value, tone], i) => `
+        <span class="money-bar-seg money-bar-${tone}" data-target-width="${(value / totalScale) * 100}" style="--seg-i:${i}; width:0%" title="${label}: ${PKR.format(value)}"></span>`
         )
         .join("")}
     </div>
     <div class="money-bar-legend">
       ${segments
-        .map(([label, value, tone]) => `<span class="money-bar-key money-bar-${tone}"><i></i>${label} · ${PKR.format(value)}</span>`)
+        .map(([label, value, tone]) => `<span class="money-bar-key money-bar-${tone}"><i></i>${label} · ${shortPkr(value)}</span>`)
         .join("")}
     </div>`
   );
+  // Double-rAF so the browser commits the width:0 baseline before we
+  // change the target width — otherwise the CSS transition has nothing
+  // to interpolate from.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      qsa("[data-money-bar-track] .money-bar-seg").forEach((node) => {
+        node.style.width = `${node.dataset.targetWidth}%`;
+      });
+    });
+  });
 
   renderSourcingQueue();
   renderCashflowBatches(fx);
@@ -6020,30 +6185,165 @@ function customerKpis() {
   ];
 }
 
+// Previous KPI numeric values keyed by slot+label. Lets us count up from
+// the last render's value to the new one instead of snapping.
+const _kpiPreviousValues = new Map();
+
+// Short-format helper. 247000 → "247K", 1_200_000 → "1.2M".
+// `prefix` lets callers prepend "Rs " / "$" without re-formatting.
+function shortNum(n, prefix = "") {
+  const v = Number(n || 0);
+  const abs = Math.abs(v);
+  if (abs >= 1_000_000) return `${prefix}${(v / 1_000_000).toFixed(v % 1_000_000 ? 1 : 0)}M`;
+  if (abs >= 1_000)     return `${prefix}${(v / 1_000).toFixed(v % 1_000 >= 100 ? 1 : 0)}K`;
+  return `${prefix}${Math.round(v)}`;
+}
+
+function shortPkr(n) { return shortNum(n, "Rs "); }
+
+// Tiny inline-SVG sparkline. Takes a series of numbers, returns an SVG
+// string. 60×18px by default — sits next to the KPI label without taking
+// over the card. Auto-scales to the data; flat zero data hides the line.
+function kpiSparkline(values, { width = 60, height = 18, color = "var(--pink-2)" } = {}) {
+  if (!Array.isArray(values) || values.length < 2) return "";
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  const step = width / (values.length - 1);
+  const points = values.map((v, i) => {
+    const x = i * step;
+    const y = height - ((v - min) / range) * height;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  // Final dot at the latest value so the eye lands at the right edge.
+  const lastX = width;
+  const lastY = height - ((values[values.length - 1] - min) / range) * height;
+  return `<svg class="kpi-sparkline" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true">
+    <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" />
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="2" fill="${color}" />
+  </svg>`;
+}
+
+// Count-up animation. Takes a DOM element, animates its textContent from
+// `from` to `to` over `duration` ms using the supplied formatter to render
+// each frame. rAF-driven, easeOutCubic. Honors prefers-reduced-motion by
+// snapping instantly.
+function animateCountUp(el, from, to, duration = 700, formatter = (n) => String(Math.round(n))) {
+  if (!el) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || from === to) {
+    el.textContent = formatter(to);
+    return;
+  }
+  const start = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    const val = from + (to - from) * ease(t);
+    el.textContent = formatter(val);
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// Returns a daily-bucketed series of length `days+1` (last `days` plus today)
+// using `accessor` to extract the value from each order (or 1 for count).
+// Used to feed sparklines + 7-day trend comparisons.
+function dailySeries(orders, days, accessor = () => 1) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const buckets = new Array(days + 1).fill(0);
+  for (const o of orders) {
+    const t = new Date(o.created_at || 0).getTime();
+    if (!Number.isFinite(t)) continue;
+    const diffDays = Math.floor((today.getTime() - t) / 86_400_000);
+    if (diffDays >= 0 && diffDays <= days) {
+      buckets[days - diffDays] += Number(accessor(o)) || 0;
+    }
+  }
+  return buckets;
+}
+
+// 7-day vs prior-7-day trend %. Capped at ±999 to keep the chip readable
+// when prior was 0.
+function trend7d(currentSeries) {
+  if (!Array.isArray(currentSeries) || currentSeries.length < 14) return null;
+  const recent = currentSeries.slice(-7).reduce((s, v) => s + v, 0);
+  const prior = currentSeries.slice(-14, -7).reduce((s, v) => s + v, 0);
+  if (!prior) return recent ? 100 : 0;
+  return Math.max(-999, Math.min(999, Math.round(((recent - prior) / prior) * 100)));
+}
+
 function renderKpiHero(slot, kpis, options = {}) {
   const el = qs(slot);
   if (!el) return;
-  el.innerHTML = kpis.map((k) => {
+  // First render of this slot since pageload? If so, do NOT animate from 0
+  // (looks like every counter rolled up from a cold start). Snap instead.
+  const slotKey = `${slot}:firstRender`;
+  const firstRender = !_kpiPreviousValues.has(slotKey);
+  _kpiPreviousValues.set(slotKey, true);
+
+  el.innerHTML = kpis.map((k, i) => {
     let trendChip = "";
     if (k.trend && typeof k.trend.value === "number") {
       const v = k.trend.value;
       const positive = (k.trend.invert ? v < 0 : v > 0);
       const arrow = v > 0 ? "↑" : v < 0 ? "↓" : "·";
       const tone = v === 0 ? "info" : positive ? "ok" : "warn";
-      trendChip = `<span class="kpi-trend tone-${tone}">${arrow} ${Math.abs(v)}${k.trend.unit || "%"}</span>`;
+      trendChip = `<span class="kpi-trend tone-${tone}" title="${attr(k.trend.title || "vs previous period")}">${arrow} ${Math.abs(v)}${k.trend.unit || "%"}</span>`;
     }
+    const sparkline = (k.sparkline && k.sparkline.length >= 2)
+      ? kpiSparkline(k.sparkline)
+      : "";
+    // The displayed value — if numeric is supplied we'll animate to it
+    // (and overwrite the data-target attribute below). Otherwise the
+    // value string renders directly.
+    const valueAttr = (typeof k.numeric === "number")
+      ? ` data-kpi-target="${k.numeric}" data-kpi-format="${attr(k.format || "raw")}"`
+      : "";
     return `
     <article class="kpi-card${k.tone ? ` tone-${k.tone}` : ""}${k.action ? " kpi-action" : ""}"
+             data-kpi-key="${attr(slot + ":" + i + ":" + (k.key || k.label))}"
              ${k.action ? `data-action="${attr(k.action)}"${k.actionFilter ? ` data-action-filter="${attr(k.actionFilter)}"` : ""}` : ""}>
       <div class="kpi-card-top">
         <span class="kpi-label">${esc(k.label)}</span>
+        ${sparkline}
+      </div>
+      <div class="kpi-value-row">
+        <strong class="kpi-value"${valueAttr}>${esc(String(k.value))}</strong>
         ${trendChip}
       </div>
-      <strong class="kpi-value">${esc(String(k.value))}</strong>
       ${k.sub ? `<small class="kpi-sub">${esc(k.sub)}</small>` : ""}
     </article>
   `;
   }).join("");
+
+  // Count-up pass: walk every .kpi-value with a data-kpi-target and animate
+  // from the previously-stored numeric to the new one.
+  if (!firstRender) {
+    el.querySelectorAll(".kpi-value[data-kpi-target]").forEach((node) => {
+      const card = node.closest(".kpi-card");
+      const key = card?.dataset.kpiKey;
+      if (!key) return;
+      const to = Number(node.dataset.kpiTarget);
+      const from = _kpiPreviousValues.get(key);
+      const fmt = node.dataset.kpiFormat;
+      const formatter = (n) =>
+        fmt === "pkr" ? PKR.format(Math.round(n)) :
+        fmt === "short-pkr" ? shortPkr(n) :
+        fmt === "usd" ? USD.format(Math.round(n)) :
+        String(Math.round(n));
+      if (typeof from === "number" && from !== to) {
+        animateCountUp(node, from, to, 700, formatter);
+      }
+      _kpiPreviousValues.set(key, to);
+    });
+  } else {
+    // First render — just remember the values, don't animate.
+    el.querySelectorAll(".kpi-value[data-kpi-target]").forEach((node) => {
+      const card = node.closest(".kpi-card");
+      const key = card?.dataset.kpiKey;
+      if (key) _kpiPreviousValues.set(key, Number(node.dataset.kpiTarget));
+    });
+  }
 }
 
 // Render the segment chip bar above the Customers filter. Pinned segments
@@ -7398,6 +7698,12 @@ function handleAdminLogin(event) {
 }
 
 async function refreshAdmin() {
+  // Skeleton state — flag the body so CSS can shimmer KPI cards / list rows
+  // while we wait for /api/admin/dashboard. First-load only (state.orders
+  // hasn't been populated yet); subsequent refreshes show stale-then-fresh
+  // without the placeholders flashing.
+  const firstLoad = !state.orders?.length;
+  if (firstLoad) document.body.classList.add("admin-loading");
   const fallback = {
     orders: state.orders,
     products: state.products,
@@ -7422,6 +7728,7 @@ async function refreshAdmin() {
   state.orderViews = data.orderViews || data.order_views || state.orderViews || [];
   state.teamMembers = data.teamMembers || data.team_members || state.teamMembers || [];
   state.settings = { ...state.settings, ...(data.settings || {}) };
+  document.body.classList.remove("admin-loading");
   renderAll();
 }
 
@@ -9163,6 +9470,14 @@ function wireEvents() {
       event.preventDefault();
       return importProductFromUrl();
     }
+    // Dark mode toggle — portal only. Persists to localStorage so the
+    // team's preference survives reloads.
+    if (action === "toggle-theme") {
+      event.preventDefault();
+      const isDark = document.documentElement.classList.toggle("theme-dark");
+      try { localStorage.setItem("gb_theme", isDark ? "dark" : "light"); } catch {}
+      return;
+    }
     // Reset the PKR price input back to the URL-autofill suggestion that's
     // stashed in dataset.suggested. Lets the admin try an edit and roll back.
     if (action === "reset-customer-price") {
@@ -9484,8 +9799,28 @@ function wireEvents() {
       return;
     }
     if (action === "jump-tab") {
-      const tab = target.dataset.actionFilter;
+      // Action filter may be "<tab>" or "<tab>:<status>" — the second form
+      // is used by the cashflow KPI drilldowns to land the user on Orders
+      // with a status pre-filter applied. Empty status = "All".
+      const raw = target.dataset.actionFilter || "";
+      const [tab, status] = raw.split(":");
       if (tab) qs(`[data-admin-tab="${tab}"]`)?.click();
+      if (status && tab === "orders") {
+        // Apply the status filter after the tab switch — small delay so
+        // the panel is in the DOM. The chip set + the <select> both
+        // mirror the same filter state to stay in sync.
+        setTimeout(() => {
+          const sel = qs("[data-admin-order-filter]");
+          if (sel) {
+            sel.value = status;
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          // Update the quick-filter chip row visual state to match.
+          qsa("[data-order-filter-chip]").forEach((c) => {
+            c.classList.toggle("active", c.dataset.orderFilterChip === status);
+          });
+        }, 30);
+      }
       return;
     }
     if (action === "broadcast-from-filter") {
@@ -9704,6 +10039,40 @@ function wireEvents() {
       order.status = previousStatus;
       renderAdminOrders();
       toast("Couldn't update — restored.");
+    }
+  });
+
+  // Kanban keyboard shortcuts.
+  //   j / ↓  →  next card
+  //   k / ↑  →  prev card
+  //   Enter  →  open focused order
+  //   ?      →  show help toast
+  // Only active when the Kanban board is visible and no input is focused.
+  document.addEventListener("keydown", (event) => {
+    if (document.body.dataset.page !== "portal") return;
+    if (state.ordersView !== "board") return;
+    const tag = (event.target?.tagName || "").toLowerCase();
+    if (["input", "textarea", "select"].includes(tag)) return;
+    if (event.target?.isContentEditable) return;
+    const cards = qsa("[data-kanban-drag]");
+    if (!cards.length) return;
+    const currentIdx = cards.findIndex((c) => c === document.activeElement);
+    const move = (delta) => {
+      event.preventDefault();
+      const next = cards[Math.max(0, Math.min(cards.length - 1, currentIdx + delta))];
+      if (next) next.focus();
+    };
+    if (event.key === "j" || event.key === "ArrowDown") return move(1);
+    if (event.key === "k" || event.key === "ArrowUp") return move(-1);
+    if (event.key === "Enter" && currentIdx >= 0) {
+      event.preventDefault();
+      cards[currentIdx].click();
+      return;
+    }
+    if (event.key === "?" && event.shiftKey) {
+      event.preventDefault();
+      toast("Kanban shortcuts: j/k or ↑/↓ to navigate · Enter to open · drag to change status");
+      return;
     }
   });
 
@@ -10263,6 +10632,13 @@ function wireHeroParallax() {
 }
 
 function init() {
+  // Apply persisted theme before render so there's no flash of light theme
+  // on a reload while in dark mode.
+  try {
+    if (localStorage.getItem("gb_theme") === "dark") {
+      document.documentElement.classList.add("theme-dark");
+    }
+  } catch {}
   wireEvents();
   fillProductForm();
   if (state.adminToken) {
@@ -10281,6 +10657,9 @@ function init() {
   registerServiceWorker();
   loadRemoteData();
   checkSession();
+  // Portal-only: 5s freshness ticker for the today ribbon's "Updated Xs
+  // ago" indicator. Cheap interval — only updates one DOM node.
+  if (document.body.dataset.page === "portal") startFreshnessTicker();
 }
 
 // ═════════════════════ CUSTOMER ACCOUNT (storefront) ═════════════════════
