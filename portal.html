@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260520-portal-theme" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260521-pkr-first" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -538,12 +538,43 @@
                     <option value="preorder">Preorder (USA-sourced, 50/50 payment, 4-6 week delivery)</option>
                     <option value="in_stock">In stock in Pakistan (full payment, 3-5 day delivery)</option>
                   </select></label>
-                  <label data-pricing-field="preorder">USA retail USD<input name="usa_price_usd" type="number" min="0" step="0.01" /></label>
-                  <label data-pricing-field="preorder">Shipping PKR<input name="shipping_pkr" type="number" min="0" step="100" /></label>
-                  <label data-pricing-field="preorder">FX rate<input name="fx_rate" type="number" min="1" step="0.01" /></label>
-                  <label data-pricing-field="in_stock">Customer price PKR (final)<input name="customer_price_pkr" type="number" min="0" step="100" /></label>
+
+                  <!-- PKR-FIRST PRICING.
+                       The admin only ever types the final customer PKR
+                       price — pre-filled from URL autofill via the server's
+                       suggested_customer_price_pkr (USD × FX × markup +
+                       shipping band). USD + FX + shipping live in the
+                       collapsed "Cost breakdown" section below for the rare
+                       case the admin wants to override them. -->
+                  <label class="span-2 customer-price-row">
+                    <span class="customer-price-label">Customer price PKR (final)</span>
+                    <div class="customer-price-input-wrap">
+                      <span class="customer-price-prefix">Rs</span>
+                      <input name="customer_price_pkr" type="number" min="0" step="100" required data-customer-price />
+                      <button class="button ghost customer-price-reset" type="button" data-action="reset-customer-price" title="Reset to URL autofill suggestion">↺</button>
+                    </div>
+                    <small class="customer-price-hint" data-customer-price-hint>Autofills when you paste a retailer URL above. Editable.</small>
+                  </label>
+
                   <label data-pricing-field="in_stock">Delivery days min<input name="delivery_days_min" type="number" min="1" step="1" placeholder="3" /></label>
                   <label data-pricing-field="in_stock">Delivery days max<input name="delivery_days_max" type="number" min="1" step="1" placeholder="5" /></label>
+
+                  <!-- COST BREAKDOWN — optional, collapsed by default.
+                       Admin rarely needs to touch these; the URL autofill
+                       fills them in too so the customer_price_pkr math
+                       stays sane on the back end. Open this to override
+                       USD / FX / shipping for a specific product. -->
+                  <details class="cost-breakdown span-2" data-pricing-field="preorder">
+                    <summary>
+                      <span>Cost breakdown <small>(USD, FX, shipping — usually leave as-is)</small></span>
+                      <span class="cost-breakdown-chev" aria-hidden="true">+</span>
+                    </summary>
+                    <div class="cost-breakdown-grid">
+                      <label>USA retail USD<input name="usa_price_usd" type="number" min="0" step="0.01" placeholder="Auto-filled from URL" /></label>
+                      <label>Shipping PKR<input name="shipping_pkr" type="number" min="0" step="100" placeholder="Category default" /></label>
+                      <label>FX rate<input name="fx_rate" type="number" min="1" step="0.01" placeholder="Store default" /></label>
+                    </div>
+                  </details>
                   <label>Status<select name="stock_mode"><option value="preorder">Preorder</option><option value="in_stock">In stock</option></select></label>
                   <label>Inventory<input name="inventory" type="number" min="0" step="1" required /></label>
                   <label>Low-stock alert at<input name="low_stock_threshold" type="number" min="0" step="1" placeholder="2" /></label>
@@ -642,6 +673,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260520-portal-trends"></script>
+    <script type="module" src="./assets/app.js?v=20260521-pkr-first"></script>
   </body>
 </html>

@@ -7435,30 +7435,35 @@ async function saveProduct(event) {
     return;
   }
   product.id = product.id || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const pricingMode = product.pricing_mode || (Number(product.customer_price_pkr || 0) > 0 ? "in_stock" : "preorder");
+  const pricingMode = product.pricing_mode || "preorder";
   delete product.pricing_mode;
+
+  // PKR-FIRST.
+  // Both modes now require a final customer PKR price. The admin types
+  // (or accepts the auto-filled suggestion). USD / FX / shipping are
+  // optional internal-bookkeeping fields — kept only because the team
+  // sometimes wants to track the underlying cost for margin reports.
+  product.customer_price_pkr = Number(product.customer_price_pkr || 0);
+  if (product.customer_price_pkr <= 0) {
+    toast("Set the final customer PKR price. Paste a retailer URL above to auto-suggest one.");
+    qs("[data-customer-price]")?.focus();
+    return;
+  }
+
+  // Internal-only USD/FX/shipping bookkeeping — passes through whatever
+  // was filled (by URL autofill or by hand in the cost-breakdown drawer).
+  // The customer never sees these.
+  product.usa_price_usd = Number(product.usa_price_usd || 0);
+  product.shipping_pkr = Number(product.shipping_pkr || 0);
+  product.fx_rate = Number(product.fx_rate || state.settings.fx_rate || 282);
+
   if (pricingMode === "in_stock") {
     product.stock_mode = "in_stock";
-    product.customer_price_pkr = Number(product.customer_price_pkr || 0);
-    if (product.customer_price_pkr <= 0) {
-      toast("Set a customer price in PKR for in-stock products.");
-      return;
-    }
-    product.usa_price_usd = 0;
-    product.shipping_pkr = 0;
-    product.fx_rate = Number(state.settings.fx_rate || 282);
     product.delivery_days_min = Number(product.delivery_days_min || 3);
     product.delivery_days_max = Number(product.delivery_days_max || 5);
     product.preorder_weeks = 0;
   } else {
-    product.usa_price_usd = Number(product.usa_price_usd || 0);
-    product.shipping_pkr = Number(product.shipping_pkr || 0);
-    product.fx_rate = Number(product.fx_rate || state.settings.fx_rate || 282);
-    if (product.usa_price_usd <= 0) {
-      toast("Set the USA retail USD price for preorder products.");
-      return;
-    }
-    product.customer_price_pkr = 0;
+    product.stock_mode = "preorder";
     product.delivery_days_min = 0;
     product.delivery_days_max = 0;
     product.preorder_weeks = Number(state.settings.preorder_weeks || 4);
@@ -7653,6 +7658,20 @@ async function importProductFromUrl() {
   writeIfEmpty("description", c.description);
   writeIfEmpty("usa_price_usd", c.usa_price_usd || "");
   writeIfEmpty("shipping_pkr", c.shipping_pkr || "");
+  // PKR-first: pre-fill the customer-facing PKR price from the server's
+  // suggested figure (USD × FX × markup + shipping band). Admin only sees
+  // this field and can edit it; USD/FX/shipping live in the collapsed
+  // "Cost breakdown" section. Remember the suggestion so the reset button
+  // can restore it.
+  if (c.suggested_customer_price_pkr) {
+    writeIfEmpty("customer_price_pkr", c.suggested_customer_price_pkr);
+    const priceField = form.elements.customer_price_pkr;
+    if (priceField) priceField.dataset.suggested = c.suggested_customer_price_pkr;
+    const hint = qs("[data-customer-price-hint]");
+    if (hint) {
+      hint.innerHTML = `Auto-filled: <strong>${PKR.format(c.suggested_customer_price_pkr)}</strong> (USD ${c.usa_price_usd || "?"} × FX × markup + shipping). Edit to override.`;
+    }
+  }
   writeIfEmpty("image_url", c.image_url);
   writeIfEmpty("source_url", c.source_url || url);
   writeIfEmpty("variants", c.variants);
@@ -9143,6 +9162,21 @@ function wireEvents() {
     if (action === "import-from-url") {
       event.preventDefault();
       return importProductFromUrl();
+    }
+    // Reset the PKR price input back to the URL-autofill suggestion that's
+    // stashed in dataset.suggested. Lets the admin try an edit and roll back.
+    if (action === "reset-customer-price") {
+      event.preventDefault();
+      const input = qs("[data-customer-price]");
+      const suggested = input?.dataset?.suggested;
+      if (input && suggested) {
+        input.value = suggested;
+        updatePricePreview?.();
+        toast(`Reset to suggested ${PKR.format(Number(suggested))}.`);
+      } else {
+        toast("No autofill suggestion to reset to. Paste a retailer URL first.");
+      }
+      return;
     }
     // Sourcing tray (admin bulk URL importer)
     if (action === "sourcing-fetch") {

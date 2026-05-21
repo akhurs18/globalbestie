@@ -11731,3 +11731,152 @@ body:not([data-page="portal"]) .footer-hours {
   border-top-right-radius: 0;
   border-top: 1px solid var(--line);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PKR-FIRST PRODUCT UPLOAD — Customer price row + Cost breakdown drawer
+   The admin's PRIMARY pricing input is the final customer PKR price.
+   USD / FX / shipping live in a collapsed accordion underneath.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.customer-price-row {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--pink-2);
+  border-radius: 12px;
+  background: linear-gradient(180deg, var(--rose) 0%, var(--surface) 100%);
+  box-shadow: 0 4px 14px rgba(216, 142, 155, 0.12);
+}
+
+.customer-price-label {
+  font-weight: 700;
+  font-size: 0.86rem;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.customer-price-input-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.customer-price-prefix {
+  font-family: "Playfair Display", serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--pink-3);
+  padding: 0 4px;
+}
+
+.customer-price-input-wrap input[data-customer-price] {
+  font-family: "Playfair Display", serif;
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.customer-price-input-wrap input[data-customer-price]:focus {
+  outline: none;
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 4px rgba(232, 166, 176, 0.16);
+}
+
+.customer-price-reset {
+  padding: 8px 12px !important;
+  min-height: auto !important;
+  font-size: 1rem !important;
+  font-weight: 600;
+  border-radius: 8px !important;
+}
+
+.customer-price-hint {
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.customer-price-hint strong {
+  color: var(--pink-3);
+  font-weight: 700;
+}
+
+/* Cost breakdown drawer — collapsed by default, opens to show the
+   USD / FX / shipping math behind the customer PKR figure. */
+.cost-breakdown {
+  margin: 4px 0;
+}
+
+.cost-breakdown summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  list-style: none;
+  transition: border-color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.cost-breakdown summary::-webkit-details-marker { display: none; }
+
+.cost-breakdown summary small {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-left: 6px;
+}
+
+.cost-breakdown summary:hover {
+  border-color: var(--pink-2);
+  border-style: solid;
+  background: var(--rose);
+}
+
+.cost-breakdown-chev {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-weight: 700;
+  transition: transform 240ms var(--ease-cinema);
+}
+
+.cost-breakdown[open] .cost-breakdown-chev {
+  transform: rotate(45deg);
+}
+
+.cost-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 14px 0 4px;
+}
+
+.cost-breakdown-grid label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+  .cost-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+}
