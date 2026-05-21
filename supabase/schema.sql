@@ -33,6 +33,12 @@ alter table public.store_settings add column if not exists balance_reminder_temp
 alter table public.store_settings add column if not exists support_whatsapp text;
 alter table public.store_settings add column if not exists next_shipment_date date;
 alter table public.store_settings add column if not exists shipment_notice text;
+-- Announcement-bar fields. `batch_doorstep_window` is the human label
+-- ("May 25-27") and `batch_doorstep_until` is the last day the label
+-- is still relevant — once today > that date, the storefront auto-hides
+-- the doorstep line so we never show a stale promise.
+alter table public.store_settings add column if not exists batch_doorstep_window text;
+alter table public.store_settings add column if not exists batch_doorstep_until date;
 
 create table if not exists public.shipment_batches (
   id text primary key,

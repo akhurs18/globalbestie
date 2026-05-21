@@ -12,10 +12,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260518-preorder-faq" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260520-custom-quote" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -74,7 +74,7 @@
             "name": "Do shoes come with the original box?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500 — please request this at the time of ordering."
+              "text": "Shoes are shipped without the original box by default. If you want the box, there is an additional charge of Rs 2,500 — please request this at the time of ordering."
             }
           }
         ]
@@ -104,6 +104,7 @@
 
       <nav class="main-nav" aria-label="Primary navigation">
         <a href="/shop" data-route="shop">Shop</a>
+        <a href="/quote" data-route="quote">Custom quote</a>
         <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
         <a href="/track" data-route="track">Track</a>
       </nav>
@@ -123,8 +124,9 @@
          thumb can reach navigation at the top. Hidden on desktop via CSS. -->
     <nav class="mobile-action-bar" aria-label="Mobile quick actions">
       <a href="/shop" data-route="shop">Shop</a>
+      <a href="/quote" data-route="quote">Quote</a>
       <a href="/track" data-route="track">Track</a>
-      <a class="mobile-wa-tab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
+      <a class="mobile-wa-tab" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
         WhatsApp
       </a>
@@ -321,7 +323,7 @@
           <div class="trust-stats">
             <span><strong>4 wk</strong> avg preorder time</span>
             <span><strong>15 min</strong> WhatsApp reply window</span>
-            <span><strong>9</strong> cities served regularly</span>
+            <span><strong>7+</strong> cities served regularly</span>
           </div>
         </section>
 
@@ -395,6 +397,11 @@
                 <option value="newest">Newest drops</option>
               </select>
             </label>
+            <button class="wishlist-chip hidden" type="button" data-wishlist-toggle aria-pressed="false">
+              <span aria-hidden="true">♥</span>
+              <span>Saved items</span>
+              <strong data-wishlist-count>0</strong>
+            </button>
           </aside>
           <div class="product-grid shop-grid" data-shop-products></div>
         </div>
@@ -433,7 +440,7 @@
             </li>
             <li>
               <strong>Shoe boxes cost extra</strong>
-              <span>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500 — please request this at the time of ordering, not after.</span>
+              <span>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of Rs 2,500 — please request this at the time of ordering, not after.</span>
             </li>
             <li>
               <strong>Prices are fixed — no discounts</strong>
@@ -458,7 +465,7 @@
             <span class="visually-hidden">Search FAQ</span>
             <input type="search" data-faq-search placeholder="Search questions — try 'shoes box' or 'refund'" autocomplete="off" />
           </label>
-          <p class="faq-empty hidden" data-faq-empty>No questions matched. <a href="https://wa.me/923001234567" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.</p>
+          <p class="faq-empty hidden" data-faq-empty>No questions matched. <a href="https://wa.me/13362556023" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.</p>
         </div>
 
         <div class="faq-shell" aria-label="Frequently asked questions">
@@ -521,7 +528,7 @@
               </details>
               <details class="faq-item">
                 <summary>Do shoes come with the original box?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of PKR 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
+                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of Rs 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
               </details>
               <details class="faq-item">
                 <summary>Can I request a specific product?<span class="faq-toggle" aria-hidden="true"></span></summary>
@@ -580,17 +587,24 @@
               <p class="payment-note">Transfer the amount shown in your order summary to the account below. Paste the transaction reference (or upload a screenshot) so we can match it to your order faster.</p>
               <div data-bank-details></div>
               <label>Transfer reference<input name="transfer_reference" required placeholder="Transaction ID or sender account title" /></label>
-              <label>Confirmation screenshot (optional, speeds up matching)<input name="transfer_file" type="file" accept="image/*,.pdf" /></label>
+              <label>Confirmation screenshot (optional, speeds up matching)
+                <input name="transfer_file" type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,application/pdf" data-transfer-file />
+                <small class="upload-hint" data-transfer-hint>JPG / PNG / HEIC / PDF · we'll compress images automatically</small>
+              </label>
             </fieldset>
 
             <fieldset class="ack-box">
               <legend>Confirm before placing your order</legend>
               <label class="check-row"><input name="terms_ack" type="checkbox" required /> I understand preorder shipment timing can vary by batch, and the exact ETA will be confirmed on WhatsApp after my order.</label>
               <label class="check-row"><input name="balance_ack" type="checkbox" required /> I understand the remaining 50% balance is collected after my parcel arrives in Pakistan, before local dispatch.</label>
-              <label class="check-row"><input name="whatsapp_opt_in" type="checkbox" value="true" checked /> Send me VIP drop alerts on WhatsApp (1–2 messages a month, opt out anytime).</label>
             </fieldset>
 
-            <button class="button primary wide" type="submit">Place order</button>
+            <ul class="checkout-trust-strip" aria-label="Order trust signals">
+              <li><span aria-hidden="true">🔒</span> Your details stay private</li>
+              <li><span aria-hidden="true">🇵🇰</span> PK-registered business</li>
+              <li><span aria-hidden="true">✓</span> Authentic USA sourcing</li>
+            </ul>
+            <button class="button primary wide checkout-place-order" type="submit">Place order</button>
             <p class="checkout-reassure">
               We confirm your order details, shipment batch, and exact ETA on WhatsApp within about 15 minutes.
             </p>
@@ -620,9 +634,198 @@
         </div>
       </section>
 
+      <section class="view" id="view-quote" data-view="quote">
+        <div class="quote-estimator-shell">
+          <section class="quote-estimator-hero">
+            <p class="kicker">Quote Concierge</p>
+            <h1>Price your USA find before you DM.</h1>
+            <p>Use the USA retail price to preview the PKR range with Global Bestie's markup and typical category shipping. Your final quote is confirmed by the team before sourcing.</p>
+            <div class="quote-proof-strip" aria-label="Quote notes">
+              <span>PKR estimate</span>
+              <span>Category shipping</span>
+              <span>50% preorder split</span>
+            </div>
+          </section>
+
+          <form class="quote-estimator-card" data-quote-form>
+            <div class="quote-form-grid">
+              <label>USA retail price
+                <span class="input-prefix">$</span>
+                <input name="usa_price_usd" type="number" min="1" step="0.01" value="100" required />
+              </label>
+              <label>Category
+                <select name="category">
+                  <option value="handbags">Handbag</option>
+                  <option value="shoes">Shoes</option>
+                  <option value="makeup">Makeup</option>
+                  <option value="fragrance">Fragrance</option>
+                  <option value="accessories">Accessories</option>
+                </select>
+              </label>
+              <!-- Shipping + FX are intentionally NOT shown to the customer
+                   on this page. Exposing the working FX or category shipping
+                   bands turns the estimator into a margin-reverse-engineering
+                   tool. The JS still reads these hidden fields to compute
+                   the estimate; they're populated from store_settings at
+                   render time and the customer never sees the values. -->
+              <input type="hidden" name="shipping_pkr" data-quote-shipping />
+              <input type="hidden" name="fx_rate" data-quote-fx />
+            </div>
+            <label class="quote-check-row">
+              <input name="shoe_box" type="checkbox" />
+              Add original shoe box fee when ordering shoes
+            </label>
+            <div class="quote-result" data-quote-result aria-live="polite"></div>
+            <div class="quote-actions">
+              <button class="button secondary" type="button" data-action="add-quote-estimate">Add quote to bag</button>
+              <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-quote-whatsapp data-support-whatsapp>DM us this quote</a>
+              <a class="button ghost" href="/preorder" data-route="preorder">How preorder works</a>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="view" id="view-about" data-view="about">
+        <div class="content-shell">
+          <p class="kicker">About</p>
+          <h1>USA luxury, delivered to your doorstep.</h1>
+          <p class="content-lead">Global Bestie is a personal-import concierge run out of Pakistan. We source authentic handbags, shoes, makeup, fragrance, and accessories directly from USA brand stores and authorized retailers, then deliver them to your doorstep — with prices already in PKR.</p>
+          <h2>Why we started</h2>
+          <p>Pakistani shoppers were either paying triple-retail at local boutiques or risking unauthorized resellers online. We built Global Bestie to be the middle path — real USA sourcing, transparent PKR pricing that includes shipping and duty, and a WhatsApp concierge you can actually talk to.</p>
+          <h2>How we work</h2>
+          <ul class="content-list">
+            <li><strong>Curated drops.</strong> We publish a fresh batch every few weeks across handbags, shoes, beauty, fragrance, and accessories — items we've vetted for authenticity and demand.</li>
+            <li><strong>Batch sourcing.</strong> Preorders are consolidated into the next USA shipment. This is why 4 weeks is the typical delivery window — and why the price stays reasonable.</li>
+            <li><strong>50% advance.</strong> A 50% advance confirms preorders; the balance is collected after the shipment arrives in Pakistan, before local dispatch. In-stock items are paid in full at checkout.</li>
+            <li><strong>WhatsApp first.</strong> Every order is confirmed on WhatsApp within about 15 minutes during business hours.</li>
+          </ul>
+          <p class="content-cta-block">
+            <a class="button primary" href="/shop" data-route="shop">Browse the shop</a>
+            <a class="button ghost" href="/contact" data-route="contact">Talk to us</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="view" id="view-contact" data-view="contact">
+        <div class="content-shell">
+          <p class="kicker">Contact</p>
+          <h1>Talk to Global Bestie.</h1>
+          <p class="content-lead">The fastest way to reach us is WhatsApp — replies typically within 15 minutes during business hours.</p>
+          <div class="contact-grid">
+            <article class="contact-card">
+              <h2>WhatsApp</h2>
+              <p><a class="contact-link" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>+1 336 255 6023</a></p>
+              <p class="muted">Business hours: 11 AM – 9 PM PKT</p>
+              <p class="muted">Reply window: ~15 minutes</p>
+            </article>
+            <article class="contact-card">
+              <h2>What to send us</h2>
+              <ul class="content-list">
+                <li>Product link, size, shade, or screenshot — we'll quote a final PKR price.</li>
+                <li>Order number for ETA updates or balance questions.</li>
+                <li>City and address questions for delivery.</li>
+              </ul>
+            </article>
+          </div>
+          <p class="content-cta-block">
+            <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>Open WhatsApp</a>
+            <a class="button ghost" href="/shop" data-route="shop">Browse the shop</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="view" id="view-returns" data-view="returns">
+        <div class="content-shell">
+          <p class="kicker">Returns &amp; refunds</p>
+          <h1>Returns &amp; refunds policy</h1>
+          <p class="content-lead">Because every Global Bestie order is sourced specifically for you from the USA, refunds and returns work a little differently from a typical retail store. Here's exactly what to expect.</p>
+
+          <h2>Cancellations before sourcing</h2>
+          <p>You can cancel a preorder any time before our team has purchased it in the USA. Message us on WhatsApp with your order number — if the item hasn't been sourced yet, we'll refund your 50% advance in full to your original bank account within 3–5 business days.</p>
+
+          <h2>Cancellations after sourcing</h2>
+          <p>Once the item has been purchased from the USA retailer, cancellations depend on that retailer's policy. Some brands (e.g. Coach, Michael Kors) accept returns within their window; others (clearance sales, beauty products) are final-sale. We'll review your case and let you know on WhatsApp whether a refund is possible and how much will be deducted for return shipping or restocking.</p>
+
+          <h2>Defective or wrong items</h2>
+          <p>If your order arrives damaged, defective, or different from what you ordered, message us on WhatsApp within <strong>48 hours of delivery</strong> with clear photos. We'll repair, replace, or refund — whichever fits the case — at no cost to you.</p>
+
+          <h2>In-stock items</h2>
+          <p>In-stock items can be exchanged for size/shade within <strong>7 days of delivery</strong>, provided they're unopened and in original packaging. Beauty products are non-returnable for hygiene reasons unless defective.</p>
+
+          <h2>Refund timeline</h2>
+          <p>Approved refunds are transferred back to the same bank account you paid from, usually within 3–5 business days of approval. We do not issue store credit unless you specifically request it.</p>
+
+          <p class="content-cta-block">
+            <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>Message us on WhatsApp</a>
+          </p>
+        </div>
+      </section>
+
+      <section class="view" id="view-size-guide" data-view="size-guide">
+        <div class="content-shell">
+          <p class="kicker">Size guide</p>
+          <h1>Find your USA size.</h1>
+          <p class="content-lead">USA sizing is different from UK, EU, and desi sizing. Use these tables to find your correct USA size before placing a preorder — sizing mistakes are the #1 reason for return requests.</p>
+
+          <h2>Women's shoes (US ↔ UK ↔ EU)</h2>
+          <table class="size-table">
+            <thead><tr><th>US</th><th>UK</th><th>EU</th><th>Foot length (cm)</th></tr></thead>
+            <tbody>
+              <tr><td>5</td><td>3</td><td>35</td><td>22.0</td></tr>
+              <tr><td>5.5</td><td>3.5</td><td>35.5</td><td>22.4</td></tr>
+              <tr><td>6</td><td>4</td><td>36</td><td>22.9</td></tr>
+              <tr><td>6.5</td><td>4.5</td><td>37</td><td>23.3</td></tr>
+              <tr><td>7</td><td>5</td><td>37.5</td><td>23.8</td></tr>
+              <tr><td>7.5</td><td>5.5</td><td>38</td><td>24.1</td></tr>
+              <tr><td>8</td><td>6</td><td>38.5</td><td>24.6</td></tr>
+              <tr><td>8.5</td><td>6.5</td><td>39</td><td>25.1</td></tr>
+              <tr><td>9</td><td>7</td><td>40</td><td>25.4</td></tr>
+              <tr><td>9.5</td><td>7.5</td><td>40.5</td><td>25.9</td></tr>
+              <tr><td>10</td><td>8</td><td>41</td><td>26.2</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Men's shoes (US ↔ UK ↔ EU)</h2>
+          <table class="size-table">
+            <thead><tr><th>US</th><th>UK</th><th>EU</th><th>Foot length (cm)</th></tr></thead>
+            <tbody>
+              <tr><td>7</td><td>6</td><td>40</td><td>25.0</td></tr>
+              <tr><td>7.5</td><td>6.5</td><td>40.5</td><td>25.4</td></tr>
+              <tr><td>8</td><td>7</td><td>41</td><td>25.8</td></tr>
+              <tr><td>8.5</td><td>7.5</td><td>42</td><td>26.2</td></tr>
+              <tr><td>9</td><td>8</td><td>42.5</td><td>26.7</td></tr>
+              <tr><td>9.5</td><td>8.5</td><td>43</td><td>27.1</td></tr>
+              <tr><td>10</td><td>9</td><td>44</td><td>27.5</td></tr>
+              <tr><td>10.5</td><td>9.5</td><td>44.5</td><td>27.9</td></tr>
+              <tr><td>11</td><td>10</td><td>45</td><td>28.3</td></tr>
+              <tr><td>12</td><td>11</td><td>46</td><td>29.2</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Women's clothing (US ↔ desi alterations)</h2>
+          <table class="size-table">
+            <thead><tr><th>US</th><th>UK</th><th>EU</th><th>Bust (in)</th><th>Waist (in)</th></tr></thead>
+            <tbody>
+              <tr><td>XS / 0–2</td><td>4–6</td><td>32–34</td><td>32–33</td><td>24–25</td></tr>
+              <tr><td>S / 4–6</td><td>8–10</td><td>36–38</td><td>34–35</td><td>26–27</td></tr>
+              <tr><td>M / 8–10</td><td>12–14</td><td>40–42</td><td>36–37</td><td>28–29</td></tr>
+              <tr><td>L / 12–14</td><td>16–18</td><td>44–46</td><td>38–40</td><td>30–32</td></tr>
+              <tr><td>XL / 16–18</td><td>20–22</td><td>48–50</td><td>41–43</td><td>33–35</td></tr>
+            </tbody>
+          </table>
+
+          <p class="muted">If you're between sizes, we typically recommend sizing UP for shoes and TRUE TO SIZE for clothing. When in doubt, send us your foot length (in cm) on WhatsApp and we'll confirm before sourcing.</p>
+
+          <p class="content-cta-block">
+            <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>Ask on WhatsApp</a>
+            <a class="button ghost" href="/shop?category=shoes" data-route="shop">Browse shoes</a>
+          </p>
+        </div>
+      </section>
+
     </main>
 
-    <a class="whatsapp-fab" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp" data-support-whatsapp>
+    <a class="whatsapp-fab" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp" data-support-whatsapp>
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
       <span class="whatsapp-fab-label">Chat with us</span>
     </a>
@@ -661,13 +864,20 @@
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Orders</h3>
+          <a href="/quote" data-route="quote">Custom quote</a>
           <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
           <a href="/track" data-route="track">Track your order</a>
-          <a href="/checkout" data-route="checkout">Checkout</a>
+          <a href="/returns" data-route="returns">Returns &amp; refunds</a>
+          <a href="/size-guide" data-route="size-guide">Size guide</a>
+        </div>
+        <div class="footer-col">
+          <h3 class="footer-col-title">Company</h3>
+          <a href="/about" data-route="about">About Global Bestie</a>
+          <a href="/contact" data-route="contact">Contact</a>
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Get in touch</h3>
-          <a class="footer-wa-link" href="https://wa.me/923001234567" target="_blank" rel="noopener noreferrer">
+          <a class="footer-wa-link" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             WhatsApp us
           </a>
@@ -686,6 +896,6 @@
 
     <div id="page-curtain" aria-hidden="true"></div>
 
-    <script type="module" src="./assets/app.js?v=20260518-preorder-faq"></script>
+    <script type="module" src="./assets/app.js?v=20260520-custom-quote"></script>
   </body>
 </html>

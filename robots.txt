@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /shop
+Allow: /preorder
+Allow: /quote
+Allow: /track
+Allow: /about
+Allow: /contact
+Allow: /returns
+Allow: /size-guide
+Disallow: /checkout
+Disallow: /portal
+Disallow: /portal.html
+Disallow: /api/
+Disallow: /.netlify/
+
+Sitemap: https://globalbestiepk.com/sitemap.xml

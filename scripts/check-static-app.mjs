@@ -47,17 +47,16 @@ const checks = [
   [!html.includes('href="#admin"') && !html.includes('data-view="admin"'), "Public site still exposes admin"],
   [html.includes("Global Bestie"), "Public brand name missing"],
   [portal.includes('data-view="admin"'), "Internal portal view missing"],
-  [portal.includes('data-admin-panel="growth"'), "Growth Studio panel missing"],
+  [!portal.includes('data-admin-panel="growth"') && !portal.includes("Growth Studio"), "Growth Studio should be removed from portal"],
   [portal.includes('data-admin-panel="shipments"'), "Shipment batch panel missing"],
   [portal.includes('data-admin-order-cards'), "Responsive order cards missing"],
   [portal.includes("noindex"), "Internal portal should discourage indexing"],
   [html.includes('data-view="checkout"'), "Checkout view missing"],
   [js.includes("calculatePrice"), "Pricing calculator missing"],
-  [js.includes("renderMarketing"), "Marketing portal renderer missing"],
+  [html.includes('data-view="quote"') && js.includes("updateQuoteEstimator"), "Custom quote page missing"],
   [js.includes("ORDER_STEPS"), "Order tracking steps missing"],
   [js.includes("amountDueForOrder"), "Order payment detail helper missing"],
   [js.includes("renderShipmentBatches"), "Shipment batch renderer missing"],
-  [portal.includes("24/7 DM automation"), "24/7 DM automation panel missing"],
   [(await readFile("netlify/functions/instagram-webhook.js", "utf8")).includes("/api/webhooks/instagram"), "Instagram webhook endpoint missing"],
   [css.includes("--pink"), "Brand color tokens missing"],
 ];
@@ -83,6 +82,12 @@ await mkdir("dist/assets", { recursive: true });
 await cp("index.html", "dist/index.html");
 await cp("portal.html", "dist/portal.html");
 await cp("assets", "dist/assets", { recursive: true });
+// Copy SEO files (robots/sitemap) and the service worker if they exist.
+// We swallow missing-file errors so the build still works on a fresh
+// checkout that hasn't generated these yet.
+for (const file of ["robots.txt", "sitemap.xml", "sw.js"]) {
+  try { await cp(file, `dist/${file}`); } catch {}
+}
 try {
   await cp(preservedBatchDir, marketingBatchDir, { recursive: true });
   await rm(preservedBatchDir, { recursive: true, force: true });

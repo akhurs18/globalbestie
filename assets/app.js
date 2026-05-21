@@ -76,22 +76,34 @@ const PAYMENT_STATES = [
   ["deposit_confirmed", "Advance confirmed"],
 ];
 
+// IMPORTANT: the bank values below are PLACEHOLDERS — the all-zeros
+// account number and IBAN must be replaced (in the Supabase `settings`
+// row that drives production) BEFORE the checkout flow can accept real
+// transfers. The renderBankDetails() function below logs a console.warn
+// while these defaults are still in play, so we notice during QA.
 const sampleSettings = {
   bank_name: "Meezan Bank",
   account_title: "Global Bestie Imports",
-  account_number: "0210-0000-000000",
-  iban: "PK00MEZN0000000000000000",
+  account_number: "0210-0000-000000", // TODO: replace with real account before going live
+  iban: "PK00MEZN0000000000000000",   // TODO: replace with real IBAN before going live
   markup_rate: 0.25,
   fx_rate: 282,
   preorder_weeks: 4,
   next_shipment_date: "2026-06-02",
   shipment_notice: "Next USA batch is being consolidated. Dates can shift slightly based on brand dispatch and customs clearance.",
+  // Customer-visible announcement ribbon. `batch_doorstep_window` is the
+  // human label ("May 25-27") and `batch_doorstep_until` is the last day
+  // the label is still relevant — once today > that date, the doorstep
+  // line auto-hides so we never show a stale promise. Both are settings
+  // so the admin can rotate them without a deploy.
+  batch_doorstep_window: "May 25-27",
+  batch_doorstep_until: "2026-05-27",
   business_hours: "11 AM - 9 PM PKT",
   response_sla_minutes: 15,
   city_delivery_fees: "Karachi 450, Lahore 550, Islamabad/Rawalpindi 650, other cities quoted",
   shipping_rules: "Handbags 12k-18k, shoes 9k-13k, makeup 3.5k-6k, fragrance quoted by weight.",
   balance_reminder_template: "Hi {name}, your Global Bestie preorder has arrived in Pakistan. Remaining balance: {balance}. Please transfer before local dispatch.",
-  support_whatsapp: "+923001234567",
+  support_whatsapp: "+13362556023",
 };
 
 const sampleProducts = [
@@ -255,7 +267,7 @@ const sampleOrders = [
     address: "Gulberg III, Lahore",
     channel: "Instagram DM",
     owner: "Mariam",
-    priority: "VIP",
+    priority: "Top",
     status: "sourcing",
     payment_status: "advance_confirmed",
     total_pkr: 153738,
@@ -275,7 +287,7 @@ const sampleOrders = [
     tracking_number: "",
     eta: "Arrives Pakistan around June 2, 2026",
     next_action: "Confirm USA purchase receipt and upload product sourcing proof.",
-    internal_notes: "VIP customer. Keep tone warm; she wants black as backup if blush sells out.",
+    internal_notes: "Top customer. Keep tone warm; she wants black as backup if blush sells out.",
     created_at: "2026-05-04T10:30:00Z",
     transfer_reference: "IBFT-78321",
     items: [{
@@ -423,7 +435,7 @@ const sampleCampaigns = [
   },
   {
     id: "camp-002",
-    name: "WhatsApp VIP Preorder List",
+    name: "WhatsApp Preorder List",
     channel: "WhatsApp",
     status: "draft",
     budget_pkr: 12000,
@@ -480,7 +492,7 @@ const sampleLeads = [
 const sampleCalendar = [
   { id: "post-001", date: "Today 8:30 PM", channel: "Instagram Reel", title: "Coach Tabby preorder reveal", status: "Needs caption" },
   { id: "post-002", date: "Tomorrow 2:00 PM", channel: "Story set", title: "Rare Beauty shade poll", status: "Ready" },
-  { id: "post-003", date: "Friday 7:00 PM", channel: "WhatsApp broadcast", title: "VIP handbag preorder list", status: "Draft" },
+  { id: "post-003", date: "Friday 7:00 PM", channel: "WhatsApp broadcast", title: "Handbag preorder list", status: "Draft" },
 ];
 
 const sampleShipmentBatches = [
@@ -507,7 +519,7 @@ const sampleShipmentBatches = [
 ];
 
 const growthPlays = [
-  ["VIP WhatsApp list", "Segment customers by handbags, shoes, beauty, and send early preorder windows."],
+  ["WhatsApp preorder list", "Segment customers by handbags, shoes, beauty, and send early preorder windows."],
   ["Creator seeding", "Track micro-influencer gifts, story deliverables, coupon codes, and UGC rights."],
   ["Referral credits", "Reward customers for bringing buyers into high-ticket preorder drops."],
   ["Retargeting loop", "Run Meta campaigns for viewed product, abandoned checkout, and DM-but-no-order leads."],
@@ -859,11 +871,43 @@ function formatDate(value) {
 }
 
 function nextShipmentLabel() {
-  return "New orders estimated around mid-June";
+  // Drive off the configured next_shipment_date so the announcement
+  // doesn't go stale when batches move.
+  const settings = state.settings || sampleSettings;
+  const iso = settings.next_shipment_date;
+  if (iso) {
+    const dt = new Date(`${iso}T12:00:00`);
+    if (!Number.isNaN(dt.getTime())) {
+      const month = dt.toLocaleDateString("en-PK", { month: "long" });
+      const day = dt.getDate();
+      const period = day <= 10 ? "early" : day <= 20 ? "mid" : "late";
+      return `New orders estimated around ${period}-${month}`;
+    }
+  }
+  return "New orders estimated based on the next USA batch";
+}
+
+function currentDoorstepWindow() {
+  // Only return the window string if it's set AND the end date hasn't
+  // already passed — stops us from claiming "doorstep delivery May 25-27"
+  // on June 5th.
+  const settings = state.settings || sampleSettings;
+  const window = settings.batch_doorstep_window;
+  const until = settings.batch_doorstep_until;
+  if (!window) return "";
+  if (until) {
+    const end = new Date(`${until}T23:59:59`);
+    if (!Number.isNaN(end.getTime()) && Date.now() > end.getTime()) return "";
+  }
+  return window;
 }
 
 function shipmentNotice() {
-  return "Current batch doorstep delivery is expected May 25-27. Preorder timing can vary slightly because USA shipments move in batches.";
+  const window = currentDoorstepWindow();
+  if (window) {
+    return `Current batch doorstep delivery is expected ${window}. Preorder timing can vary slightly because USA shipments move in batches.`;
+  }
+  return "Preorder timing can vary slightly because USA shipments move in batches — we'll confirm the exact ETA on WhatsApp after your order.";
 }
 
 async function apiFetch(path, options = {}, fallback) {
@@ -987,7 +1031,14 @@ function variantHint(product) {
 // 10-item beauty haul without leaving the shop grid or opening detail pages.
 function renderAddToBag(product, disabled) {
   if (disabled) {
-    return `<button class="button primary" type="button" disabled>Sold out</button>`;
+    // Sold-out items get a "Notify me when restocked" CTA instead of
+    // a dead disabled button. Click opens a small inline form that
+    // posts a lead via /api/leads with the product reference.
+    return `
+      <button class="button primary" type="button" data-action="restock-notify" data-product-id="${attr(product.id)}" aria-label="Notify me when ${attr(product.title)} is back in stock">
+        Notify me when restocked
+      </button>
+    `;
   }
   const line = (state.cart || []).find((l) => l.product_id === product.id);
   if (!line) {
@@ -1111,7 +1162,7 @@ function productCard(product, options = {}) {
 
 function filteredProducts() {
   let products = [...state.products];
-  const { search, category, stock, sort } = state.filters;
+  const { search, category, stock, sort, wishlistOnly } = state.filters;
   if (search) {
     const needle = search.toLowerCase();
     products = products.filter((product) =>
@@ -1120,6 +1171,10 @@ function filteredProducts() {
   }
   if (category !== "all") products = products.filter((product) => product.category === category);
   if (stock !== "all") products = products.filter((product) => product.stock_mode === stock);
+  if (wishlistOnly) {
+    const wished = state._wishlist || (state._wishlist = loadWishlist());
+    products = products.filter((product) => wished.has(product.id));
+  }
   products.sort((a, b) => {
     if (sort === "price_asc") return calculatePrice(a) - calculatePrice(b);
     if (sort === "price_desc") return calculatePrice(b) - calculatePrice(a);
@@ -1159,9 +1214,16 @@ function productEmptyState() {
       <p class="kicker">Concierge search</p>
       <h2>No matching drops yet.</h2>
       <p>${query ? `We do not have “${esc(query)}” listed right now, but we can still source it from the USA.` : "Try a different category, or send us the exact product you want sourced."}</p>
-      ${waHref ? `<a class="button primary" href="${safeUrl(waHref)}" target="_blank" rel="noreferrer">DM us the product</a>` : ""}
+      <div class="empty-state-actions">
+        <a class="button primary" href="/quote" data-route="quote">Create a custom quote</a>
+        ${waHref ? `<a class="button secondary" href="${safeUrl(waHref)}" target="_blank" rel="noreferrer">DM us the product</a>` : ""}
+      </div>
     </div>
   `;
+}
+
+function isCustomQuoteProduct(product) {
+  return product?.id?.startsWith("quote-") || product?.brand === "Customer request";
 }
 
 function renderProducts() {
@@ -1171,6 +1233,7 @@ function renderProducts() {
     setHTML("[data-shop-products]", new Array(6).fill(productSkeleton()).join(""));
     return;
   }
+  if (typeof renderWishlistChip === "function") renderWishlistChip();
   const featured = state.products.filter((product) => product.featured).slice(0, 3);
   const visibleProducts = filteredProducts();
   setHTML("[data-featured-products]", featured.map((product) => productCard(product)).join(""));
@@ -1220,11 +1283,21 @@ function renderCart() {
   const lines = cartLines();
   const empty = `<p class="muted">Your bag is empty.</p>`;
   const html = lines.map((line) => {
+    // Two special line shapes coexist here:
+    //   • sourcing_request  — added from the "Source any USA product" modal
+    //     (customer pasted a retailer URL we don't carry yet).
+    //   • custom_quote      — added from the /quote estimator page
+    //     (customer played with USD + category to get a manual estimate).
+    // Both surface the "team will confirm final price" promise but with
+    // slightly different visual treatments.
     const isSourcing = line.kind === "sourcing_request" || line.product.is_sourcing_request;
+    const isCustomQuote = isCustomQuoteProduct(line.product);
     const statusCopy = isSourcing
       ? `Sourcing request · Qty ${line.quantity}`
-      : `${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}`;
-    const variantBlock = isSourcing
+      : isCustomQuote
+        ? `Custom quote · Qty ${line.quantity}`
+        : `${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}${line.variant ? ` · ${esc(line.variant)}` : ""}`;
+    const variantBlock = (isSourcing || isCustomQuote)
       ? (line.variant ? `<small>Variant: ${esc(line.variant)}</small>` : "")
       : `<label class="cart-variant-edit">
           <span>${esc(variantLabel(line.product))}</span>
@@ -1233,16 +1306,29 @@ function renderCart() {
     const sourceLine = isSourcing && line.product.source_url
       ? `<small><a href="${safeUrl(line.product.source_url)}" target="_blank" rel="noopener noreferrer">View source link →</a></small>`
       : "";
+    const customQuoteNote = isCustomQuote
+      ? `<small class="custom-quote-note">Final PKR price, source, and batch are confirmed by the team before sourcing.</small>`
+      : "";
     return `
     <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
       <div>
-        <strong>${esc(line.product.title)}${isSourcing ? `<span class="cart-estimate-chip">Estimate</span>` : ""}</strong>
-        <small>${statusCopy}${line.variant && !isSourcing ? ` · ${esc(line.variant)}` : ""}</small>
+        <strong>
+          ${esc(line.product.title)}
+          ${isSourcing ? `<span class="cart-estimate-chip">Estimate</span>` : ""}
+          ${isCustomQuote ? `<span class="line-badge custom-quote-badge">Custom quote</span>` : ""}
+        </strong>
+        <small>${statusCopy}</small>
         ${sourceLine}
+        ${customQuoteNote}
         ${variantBlock}
       </div>
       <div class="mini-actions">
         <strong>${PKR.format(line.subtotal)}</strong>
+        <div class="qty-stepper" role="group" aria-label="Quantity for ${attr(line.product.title)}">
+          <button class="qty-step" type="button" data-action="decrement-cart" data-product-id="${attr(line.product_id)}" aria-label="Decrease quantity">−</button>
+          <span class="qty-value" aria-live="polite">${line.quantity}</span>
+          <button class="qty-step" type="button" data-action="add-cart" data-product-id="${attr(line.product_id)}" aria-label="Increase quantity">+</button>
+        </div>
         <button class="icon-button plain" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}">Remove</button>
       </div>
     </div>
@@ -1286,6 +1372,22 @@ function renderBankDetails() {
   // Bank details now show inline as the primary "where to pay" panel at
   // checkout. The previous "after approval" framing is gone — customers
   // transfer immediately.
+  //
+  // Sanity-warn (dev tools only) if the production settings are still
+  // shipping the all-zeros placeholders from sampleSettings — those are
+  // not real and customers can't transfer to them.
+  if (
+    settings.account_number === sampleSettings.account_number ||
+    settings.iban === sampleSettings.iban ||
+    /^0+$/.test(String(settings.account_number || "").replace(/\D/g, "").replace(/^0+/, "")) ||
+    /^PK0+/.test(String(settings.iban || ""))
+  ) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[Global Bestie] Bank account/IBAN is still a placeholder. " +
+      "Update the `settings` row in Supabase before going live."
+    );
+  }
   const copyChip = (val, label) => val
     ? `<button class="copy-chip" type="button" data-action="copy-text" data-copy="${attr(val)}" data-copy-label="${attr(label)}" aria-label="Copy ${attr(label)}"><span>Copy</span></button>`
     : "";
@@ -1422,13 +1524,121 @@ function closeModal() {
   const root = qs("[data-modal-root]");
   if (root) root.innerHTML = "";
   document.body.classList.remove("modal-open");
+  // Strip the product JSON-LD if we injected one for an open PDP.
+  document.getElementById("product-jsonld")?.remove();
+}
+
+// Restock-notify modal — opens when a customer taps "Notify me when
+// restocked" on a sold-out card. Collects a Pakistani mobile and posts
+// it as a typed lead so the team can ping them via WhatsApp when stock
+// returns. Prefills the phone from a saved profile if we have one.
+function openRestockNotifyModal(productId) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  const last = (() => { try { return localStorage.getItem("gb_last_phone") || ""; } catch { return ""; } })();
+  const prefilled = isValidPkMobile(last) ? formatPkDisplay(last) : "";
+  openModal(`
+    <div class="restock-modal">
+      <p class="kicker">Restock alert</p>
+      <h2>Notify me when ${esc(product.title)} is back.</h2>
+      <p class="confirmation-sub">Drop your WhatsApp number — we'll message you when this item is back in stock or open for preorder. No spam.</p>
+      <label class="auth-label">
+        <span>Phone (Pakistani mobile)</span>
+        <input type="tel" data-restock-phone value="${attr(prefilled)}" placeholder="0300 1234567" autocomplete="tel" autofocus />
+      </label>
+      <div class="confirmation-actions">
+        <button class="button primary wide" type="button" data-action="restock-notify-submit" data-product-id="${attr(product.id)}">Notify me</button>
+        <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+async function submitRestockNotify(productId) {
+  const product = state.products.find((p) => p.id === productId);
+  const raw = qs("[data-restock-phone]")?.value || "";
+  const canon = canonPhone(raw);
+  if (!isValidPkMobile(canon)) {
+    toast("Please enter a valid Pakistani mobile number.");
+    qs("[data-restock-phone]")?.focus();
+    return;
+  }
+  const submitBtn = qs("[data-action='restock-notify-submit']");
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Saving…"; }
+  try {
+    await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customer_phone: canon,
+        customer_name: "",
+        source: "restock_notify",
+        product_id: productId,
+        product_title: product?.title || "",
+        note: `Restock-notify request for ${product?.title || productId}`,
+      }),
+    });
+    try { localStorage.setItem("gb_last_phone", canon); } catch {}
+    closeModal();
+    toast(`We'll message you on WhatsApp when ${product?.title || "it"} is back in stock.`);
+  } catch {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Notify me"; }
+    toast("Couldn't save just now — please try again or message us on WhatsApp.");
+  }
+}
+
+// Adds a <script type="application/ld+json"> for the open product so
+// crawlers / Google rich results still see a Product offer even though
+// the PDP is a modal (no per-product route in this iteration).
+function injectProductJsonLd(product) {
+  if (!product) return;
+  try {
+    document.getElementById("product-jsonld")?.remove();
+    const parts = productPricingParts(product);
+    const price = parts?.total || product.customer_price_pkr || 0;
+    if (!price) return;
+    const availability = product.stock_mode === "preorder"
+      ? "https://schema.org/PreOrder"
+      : (Number(product.inventory || 0) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock");
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": product.title,
+      "image": [product.image_url, ...(Array.isArray(product.gallery_urls) ? product.gallery_urls : [])].filter(Boolean).slice(0, 6),
+      "description": product.description || "",
+      "brand": product.brand ? { "@type": "Brand", "name": product.brand } : undefined,
+      "sku": product.id,
+      "category": product.category || undefined,
+      "offers": {
+        "@type": "Offer",
+        "url": `${location.origin}/shop?product=${encodeURIComponent(product.id)}`,
+        "priceCurrency": "PKR",
+        "price": String(price),
+        "availability": availability,
+        "itemCondition": "https://schema.org/NewCondition",
+        "seller": { "@type": "Organization", "name": "Global Bestie" },
+      },
+    };
+    const tag = document.createElement("script");
+    tag.id = "product-jsonld";
+    tag.type = "application/ld+json";
+    tag.textContent = JSON.stringify(data);
+    document.head.appendChild(tag);
+  } catch {
+    // Schema injection failures shouldn't block the PDP from opening.
+  }
 }
 
 function showProductDetails(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
   // Track this open in the storefront's recently-viewed list (no-op on portal)
-  if (document.body.dataset.page !== "portal") recordRecentlyViewed(productId);
+  if (document.body.dataset.page !== "portal") {
+    recordRecentlyViewed(productId);
+    // Inject Product + Offer JSON-LD so Google can pick up rich results
+    // even though PDP is a modal, not a route. Removed on modal close.
+    injectProductJsonLd(product);
+  }
   const parts = productPricingParts(product);
   const advanceDue = product.stock_mode === "preorder" ? Math.ceil(parts.total * 0.5) : parts.total;
   const balanceDue = Math.max(0, parts.total - advanceDue);
@@ -1515,7 +1725,7 @@ function showProductDetails(productId) {
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
-          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? "Est. mid-June" : "Local dispatch"}</strong></article>
+          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextShipmentLabel().replace(/^New orders estimated around /, "Est. ")) : "Local dispatch"}</strong></article>
         </div>
         <dl class="detail-list">
           ${isPortal ? portalDetails : publicDetails}
@@ -1811,7 +2021,7 @@ function renderAdmin() {
   setHTML("[data-admin-today-feed]", [
     ["Approve orders", pending, "Confirm availability, final PKR price, and shipment batch before customers pay.", "orders"],
     ["Collect balances", balanceDue, "Pakistan-arrived preorders should not dispatch locally until balance proof is confirmed.", "orders"],
-    ["Human DM handoffs", handoffs, "Variant, complaint, payment, delay, and unclear-intent messages need a person.", "growth"],
+    ["Human DM handoffs", handoffs, "Variant, complaint, payment, delay, and unclear-intent messages need a person.", "customers"],
     ["Trend approvals", trendApprovals, "Review scraped candidates before anything publishes to the storefront.", "trends"],
   ].map(([label, value, body, tab]) => `
     <button class="today-card" type="button" data-admin-tab-jump="${tab}">
@@ -2692,7 +2902,7 @@ function renderCashflowWorklists() {
             const due = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
             const waNum = canonPhone(o.customer_phone);
             const waHref = isValidPkMobile(waNum)
-              ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${o.customer_name.split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: PKR ${due}. Please transfer before local dispatch.`)}`
+              ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${o.customer_name.split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: Rs ${due}. Please transfer before local dispatch.`)}`
               : "#";
             const days = daysSince(o.arrived_at || o.updated_at || o.created_at);
             const urgent = days !== null && days >= 3;
@@ -2756,7 +2966,7 @@ function renderActionItems() {
       const urgent = days !== null && days >= 3;
       const waNum = canonPhone(o.customer_phone);
       const waHref = isValidPkMobile(waNum)
-        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: PKR ${due.toLocaleString()}. Please transfer before local dispatch.`)}`
+        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has arrived in Pakistan. Remaining balance: Rs ${due.toLocaleString()}. Please transfer before local dispatch.`)}`
         : "";
       return {
         kind: "balance",
@@ -2873,7 +3083,7 @@ function renderLedger() {
       const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
       const waNum = canonPhone(o.customer_phone);
       const waHref = isValidPkMobile(waNum) && balanceLeft > 0
-        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has a remaining balance of PKR ${balanceLeft.toLocaleString()}. Please transfer when convenient — thank you!`)}`
+        ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has a remaining balance of Rs ${balanceLeft.toLocaleString()}. Please transfer when convenient — thank you!`)}`
         : "";
       totalPkr += payment.total;
       totalUsd += usdActual;
@@ -3733,7 +3943,6 @@ async function saveSourcing(orderId, itemKey, costStr, dateStr) {
 function renderAdminTabBadges({ pending, balanceDue, handoffs, trendApprovals, lowStock, activeBatch }) {
   const values = {
     overview: pending + balanceDue + handoffs + trendApprovals,
-    growth: handoffs,
     orders: pending + balanceDue,
     shipments: activeBatch ? 1 : 0,
     products: lowStock,
@@ -3793,7 +4002,6 @@ function openCommandPalette() {
           { label: "Export orders CSV", sub: "Current filter view", run: () => { qs("[data-admin-tab='orders']")?.click(); setTimeout(exportOrdersCsv, 80); } },
           { label: "Export customers CSV", sub: "Current filter view", run: () => { qs("[data-admin-tab='customers']")?.click(); setTimeout(exportCustomersCsv, 80); } },
           { label: "Open dispatch", sub: "Bulk mark out for delivery", run: () => openDispatchModal() },
-          { label: "New broadcast", sub: "Pick template + segment", run: () => { qs("[data-admin-tab='growth']")?.click(); setTimeout(() => qs("[data-broadcast-form] [name='template_id']")?.focus(), 100); } },
           { label: "Refresh data", sub: "Reload from /api/admin/dashboard", run: () => refreshAdmin() },
           { label: "Jump to Overview", sub: "KPIs + needs-attention queue", run: () => qs("[data-admin-tab='overview']")?.click() },
           { label: "Jump to Cashflow", sub: "Ledger + balance chase", run: () => qs("[data-admin-tab='cashflow']")?.click() },
@@ -4126,6 +4334,28 @@ function toggleWishlist(productId) {
   else state._wishlist.add(productId);
   saveWishlist(state._wishlist);
   renderProducts();
+  renderWishlistChip();
+}
+
+// Surfaces the saved-items count + filter toggle in the shop sidebar.
+// Hidden completely when no items are saved so the UI stays clean.
+function renderWishlistChip() {
+  const chip = qs("[data-wishlist-toggle]");
+  if (!chip) return;
+  const wished = state._wishlist || (state._wishlist = loadWishlist());
+  const count = wished.size;
+  const countEl = chip.querySelector("[data-wishlist-count]");
+  if (countEl) countEl.textContent = count;
+  chip.classList.toggle("hidden", count === 0);
+  const active = !!state.filters?.wishlistOnly;
+  chip.classList.toggle("is-active", active);
+  chip.setAttribute("aria-pressed", active ? "true" : "false");
+  // If the filter is on but the wishlist just emptied, clear the filter
+  // so the grid doesn't get stuck showing "no products".
+  if (active && count === 0) {
+    state.filters.wishlistOnly = false;
+    renderProducts();
+  }
 }
 
 // ─── Recently viewed products (storefront, localStorage) ───
@@ -4493,6 +4723,12 @@ function updateProductBulkBar() {
   if (selectAll) selectAll.checked = n === total && total > 0;
 }
 
+// Growth Studio is currently disabled — its panel was removed from the
+// portal in May 2026 (the team decided Content/Campaigns/Broadcasts would
+// run from external tools instead). The function and all the renderers
+// below stay in the codebase so we can re-enable the panel without
+// rewriting it; they no-op when the `[data-admin-panel="growth"]` panel
+// is absent from the DOM.
 function renderMarketing() {
   if (!has("[data-admin-panel=\"growth\"]")) return;
 
@@ -4699,14 +4935,160 @@ function updatePricePreview() {
   if (preview) preview.textContent = `Customer price preview: ${PKR.format(total)}`;
 }
 
+const QUOTE_SHIPPING_DEFAULTS = {
+  handbags: 15000,
+  shoes: 11000,
+  makeup: 4800,
+  fragrance: 6500,
+  accessories: 8500,
+};
+
+const QUOTE_CATEGORY_LABELS = {
+  handbags: "Handbag",
+  shoes: "Shoes",
+  makeup: "Makeup",
+  fragrance: "Fragrance",
+  accessories: "Accessories",
+};
+
+const QUOTE_CATEGORY_IMAGES = {
+  handbags: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
+  shoes: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=84",
+  makeup: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=84",
+  fragrance: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=84",
+  accessories: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=900&q=84",
+};
+
+function getQuoteEstimate({ resetShipping = false } = {}) {
+  const form = qs("[data-quote-form]");
+  if (!form) return null;
+  const category = form.elements.category?.value || "handbags";
+  const shippingInput = form.elements.shipping_pkr;
+  const fxInput = form.elements.fx_rate;
+  if (fxInput && !fxInput.value) fxInput.value = state.settings.fx_rate || 282;
+  if (shippingInput && (resetShipping || !shippingInput.value)) {
+    shippingInput.value = QUOTE_SHIPPING_DEFAULTS[category] || QUOTE_SHIPPING_DEFAULTS.accessories;
+  }
+
+  const data = Object.fromEntries(new FormData(form).entries());
+  const usa = Number(data.usa_price_usd || 0);
+  const fx = Number(data.fx_rate || state.settings.fx_rate || 282);
+  const baseShipping = Number(data.shipping_pkr || QUOTE_SHIPPING_DEFAULTS[category] || 0);
+  const shoeBoxFee = category === "shoes" && data.shoe_box ? 2500 : 0;
+  const shipping = baseShipping + shoeBoxFee;
+  const markupRate = Number(state.settings.markup_rate ?? 0.25);
+  const retailPkr = usa * fx;
+  const service = retailPkr * markupRate;
+  const total = Math.ceil((retailPkr + service + shipping) / 10) * 10;
+  const advance = Math.ceil((total * 0.5) / 10) * 10;
+  const balance = Math.max(0, total - advance);
+  return {
+    category,
+    label: QUOTE_CATEGORY_LABELS[category] || "Product",
+    usa,
+    fx,
+    baseShipping,
+    shoeBoxFee,
+    shipping,
+    markupRate,
+    retailPkr,
+    service,
+    total,
+    advance,
+    balance,
+  };
+}
+
+function updateQuoteEstimator(options = {}) {
+  const quote = getQuoteEstimate(options);
+  if (!quote) return;
+  const { label, usa, total, advance, balance } = quote;
+  const result = qs("[data-quote-result]");
+  if (result) {
+    // Customer-facing breakdown intentionally omits FX rate, USD × PKR
+    // math, markup percentage, and shipping line. We show the final PKR,
+    // the 50/50 split, and an inclusive "what's covered" list — the same
+    // privacy stance the PDP and order summary take.
+    result.innerHTML = `
+      <div class="quote-total">
+        <span>Estimated PKR price</span>
+        <strong>${PKR.format(total || 0)}</strong>
+      </div>
+      <dl class="quote-breakdown">
+        <div><dt>50% advance at checkout</dt><dd>${PKR.format(advance || 0)}</dd></div>
+        <div><dt>Balance on Pakistan arrival</dt><dd>${PKR.format(balance || 0)}</dd></div>
+      </dl>
+      <ul class="quote-includes" aria-label="What's included in this estimate">
+        <li>USA sourcing &amp; receipts</li>
+        <li>International shipping to Pakistan</li>
+        <li>Service &amp; door-to-door delivery</li>
+      </ul>
+      <p class="quote-note">Working estimate. Our team confirms the final PKR price, availability, and shipment batch before sourcing — no payment until we confirm.</p>
+    `;
+  }
+  const wa = qs("[data-quote-whatsapp]");
+  if (wa) {
+    // The DM message intentionally references only the USA price the
+    // customer entered + the final PKR estimate — never our FX or markup.
+    const msg = `Hi Global Bestie, can you confirm this ${label.toLowerCase()} quote? USA retail: $${usa || 0}. PKR estimate I saw: ${PKR.format(total || 0)}.`;
+    wa.href = `https://wa.me/13362556023?text=${encodeURIComponent(msg)}`;
+  }
+}
+
+function addQuoteEstimateToCart() {
+  const quote = getQuoteEstimate();
+  if (!quote || !quote.usa || !quote.total) {
+    toast("Enter a USA retail price first.");
+    qs("[data-quote-form] input[name='usa_price_usd']")?.focus();
+    return;
+  }
+  const product = {
+    id: `quote-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    title: `Custom USA ${quote.label} Quote`,
+    brand: "Customer request",
+    category: quote.category,
+    description: `Working estimate for a USA ${quote.label.toLowerCase()} request. Final PKR price, availability, and shipment batch are confirmed by the team before sourcing.`,
+    usa_price_usd: quote.usa,
+    shipping_pkr: quote.shipping,
+    fx_rate: quote.fx,
+    markup_rate: quote.markupRate,
+    customer_price_pkr: quote.total,
+    price_pkr: quote.total,
+    stock_mode: "preorder",
+    inventory: 0,
+    image_url: QUOTE_CATEGORY_IMAGES[quote.category] || QUOTE_CATEGORY_IMAGES.accessories,
+    gallery_urls: [QUOTE_CATEGORY_IMAGES[quote.category] || QUOTE_CATEGORY_IMAGES.accessories],
+    source_url: "",
+    variants: "Custom quote request. Add product link, size, shade, color, or screenshot notes at checkout.",
+    authenticity_note: "Team confirms source, availability, final PKR price, and shipment batch before payment/sourcing.",
+    social_proof: "Custom USA sourcing estimate.",
+    featured: false,
+    preorder_weeks: state.settings.preorder_weeks || 4,
+  };
+  state.cart.push({
+    product_id: product.id,
+    quantity: 1,
+    product,
+    variant: product.variants,
+  });
+  saveCart();
+  renderCart();
+  renderProducts();
+  setCartDrawerOpen(true);
+  toast("Custom quote added to bag.");
+}
+
 function renderAll() {
   renderBatchRibbon();
   renderProducts();
   renderCart();
   renderBankDetails();
   renderSupportLinks();
+  updateQuoteEstimator();
   renderAdmin();
-  renderMarketing();
+  // renderMarketing() — Growth Studio panel is currently removed from
+  // the portal; the function's guard makes the call a no-op but we skip
+  // it entirely to save the selector query on every render.
   renderRecentOrdersRail();
 }
 
@@ -4749,16 +5131,19 @@ function renderRecentOrdersRail() {
 
 // Live ribbon under the header. Keep this customer-facing and simple:
 // current doorstep timing plus the estimate for new orders.
+// Both halves are settings-driven (via sampleSettings / Supabase), and
+// the doorstep window auto-hides once its end date passes so we never
+// ship a stale promise.
 function renderBatchRibbon() {
   const el = qs("[data-batch-ribbon]");
   if (!el) return;
-
+  const window = currentDoorstepWindow();
+  const nextLabel = nextShipmentLabel();
   el.innerHTML = `
     <strong>USA sourcing for Pakistan</strong>
+    ${window ? `<span class="announce-sep" aria-hidden="true">·</span><span>Current batch doorstep delivery: ${esc(window)}</span>` : ""}
     <span class="announce-sep" aria-hidden="true">·</span>
-    <span>Current batch doorstep delivery: May 25-27</span>
-    <span class="announce-sep" aria-hidden="true">·</span>
-    <span>New orders estimated around mid-June</span>
+    <span>${esc(nextLabel)}</span>
   `;
 }
 
@@ -4774,7 +5159,12 @@ const ROUTE_TO_PATH = {
   preorder: "/preorder",
   checkout: "/checkout",
   track: "/track",
+  quote: "/quote",
   faq: "/preorder",
+  about: "/about",
+  contact: "/contact",
+  returns: "/returns",
+  "size-guide": "/size-guide",
 };
 
 const PATH_TO_ROUTE = {
@@ -4784,7 +5174,12 @@ const PATH_TO_ROUTE = {
   "/preorder": "preorder",
   "/checkout": "checkout",
   "/track": "track",
+  "/quote": "quote",
   "/faq": "preorder",
+  "/about": "about",
+  "/contact": "contact",
+  "/returns": "returns",
+  "/size-guide": "size-guide",
 };
 
 const ROUTE_META = {
@@ -4808,9 +5203,29 @@ const ROUTE_META = {
     title: "Track Your Order | Global Bestie",
     description: "Follow your Global Bestie order from USA sourcing to Pakistan delivery.",
   },
+  quote: {
+    title: "Custom Quote | Global Bestie",
+    description: "Preview a Global Bestie USA-to-Pakistan preorder price in PKR before sending your product link.",
+  },
   admin: {
     title: "Global Bestie Portal",
     description: "Internal Global Bestie operations portal.",
+  },
+  about: {
+    title: "About Global Bestie | USA → Pakistan luxury concierge",
+    description: "Who we are and how Global Bestie sources authentic USA branded handbags, shoes, makeup, and accessories for Pakistan.",
+  },
+  contact: {
+    title: "Contact Global Bestie",
+    description: "Talk to the Global Bestie concierge on WhatsApp — replies typically within 15 minutes during business hours.",
+  },
+  returns: {
+    title: "Returns & Refunds | Global Bestie",
+    description: "How cancellations, refunds, defective items, and USA retailer policies work at Global Bestie.",
+  },
+  "size-guide": {
+    title: "Size guide | Global Bestie",
+    description: "US ↔ UK ↔ EU ↔ desi size conversions for shoes and clothing — find your USA size before you preorder.",
   },
 };
 
@@ -5055,6 +5470,34 @@ async function fileToPayload(file) {
   };
 }
 
+// Compresses an image File to a target max-dimension/quality so PK 3G/4G
+// uploads don't time out. PDFs and small images (< target) pass through.
+// Returns a File-shaped object (Blob) the rest of the pipeline can use.
+async function compressImageFile(file, { maxDim = 1600, targetBytes = 1024 * 1024, quality = 0.82 } = {}) {
+  if (!file || !/^image\//.test(file.type) || /image\/heic|image\/heif/.test(file.type)) {
+    // Browsers can't canvas-decode HEIC/HEIF — let the server keep the
+    // original. For non-images (PDF) we also skip.
+    return file;
+  }
+  if (file.size <= targetBytes) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const ratio = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * ratio);
+    const h = Math.round(bitmap.height * ratio);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+    if (!blob || blob.size >= file.size) return file;
+    // Re-wrap so consumers see a `File` (name + type + size).
+    return new File([blob], file.name.replace(/\.[a-z0-9]+$/i, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file; // any decode failure → fall back to original
+  }
+}
+
 // Max size for the transfer-proof upload BEFORE base64 expansion. 5 MB is
 // well under Netlify Functions' 6 MB synchronous payload limit and covers any
 // reasonable bank-app screenshot. Anything larger we bounce client-side with
@@ -5113,11 +5556,24 @@ async function handleCheckout(event) {
     return;
   }
 
-  // ─── Guard 5: transfer proof file size ────────────────────────────────
-  const file = form.elements.transfer_file?.files?.[0];
+  // ─── Guard 5: transfer proof file size + compression ──────────────────
+  let file = form.elements.transfer_file?.files?.[0];
   if (file && file.size > TRANSFER_PROOF_MAX_BYTES) {
     toast(`Transfer proof is ${(file.size / 1024 / 1024).toFixed(1)} MB — please upload an image under 5 MB or skip and just send the reference.`);
     return;
+  }
+  // Compress big images to ~1 MB so PK 3G/4G uploads don't time out.
+  if (file) {
+    const original = file;
+    file = await compressImageFile(file);
+    const hint = qs("[data-transfer-hint]");
+    if (hint) {
+      const kb = (file.size / 1024).toFixed(0);
+      hint.textContent = file === original
+        ? `Uploading ${file.name} (${kb} KB)…`
+        : `Compressed to ${kb} KB · uploading…`;
+      hint.className = "upload-hint ok";
+    }
   }
 
   // ─── Disable submit + spinner state ───────────────────────────────────
@@ -5228,6 +5684,9 @@ async function handleCheckout(event) {
       // re-typing the bank name on every order.
       transfer_reference: data.transfer_reference || "",
     });
+    // Remember the last phone used so we can prefill on next visit even
+    // before they re-type it. Recall flow on phone blur handles the rest.
+    try { localStorage.setItem("gb_last_phone", canon); } catch {}
     form.reset();
     delete form.dataset.idempotencyKey;
     renderAll();
@@ -5314,7 +5773,7 @@ Address: ${customer.address}
 Items:
 ${lines}
 
-Estimated total: PKR ${total.toLocaleString()}`;
+Estimated total: Rs ${total.toLocaleString()}`;
   const waHref = waNum ? `https://wa.me/${waNum}?text=${encodeURIComponent(waText)}` : "";
   openModal(`
     <div class="submit-failure">
@@ -5479,7 +5938,7 @@ function bindCustomerEditors() {
       const wrap = tagsEl.querySelector("[data-customer-tags]");
       wrap.innerHTML = (current.length
         ? current.map((t) => `<span class="tag-chip">${esc(t)}<button type="button" data-remove-tag="${attr(t)}" aria-label="Remove ${attr(t)} tag">×</button></span>`).join("")
-        : `<span class="customer-tags-empty">No tags yet — try "VIP Karachi", "Coach fan", "slow payer"</span>`
+        : `<span class="customer-tags-empty">No tags yet — try "Karachi top", "Coach fan", "slow payer"</span>`
       ) + `<input type="text" class="tag-add-input" data-add-tag placeholder="+ add tag" aria-label="Add a tag" />`;
       // Re-bind the freshly inserted input
       bindTagInput();
@@ -5802,7 +6261,7 @@ function openSegmentSaveModal() {
       <p class="confirmation-sub">${esc(summary)}</p>
       <label class="span-2">
         <span>Segment name</span>
-        <input type="text" data-segment-name placeholder="VIPs in Karachi · Coach fans · Win-back targets" autofocus />
+        <input type="text" data-segment-name placeholder="Top customers in Karachi · Coach fans · Win-back targets" autofocus />
       </label>
       <label class="check-row">
         <input type="checkbox" data-segment-pinned />
@@ -6063,7 +6522,7 @@ function showCustomerDetails(phone) {
         <div class="customer-tags" data-customer-tags>
           ${tags.length ? tags.map((t) => `
             <span class="tag-chip">${esc(t)}<button type="button" data-remove-tag="${attr(t)}" aria-label="Remove ${attr(t)} tag">×</button></span>
-          `).join("") : `<span class="customer-tags-empty">No tags yet — try "VIP Karachi", "Coach fan", "slow payer"</span>`}
+          `).join("") : `<span class="customer-tags-empty">No tags yet — try "Karachi top", "Coach fan", "slow payer"</span>`}
           <input type="text" class="tag-add-input" data-add-tag list="customer-tag-suggestions" placeholder="+ add tag" aria-label="Add a tag" />
         </div>
         <datalist id="customer-tag-suggestions">${allKnownTags().map((t) => `<option value="${attr(t)}"></option>`).join("")}</datalist>
@@ -7128,6 +7587,7 @@ async function importProductFromUrl() {
   const form = qs("[data-product-editor]");
   const input = qs("[data-product-url-import]");
   const status = qs("[data-product-url-import-status]");
+  const health = qs("[data-product-url-import-health]");
   if (!form || !input) return;
   const url = input.value.trim();
   if (!url) {
@@ -7135,6 +7595,7 @@ async function importProductFromUrl() {
     return;
   }
   if (status) status.textContent = "Fetching retailer page…";
+  if (health) health.innerHTML = "";
 
   // Bypass apiFetch here because we want to differentiate failure modes
   // (function not deployed vs. retailer blocked us vs. function returned an
@@ -7151,12 +7612,14 @@ async function importProductFromUrl() {
     if (response.status === 404) {
       const message = "URL autofill needs a deployed environment (Netlify) or `netlify dev` locally. The form still works manually — fill the fields and Save.";
       if (status) status.textContent = message;
+      if (health) health.innerHTML = `<span class="missing">Endpoint offline</span><span class="missing">Manual fill needed</span>`;
       toast(message);
       return;
     }
     if (response.status === 401) {
       const message = "Portal session expired. Reload and unlock the portal again.";
       if (status) status.textContent = message;
+      if (health) health.innerHTML = `<span class="missing">Session expired</span>`;
       toast(message);
       return;
     }
@@ -7164,6 +7627,7 @@ async function importProductFromUrl() {
   } catch (err) {
     const message = "Couldn't reach the autofill endpoint. Check your connection — or fill the form manually.";
     if (status) status.textContent = message;
+    if (health) health.innerHTML = `<span class="missing">Connection failed</span><span class="missing">Manual fill needed</span>`;
     toast(message);
     return;
   }
@@ -7173,6 +7637,7 @@ async function importProductFromUrl() {
     // hint that manual works.
     const message = `${result.error} You can still type the title, price, and image URL manually.`;
     if (status) status.textContent = message;
+    if (health) health.innerHTML = `<span class="missing">Retailer blocked</span><span class="missing">Manual fill needed</span>`;
     toast(message);
     return;
   }
@@ -7187,6 +7652,7 @@ async function importProductFromUrl() {
   writeIfEmpty("category", c.category);
   writeIfEmpty("description", c.description);
   writeIfEmpty("usa_price_usd", c.usa_price_usd || "");
+  writeIfEmpty("shipping_pkr", c.shipping_pkr || "");
   writeIfEmpty("image_url", c.image_url);
   writeIfEmpty("source_url", c.source_url || url);
   writeIfEmpty("variants", c.variants);
@@ -7201,8 +7667,20 @@ async function importProductFromUrl() {
     preview.style.display = "block";
   }
   updatePricePreview?.();
-  const filled = ["title", "brand", "image_url", "usa_price_usd"].filter((k) => c[k]).length;
-  if (status) status.textContent = `Filled ${filled}/4 key fields. Review and edit before saving.`;
+  const healthItems = [
+    ["title", "Title", c.title],
+    ["price", "Price", c.usa_price_usd],
+    ["shipping", "Shipping", c.shipping_pkr],
+    ["image", "Image", c.image_url],
+    ["source", "Source URL", c.source_url || url],
+  ];
+  if (health) {
+    health.innerHTML = healthItems
+      .map(([, label, value]) => `<span class="${value ? "ok" : "missing"}">${esc(label)}</span>`)
+      .join("");
+  }
+  const filled = healthItems.filter(([, , value]) => value).length;
+  if (status) status.textContent = `Filled ${filled}/5 key fields. Review and edit before saving.`;
   toast("Autofill complete — review the form before saving.");
 }
 
@@ -7946,13 +8424,23 @@ async function createShipmentBatch(event) {
 
 async function runScraper() {
   const batchId = `batch-${new Date().toISOString().slice(0, 10)}`;
+  const status = qs("[data-trends-run-status]");
+  if (status) {
+    status.className = "bulk-run-status is-loading";
+    status.textContent = "Uploading 10 review products with title, brand, category, source, image, price, shipping, variants, and authenticity notes…";
+  }
   const result = await apiFetch("/api/scraper", {
     method: "POST",
-    body: JSON.stringify({ target_count: 200, batch_id: batchId }),
-  }, { trends: sampleTrends, batch: { id: batchId, target_count: 200, fetched_count: sampleTrends.length } });
+    body: JSON.stringify({ target_count: 10, batch_id: batchId }),
+  }, { trends: sampleTrends.slice(0, 10), batch: { id: batchId, target_count: 10, fetched_count: Math.min(10, sampleTrends.length) } });
   state.trends = result.trends || state.trends;
   renderTrends();
-  toast(`Daily product batch queued: ${result.batch?.fetched_count || state.trends.length} candidates.`);
+  const count = result.batch?.fetched_count || Math.min(10, state.trends.length);
+  if (status) {
+    status.className = "bulk-run-status is-ready";
+    status.textContent = `${count} review products added as pending. Check images, copy, and source before saving drafts or publishing.`;
+  }
+  toast(`${count} review products uploaded for review.`);
 }
 
 async function queueCreative(event) {
@@ -8164,7 +8652,7 @@ function showApproveTrendModal(trend) {
             <option value="in_stock">In stock</option>
           </select>
         </label>
-        <label>Marketing badge (optional)<input name="marketing_badge" placeholder="Frequently requested · VIP drop" /></label>
+        <label>Marketing badge (optional)<input name="marketing_badge" placeholder="Frequently requested · New drop" /></label>
 
         <label class="span-2">Description<textarea name="description" rows="3" required minlength="60" placeholder="At least one solid sentence describing fit, materials, why customers want it. Min 60 chars.">${(trend.suggested_description || "").replace(/</g, "&lt;")}</textarea></label>
 
@@ -8586,12 +9074,15 @@ function wireEvents() {
     }
     if (action === "open-cart") return setCartDrawerOpen(true);
     if (action === "close-cart") return setCartDrawerOpen(false);
+    if (action === "add-quote-estimate") return addQuoteEstimateToCart();
     // Note: action="checkout" guard is handled in the anchor click handler
     // above, which fires before this one and short-circuits navigation when
     // the cart is empty.
     if (action === "add-cart") return addToCart(productId);
     if (action === "quick-add-cart") return addToCart(productId, { fromCard: true });
     if (action === "toggle-wishlist") return toggleWishlist(productId);
+    if (action === "restock-notify") return openRestockNotifyModal(productId);
+    if (action === "restock-notify-submit") return submitRestockNotify(productId);
     if (action === "open-recent-product") {
       const id = target.dataset.productId;
       if (id) showProductDetails(id);
@@ -8840,21 +9331,7 @@ function wireEvents() {
       return;
     }
     if (action === "broadcast-from-filter") {
-      // Carries the current Customers-tab filter into the broadcast form on
-      // the Growth Studio tab and immediately refreshes the recipient count.
-      const cf = state.customerFilters || {};
-      qs("[data-admin-tab='growth']")?.click();
-      setTimeout(() => {
-        const form = qs("[data-broadcast-form]");
-        if (!form) return;
-        // Reset any stale filters first so this view is reflected exactly.
-        ["city", "tag", "last_order_days", "min_orders", "min_revenue"].forEach((k) => {
-          if (form.elements[k]) form.elements[k].value = "";
-        });
-        if (cf.city && cf.city !== "all") form.elements.city.value = cf.city;
-        previewBroadcastCount();
-        form.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
+      toast("Broadcast tooling has been removed from the portal.");
       return;
     }
     if (action === "cancel-scheduled") {
@@ -9172,7 +9649,13 @@ function wireEvents() {
         return;
       }
     }
-    if (event.key === "Escape") closeModal();
+    if (event.key === "Escape") {
+      closeModal();
+      // Also dismiss the cart drawer if it's open. Customers expect ESC
+      // to close ANY currently-visible overlay, not just modals.
+      const drawer = qs("[data-cart-drawer]");
+      if (drawer?.classList.contains("open")) setCartDrawerOpen(false);
+    }
     if (event.key === "Enter" && event.target.matches("[data-action='view-order']")) {
       showOrderDetails(event.target.dataset.orderId);
     }
@@ -9194,6 +9677,15 @@ function wireEvents() {
     control.addEventListener("input", handleShopFilterChange);
     control.addEventListener("change", handleShopFilterChange);
   });
+
+  // Wishlist filter chip — toggles a "saved items only" view of the shop.
+  // Hidden when the wishlist is empty; populated on every renderProducts().
+  qs("[data-wishlist-toggle]")?.addEventListener("click", () => {
+    state.filters.wishlistOnly = !state.filters.wishlistOnly;
+    renderProducts();
+    renderWishlistChip();
+  });
+  renderWishlistChip();
 
   qsa("[data-admin-tab]").forEach((tab) => {
     tab.addEventListener("click", () => {
@@ -9248,7 +9740,45 @@ function wireEvents() {
     qs("[data-faq-empty]")?.classList.toggle("hidden", visible > 0);
   });
 
+  qs("[data-quote-form]")?.addEventListener("input", (event) => {
+    updateQuoteEstimator({ resetShipping: event.target?.name === "category" });
+  });
+  qs("[data-quote-form]")?.addEventListener("change", (event) => {
+    updateQuoteEstimator({ resetShipping: event.target?.name === "category" });
+  });
+
   qs("[data-checkout-form]")?.addEventListener("submit", handleCheckout);
+
+  // Transfer-screenshot hint: validates type + size on pick and previews
+  // what we'll compress it to before the customer hits Place Order.
+  const transferInput = qs("[data-checkout-form] [data-transfer-file]");
+  const transferHint = qs("[data-checkout-form] [data-transfer-hint]");
+  if (transferInput && transferHint) {
+    const defaultHint = "JPG / PNG / HEIC / PDF · we'll compress images automatically";
+    transferInput.addEventListener("change", async () => {
+      const file = transferInput.files?.[0];
+      if (!file) {
+        transferHint.textContent = defaultHint;
+        transferHint.className = "upload-hint";
+        return;
+      }
+      if (file.size > TRANSFER_PROOF_MAX_BYTES) {
+        transferHint.textContent = `${(file.size / 1024 / 1024).toFixed(1)} MB is too large — please upload under 5 MB.`;
+        transferHint.className = "upload-hint warn";
+        transferInput.value = "";
+        return;
+      }
+      const allowed = /^(image\/(jpeg|png|heic|heif|webp)|application\/pdf)$/i;
+      if (!allowed.test(file.type)) {
+        transferHint.textContent = "Only JPG, PNG, HEIC, WebP, or PDF files are accepted.";
+        transferHint.className = "upload-hint warn";
+        transferInput.value = "";
+        return;
+      }
+      transferHint.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB) — ready ✓`;
+      transferHint.className = "upload-hint ok";
+    });
+  }
 
   // Inline phone validation hint + canonical form preview. Fires on input
   // for live feedback ("becomes +92 300 1234567 ✓") and on blur for the
@@ -9275,6 +9805,19 @@ function wireEvents() {
       }
     };
     phoneInput.addEventListener("input", refresh);
+    // Prefill the phone field on mount if we remember a previous one.
+    // This lets the existing blur-recall flow auto-populate the rest of
+    // the form on first visit to /checkout for a returning customer.
+    try {
+      const last = localStorage.getItem("gb_last_phone");
+      if (last && isValidPkMobile(last) && !phoneInput.value) {
+        phoneInput.value = formatPkDisplay(last);
+        refresh();
+        // Trigger blur logic synchronously so name/email/city/address
+        // get filled before the customer's eyes even reach the field.
+        phoneInput.dispatchEvent(new Event("blur"));
+      }
+    } catch {}
     phoneInput.addEventListener("blur", async () => {
       refresh();
       const canon = canonPhone(phoneInput.value);
@@ -9304,8 +9847,8 @@ function wireEvents() {
       }
 
       // Phone-blur abandoned-cart lead capture. Fire-and-forget; the response
-      // doesn't gate the UI. We send what we have at this moment so even if
-      // the customer never finishes, the team has the lead in Growth Studio.
+      // doesn't gate the UI. We send what we have at this moment so the team
+      // can follow up from the customer list even if checkout is abandoned.
       const cartSummary = (state.cart || []).map((l) => {
         const p = state.products.find((x) => x.id === l.product_id) || l.product;
         return `${p?.title || l.product_id} × ${l.quantity}`;

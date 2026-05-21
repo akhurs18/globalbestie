@@ -1,6 +1,6 @@
 // Admin customer mutations — keyed by canonical phone in the query string
 // (`?phone=923xxxxxxxxx`). Used by the portal customer modal to inline-edit
-// tags, notes, VIP tier, and the opt-in flag. All mutations require the
+// tags, notes, priority tier, and the opt-in flag. All mutations require the
 // admin bearer token; safe to expose only behind it.
 
 import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";

@@ -188,7 +188,7 @@ function makeCreativeJobsFromCandidates(candidates, batchId) {
 async function main() {
   makeNetlifyEnvShim();
 
-  const targetCount = Math.min(200, Math.max(1, Number(process.env.TARGET_COUNT || 200)));
+  const targetCount = Math.min(10, Math.max(1, Number(process.env.TARGET_COUNT || 10)));
   const batchId = process.env.BATCH_ID || `batch-${todayISO()}`;
   const secret = process.env.ADMIN_SHARED_SECRET || "";
 

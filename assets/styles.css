@@ -1145,6 +1145,29 @@ dl div,
   color: var(--muted);
 }
 
+.line-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 6px 0 4px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 79, 154, 0.28);
+  background: rgba(255, 79, 154, 0.1);
+  color: var(--pink-2);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.custom-quote-note {
+  display: block;
+  max-width: 42ch;
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
 .track-shell {
   display: grid;
   grid-template-columns: 390px 1fr;
@@ -1483,6 +1506,201 @@ dl div,
 
 .phone-hint.ok { color: var(--green); }
 .phone-hint.warn { color: var(--amber); }
+
+/* ───── Upload hint (transfer screenshot) ───── */
+.upload-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.upload-hint.ok { color: var(--green); }
+.upload-hint.warn { color: var(--amber); }
+
+/* ───── Checkout trust strip (above Place Order) ───── */
+.checkout-trust-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  list-style: none;
+  margin: 12px 0 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(232, 166, 176, 0.08);
+  border: 1px solid rgba(232, 166, 176, 0.4);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.checkout-trust-strip li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ───── Sticky Place Order CTA (mobile only) ───── */
+@media (max-width: 720px) {
+  .checkout-place-order {
+    position: sticky;
+    bottom: 12px;
+    z-index: 5;
+    box-shadow: 0 6px 24px rgba(232, 166, 176, 0.32);
+  }
+}
+
+/* ───── Static content pages (about / contact / returns / size guide) ───── */
+.content-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 54px 20px 80px;
+}
+
+.content-shell .content-lead {
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+  margin: 6px 0 18px;
+}
+
+.content-shell h1 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 600;
+  margin: 6px 0 16px;
+  color: var(--ink);
+}
+
+.content-shell h2 {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 28px 0 10px;
+  color: var(--ink);
+}
+
+.content-shell p {
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.content-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 8px 0 14px;
+}
+
+.content-list li {
+  margin-bottom: 8px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.content-cta-block {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.contact-card {
+  background: rgba(232, 166, 176, 0.08);
+  border: 1px solid rgba(232, 166, 176, 0.3);
+  padding: 18px 20px;
+  border-radius: 14px;
+}
+
+.contact-card h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.contact-link {
+  font-weight: 700;
+  color: var(--pink-3);
+  text-decoration: none;
+}
+
+.contact-link:hover { text-decoration: underline; }
+
+.size-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 22px;
+  font-size: 0.92rem;
+}
+
+.size-table th,
+.size-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(232, 166, 176, 0.28);
+}
+
+.size-table th {
+  background: rgba(232, 166, 176, 0.08);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.size-table tbody tr:hover {
+  background: rgba(232, 166, 176, 0.05);
+}
+
+/* ───── Wishlist filter chip (shop sidebar) ───── */
+.wishlist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--pink);
+  border-radius: 999px;
+  background: rgba(232, 166, 176, 0.12);
+  color: var(--pink-3);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.wishlist-chip strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 0.74rem;
+}
+
+.wishlist-chip.is-active {
+  background: var(--pink);
+  color: #fff;
+}
+
+.wishlist-chip.is-active strong {
+  background: #fff;
+  color: var(--pink-3);
+}
+
+.wishlist-chip:hover,
+.wishlist-chip:focus-visible {
+  outline: none;
+  filter: brightness(0.97);
+}
 
 /* ───── Multi-order tracking list ───── */
 .order-list-shell {
@@ -8330,9 +8548,12 @@ body[data-active-view="checkout"] .whatsapp-fab {
   }
 }
 
-/* ═══════════════════════════════════════ BANK BOX (primary on checkout) */
+/* ═══════════════════════════════════════ BANK BOX (primary on checkout)
+   IMPORTANT: dt/dd/code colors are explicitly --ink (dark) here — the
+   light cream theme means using --cream would render the values
+   invisible against the off-white page background. */
 .bank-box-primary {
-  background: linear-gradient(180deg, rgba(255, 79, 154, 0.09), rgba(17, 13, 16, 0.55));
+  background: linear-gradient(180deg, rgba(232, 166, 176, 0.16), rgba(255, 255, 255, 0.96));
   border: 1px solid var(--pink);
   border-radius: 16px;
   padding: 18px 20px;
@@ -8340,7 +8561,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
 }
 
 .bank-box-primary legend {
-  color: var(--pink-2);
+  color: var(--pink-3);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -8367,7 +8588,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
 }
 
 .bank-details-grid dd {
-  color: var(--cream);
+  color: var(--ink);
   font-weight: 700;
   margin: 0;
 }
@@ -8375,8 +8596,8 @@ body[data-active-view="checkout"] .whatsapp-fab {
 .bank-details-grid code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.9rem;
-  color: var(--cream);
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  background: rgba(232, 166, 176, 0.18);
   padding: 2px 6px;
   border-radius: 6px;
 }
@@ -8514,6 +8735,64 @@ body[data-active-view="checkout"] .whatsapp-fab {
   margin-top: 6px;
   color: var(--muted);
   font-size: 0.78rem;
+}
+
+.autofill-health,
+.bulk-run-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.autofill-health:empty,
+.bulk-run-status:empty {
+  display: none;
+}
+
+.autofill-health span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 79, 154, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.autofill-health span.ok {
+  border-color: rgba(84, 207, 152, 0.34);
+  background: rgba(84, 207, 152, 0.1);
+  color: #9ff0c7;
+}
+
+.autofill-health span.missing {
+  border-color: rgba(255, 190, 92, 0.34);
+  background: rgba(255, 190, 92, 0.1);
+  color: #ffd99b;
+}
+
+.bulk-run-status {
+  margin: 10px 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 79, 154, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.bulk-run-status.is-loading {
+  color: #ffdbe8;
+}
+
+.bulk-run-status.is-ready {
+  border-color: rgba(84, 207, 152, 0.28);
+  background: rgba(84, 207, 152, 0.08);
+  color: #b9f5d6;
 }
 
 /* ═══════════════════════════════════════ TREND APPROVAL MODAL */
@@ -9665,6 +9944,12 @@ body:not([data-page="portal"]) .product-empty-state p:not(.kicker) {
   line-height: 1.6;
 }
 
+.empty-state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 body:not([data-page="portal"]) .product-card .product-media {
   height: clamp(220px, 27vw, 292px);
   aspect-ratio: auto;
@@ -9878,6 +10163,551 @@ body:not([data-page="portal"]) .variant-input-label input {
   background: #fff;
   color: var(--ink);
   border-color: rgba(139, 76, 95, 0.22);
+}
+
+body:not([data-page="portal"]) .quote-estimator-shell {
+  width: var(--page);
+  margin: 0 auto;
+  padding: clamp(34px, 6vw, 72px) 0 clamp(58px, 7vw, 86px);
+  display: grid;
+  grid-template-columns: minmax(280px, 0.82fr) minmax(360px, 1fr);
+  gap: clamp(24px, 5vw, 68px);
+  align-items: start;
+}
+
+body:not([data-page="portal"]) .quote-estimator-hero {
+  position: sticky;
+  top: 98px;
+  min-height: 420px;
+  display: grid;
+  align-content: center;
+  padding: clamp(22px, 4vw, 38px);
+  border: 1px solid rgba(139, 76, 95, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(140deg, rgba(255, 255, 255, 0.86), rgba(252, 240, 244, 0.82)),
+    url("https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1100&q=82") center / cover;
+  background-blend-mode: screen;
+  box-shadow: 0 24px 70px rgba(139, 76, 95, 0.14);
+  overflow: hidden;
+}
+
+body:not([data-page="portal"]) .quote-estimator-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  background: linear-gradient(0deg, rgba(255, 253, 253, 0.96), transparent);
+  pointer-events: none;
+}
+
+body:not([data-page="portal"]) .quote-estimator-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+body:not([data-page="portal"]) .quote-estimator-hero h1 {
+  max-width: 11ch;
+  font-size: clamp(2.45rem, 5.8vw, 4.8rem);
+}
+
+body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
+  max-width: 40ch;
+}
+
+.quote-proof-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.quote-proof-strip span {
+  padding: 8px 10px;
+  border: 1px solid rgba(139, 76, 95, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.quote-estimator-card {
+  display: grid;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 34px);
+  border: 1px solid rgba(139, 76, 95, 0.2);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(217, 139, 154, 0.2), transparent 24rem),
+    rgba(255, 254, 254, 0.96);
+  box-shadow: 0 22px 58px rgba(139, 76, 95, 0.12);
+}
+
+.quote-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.quote-estimator-card label {
+  position: relative;
+}
+
+.quote-estimator-card .input-prefix {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 1;
+  color: var(--pink-3);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.quote-estimator-card .input-prefix + input {
+  padding-left: 42px;
+}
+
+.quote-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(139, 76, 95, 0.16);
+  border-radius: 8px;
+  background: #fbf4f6;
+  color: var(--ink-soft);
+}
+
+.quote-check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pink-3);
+}
+
+.quote-result {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #201018;
+  color: #fff7f9;
+}
+
+.quote-total {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.quote-total span {
+  color: rgba(255, 247, 249, 0.68);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.quote-total strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.95;
+}
+
+.quote-breakdown {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.quote-breakdown div {
+  padding: 9px 0;
+  border-top: 1px solid rgba(255, 247, 249, 0.12);
+}
+
+.quote-breakdown dt {
+  color: rgba(255, 247, 249, 0.6);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.quote-breakdown dd {
+  margin: 0;
+  color: #fff7f9;
+  font-weight: 800;
+}
+
+.quote-note {
+  margin: 0;
+  color: rgba(255, 247, 249, 0.72);
+  line-height: 1.55;
+}
+
+.quote-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 840px) {
+  body:not([data-page="portal"]) .quote-estimator-shell {
+    grid-template-columns: 1fr;
+  }
+
+  body:not([data-page="portal"]) .quote-estimator-hero {
+    position: relative;
+    top: auto;
+    min-height: 330px;
+  }
+
+  .quote-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL DARK CONTROL ROOM
+   The public storefront is intentionally blush-light, but the internal portal
+   needs dense, high-contrast operations surfaces. This final portal-only pass
+   prevents light-theme storefront overrides from leaking into admin tables,
+   banners, forms, cards, and popups.
+   ═══════════════════════════════════════════════════════════════════════ */
+body[data-page="portal"] {
+  --bg: #100b10;
+  --surface: #181218;
+  --surface-2: #211722;
+  --ink: #fff7fa;
+  --ink-soft: #ead8df;
+  --muted: #bfa8b2;
+  --line: rgba(245, 181, 197, 0.22);
+  --line-strong: rgba(245, 181, 197, 0.42);
+  --cream: #fff7fa;
+  --rose: #f6c8d2;
+  --pink: #f0a5b4;
+  --pink-2: #e28fa1;
+  --pink-3: #ffbcc9;
+  --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+  --shadow-soft: 0 14px 36px rgba(0, 0, 0, 0.26);
+  background:
+    radial-gradient(circle at 8% -8%, rgba(240, 165, 180, 0.18), transparent 30rem),
+    radial-gradient(circle at 92% 12%, rgba(111, 62, 91, 0.28), transparent 32rem),
+    linear-gradient(180deg, #100b10 0%, #151016 48%, #0d090d 100%);
+  color: var(--ink);
+}
+
+body[data-page="portal"]::before {
+  opacity: 0.24;
+}
+
+body[data-page="portal"] .admin-shell {
+  width: min(1440px, calc(100vw - 40px));
+}
+
+body[data-page="portal"] .admin-sidebar,
+body[data-page="portal"] .admin-login,
+body[data-page="portal"] .admin-panel,
+body[data-page="portal"] .ops-panel,
+body[data-page="portal"] .metric-card,
+body[data-page="portal"] .today-card,
+body[data-page="portal"] .growth-hero-panel,
+body[data-page="portal"] .growth-side,
+body[data-page="portal"] .lead-card,
+body[data-page="portal"] .creative-job,
+body[data-page="portal"] .campaign-row,
+body[data-page="portal"] .calendar-row,
+body[data-page="portal"] .shipment-card,
+body[data-page="portal"] .admin-order-card,
+body[data-page="portal"] .trend-card,
+body[data-page="portal"] .checklist-row,
+body[data-page="portal"] .automation-grid article,
+body[data-page="portal"] .automation-flow article,
+body[data-page="portal"] .detail-panel,
+body[data-page="portal"] .verification-grid div,
+body[data-page="portal"] .detail-list div,
+body[data-page="portal"] .trust-strip span,
+body[data-page="portal"] .order-card-grid span,
+body[data-page="portal"] .message-thread article,
+body[data-page="portal"] .order-item-line,
+body[data-page="portal"] .payment-ledger article,
+body[data-page="portal"] .product-card,
+body[data-page="portal"] .admin-table-wrap,
+body[data-page="portal"] .bulk-bar,
+body[data-page="portal"] .import-bar,
+body[data-page="portal"] .url-import {
+  border-color: var(--line);
+  background: linear-gradient(180deg, rgba(33, 23, 34, 0.96), rgba(20, 14, 20, 0.96));
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-page="portal"] .admin-sidebar {
+  top: 20px;
+}
+
+body[data-page="portal"] .admin-brand .brand-mark {
+  background: #fff;
+}
+
+body[data-page="portal"] .brand strong,
+body[data-page="portal"] .admin-content h1,
+body[data-page="portal"] .admin-content h2,
+body[data-page="portal"] .admin-content h3,
+body[data-page="portal"] .drawer-header h2,
+body[data-page="portal"] .detail-modal h2,
+body[data-page="portal"] .price-large,
+body[data-page="portal"] .metric-card strong,
+body[data-page="portal"] .today-card strong,
+body[data-page="portal"] .today-card span,
+body[data-page="portal"] .campaign-row strong,
+body[data-page="portal"] .calendar-row strong,
+body[data-page="portal"] .lead-card strong,
+body[data-page="portal"] .verification-grid strong,
+body[data-page="portal"] .message-thread p,
+body[data-page="portal"] .order-mini,
+body[data-page="portal"] .detail-list dd {
+  color: var(--ink);
+}
+
+body[data-page="portal"] p,
+body[data-page="portal"] small,
+body[data-page="portal"] td,
+body[data-page="portal"] .portal-login-note,
+body[data-page="portal"] .metric-card em,
+body[data-page="portal"] .today-card small,
+body[data-page="portal"] .drawer-hero p:not(.kicker),
+body[data-page="portal"] .lead-card p,
+body[data-page="portal"] .lead-card span,
+body[data-page="portal"] .campaign-row small,
+body[data-page="portal"] .calendar-row small,
+body[data-page="portal"] .growth-side span,
+body[data-page="portal"] .creative-job small,
+body[data-page="portal"] .integration-list span,
+body[data-page="portal"] .trend-card small,
+body[data-page="portal"] .shipment-card p,
+body[data-page="portal"] .admin-order-card p,
+body[data-page="portal"] .order-mini span,
+body[data-page="portal"] .order-card-grid small,
+body[data-page="portal"] .automation-grid span,
+body[data-page="portal"] .automation-flow span,
+body[data-page="portal"] .handoff-note,
+body[data-page="portal"] .checklist-row small,
+body[data-page="portal"] .detail-list dt,
+body[data-page="portal"] .order-item-line small,
+body[data-page="portal"] .cmd-palette-sub,
+body[data-page="portal"] .cmd-palette-empty,
+body[data-page="portal"] .cmd-palette-hint {
+  color: var(--muted);
+}
+
+body[data-page="portal"] .kicker,
+body[data-page="portal"] label,
+body[data-page="portal"] .form-section-title,
+body[data-page="portal"] .admin-table th,
+body[data-page="portal"] .ops-panel .panel-title-row h2,
+body[data-page="portal"] .ops-panel > h2,
+body[data-page="portal"] .cmd-palette-type {
+  color: var(--pink-2);
+}
+
+body[data-page="portal"] .admin-tab,
+body[data-page="portal"] .cmd-k-trigger,
+body[data-page="portal"] .quick-filter-row button,
+body[data-page="portal"] .subnav-tabs button,
+body[data-page="portal"] .action-tone-chips button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+}
+
+body[data-page="portal"] .admin-tab:hover,
+body[data-page="portal"] .admin-tab:focus-visible,
+body[data-page="portal"] .admin-tab.active,
+body[data-page="portal"] .cmd-k-trigger:hover,
+body[data-page="portal"] .cmd-k-trigger:focus-visible,
+body[data-page="portal"] .quick-filter-row button.active,
+body[data-page="portal"] .quick-filter-row button:hover,
+body[data-page="portal"] .subnav-tabs button.active,
+body[data-page="portal"] .subnav-tabs button:hover,
+body[data-page="portal"] .action-tone-chips button.active,
+body[data-page="portal"] .action-tone-chips button:hover {
+  border-color: var(--line-strong);
+  background: rgba(240, 165, 180, 0.14);
+  color: var(--ink);
+  outline: none;
+}
+
+body[data-page="portal"] .admin-tab.active {
+  box-shadow: inset 3px 0 0 var(--pink);
+}
+
+body[data-page="portal"] .admin-tab [data-tab-badge] {
+  background: var(--pink);
+  color: #160b10;
+}
+
+body[data-page="portal"] input,
+body[data-page="portal"] select,
+body[data-page="portal"] textarea,
+body[data-page="portal"] .admin-table select,
+body[data-page="portal"] .admin-table input,
+body[data-page="portal"] .admin-table textarea,
+body[data-page="portal"] .template-editor-modal input,
+body[data-page="portal"] .template-editor-modal select,
+body[data-page="portal"] .template-editor-modal textarea,
+body[data-page="portal"] .trend-edit-form input,
+body[data-page="portal"] .trend-edit-form select,
+body[data-page="portal"] .trend-edit-form textarea,
+body[data-page="portal"] .cmd-palette-input {
+  border-color: var(--line);
+  background: #120d12;
+  color: var(--ink);
+}
+
+body[data-page="portal"] input::placeholder,
+body[data-page="portal"] textarea::placeholder {
+  color: rgba(191, 168, 178, 0.62);
+}
+
+body[data-page="portal"] select option {
+  background: #120d12;
+  color: var(--ink);
+}
+
+body[data-page="portal"] .admin-table {
+  color: var(--ink-soft);
+}
+
+body[data-page="portal"] .admin-table thead {
+  background: #211722;
+}
+
+body[data-page="portal"] .admin-table th {
+  background: rgba(240, 165, 180, 0.08);
+}
+
+body[data-page="portal"] .admin-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+body[data-page="portal"] .admin-table tbody tr:hover td,
+body[data-page="portal"] .admin-table tbody tr:focus-visible td,
+body[data-page="portal"] .order-row:hover td,
+body[data-page="portal"] .order-row:focus-visible td {
+  background: rgba(240, 165, 180, 0.1);
+}
+
+body[data-page="portal"] .button.secondary,
+body[data-page="portal"] .button.ghost {
+  border-color: var(--line);
+  background: #241923;
+  color: var(--ink);
+}
+
+body[data-page="portal"] .button.primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #f4b2bf, #e28fa1);
+  color: #170b11;
+}
+
+body[data-page="portal"] .status-pill,
+body[data-page="portal"] .price-chip,
+body[data-page="portal"] code,
+body[data-page="portal"] kbd {
+  border-color: var(--line);
+  background: rgba(240, 165, 180, 0.14);
+  color: var(--ink);
+}
+
+body[data-page="portal"] .demo-data-banner,
+body[data-page="portal"] .fx-stale-banner {
+  border-radius: 12px;
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-page="portal"] .demo-data-banner {
+  border-color: rgba(245, 158, 11, 0.62);
+  background: linear-gradient(90deg, rgba(120, 53, 15, 0.78), rgba(33, 23, 34, 0.95));
+}
+
+body[data-page="portal"] .demo-data-banner strong {
+  color: #fde68a;
+}
+
+body[data-page="portal"] .fx-stale-banner {
+  border-color: rgba(251, 113, 133, 0.64);
+  background: linear-gradient(90deg, rgba(127, 29, 29, 0.74), rgba(33, 23, 34, 0.95));
+}
+
+body[data-page="portal"] .fx-stale-banner strong {
+  color: #fecdd3;
+}
+
+body[data-page="portal"] .fx-stale-banner code {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--ink);
+}
+
+body[data-page="portal"] .demo-data-banner a,
+body[data-page="portal"] .fx-stale-banner a {
+  color: #fff7fa;
+}
+
+body[data-page="portal"] .modal-backdrop,
+body[data-page="portal"] .cmd-palette-backdrop {
+  background: rgba(6, 4, 7, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+body[data-page="portal"] .detail-modal,
+body[data-page="portal"] .cmd-palette,
+body[data-page="portal"] .auth-modal,
+body[data-page="portal"] .manual-order-modal,
+body[data-page="portal"] .wa-template-modal,
+body[data-page="portal"] .template-editor-modal,
+body[data-page="portal"] .segment-save-modal,
+body[data-page="portal"] .lead-reply-modal,
+body[data-page="portal"] .trend-approve-modal,
+body[data-page="portal"] .trend-edit-modal,
+body[data-page="portal"] .dispatch-modal {
+  border-color: var(--line-strong);
+  background:
+    radial-gradient(circle at 0 0, rgba(240, 165, 180, 0.12), transparent 24rem),
+    #151016;
+  color: var(--ink);
+  box-shadow: 0 40px 110px rgba(0, 0, 0, 0.55);
+}
+
+body[data-page="portal"] .modal-close {
+  border-color: var(--line);
+  background: #241923;
+  color: var(--ink);
+}
+
+body[data-page="portal"] .product-modal-actions,
+body[data-page="portal"] .product-modal-cta {
+  border-top-color: var(--line);
+  background: rgba(15, 10, 15, 0.96);
+}
+
+body[data-page="portal"] .gallery-main,
+body[data-page="portal"] .gallery-thumb,
+body[data-page="portal"] .product-gallery > img,
+body[data-page="portal"] .gallery-strip img,
+body[data-page="portal"] .trend-edit-media img,
+body[data-page="portal"] [data-image-preview] {
+  border-color: var(--line);
+  background: #120d12;
+}
+
+body[data-page="portal"] .toast {
+  border-color: var(--line-strong);
+  background: #211722;
+  color: var(--ink);
+  box-shadow: var(--shadow);
 }
 
 body:not([data-page="portal"]) .sourced-badge {
@@ -10631,4 +11461,32 @@ body:not([data-page="portal"]) .footer-hours {
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.1em;
+}
+
+/* Quote estimator: "what's included" pill list. Sits between the
+   50/50 split and the team-confirmation note. Replaces the old
+   FX/markup line breakdown to avoid exposing internal math. */
+.quote-includes {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.quote-includes li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--rose);
+  color: var(--pink-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.quote-includes li::before {
+  content: "✓ ";
+  margin-right: 4px;
+  color: var(--pink-3);
 }

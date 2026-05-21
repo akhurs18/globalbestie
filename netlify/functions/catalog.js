@@ -57,6 +57,10 @@ export default async (req) => {
         account_title: settings.account_title,
         account_number: settings.account_number,
         iban: settings.iban,
+        // Announcement-bar fields (auto-clear once batch_doorstep_until
+        // passes — the client checks the date and hides the chip).
+        batch_doorstep_window: settings.batch_doorstep_window,
+        batch_doorstep_until: settings.batch_doorstep_until,
       };
       return json({
         products: isAdmin ? products : products.map((product) => publicProduct(product, settings)),

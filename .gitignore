@@ -8,3 +8,6 @@ node_modules/
 remotion/node_modules/
 remotion/out/
 .claude/
+
+# Internal QA / audit notes — keep out of public repo
+docs/internal/

@@ -101,6 +101,22 @@ function guessCategory(text = "") {
   return "accessories";
 }
 
+function normalizeCategory(value = "") {
+  const t = String(value || "").toLowerCase();
+  if (["handbags", "shoes", "makeup", "fragrance", "accessories"].includes(t)) return t;
+  return guessCategory(t);
+}
+
+function defaultShippingPkr(category) {
+  return {
+    handbags: 15000,
+    shoes: 11000,
+    makeup: 4800,
+    fragrance: 6500,
+    accessories: 8500,
+  }[category] || 8500;
+}
+
 function guessVariantHint(category) {
   return {
     shoes: "Sizes 36–42 EU available on request. DM to confirm your size.",
@@ -229,13 +245,14 @@ function runAdapter(host, html) {
 }
 
 // Category-default shipping band in PKR. Used as the suggested shipping
-// when the admin hasn't overridden per-product. Conservative estimates.
+// when the admin hasn't overridden per-product. Numbers reflect the
+// real consolidated-batch shipping cost per item after live-ops review.
 const SHIPPING_DEFAULTS_PKR = {
-  handbags: 4500,
-  shoes: 5500,
-  makeup: 2500,
-  fragrance: 3500,
-  accessories: 2500,
+  handbags: 15000,
+  shoes: 11000,
+  makeup: 4800,
+  fragrance: 6500,
+  accessories: 8500,
 };
 
 function suggestedPkrPrice(usd, category, settings) {
@@ -333,7 +350,15 @@ async function fetchOne(rawUrl, settings) {
   if (!brand) brand = brandFromUrl(url);
 
   const uniqueImages = [...new Set(images.filter((u) => typeof u === "string" && /^https?:\/\//i.test(u)))].slice(0, 8);
-  const category = jsonld?.category || guessCategory(`${title} ${description}`);
+  // Coerce category to the known taxonomy so the form's <select> always
+  // has a matching <option>. Unknown categories fall back to guessCategory.
+  const category = normalizeCategory(jsonld?.category || guessCategory(`${title} ${description}`));
+  const cleanTitle = decodeEntities(title).slice(0, 180);
+  const cleanBrand = decodeEntities(String(brand || "")).slice(0, 80);
+  // If the retailer didn't expose a description we still want SOMETHING
+  // populated in the form so the admin isn't staring at a blank field.
+  const cleanDescription = decodeEntities(description).slice(0, 1200)
+    || `${cleanBrand || "USA retailer"} ${cleanTitle || "product"} preorder candidate. Review final product details before publishing.`;
 
   // Re-host the scraped images in our own bucket so retailer URL rot can't
   // break products later. Best-effort: if Supabase isn't configured we just
@@ -347,11 +372,12 @@ async function fetchOne(rawUrl, settings) {
   }
 
   const candidate = {
-    title: decodeEntities(title).slice(0, 180),
-    brand: decodeEntities(String(brand || "")).slice(0, 80),
+    title: cleanTitle,
+    brand: cleanBrand,
     category,
-    description: decodeEntities(description).slice(0, 1200),
+    description: cleanDescription,
     usa_price_usd: priceUsd,
+    shipping_pkr: defaultShippingPkr(category),
     image_url: storedImages[0] || "",
     gallery_urls: storedImages,
     source_url: url,
@@ -360,7 +386,7 @@ async function fetchOne(rawUrl, settings) {
     // Suggested PKR price + shipping for the admin to confirm. Helps the
     // bulk save flow — no need to open each product to compute pricing.
     suggested_customer_price_pkr: suggestedPkrPrice(priceUsd, category, settings),
-    suggested_shipping_pkr: SHIPPING_DEFAULTS_PKR[category] || 3500,
+    suggested_shipping_pkr: SHIPPING_DEFAULTS_PKR[category] || 8500,
   };
 
   // Decide an overall status code.
@@ -409,11 +435,12 @@ export default async (req) => {
       });
     }
 
-    // Single-URL path (legacy)
+    // Single-URL path (legacy + customer-side source-estimate caller).
+    // All the parsing / image picking / dedupe / safe-fallback logic lives
+    // in fetchOne() above so we never have two divergent implementations.
     const url = body.url;
     if (!url) return json({ error: "Provide a URL or an array of URLs" }, { status: 400 });
     const result = await fetchOne(url, settings);
-    // Preserve the legacy shape so existing single-URL callers keep working.
     if (result.status === "duplicate") {
       return json({
         existing_product_id: result.existing_product_id,

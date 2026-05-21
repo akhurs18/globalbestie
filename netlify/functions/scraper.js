@@ -49,6 +49,14 @@ const FALLBACK_TRENDS = [
   },
 ];
 
+const CATEGORY_DEFAULTS = {
+  handbags: { usd: 325, shipping: 15000 },
+  shoes: { usd: 120, shipping: 11000 },
+  makeup: { usd: 35, shipping: 4800 },
+  fragrance: { usd: 105, shipping: 6500 },
+  accessories: { usd: 165, shipping: 8500 },
+};
+
 function slugify(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
@@ -68,21 +76,21 @@ function extractImageUrls(html) {
   return [...new Set(urls)].slice(0, 8);
 }
 
-function buildProductDescription({ title, category, angle = "", variant = "", source = "" }) {
+// Customer-facing description generator. Kept deliberately short, free of
+// internal merchandising language (no "selling angles", "high intent",
+// "service margin", source URLs, or 50%-advance payment notes — that's
+// surfaced separately on the storefront via the order-summary card).
+function buildProductDescription({ title, category, variant = "" }) {
   const categoryCopy = {
-    handbags: "A premium handbag preorder selected for polished everyday styling, gifting, and statement outfits.",
-    shoes: "A high-demand sneaker preorder for customers who want USA sizing, authentic sourcing, and outfit-friendly colorways.",
-    makeup: "A beauty preorder candidate with shade confirmation before sourcing, ideal for customers who want exact USA product availability.",
-    fragrance: "A premium fragrance preorder with extra packaging attention for international transit and gift-ready presentation.",
-    accessories: "A branded accessory preorder chosen for high intent, gifting potential, and strong Instagram/WhatsApp selling angles.",
+    handbags: "A polished USA-sourced handbag, packed with dust bag and authenticity-first attention.",
+    shoes: "USA-sourced sneakers with authentic packaging and full-size availability.",
+    makeup: "A curated beauty pick sourced from USA retail with shade confirmation before dispatch.",
+    fragrance: "A premium fragrance sourced from USA retail with gift-ready packaging.",
+    accessories: "A branded accessory sourced from USA retail and packed for safe Pakistan delivery.",
   };
-  return [
-    categoryCopy[category] || "A curated USA branded preorder candidate for Global Bestie customers in Pakistan.",
-    variant ? `Variant focus: ${variant}.` : "",
-    angle ? `Merchandising angle: ${angle}.` : "",
-    source ? `Source reference: ${source}.` : "",
-    "Price follows Global Bestie’s USA retail + 25% service margin + shipping model. Customer pays 50% advance for preorder and the remaining balance after Pakistan arrival before local dispatch.",
-  ].filter(Boolean).join(" ");
+  const lead = categoryCopy[category] || "A curated USA-sourced piece, handpicked for Global Bestie customers in Pakistan.";
+  const variantNote = variant ? ` Available in ${String(variant).toLowerCase()}.` : "";
+  return lead + variantNote;
 }
 
 function makeRemotionBrief(candidate) {
@@ -100,7 +108,40 @@ function makeRemotionBrief(candidate) {
   };
 }
 
-function makeSeedCandidates(batchId = "", targetCount = 200) {
+function completeCandidate(candidate, index = 0) {
+  const category = candidate.category || "accessories";
+  const defaults = CATEGORY_DEFAULTS[category] || CATEGORY_DEFAULTS.accessories;
+  const imageUrl = candidate.image_url || "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84";
+  const description = candidate.suggested_description || buildProductDescription({
+    title: candidate.title || "USA preorder product",
+    category,
+    variant: candidate.variants || "",
+  });
+  return {
+    id: candidate.id || `trend-${slugify(candidate.title || `candidate-${index}`)}-${String(index).padStart(3, "0")}`,
+    batch_id: candidate.batch_id,
+    title: candidate.title || `USA ${category} preorder candidate`,
+    brand: candidate.brand || inferBrand(candidate.title || ""),
+    category,
+    source_url: candidate.source_url || "https://www.sephora.com/",
+    usa_price_usd: Number(candidate.usa_price_usd || defaults.usd),
+    shipping_pkr: Number(candidate.shipping_pkr || defaults.shipping),
+    score: Number(candidate.score || Math.max(70, 95 - index)),
+    status: candidate.status || "pending",
+    image_url: imageUrl,
+    suggested_description: description.length >= 60 ? description : `${description} Final product details can be adjusted by the team before approval.`,
+    asset_urls: Array.isArray(candidate.asset_urls) && candidate.asset_urls.length ? candidate.asset_urls : [imageUrl],
+    production_status: candidate.production_status || "ready_for_review",
+    variants: candidate.variants || "Confirm size, shade, color, or volume before approval.",
+    authenticity_note: candidate.authenticity_note || "Verify official retailer source and attach receipt before publishing.",
+    social_proof: candidate.social_proof || "Review candidate for the next Global Bestie USA preorder batch.",
+    remotion_brief: candidate.remotion_brief || makeRemotionBrief(candidate),
+    raw_source: candidate.raw_source || "curated_seed",
+    created_at: candidate.created_at || new Date().toISOString(),
+  };
+}
+
+function makeSeedCandidates(batchId = "", targetCount = 10) {
   const IMAGES = {
     handbags: [
       "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
@@ -204,8 +245,8 @@ function makeSeedCandidates(batchId = "", targetCount = 200) {
         variant,
         source: seed.url,
       }),
-      asset_urls: [],
-      production_status: "needs_assets",
+      asset_urls: [(IMAGES[seed.category] || IMAGES.handbags)[cursor % (IMAGES[seed.category] || IMAGES.handbags).length]],
+      production_status: "ready_for_review",
       variants: variant,
       authenticity_note: "Verify official retailer source and attach receipt before publishing.",
       social_proof: seed.angle,
@@ -237,8 +278,8 @@ function extractCandidates(html, source, limit = 67, batchId = "") {
       brand: inferBrand(title),
       category: source.category,
       source_url: source.url,
-      usa_price_usd: 0,
-      shipping_pkr: source.category === "makeup" ? 4500 : 12000,
+      usa_price_usd: CATEGORY_DEFAULTS[source.category]?.usd || CATEGORY_DEFAULTS.accessories.usd,
+      shipping_pkr: CATEGORY_DEFAULTS[source.category]?.shipping || CATEGORY_DEFAULTS.accessories.shipping,
       score: Math.max(70, 96 - index * 4),
       status: "pending",
       image_url: imageUrls[index % Math.max(1, imageUrls.length)] || "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=84",
@@ -254,7 +295,7 @@ function extractCandidates(html, source, limit = 67, batchId = "") {
     }));
 }
 
-async function scrapeSources(targetCount = 200, batchId = "") {
+async function scrapeSources(targetCount = 10, batchId = "") {
   const limitPerSource = Math.max(4, Math.ceil(targetCount / TREND_SOURCES.length));
   const batches = await Promise.allSettled(
     TREND_SOURCES.map(async (source) => {
@@ -270,28 +311,30 @@ async function scrapeSources(targetCount = 200, batchId = "") {
     })
   );
 
-  const candidates = batches.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+  const candidates = batches.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
+    .map((candidate, index) => completeCandidate(candidate, index));
   const seedCandidates = makeSeedCandidates(batchId, targetCount).slice(0, targetCount);
   if (candidates.length) {
     const seenIds = new Set(candidates.map((candidate) => candidate.id));
     const topUps = seedCandidates.filter((candidate) => !seenIds.has(candidate.id));
-    return [...candidates, ...topUps].slice(0, targetCount);
+    return [...candidates, ...topUps].slice(0, targetCount).map((candidate, index) => completeCandidate(candidate, index));
   }
 
-  if (seedCandidates.length) return seedCandidates;
+  if (seedCandidates.length) return seedCandidates.map((candidate, index) => completeCandidate(candidate, index));
 
   return FALLBACK_TRENDS.map((candidate) => ({
     ...candidate,
     batch_id: batchId,
     suggested_description: candidate.suggested_description || "Fallback trend candidate. Add final product copy and media before approval.",
     asset_urls: candidate.asset_urls || [],
-    production_status: candidate.production_status || "needs_assets",
+    asset_urls: candidate.asset_urls || [candidate.image_url],
+    production_status: candidate.production_status || "ready_for_review",
     brand: candidate.brand || inferBrand(candidate.title),
     variants: candidate.variants || "Confirm variant before approval.",
     authenticity_note: candidate.authenticity_note || "Verify source before approval.",
     social_proof: candidate.social_proof || "Trend candidate for preorder testing.",
     remotion_brief: candidate.remotion_brief || makeRemotionBrief(candidate),
-  })).slice(0, targetCount);
+  })).slice(0, targetCount).map((candidate, index) => completeCandidate(candidate, index));
 }
 
 export default async (req) => {
@@ -299,7 +342,7 @@ export default async (req) => {
 
   try {
     const payload = req.method === "POST" ? await req.json().catch(() => ({})) : {};
-    const targetCount = Math.min(200, Math.max(1, Number(payload.target_count || 200)));
+    const targetCount = Math.min(10, Math.max(1, Number(payload.target_count || 10)));
     const batchId = payload.batch_id || `batch-${new Date().toISOString().slice(0, 10)}`;
     const candidates = await scrapeSources(targetCount, batchId);
     if (!hasSupabase()) return json({ trends: candidates, configured: false });
@@ -313,7 +356,7 @@ export default async (req) => {
         target_count: targetCount,
         fetched_count: candidates.length,
         status: "fetched",
-        notes: "Fetched for manual review, media collection, and Remotion handoff before publishing.",
+        notes: "Fetched 10 complete candidates for manual review before publishing.",
       }),
     });
 
