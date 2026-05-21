@@ -8638,10 +8638,25 @@ async function submitQuoteFromUrl() {
   const urlInput = qs("[data-quote-url]");
   const variantInput = qs("[data-quote-variant]");
   const resultBox = qs("[data-quote-url-result]");
-  if (!urlInput || !resultBox) return;
+  if (!urlInput) {
+    // Belt-and-braces: shouldn't happen if the page rendered, but if it
+    // does we surface it loudly instead of silently doing nothing.
+    toast("Quote field missing on this page — reload and try again.");
+    return;
+  }
+  if (!resultBox) {
+    toast("Quote result slot missing — reload and try again.");
+    return;
+  }
   const url = String(urlInput.value || "").trim();
   if (!url) {
     resultBox.innerHTML = `<div class="source-result is-blocked">Paste a USA retailer link first.</div>`;
+    resultBox.scrollIntoView({ behavior: "smooth", block: "center" });
+    urlInput.focus();
+    return;
+  }
+  if (!/^https?:\/\//i.test(url)) {
+    resultBox.innerHTML = `<div class="source-result is-blocked">Link must start with http:// or https://</div>`;
     urlInput.focus();
     return;
   }
@@ -8649,6 +8664,9 @@ async function submitQuoteFromUrl() {
     <span class="quote-spinner" aria-hidden="true"></span>
     Reaching out to the retailer… this usually takes a few seconds.
   </div>`;
+  // Ensure the loading state is actually visible — if the result slot
+  // sits below the fold the user thinks nothing happened.
+  resultBox.scrollIntoView({ behavior: "smooth", block: "center" });
 
   let payload;
   try {

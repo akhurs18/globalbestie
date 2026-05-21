@@ -12599,3 +12599,366 @@ html.theme-dark body[data-page="portal"] .admin-tab:hover {
   .suggest-card { animation: none !important; }
   .suggest-hero img { transition: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL — light slate + sky accent
+   Re-skins the operator portal in a clean SaaS palette: cool greys,
+   pure whites, a single soft sky-blue accent. Visually lighter and
+   denser than the storefront's editorial blush. The storefront
+   (body[data-page!="portal"]) keeps its pink palette untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+body[data-page="portal"] {
+  --bg: #f7f9fc;                 /* very pale cool grey */
+  --surface: #ffffff;
+  --surface-2: #f1f4f9;
+  --ink: #0f172a;                /* slate-900 */
+  --ink-soft: #334155;           /* slate-700 */
+  --muted: #64748b;              /* slate-500 */
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.16);
+  --black: #0f172a;
+  --black-2: #1e293b;
+  --cream: #ffffff;
+  --rose: #e0f2fe;               /* sky-100 — soft accent surface */
+  --pink: #0ea5e9;               /* sky-500 — primary accent */
+  --pink-2: #0284c7;             /* sky-600 — hover / active */
+  --pink-3: #0369a1;             /* sky-700 — deepest text accent */
+  --pink-glow: rgba(14, 165, 233, 0.32);
+  --green: #16a34a;              /* slightly cooler green for ok states */
+  --amber: #d97706;
+  --red: #dc2626;
+  --shadow:
+    0 12px 36px rgba(15, 23, 42, 0.08),
+    0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-soft: 0 4px 16px rgba(15, 23, 42, 0.06);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* Portal site header gets a translucent white-on-slate look */
+body[data-page="portal"] .site-header {
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom-color: var(--line);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+body[data-page="portal"] .site-header[data-elevated="true"] {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 0 var(--line), 0 6px 24px rgba(15, 23, 42, 0.06);
+}
+
+/* Portal nav: clean side tabs against the slate-grey background */
+body[data-page="portal"] .admin-tabs {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+body[data-page="portal"] .admin-tab {
+  color: var(--muted);
+  background: transparent;
+  border-radius: 8px;
+  margin: 2px 6px;
+  padding: 9px 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: color 180ms var(--ease), background 180ms var(--ease);
+}
+
+body[data-page="portal"] .admin-tab:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+body[data-page="portal"] .admin-tab.active {
+  color: var(--pink-3);
+  background: var(--rose);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+/* Today ribbon — flatter cards on the slate background */
+body[data-page="portal"] .today-ribbon {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+body[data-page="portal"] .today-stat {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+body[data-page="portal"] .today-stat:hover {
+  background: var(--surface-2);
+}
+
+body[data-page="portal"] .today-freshness {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+body[data-page="portal"] .freshness-dot {
+  background: var(--green);
+  box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4);
+}
+
+/* KPI cards — clean white tiles, slate text */
+body[data-page="portal"] .kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  padding: 18px 20px;
+}
+
+body[data-page="portal"] .kpi-card.tone-ok .kpi-value { color: var(--ink); }
+body[data-page="portal"] .kpi-card.tone-warn .kpi-value { color: var(--red); }
+
+body[data-page="portal"] .kpi-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+body[data-page="portal"] .kpi-value {
+  font-family: "Inter", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+body[data-page="portal"] .kpi-sub {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+body[data-page="portal"] .kpi-trend.tone-ok   { background: rgba(22, 163, 74, 0.1); color: var(--green); }
+body[data-page="portal"] .kpi-trend.tone-warn { background: rgba(220, 38, 38, 0.1); color: var(--red); }
+body[data-page="portal"] .kpi-trend.tone-info { background: rgba(15, 23, 42, 0.06); color: var(--muted); }
+
+/* Panels, tables, drop-zones — quiet slate borders, pure white surfaces */
+body[data-page="portal"] .ops-panel,
+body[data-page="portal"] .admin-panel > section,
+body[data-page="portal"] .admin-table-wrap,
+body[data-page="portal"] .sourcing-tray,
+body[data-page="portal"] .cashflow-card,
+body[data-page="portal"] .kanban-col {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+body[data-page="portal"] .ops-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+/* Table rows — subtle hover, soft alternating rows */
+body[data-page="portal"] .admin-table thead {
+  background: var(--surface-2);
+}
+
+body[data-page="portal"] .admin-table th {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-color: var(--line);
+}
+
+body[data-page="portal"] .admin-table td {
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+body[data-page="portal"] .admin-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+/* Buttons — primary sky-blue, secondary white-on-line */
+body[data-page="portal"] .button.primary {
+  background: var(--pink);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.28);
+}
+
+body[data-page="portal"] .button.primary:hover {
+  background: var(--pink-2);
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(14, 165, 233, 0.36);
+}
+
+body[data-page="portal"] .button.primary::after {
+  display: none; /* kill the storefront's gradient-fade pseudo */
+}
+
+body[data-page="portal"] .button.secondary,
+body[data-page="portal"] .button.ghost {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+
+body[data-page="portal"] .button.secondary:hover,
+body[data-page="portal"] .button.ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+/* Inputs / selects */
+body[data-page="portal"] input,
+body[data-page="portal"] select,
+body[data-page="portal"] textarea {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  border-radius: 8px;
+}
+
+body[data-page="portal"] input:focus,
+body[data-page="portal"] select:focus,
+body[data-page="portal"] textarea:focus {
+  outline: none;
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.18);
+}
+
+/* Pills, chips, badges — sky-blue accent family */
+body[data-page="portal"] .status-pill.preorder,
+body[data-page="portal"] .segment-chip,
+body[data-page="portal"] .row-status-chip {
+  background: var(--rose);
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .status-pill.in_stock {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--green);
+}
+
+/* Kanban — flat cards, slate dividers */
+body[data-page="portal"] .kanban-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+body[data-page="portal"] .kanban-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+body[data-page="portal"] .kanban-col {
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+/* Sourcing-tray / Suggest-10 cards take the new accent */
+body[data-page="portal"] .suggest-card.is-selected {
+  border-color: var(--pink);
+  box-shadow:
+    0 0 0 3px rgba(14, 165, 233, 0.18),
+    var(--shadow);
+}
+
+body[data-page="portal"] .suggest-img-count {
+  background: var(--rose);
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .suggest-field-price {
+  background: linear-gradient(180deg, var(--rose) 0%, var(--surface) 100%);
+  border-color: var(--pink);
+}
+
+body[data-page="portal"] .suggest-price-prefix,
+body[data-page="portal"] .customer-price-prefix {
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .customer-price-row {
+  background: linear-gradient(180deg, var(--rose) 0%, var(--surface) 100%);
+  border-color: var(--pink);
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.1);
+}
+
+/* Money bar — recolor the four flow segments to the slate/sky family */
+body[data-page="portal"] .money-bar-out  { background: var(--red); }
+body[data-page="portal"] .money-bar-in   { background: var(--green); }
+body[data-page="portal"] .money-bar-near { background: var(--pink); }
+body[data-page="portal"] .money-bar-far  { background: var(--muted); }
+
+/* Funnel: switch the gradient stops to sky-blue */
+body[data-page="portal"] svg#funnelGradInfo stop,
+body[data-page="portal"] svg defs linearGradient[id="funnelGradInfo"] stop:nth-child(1) {
+  stop-color: var(--pink);
+}
+
+/* Pipeline + sparklines: ensure good contrast */
+body[data-page="portal"] .kpi-sparkline polyline { stroke: var(--pink) !important; }
+body[data-page="portal"] .kpi-sparkline circle  { fill: var(--pink) !important; }
+
+/* Sticky bulk-action bar / segment bar */
+body[data-page="portal"] .segment-bar,
+body[data-page="portal"] .bulk-action-bar,
+body[data-page="portal"] .quick-filter-row {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+body[data-page="portal"] .quick-filter-row button {
+  color: var(--muted);
+}
+
+body[data-page="portal"] .quick-filter-row button.active {
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .quick-filter-row button.active::after {
+  background: var(--pink);
+}
+
+/* Smaller / quieter shadows everywhere — the storefront blush palette
+   used deeper shadows for the editorial feel; the portal wants
+   functional clarity. */
+body[data-page="portal"] .product-card,
+body[data-page="portal"] .admin-order-card {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Form section titles inside the product editor */
+body[data-page="portal"] .form-section-title {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+
+/* Admin headings */
+body[data-page="portal"] .admin-heading h1 {
+  color: var(--ink);
+  font-family: "Inter", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+body[data-page="portal"] .kicker {
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .kicker::before {
+  background: var(--pink);
+}
