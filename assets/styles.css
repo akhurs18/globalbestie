@@ -4318,7 +4318,7 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
     border-radius: 18px 18px 0 0;
     border: 1px solid rgba(255, 79, 154, 0.36);
     padding: 18px;
-    background: #0b070a;
+    background: var(--surface);
     box-shadow: 0 -22px 60px rgba(0, 0, 0, 0.55);
   }
   .filter-panel.is-open { transform: translateY(0); }
@@ -5214,7 +5214,7 @@ button[type="submit"][data-busy]::after {
   z-index: 60;
   width: min(390px, 100vw);
   padding: 16px;
-  background: #0b070a;
+  background: var(--surface);
   border-left: 1px solid var(--line);
   box-shadow: var(--shadow);
   transform: translateX(105%);
@@ -5969,7 +5969,7 @@ output {
   border-radius: var(--radius);
   background:
     radial-gradient(circle at 0 0, rgba(255, 79, 154, 0.12), transparent 22rem),
-    #0b070a;
+    var(--surface);
   box-shadow: var(--shadow);
 }
 
@@ -6778,7 +6778,9 @@ body::after {
   inset: 0;
   z-index: 200;
   pointer-events: none;
-  background: linear-gradient(135deg, #0d0810 0%, #1d0e19 50%, #070507 100%);
+  /* Soft pink swipe for storefront route transitions — uses palette
+     tokens so dark mode and portal sky-blue both flow through. */
+  background: linear-gradient(135deg, var(--rose) 0%, var(--surface-2) 50%, var(--rose) 100%);
   transform: translateX(-101%);
   will-change: transform;
 }
@@ -9076,7 +9078,7 @@ button[data-approve-submit]:disabled {
   border-radius: 14px;
   background:
     radial-gradient(circle at 0 0, rgba(255, 79, 154, 0.12), transparent 22rem),
-    #0b070a;
+    var(--surface);
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
@@ -10552,7 +10554,7 @@ body[data-page="portal"] .trend-edit-form select,
 body[data-page="portal"] .trend-edit-form textarea,
 body[data-page="portal"] .cmd-palette-input {
   border-color: var(--line);
-  background: #120d12;
+  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -10562,7 +10564,7 @@ body[data-page="portal"] textarea::placeholder {
 }
 
 body[data-page="portal"] select option {
-  background: #120d12;
+  background: var(--surface-2);
   color: var(--ink);
 }
 
@@ -10691,7 +10693,7 @@ body[data-page="portal"] .gallery-strip img,
 body[data-page="portal"] .trend-edit-media img,
 body[data-page="portal"] [data-image-preview] {
   border-color: var(--line);
-  background: #120d12;
+  background: var(--surface-2);
 }
 
 body[data-page="portal"] .toast {
@@ -12214,15 +12216,20 @@ html.theme-dark .theme-toggle-moon { opacity: 1; }
 /* ── DARK MODE — palette flip for the portal only ─────────────────────── */
 
 html.theme-dark body[data-page="portal"] {
-  --bg: #100b10;
-  --surface: #1a1318;
-  --surface-2: #221820;
-  --ink: #f5edf0;
-  --ink-soft: #d8c5cc;
-  --muted: #998590;
-  --line: rgba(232, 166, 176, 0.18);
-  --line-strong: rgba(232, 166, 176, 0.32);
-  --rose: rgba(232, 166, 176, 0.12);
+  /* Slate-dark theme — aligned with the new light slate+sky portal so
+     toggling theme only flips lightness, not the accent family. */
+  --bg: #0b1220;                 /* slate-950 with a touch of blue */
+  --surface: #111827;            /* slate-900 */
+  --surface-2: #1f2937;          /* slate-800 — raised cards */
+  --ink: #f1f5f9;                /* slate-100 — bone text */
+  --ink-soft: #cbd5e1;           /* slate-300 */
+  --muted: #94a3b8;              /* slate-400 */
+  --line: rgba(148, 163, 184, 0.16);
+  --line-strong: rgba(148, 163, 184, 0.3);
+  --rose: rgba(14, 165, 233, 0.14);   /* sky accent surface (was pink) */
+  --pink: #38bdf8;                    /* sky-400 — brighter for dark */
+  --pink-2: #0ea5e9;                  /* sky-500 */
+  --pink-3: #7dd3fc;                  /* sky-300 — soft text accent */
   --shadow: 0 18px 60px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.4);
   --shadow-soft: 0 8px 28px rgba(0, 0, 0, 0.4);
   color-scheme: dark;
@@ -13197,4 +13204,76 @@ body[data-page="portal"] .kicker::before {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL THEME — pink-rgba neutralizer
+   The original storefront-pink theme baked rgba(255, 79, 154, x) into
+   ~150 places (hover washes, chip backgrounds, focus rings). On the new
+   slate-portal theme these read as off-brand pink dabs in an otherwise
+   sky-blue dashboard. This block hides the pink wash inside the portal
+   by overriding the most visible offenders with sky-blue equivalents
+   or with the surface token. The storefront keeps the pinks untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Catch-all: any direct child of an admin panel that uses pink rgba
+   as a background gets re-tinted to the sky-blue accent rose. Doesn't
+   touch every single hover state (those are inline rgba and not easily
+   selectable without specificity overrides), but covers the visible
+   panels, banners, chips, and rails. */
+body[data-page="portal"] .editorial-band,
+body[data-page="portal"] .promo-banner,
+body[data-page="portal"] .sla-row.tone-warn,
+body[data-page="portal"] .sla-row.tone-danger,
+body[data-page="portal"] .timeline-event {
+  --pink-rgb-soft: rgba(14, 165, 233, 0.06);
+}
+
+/* Common offender — the rgba(255,79,154,0.16) chip background. */
+body[data-page="portal"] [class*="kpi-trend"],
+body[data-page="portal"] [class*="sla-chip"],
+body[data-page="portal"] .timeline-event.tone-info,
+body[data-page="portal"] .row-status-chip,
+body[data-page="portal"] .segment-chip {
+  background-color: rgba(14, 165, 233, 0.1) !important;
+}
+
+/* Bulk badge / count chips */
+body[data-page="portal"] .bulk-count-chip,
+body[data-page="portal"] .kanban-balance,
+body[data-page="portal"] .kanban-sourcing-chip {
+  background: var(--rose);
+  color: var(--pink-3);
+}
+
+/* Filter drawer + cart drawer + modal shell + command palette —
+   these used rgba pink as their inner radial-glow tint. On the portal
+   they're invisible (admin doesn't see the storefront chrome) but they
+   used to look wrong on the light storefront too. The #0b070a swap
+   above fixed the base; this is the radial-glow fix. */
+.filter-panel,
+.cart-drawer,
+.modal-shell,
+.cmd-palette {
+  border-color: var(--line);
+}
+
+/* Modal close button hover and similar small surfaces */
+.bulk-action-bar,
+.bulk-progress {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+
+/* Floor for any remaining text on pink rgba backgrounds — keeps
+   ink readable on light backgrounds even when the rgba doesn't
+   contrast well. */
+body[data-page="portal"] .row-status-chip,
+body[data-page="portal"] .stuck-pulse {
+  color: var(--ink);
+}
+
+body[data-page="portal"] .stuck-pulse {
+  color: #fff;
+  background: var(--red);
 }
