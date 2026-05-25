@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260522-portal-slate" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-oms-upgrade" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -670,47 +670,14 @@
                a disclosure. Customers without a link (e.g. browsing a US
                store on their phone, or quoting something seen in person)
                can still type the USD price in. Same backend math. -->
-          <details class="quote-manual-disclosure">
-            <summary>
-              <span>Don't have a link? Estimate from the USA retail price</span>
-              <span class="quote-manual-chev" aria-hidden="true">+</span>
-            </summary>
-            <form class="quote-estimator-card" data-quote-form>
-              <div class="quote-form-grid">
-                <label>USA retail price
-                  <span class="input-prefix">$</span>
-                  <input name="usa_price_usd" type="number" min="1" step="0.01" value="100" required />
-                </label>
-                <label>Category
-                  <select name="category">
-                    <option value="handbags">Handbag</option>
-                    <option value="shoes">Shoes</option>
-                    <option value="makeup">Makeup</option>
-                    <option value="fragrance">Fragrance</option>
-                    <option value="accessories">Accessories</option>
-                  </select>
-                </label>
-                <!-- Shipping + FX are intentionally NOT shown to the customer
-                     on this page. Exposing the working FX or category shipping
-                     bands turns the estimator into a margin-reverse-engineering
-                     tool. The JS still reads these hidden fields to compute
-                     the estimate; they're populated from store_settings at
-                     render time and the customer never sees the values. -->
-                <input type="hidden" name="shipping_pkr" data-quote-shipping />
-                <input type="hidden" name="fx_rate" data-quote-fx />
-              </div>
-              <label class="quote-check-row">
-                <input name="shoe_box" type="checkbox" />
-                Add original shoe box fee when ordering shoes
-              </label>
-              <div class="quote-result" data-quote-result aria-live="polite"></div>
-              <div class="quote-actions">
-                <button class="button secondary" type="button" data-action="add-quote-estimate">Add quote to bag</button>
-                <a class="button primary" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-quote-whatsapp data-support-whatsapp>DM us this quote</a>
-                <a class="button ghost" href="/preorder" data-route="preorder">How preorder works</a>
-              </div>
-            </form>
-          </details>
+          <!-- Manual USD estimator removed — the URL paste flow above is
+               the canonical entry point. If a customer doesn't have a
+               link they're funneled to WhatsApp via the "blocked"
+               branch's CTA in the result card. -->
+
+          <p class="quote-no-link-hint">
+            Don't have a link? <a href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>Send us what you're looking for on WhatsApp</a> — we'll quote it within 15 minutes.
+          </p>
         </div>
       </section>
 
@@ -925,6 +892,6 @@
 
     <div id="page-curtain" aria-hidden="true"></div>
 
-    <script type="module" src="./assets/app.js?v=20260522-portal-slate"></script>
+    <script type="module" src="./assets/app.js?v=20260524-oms-upgrade"></script>
   </body>
 </html>

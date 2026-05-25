@@ -12962,3 +12962,239 @@ body[data-page="portal"] .kicker {
 body[data-page="portal"] .kicker::before {
   background: var(--pink);
 }
+
+/* /quote — "no link?" hint replaces the old manual USD estimator. */
+.quote-no-link-hint {
+  margin: 20px 0 0;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 0.94rem;
+  text-align: center;
+}
+
+.quote-no-link-hint a {
+  color: var(--pink-3);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   OMS ENHANCEMENTS — patterns lifted from Shopify, Brightpearl,
+   Linnworks, Veeqo, NetSuite dashboards.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Owner avatar chip ─────────────────────────────────────────────────── */
+.owner-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--surface);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.owner-chip.is-unassigned {
+  color: var(--muted);
+  text-shadow: none;
+  box-shadow: 0 0 0 2px var(--surface), inset 0 0 0 1px var(--line);
+}
+
+.customer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.customer-row > span {
+  font-weight: 500;
+}
+
+/* ── Order-age tint on rows ────────────────────────────────────────────── */
+.order-row.age-warm {
+  border-left: 3px solid var(--amber);
+}
+
+.order-row.age-hot {
+  border-left: 3px solid var(--red);
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.04), transparent 30%);
+}
+
+.order-row.age-hot:hover {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.08), var(--surface-2));
+}
+
+/* ── Stuck-order pulse chip ────────────────────────────────────────────── */
+.stuck-pulse {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 2px;
+  animation: stuck-pulse 2s ease-in-out infinite;
+}
+
+@keyframes stuck-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55); }
+  50%      { transform: scale(1.04); box-shadow: 0 0 0 5px rgba(220, 38, 38, 0); }
+}
+
+.order-row.is-stuck {
+  position: relative;
+}
+
+/* ── Customer LTV chip ─────────────────────────────────────────────────── */
+.ltv-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--rose);
+  color: var(--pink-3);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.ltv-chip.is-new {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--green);
+}
+
+/* ── Inline activity tooltip ───────────────────────────────────────────── */
+.cell-customer {
+  position: relative;
+}
+
+.row-activity-pop {
+  position: absolute;
+  z-index: 30;
+  left: 0;
+  bottom: calc(100% + 4px);
+  width: 300px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+}
+
+.row-activity-pop strong {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.row-activity-pop ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.row-activity-pop li {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.row-activity-pop li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.row-activity-pop li strong {
+  display: inline;
+  font-size: 0.74rem;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.cell-customer:hover .row-activity-pop {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Don't show the tooltip on rows that are being hovered for a click —
+   we want it only on intentional hover-pause. Add a tiny delay. */
+.row-activity-pop {
+  transition-delay: 240ms;
+}
+
+.cell-customer:hover .row-activity-pop {
+  transition-delay: 240ms;
+}
+
+/* ── Auto-refresh ping animation on the freshness chip ────────────────── */
+.today-freshness.has-ping {
+  animation: freshness-ping 1.6s ease-out;
+  border-color: var(--green);
+  color: var(--green);
+}
+
+@keyframes freshness-ping {
+  0%   { transform: scale(1); }
+  20%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+.today-freshness.has-ping .freshness-dot {
+  animation-duration: 0.8s;
+}
+
+/* ── Kanban stage totals ──────────────────────────────────────────────── */
+.kanban-col-titlerow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kanban-col-total {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.74rem;
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Reduced-motion mute */
+@media (prefers-reduced-motion: reduce) {
+  .stuck-pulse,
+  .today-freshness.has-ping,
+  .row-activity-pop {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -2442,6 +2442,7 @@ function renderTodayRibbon() {
 // 5-second ticker that updates the "Updated Xs ago" label inside the
 // today ribbon. Single global interval — restarts itself idempotently.
 let _freshnessTickerId = null;
+let _autoRefreshTickerId = null;
 function startFreshnessTicker() {
   if (_freshnessTickerId) return;
   _freshnessTickerId = setInterval(() => {
@@ -2465,6 +2466,39 @@ function startFreshnessTicker() {
       wrap.classList.toggle("is-stale", secs > 300);
     }
   }, 5_000);
+}
+
+// Background auto-refresh — every 30s while the portal tab is visible
+// the dashboard polls /api/admin/dashboard. If new orders arrived since
+// the last poll we ping the freshness dot and surface a one-line toast
+// so the operator knows fresh work is waiting without staring at the tab.
+function startAutoRefresh() {
+  if (_autoRefreshTickerId) return;
+  _autoRefreshTickerId = setInterval(async () => {
+    if (document.body.dataset.page !== "portal") return;
+    if (document.visibilityState !== "visible") return;          // pause if backgrounded
+    if (!state.adminToken && !document.cookie.includes("gb_team_session=")) return;
+    if (state._autoRefreshInflight) return;                       // no overlap
+    state._autoRefreshInflight = true;
+    const previousIds = new Set((state.orders || []).map((o) => o.id));
+    try {
+      await refreshAdmin();
+      const fresh = (state.orders || []).filter((o) => !previousIds.has(o.id));
+      if (fresh.length) {
+        // Ping the freshness chip + toast. Once-only per refresh tick.
+        const wrap = qs("[data-today-freshness]");
+        if (wrap) {
+          wrap.classList.add("has-ping");
+          setTimeout(() => wrap.classList.remove("has-ping"), 2500);
+        }
+        toast(`${fresh.length} new order${fresh.length === 1 ? "" : "s"} just landed.`);
+      }
+    } catch {
+      /* silent — next tick will retry */
+    } finally {
+      state._autoRefreshInflight = false;
+    }
+  }, 30_000);
 }
 
 // ─── Overview rewrites ───
@@ -4408,11 +4442,17 @@ function renderKanbanBoard(rows) {
     const isExpanded = expanded.has(col.key);
     const visible = (cards.length > KANBAN_VISIBLE_LIMIT && !isExpanded) ? cards.slice(0, KANBAN_VISIBLE_LIMIT) : cards;
     const hiddenCount = cards.length - visible.length;
+    // Stage totals — sum of total_pkr for every order in this column.
+    // Surfaces "how much money is sitting at each stage" at a glance.
+    const stageTotal = cards.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
     return `
       <div class="kanban-col tone-${col.tone}" data-kanban-col="${attr(col.key)}">
         <header>
-          <strong>${esc(col.label)}</strong>
-          <span class="kanban-count">${cards.length}</span>
+          <div class="kanban-col-titlerow">
+            <strong>${esc(col.label)}</strong>
+            <span class="kanban-count">${cards.length}</span>
+          </div>
+          ${cards.length ? `<small class="kanban-col-total" title="${attr(PKR.format(stageTotal))} across ${cards.length} order${cards.length === 1 ? "" : "s"}">${shortPkr(stageTotal)} total</small>` : ""}
         </header>
         <div class="kanban-cards" data-kanban-drop="${attr(col.key)}">
           ${visible.length
@@ -4591,6 +4631,110 @@ function orderSlaBadge(order) {
   return null;
 }
 
+// ═══════════════════════ OMS-STYLE ROW HELPERS ═══════════════════════════
+// Inspired by Shopify / Brightpearl / Linnworks dashboards — small affordances
+// that pay off when the team is processing dozens of orders per hour.
+
+// Build a stable HSL colour from a name so each owner's avatar is recognisable
+// without any image upload. The hue is name-derived; saturation/lightness
+// fixed so it works against both light and dark portal themes.
+function ownerAvatarColor(name) {
+  if (!name) return "hsl(220, 10%, 70%)";
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 52%, 56%)`;
+}
+
+function ownerAvatar(name) {
+  const display = (name || "Unassigned").trim();
+  const initials = display === "Unassigned" ? "?" : display
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase();
+  const bg = display === "Unassigned" ? "var(--line-strong)" : ownerAvatarColor(display);
+  const muted = display === "Unassigned" ? " is-unassigned" : "";
+  return `<span class="owner-chip${muted}" title="${attr(display)}" style="background:${bg};">${esc(initials)}</span>`;
+}
+
+// Age in hours — used to tint rows that have sat in the system too long
+// regardless of stage. 0–24h = fresh, 24–72h = warm, 72h+ = hot.
+function orderAgeTone(order) {
+  const created = new Date(order.created_at || 0).getTime();
+  if (!created || order.status === "delivered" || order.status === "cancelled") return "fresh";
+  const hrs = (Date.now() - created) / 3_600_000;
+  if (hrs >= 72) return "hot";
+  if (hrs >= 24) return "warm";
+  return "fresh";
+}
+
+// "Stuck order" — same status for 2× the typical SLA target. Pulses red.
+// Doesn't fire for terminal stages (delivered / cancelled).
+const STAGE_TYPICAL_HOURS = {
+  pending_review: 1,
+  accepted: 24,
+  sourcing: 168,        // 7 days
+  in_transit: 336,      // 14 days
+  pakistan_processing: 48,
+};
+
+function isOrderStuck(order) {
+  const target = STAGE_TYPICAL_HOURS[order.status];
+  if (!target) return false;
+  const stamp = order.updated_at || order.accepted_at || order.created_at;
+  if (!stamp) return false;
+  const hoursInStage = (Date.now() - new Date(stamp).getTime()) / 3_600_000;
+  return hoursInStage > target * 2;
+}
+
+// Customer LTV chip — quick lifetime spend + repeat count, computed from
+// the orders already in state. O(N) per render; fine for the typical
+// 100–500-order working set.
+const _customerLtvCache = new WeakMap();
+function customerLtv(order) {
+  if (!order?.customer_phone) return null;
+  // Cache by the orders array reference so we recompute on data refresh
+  // but not on every render.
+  let cache = _customerLtvCache.get(state.orders);
+  if (!cache) {
+    cache = new Map();
+    for (const o of state.orders) {
+      const key = canonPhone ? canonPhone(o.customer_phone) : o.customer_phone;
+      const cur = cache.get(key) || { count: 0, total: 0 };
+      cur.count++;
+      cur.total += Number(o.total_pkr || 0);
+      cache.set(key, cur);
+    }
+    _customerLtvCache.set(state.orders, cache);
+  }
+  const key = canonPhone ? canonPhone(order.customer_phone) : order.customer_phone;
+  return cache.get(key) || null;
+}
+
+function customerLtvChip(order) {
+  const ltv = customerLtv(order);
+  if (!ltv) return "";
+  if (ltv.count === 1) {
+    return `<span class="ltv-chip is-new" title="First order from this customer">New customer</span>`;
+  }
+  return `<span class="ltv-chip" title="${ltv.count} orders · lifetime spend ${PKR.format(ltv.total)}">${ltv.count}× · ${shortPkr(ltv.total)}</span>`;
+}
+
+// Hover tooltip — last 3 events on the order. Rendered inline so it works
+// with no JS (CSS-only :hover reveal). Kept short so it doesn't dominate.
+function orderActivityTooltip(order) {
+  const events = orderEvents(order).slice(-3).reverse();
+  if (!events.length) return "";
+  const items = events.map((e) => {
+    const when = e.created_at ? new Date(e.created_at).toLocaleString("en-PK", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+    const status = String(e.status || "").replaceAll("_", " ");
+    return `<li><strong>${esc(when)}</strong> · ${esc(status)}${e.note ? ` — ${esc(e.note.slice(0, 80))}` : ""}</li>`;
+  }).join("");
+  return `<div class="row-activity-pop" role="tooltip"><strong>Recent activity</strong><ol>${items}</ol></div>`;
+}
+
 function renderAdminOrders() {
   if (!has("[data-admin-orders]")) return;
   renderOrderViewsChips();
@@ -4702,11 +4846,27 @@ function renderAdminOrders() {
       ? `<button class="sla-chip sla-${sla.level}" type="button" data-action="toggle-sla-filter" data-stop-row title="Filter to SLA breaches only">${esc(sla.label)}</button>`
       : "";
     const isSelected = state.selectedOrders?.has(order.id);
+    // OMS-style row treatments — age tint, stuck pulse, owner avatar, LTV
+    // chip, inline activity-tooltip-on-hover. The tooltip is rendered as a
+    // sibling element revealed via CSS :hover so we don't pay JS cost
+    // unless the operator hovers.
+    const ageTone = orderAgeTone(order);
+    const stuck = isOrderStuck(order);
+    const stuckChip = stuck ? `<span class="stuck-pulse" title="Same status for 2× typical — chase this">stuck</span>` : "";
+    const ageHint = ageTone === "hot" ? "Aged 3+ days — chase or close" : ageTone === "warm" ? "Aged 1–3 days" : "";
     return `
-    <tr class="order-row${slaClass}${isSelected ? " is-selected" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
+    <tr class="order-row${slaClass}${isSelected ? " is-selected" : ""} age-${ageTone}${stuck ? " is-stuck" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
       <td class="bulk-col" data-stop-row><input type="checkbox" data-order-select="${attr(order.id)}" ${isSelected ? "checked" : ""} aria-label="Select order ${attr(order.id)}" /></td>
-      <td><strong>${esc(order.id)}</strong>${slaChip}<br /><small>${new Date(order.created_at).toLocaleString()}</small></td>
-      <td>${esc(order.customer_name)}<br /><small>${esc(order.customer_phone)} · ${esc(order.city)}</small><br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small></td>
+      <td>
+        <strong>${esc(order.id)}</strong>${slaChip}${stuckChip}
+        <br /><small${ageHint ? ` title="${attr(ageHint)}"` : ""}>${new Date(order.created_at).toLocaleString()}</small>
+      </td>
+      <td class="cell-customer">
+        <div class="customer-row">${ownerAvatar(order.owner)}<span>${esc(order.customer_name)}</span>${customerLtvChip(order)}</div>
+        <small>${esc(order.customer_phone)} · ${esc(order.city)}</small>
+        <br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small>
+        ${orderActivityTooltip(order)}
+      </td>
       <td>
         <select data-order-status="${attr(order.id)}" data-stop-row>
           ${ORDER_STEPS.map(([status, label]) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${label}</option>`).join("")}
@@ -10254,36 +10414,46 @@ function wireEvents() {
     }
   });
 
-  // Kanban keyboard shortcuts.
-  //   j / ↓  →  next card
-  //   k / ↑  →  prev card
-  //   Enter  →  open focused order
-  //   ?      →  show help toast
-  // Only active when the Kanban board is visible and no input is focused.
+  // Keyboard shortcuts for the Orders tab — work on both Kanban (cards)
+  // and List (rows) views.
+  //   j / ↓        →  next item
+  //   k / ↑        →  prev item
+  //   Enter        →  open focused order
+  //   Shift+?      →  help toast
+  // Only active when no input/select/textarea is focused.
   document.addEventListener("keydown", (event) => {
     if (document.body.dataset.page !== "portal") return;
-    if (state.ordersView !== "board") return;
     const tag = (event.target?.tagName || "").toLowerCase();
     if (["input", "textarea", "select"].includes(tag)) return;
     if (event.target?.isContentEditable) return;
-    const cards = qsa("[data-kanban-drag]");
-    if (!cards.length) return;
-    const currentIdx = cards.findIndex((c) => c === document.activeElement);
+
+    const isBoard = state.ordersView === "board";
+    const items = isBoard
+      ? qsa("[data-kanban-drag]")
+      : qsa("[data-admin-orders] tr.order-row");
+    if (!items.length) return;
+
+    const currentIdx = items.findIndex((c) => c === document.activeElement || c.contains(document.activeElement));
     const move = (delta) => {
       event.preventDefault();
-      const next = cards[Math.max(0, Math.min(cards.length - 1, currentIdx + delta))];
-      if (next) next.focus();
+      const baseIdx = currentIdx === -1 ? 0 : currentIdx;
+      const next = items[Math.max(0, Math.min(items.length - 1, baseIdx + delta))];
+      if (next) {
+        next.focus();
+        // List rows aren't position:absolute — scroll them into view manually.
+        next.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
     };
     if (event.key === "j" || event.key === "ArrowDown") return move(1);
-    if (event.key === "k" || event.key === "ArrowUp") return move(-1);
+    if (event.key === "k" || event.key === "ArrowUp")   return move(-1);
     if (event.key === "Enter" && currentIdx >= 0) {
       event.preventDefault();
-      cards[currentIdx].click();
+      items[currentIdx].click();
       return;
     }
     if (event.key === "?" && event.shiftKey) {
       event.preventDefault();
-      toast("Kanban shortcuts: j/k or ↑/↓ to navigate · Enter to open · drag to change status");
+      toast("Shortcuts: j/k or ↑/↓ to navigate · Enter to open · drag (board) or status select (list) to advance");
       return;
     }
   });
@@ -10898,7 +11068,12 @@ function init() {
   checkSession();
   // Portal-only: 5s freshness ticker for the today ribbon's "Updated Xs
   // ago" indicator. Cheap interval — only updates one DOM node.
-  if (document.body.dataset.page === "portal") startFreshnessTicker();
+  if (document.body.dataset.page === "portal") {
+    startFreshnessTicker();
+    // 30s background refresh — keeps the dashboard live without staring
+    // at the Refresh button. Pauses when the tab is hidden.
+    startAutoRefresh();
+  }
 }
 
 // ═════════════════════ CUSTOMER ACCOUNT (storefront) ═════════════════════
