@@ -2063,6 +2063,7 @@ function renderAdmin() {
   renderDemoBanner();
   renderFxBanner();
   renderLaunchChecklist();
+  renderOperatorAlertsPanel();
   renderCashflow();
   renderCustomersTab();
   renderOverviewExtras();
@@ -2198,6 +2199,65 @@ function renderChurnAlerts() {
 // Conversion funnel — orders over the last 30 days broken down into the
 // four key states (received → accepted → paid → delivered) so the team
 // can see the drop-off shape at a glance.
+// 30-day order heatmap. GitHub-style grid; weekdays as rows, weeks as
+// columns. Each cell intensity = number of orders that day, scaled to
+// the busiest day in the window. Hover for "Mon 12 May · 3 orders".
+function renderOrderHeatmap() {
+  const slot = qs("[data-order-heatmap]");
+  if (!slot) return;
+  const days = 30;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  // Build a contiguous array of {date, count} for the last `days` days
+  // (oldest first). Then group by calendar week starting from the cell's
+  // weekday so the grid columns line up.
+  const buckets = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today.getTime() - i * 86_400_000);
+    const dayStart = date.getTime();
+    const dayEnd = dayStart + 86_400_000;
+    const count = (state.orders || []).filter((o) => {
+      const t = new Date(o.created_at || 0).getTime();
+      return t >= dayStart && t < dayEnd;
+    }).length;
+    buckets.push({ date, count });
+  }
+  const maxCount = Math.max(1, ...buckets.map((b) => b.count));
+
+  // Group into week columns. Find the Monday of the oldest week to pad
+  // leading empty cells.
+  const firstDow = buckets[0].date.getDay(); // 0=Sun..6=Sat
+  // Use Mon-as-start (offset = (dow + 6) % 7)
+  const pad = (firstDow + 6) % 7;
+  const cells = [];
+  for (let i = 0; i < pad; i++) cells.push(null);
+  for (const b of buckets) cells.push(b);
+
+  // Build column-major grid: 7 rows (Mon..Sun), N weeks.
+  const weeks = Math.ceil(cells.length / 7);
+  const weekdayLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
+
+  let html = `<div class="heatmap-grid" style="--weeks:${weeks}">`;
+  html += `<div class="heatmap-weekdays">${weekdayLabels.map((l) => `<span>${l}</span>`).join("")}</div>`;
+  html += `<div class="heatmap-cells">`;
+  for (let w = 0; w < weeks; w++) {
+    for (let d = 0; d < 7; d++) {
+      const idx = w * 7 + d;
+      const cell = cells[idx];
+      if (!cell) {
+        html += `<span class="heatmap-cell heatmap-empty" aria-hidden="true"></span>`;
+        continue;
+      }
+      const intensity = cell.count === 0 ? 0 : Math.ceil((cell.count / maxCount) * 4); // 0..4
+      const label = `${cell.date.toLocaleDateString("en-PK", { weekday: "short", day: "numeric", month: "short" })} · ${cell.count} order${cell.count === 1 ? "" : "s"}`;
+      html += `<span class="heatmap-cell heatmap-l${intensity}" title="${attr(label)}" aria-label="${attr(label)}"></span>`;
+    }
+  }
+  html += `</div></div>`;
+  // Legend.
+  html += `<div class="heatmap-legend"><span>Quiet</span><span class="heatmap-cell heatmap-l0"></span><span class="heatmap-cell heatmap-l1"></span><span class="heatmap-cell heatmap-l2"></span><span class="heatmap-cell heatmap-l3"></span><span class="heatmap-cell heatmap-l4"></span><span>Busy</span></div>`;
+  slot.innerHTML = html;
+}
+
 function renderConversionFunnel() {
   const slot = qs("[data-conversion-funnel]");
   if (!slot) return;
@@ -2468,6 +2528,405 @@ function startFreshnessTicker() {
   }, 5_000);
 }
 
+// Soft SLA chime. Pure Web Audio so it ships with no asset weight and
+// runs without permission. Triggered only when an order's SLA flips to
+// danger between auto-refresh ticks AND the operator opted in.
+const SLA_SOUND_KEY = "gb_sla_sound";
+
+function slaSoundPreferred() {
+  try { return localStorage.getItem(SLA_SOUND_KEY) === "on"; } catch { return false; }
+}
+
+let _slaAudioCtx = null;
+function playSlaChime() {
+  try {
+    _slaAudioCtx = _slaAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = _slaAudioCtx;
+    const now = ctx.currentTime;
+    // Two-tone chirp — gentle E5 → A5 over 240ms. Not aggressive.
+    [659.25, 880.00].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const start = now + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.16, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.25);
+    });
+  } catch {
+    /* AudioContext might be blocked until user gesture; silent fail */
+  }
+}
+
+// Track which orders we've already chimed for so a sticky SLA breach
+// doesn't replay the sound every tick.
+const _chimedOrderIds = new Set();
+function maybeFireSlaSound(newOrders) {
+  if (!slaSoundPreferred()) return;
+  for (const o of (state.orders || [])) {
+    if (_chimedOrderIds.has(o.id)) continue;
+    const sla = orderSlaBadge(o);
+    if (sla && sla.level === "danger") {
+      _chimedOrderIds.add(o.id);
+      playSlaChime();
+      // One chime per refresh — chain extras 400ms apart if multiple flipped
+      break;
+    }
+  }
+}
+
+// Renders the Settings-tab "Operator alerts" panel — desktop notification
+// toggle + SLA sound toggle. Surfaces the persisted preferences so the
+// operator can see the current state.
+function renderOperatorAlertsPanel() {
+  const target = qs("[data-operator-alerts]");
+  if (!target) return;
+  const notifOn = desktopNotifPreferred();
+  const soundOn = slaSoundPreferred();
+  const permState = typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+  target.innerHTML = `
+    <div class="alerts-row">
+      <div>
+        <strong>Desktop notifications</strong>
+        <small>Get a system popup when new orders arrive — works even with the portal tab in the background.</small>
+      </div>
+      <button class="button ${notifOn ? "primary" : "secondary"}" type="button" data-action="toggle-desktop-notif">
+        ${notifOn ? "On" : permState === "denied" ? "Blocked in browser" : "Turn on"}
+      </button>
+    </div>
+    <div class="alerts-row">
+      <div>
+        <strong>SLA breach sound</strong>
+        <small>Soft chime when an order's SLA flips to danger. One chime per breach, not per refresh.</small>
+      </div>
+      <button class="button ${soundOn ? "primary" : "secondary"}" type="button" data-action="toggle-sla-sound">
+        ${soundOn ? "On" : "Turn on"}
+      </button>
+    </div>
+  `;
+}
+
+// Print a packing slip / customer receipt for a single order. Opens a
+// pop-up window with a clean A4 layout, triggers window.print(), then
+// auto-closes once printing is dismissed. No server round-trip — the
+// data is already in state.
+function printOrderPackingSlip(orderId) {
+  const order = (state.orders || []).find((o) => o.id === orderId);
+  if (!order) {
+    toast("Order not found.");
+    return;
+  }
+  const items = (order.items || order.order_items || []).map((it) => `
+    <tr>
+      <td>${esc(it.title || "")}${it.variant ? `<br><small>${esc(it.variant)}</small>` : ""}</td>
+      <td style="text-align:right">${Number(it.quantity || 1)}</td>
+      <td style="text-align:right">${PKR.format(Number(it.unit_price_pkr || 0))}</td>
+      <td style="text-align:right">${PKR.format(Number(it.unit_price_pkr || 0) * Number(it.quantity || 1))}</td>
+    </tr>
+  `).join("");
+  const totalPkr = Number(order.total_pkr || 0);
+  const advance = Number(order.advance_due_pkr || 0);
+  const balance = Number(order.balance_due_pkr || 0);
+  const html = `<!doctype html><html><head>
+    <meta charset="utf-8" />
+    <title>Packing slip · ${esc(order.id)}</title>
+    <style>
+      @page { size: A4; margin: 16mm; }
+      * { box-sizing: border-box; }
+      body { font-family: "Helvetica Neue", Arial, sans-serif; color: #1a1318; margin: 0; padding: 0; font-size: 13px; line-height: 1.55; }
+      .ps-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a1318; padding-bottom: 14px; margin-bottom: 22px; }
+      .ps-brand { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+      .ps-brand small { display: block; font-size: 11px; font-weight: 400; color: #6b6168; margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+      .ps-id { text-align: right; font-size: 11px; color: #6b6168; }
+      .ps-id strong { display: block; font-size: 18px; color: #1a1318; letter-spacing: 0.02em; margin-bottom: 4px; }
+      .ps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+      .ps-box { padding: 14px 16px; border: 1px solid #e1d9dc; border-radius: 6px; }
+      .ps-box h4 { margin: 0 0 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6b6168; }
+      .ps-box p { margin: 0; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+      th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6b6168; border-bottom: 2px solid #1a1318; padding: 8px 6px; }
+      td { padding: 10px 6px; border-bottom: 1px solid #e1d9dc; vertical-align: top; }
+      .ps-totals { width: 280px; margin-left: auto; }
+      .ps-totals tr td { border: 0; padding: 4px 0; }
+      .ps-totals tr.grand td { font-weight: 700; font-size: 16px; border-top: 2px solid #1a1318; padding-top: 10px; }
+      .ps-footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e1d9dc; font-size: 11px; color: #6b6168; text-align: center; }
+      .ps-notes { margin-top: 18px; padding: 10px 14px; background: #f6f1f3; border-left: 3px solid #1a1318; font-size: 12px; }
+    </style>
+  </head><body>
+    <div class="ps-head">
+      <div class="ps-brand">Global Bestie<small>by kkR — USA to Pakistan</small></div>
+      <div class="ps-id">
+        <strong>${esc(order.id)}</strong>
+        ${new Date(order.created_at).toLocaleString("en-PK")}
+      </div>
+    </div>
+
+    <div class="ps-grid">
+      <div class="ps-box">
+        <h4>Deliver to</h4>
+        <p><strong>${esc(order.customer_name)}</strong></p>
+        <p>${esc(order.customer_phone)}${order.customer_email ? ` · ${esc(order.customer_email)}` : ""}</p>
+        <p>${esc(order.address)}</p>
+        <p>${esc(order.city)}</p>
+      </div>
+      <div class="ps-box">
+        <h4>Order status</h4>
+        <p><strong>${esc((order.status || "").replaceAll("_", " "))}</strong></p>
+        <p>Payment: ${esc((order.payment_status || "").replaceAll("_", " "))}</p>
+        <p>Channel: ${esc(order.channel || "Storefront")}</p>
+        ${order.tracking_number ? `<p>Tracking: ${esc(order.tracking_number)}</p>` : ""}
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Unit</th><th style="text-align:right">Line total</th></tr>
+      </thead>
+      <tbody>${items || `<tr><td colspan="4">No items</td></tr>`}</tbody>
+    </table>
+
+    <table class="ps-totals">
+      <tbody>
+        <tr><td>Subtotal</td><td style="text-align:right">${PKR.format(totalPkr)}</td></tr>
+        ${advance > 0 ? `<tr><td>50% advance</td><td style="text-align:right">${PKR.format(advance)}</td></tr>` : ""}
+        ${balance > 0 ? `<tr><td>Balance on arrival</td><td style="text-align:right">${PKR.format(balance)}</td></tr>` : ""}
+        <tr class="grand"><td>Total PKR</td><td style="text-align:right">${PKR.format(totalPkr)}</td></tr>
+      </tbody>
+    </table>
+
+    ${order.notes ? `<div class="ps-notes"><strong>Order notes:</strong> ${esc(order.notes)}</div>` : ""}
+
+    <div class="ps-footer">
+      Thank you for shopping with Global Bestie. Questions? WhatsApp us — replies within 15 minutes during business hours.
+    </div>
+
+    <script>window.addEventListener("load", () => { setTimeout(() => window.print(), 200); });</script>
+  </body></html>`;
+
+  const win = window.open("", `gb-print-${order.id}`, "width=820,height=920");
+  if (!win) {
+    toast("Pop-up blocked — allow pop-ups for this site, then try again.");
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+
+// Customer-level batch view — modal showing every order from this
+// customer's phone. Quick path: from any order row, click the LTV chip
+// or "N orders" badge to land here.
+function openCustomerOrdersModal(phone, fallbackName) {
+  if (!phone) return;
+  const canon = canonPhone ? canonPhone(phone) : String(phone).replace(/\D/g, "");
+  const orders = (state.orders || [])
+    .filter((o) => (canonPhone ? canonPhone(o.customer_phone) : String(o.customer_phone || "").replace(/\D/g, "")) === canon)
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  if (!orders.length) {
+    toast("No orders found for this customer.");
+    return;
+  }
+  const name = orders[0].customer_name || fallbackName || "Customer";
+  const total = orders.reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const delivered = orders.filter((o) => o.status === "delivered").length;
+  const open = orders.filter((o) => !["delivered", "cancelled"].includes(o.status)).length;
+  const balance = orders.reduce((s, o) => s + Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0)), 0);
+  const cities = [...new Set(orders.map((o) => o.city).filter(Boolean))];
+
+  const rows = orders.map((o) => {
+    const due = amountDueForOrder ? amountDueForOrder(o) : 0;
+    return `
+      <tr>
+        <td><strong>${esc(o.id)}</strong><br><small>${new Date(o.created_at).toLocaleDateString()}</small></td>
+        <td>${esc((o.status || "").replaceAll("_", " "))}<br><small>${esc((o.payment_status || "").replaceAll("_", " "))}</small></td>
+        <td>${shortPkr(Number(o.total_pkr || 0))}<br><small>${due > 0 ? `Due ${shortPkr(due)}` : "Paid"}</small></td>
+        <td>
+          <button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(o.id)}">Open</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  openModal(`
+    <div class="customer-orders-modal">
+      <header class="customer-orders-head">
+        <div>
+          ${ownerAvatar(name)}
+          <h3>${esc(name)}</h3>
+          <small>${esc(phone)}${cities.length ? ` · ${esc(cities.join(", "))}` : ""}</small>
+        </div>
+        <div class="customer-orders-stats">
+          <div><span>Lifetime spend</span><strong>${PKR.format(total)}</strong></div>
+          <div><span>Orders</span><strong>${orders.length}</strong></div>
+          <div><span>Delivered</span><strong>${delivered}</strong></div>
+          <div><span>Open</span><strong>${open}</strong></div>
+          ${balance > 0 ? `<div class="tone-warn"><span>Balance due</span><strong>${shortPkr(balance)}</strong></div>` : ""}
+        </div>
+      </header>
+      <table class="admin-table customer-orders-table">
+        <thead>
+          <tr><th>Order</th><th>Status</th><th>Total</th><th></th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `);
+}
+
+// Bulk WhatsApp send — picks a template from the existing library and
+// fires it to every phone in the bulk-selected order set via the
+// existing /api/admin/broadcast endpoint (now accepts filters.phones).
+// Modal preview shows the resolved body before the operator commits.
+
+function openBulkWhatsappModal() {
+  const selectedIds = state.selectedOrders ? [...state.selectedOrders] : [];
+  if (!selectedIds.length) {
+    toast("Select at least one order first.");
+    return;
+  }
+  const orders = (state.orders || []).filter((o) => selectedIds.includes(o.id));
+  const phones = [...new Set(orders.map((o) => String(o.customer_phone || "").replace(/\D/g, "")).filter(Boolean))];
+  if (!phones.length) {
+    toast("No valid phones in the selection.");
+    return;
+  }
+  const templates = (state.waTemplates && state.waTemplates.length) ? state.waTemplates : (typeof DEFAULT_WA_TEMPLATES !== "undefined" ? DEFAULT_WA_TEMPLATES : []);
+  const tplOptions = templates.map((t) => `<option value="${attr(t.id)}">${esc(t.name || t.id)}</option>`).join("");
+  openModal(`
+    <div class="bulk-wa-modal">
+      <h3>WhatsApp ${phones.length} customer${phones.length === 1 ? "" : "s"}</h3>
+      <p class="bulk-wa-intro">Picks the template, interpolates per-customer placeholders, sends one message each via Maychats. Opt-outs and over-messaged customers are skipped automatically.</p>
+      <label class="bulk-wa-field">
+        Template
+        <select data-bulk-wa-template>${tplOptions}</select>
+      </label>
+      <label class="bulk-wa-field">
+        Preview
+        <textarea data-bulk-wa-preview rows="5" readonly></textarea>
+      </label>
+      <div class="bulk-wa-stats" data-bulk-wa-stats>${phones.length} recipient${phones.length === 1 ? "" : "s"} ready</div>
+      <div class="bulk-wa-actions">
+        <button class="button primary" type="button" data-action="bulk-wa-send">Send to ${phones.length}</button>
+        <button class="button ghost" type="button" data-action="close-modal">Cancel</button>
+      </div>
+    </div>
+  `);
+  state._bulkWaPhones = phones;
+  refreshBulkWhatsappPreview();
+}
+
+function refreshBulkWhatsappPreview() {
+  const sel = qs("[data-bulk-wa-template]");
+  const preview = qs("[data-bulk-wa-preview]");
+  if (!sel || !preview) return;
+  const tplId = sel.value;
+  const templates = (state.waTemplates && state.waTemplates.length) ? state.waTemplates : [];
+  const tpl = templates.find((t) => t.id === tplId);
+  preview.value = tpl?.body || "Pick a template above.";
+}
+
+async function sendBulkWhatsapp() {
+  const phones = state._bulkWaPhones || [];
+  const tplSel = qs("[data-bulk-wa-template]");
+  const stats = qs("[data-bulk-wa-stats]");
+  if (!phones.length || !tplSel?.value) {
+    toast("Pick a template first.");
+    return;
+  }
+  if (stats) stats.textContent = `Sending to ${phones.length}…`;
+  try {
+    const headers = new Headers({ "Content-Type": "application/json" });
+    if (state.adminToken) headers.set("Authorization", `Bearer ${state.adminToken}`);
+    const response = await fetch("/api/admin/broadcast", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        template_id: tplSel.value,
+        filters: { phones },
+      }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (stats) stats.textContent = `Failed: ${payload.error || response.status}`;
+      toast(`Bulk WhatsApp failed: ${payload.error || "server error"}`);
+      return;
+    }
+    const sent = payload.sent ?? payload.recipient_count ?? phones.length;
+    const skipped = payload.skipped_opt_out || 0;
+    if (stats) stats.textContent = `Sent ${sent} · ${skipped} skipped (opt-out / over-messaged).`;
+    toast(`WhatsApp sent to ${sent} customer${sent === 1 ? "" : "s"}.`);
+    setTimeout(() => closeModal(), 1800);
+  } catch (err) {
+    if (stats) stats.textContent = `Failed: ${err.message || err}`;
+    toast("Network error sending broadcast.");
+  }
+}
+
+// Browser desktop notification helper. Opt-in via Notification.requestPermission()
+// triggered from a Settings toggle. State persists in localStorage so the
+// operator's choice survives reload. Fires from the auto-refresh tick when
+// new orders arrive — useful when the portal tab is backgrounded.
+const NOTIF_PREF_KEY = "gb_desktop_notif";
+
+function desktopNotifPreferred() {
+  try { return localStorage.getItem(NOTIF_PREF_KEY) === "on"; } catch { return false; }
+}
+
+async function enableDesktopNotifications() {
+  if (typeof Notification === "undefined") {
+    toast("This browser doesn't support desktop notifications.");
+    return false;
+  }
+  let perm = Notification.permission;
+  if (perm === "default") perm = await Notification.requestPermission();
+  if (perm === "granted") {
+    try { localStorage.setItem(NOTIF_PREF_KEY, "on"); } catch {}
+    toast("Desktop notifications on. We'll ping you when new orders arrive.");
+    return true;
+  }
+  toast("Desktop notifications were blocked. Enable in your browser settings, then toggle again.");
+  return false;
+}
+
+function disableDesktopNotifications() {
+  try { localStorage.setItem(NOTIF_PREF_KEY, "off"); } catch {}
+  toast("Desktop notifications off.");
+}
+
+function maybeFireOrderNotification(newOrders) {
+  if (!desktopNotifPreferred()) return;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  if (!newOrders.length) return;
+  // Single notification summarising the batch — never spam one per order.
+  const title = newOrders.length === 1
+    ? `New order ${newOrders[0].id}`
+    : `${newOrders.length} new orders just landed`;
+  const body = newOrders.length === 1
+    ? `${newOrders[0].customer_name || "Customer"} · ${PKR.format(newOrders[0].total_pkr || 0)}`
+    : `Total ${PKR.format(newOrders.reduce((s, o) => s + Number(o.total_pkr || 0), 0))} across ${newOrders.length} orders`;
+  try {
+    const n = new Notification(title, {
+      body,
+      icon: "/assets/logo.png",
+      badge: "/assets/logo.png",
+      tag: "gb-new-orders",      // collapse repeats into one OS notification
+      renotify: true,
+    });
+    // Click to focus the tab + jump to Orders.
+    n.onclick = () => {
+      window.focus();
+      qs("[data-admin-tab='orders']")?.click();
+      n.close();
+    };
+  } catch {
+    /* silent — notification API can throw in odd contexts (iframes etc) */
+  }
+}
+
 // Background auto-refresh — every 30s while the portal tab is visible
 // the dashboard polls /api/admin/dashboard. If new orders arrived since
 // the last poll we ping the freshness dot and surface a one-line toast
@@ -2492,6 +2951,13 @@ function startAutoRefresh() {
           setTimeout(() => wrap.classList.remove("has-ping"), 2500);
         }
         toast(`${fresh.length} new order${fresh.length === 1 ? "" : "s"} just landed.`);
+        // Desktop notification (if the operator opted in via Settings).
+        // Caught here rather than inside refreshAdmin so we can diff
+        // against the prior order set.
+        maybeFireOrderNotification(fresh);
+        // SLA-breach sound — only if an order's SLA flipped to danger
+        // since the last tick.
+        maybeFireSlaSound(fresh);
       }
     } catch {
       /* silent — next tick will retry */
@@ -2640,6 +3106,7 @@ function renderOverviewExtras() {
   allEvents.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const top = allEvents.slice(0, 6);
   renderConversionFunnel();
+  renderOrderHeatmap();
   renderSlaDashboard();
   setHTML("[data-overview-activity]",
     top.length
@@ -4631,6 +5098,61 @@ function orderSlaBadge(order) {
   return null;
 }
 
+// ═══════════════════════ ORDER FILTER PERSISTENCE ═══════════════════════
+// Snapshot the Orders tab filter UI and persist it across sessions. Avoids
+// the everyday friction of "I had it filtered to Karachi handbags, then
+// reloaded, and it reset to All". Per-browser (localStorage) is enough —
+// operators usually work from the same machine.
+
+const ORDER_FILTERS_KEY = "gb_order_filters_v1";
+
+function persistOrderFilters() {
+  try {
+    const snapshot = {
+      status: qs("[data-admin-order-filter]")?.value || "all",
+      batch: qs("[data-orders-batch]")?.value || "all",
+      dateRange: qs("[data-orders-date]")?.value || "all",
+      customStart: qs("[data-orders-start]")?.value || "",
+      customEnd: qs("[data-orders-end]")?.value || "",
+      search: qs("[data-orders-search]")?.value || "",
+      chip: qs("[data-order-filter-chip].active")?.dataset.orderFilterChip || "all",
+    };
+    localStorage.setItem(ORDER_FILTERS_KEY, JSON.stringify(snapshot));
+  } catch {
+    /* localStorage can be unavailable (Safari private mode); fail silent */
+  }
+}
+
+function restoreOrderFilters() {
+  let snapshot;
+  try {
+    const raw = localStorage.getItem(ORDER_FILTERS_KEY);
+    if (!raw) return;
+    snapshot = JSON.parse(raw);
+  } catch {
+    return;
+  }
+  if (!snapshot || typeof snapshot !== "object") return;
+  const setVal = (sel, val) => {
+    const el = qs(sel);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+  setVal("[data-admin-order-filter]", snapshot.status);
+  setVal("[data-orders-batch]", snapshot.batch);
+  setVal("[data-orders-date]", snapshot.dateRange);
+  setVal("[data-orders-start]", snapshot.customStart);
+  setVal("[data-orders-end]", snapshot.customEnd);
+  setVal("[data-orders-search]", snapshot.search);
+  // Show custom-range row if dateRange === "custom"
+  qs("[data-orders-custom]")?.classList.toggle("hidden", snapshot.dateRange !== "custom");
+  // Mirror the chip row to the persisted chip selection.
+  qsa("[data-order-filter-chip]").forEach((c) => {
+    c.classList.toggle("active", c.dataset.orderFilterChip === (snapshot.chip || "all"));
+  });
+  // Don't call renderAdminOrders here — the regular renderAll() pass
+  // that follows wireEvents will pick up the restored values naturally.
+}
+
 // ═══════════════════════ OMS-STYLE ROW HELPERS ═══════════════════════════
 // Inspired by Shopify / Brightpearl / Linnworks dashboards — small affordances
 // that pay off when the team is processing dozens of orders per hour.
@@ -4719,7 +5241,9 @@ function customerLtvChip(order) {
   if (ltv.count === 1) {
     return `<span class="ltv-chip is-new" title="First order from this customer">New customer</span>`;
   }
-  return `<span class="ltv-chip" title="${ltv.count} orders · lifetime spend ${PKR.format(ltv.total)}">${ltv.count}× · ${shortPkr(ltv.total)}</span>`;
+  // Click LTV chip → open the customer-orders modal so the operator can
+  // see every order from this phone in one screen.
+  return `<button type="button" class="ltv-chip" data-action="view-customer-orders" data-customer-phone="${attr(order.customer_phone || "")}" data-customer-name="${attr(order.customer_name || "")}" title="${ltv.count} orders · lifetime spend ${PKR.format(ltv.total)} · click for full history" data-stop-row>${ltv.count}× · ${shortPkr(ltv.total)}</button>`;
 }
 
 // Hover tooltip — last 3 events on the order. Rendered inline so it works
@@ -4884,6 +5408,7 @@ function renderAdminOrders() {
       <td class="table-actions">
         <button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(order.id)}" data-stop-row>Review</button>
         <button class="button primary" type="button" data-action="save-order-status" data-order-id="${attr(order.id)}" data-stop-row>Save</button>
+        <button class="button ghost" type="button" data-action="print-order" data-order-id="${attr(order.id)}" data-stop-row title="Open packing slip">⎙ Print</button>
         <small>${esc(order.local_courier || "Courier TBD")} · ${esc(order.tracking_number || "No tracking")}</small>
       </td>
     </tr>
@@ -9788,7 +10313,7 @@ function wireEvents() {
     if (header) header.dataset.elevated = String(window.scrollY > 10);
   }, { passive: true });
 
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     if (event.target.closest("[data-stop-row]") && !event.target.closest("button[data-action]")) return;
     const tabJump = event.target.closest("[data-admin-tab-jump]");
     if (tabJump) {
@@ -9826,6 +10351,46 @@ function wireEvents() {
     if (action === "import-from-url") {
       event.preventDefault();
       return importProductFromUrl();
+    }
+    // Bulk WhatsApp — open template-picker modal for the current selection.
+    if (action === "bulk-whatsapp") {
+      event.preventDefault();
+      return openBulkWhatsappModal();
+    }
+    if (action === "bulk-wa-send") {
+      event.preventDefault();
+      return sendBulkWhatsapp();
+    }
+    // Customer batch view — opens a modal showing every order from
+    // this customer's phone.
+    if (action === "view-customer-orders") {
+      event.preventDefault();
+      return openCustomerOrdersModal(target.dataset.customerPhone, target.dataset.customerName);
+    }
+    // Print packing slip / receipt for an order.
+    if (action === "print-order") {
+      event.preventDefault();
+      return printOrderPackingSlip(target.dataset.orderId);
+    }
+    // Browser desktop notification toggle (portal Settings panel).
+    if (action === "toggle-desktop-notif") {
+      event.preventDefault();
+      if (desktopNotifPreferred()) {
+        disableDesktopNotifications();
+      } else {
+        await enableDesktopNotifications();
+      }
+      renderOperatorAlertsPanel();
+      return;
+    }
+    // SLA-breach sound toggle.
+    if (action === "toggle-sla-sound") {
+      event.preventDefault();
+      const next = !slaSoundPreferred();
+      try { localStorage.setItem(SLA_SOUND_KEY, next ? "on" : "off"); } catch {}
+      toast(next ? "SLA sound alerts on." : "SLA sound alerts off.");
+      renderOperatorAlertsPanel();
+      return;
     }
     // Dark mode toggle — portal only. Persists to localStorage so the
     // team's preference survives reloads.
@@ -10510,6 +11075,10 @@ function wireEvents() {
     }
   });
 
+  // Bulk WhatsApp template-picker — refresh preview on change.
+  document.addEventListener("change", (event) => {
+    if (event.target.matches("[data-bulk-wa-template]")) refreshBulkWhatsappPreview();
+  });
   // Order-row multi-select — toggle membership in state.selectedOrders,
   // update the bulk action bar, and add/remove the highlighted row class.
   document.addEventListener("change", (event) => {
@@ -10628,6 +11197,7 @@ function wireEvents() {
       const select = qs("[data-admin-order-filter]");
       if (select) select.value = chip.dataset.orderFilterChip;
       qsa("[data-order-filter-chip]").forEach((item) => item.classList.toggle("active", item === chip));
+      persistOrderFilters();
       renderAdminOrders();
     });
   });
@@ -10893,16 +11463,29 @@ function wireEvents() {
     if (e.target.matches("[data-broadcast-template]")) refreshBroadcastPreview();
   });
 
-  // Orders-tab filter inputs — change-driven, debounced search
+  // Orders-tab filter inputs — change-driven, debounced search.
+  // Every change also writes the current filter snapshot to localStorage
+  // so the operator's view survives reload + tab close.
   ["[data-admin-order-filter]", "[data-orders-batch]", "[data-orders-date]", "[data-orders-start]", "[data-orders-end]"].forEach((sel) => {
-    qs(sel)?.addEventListener("change", () => renderAdminOrders());
+    qs(sel)?.addEventListener("change", () => {
+      persistOrderFilters();
+      renderAdminOrders();
+    });
   });
+
+  // Restore persisted filter state on portal init. Runs after the DOM
+  // has the controls; values are written into the form elements + the
+  // chip row so the visual state matches what renderAdminOrders will use.
+  restoreOrderFilters();
   const ordersSearchEl = qs("[data-orders-search]");
   if (ordersSearchEl) {
     let timer = null;
     ordersSearchEl.addEventListener("input", () => {
       clearTimeout(timer);
-      timer = setTimeout(() => renderAdminOrders(), 180);
+      timer = setTimeout(() => {
+        persistOrderFilters();
+        renderAdminOrders();
+      }, 180);
     });
   }
 

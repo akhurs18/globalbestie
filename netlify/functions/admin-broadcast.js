@@ -105,6 +105,10 @@ function parseFilters(src = {}) {
     last_order_days: Number(src.last_order_days || 0),
     min_orders: Number(src.min_orders || 0),
     min_revenue: Number(src.min_revenue || 0),
+    // Explicit phone allowlist — used by the bulk-order WhatsApp-send
+    // flow ("send template to the 5 orders I've selected"). When this is
+    // populated all other filters become non-restrictive.
+    phones: Array.isArray(src.phones) ? src.phones.map((p) => String(p).replace(/\D/g, "")).filter(Boolean) : [],
   };
 }
 
@@ -114,6 +118,10 @@ function matches(customer, f) {
   // sent if everyone opted in" pass — used to count skipped_opt_out.
   if (!f._ignoreOptOut && customer.whatsapp_opt_in === false) return false;
   if (!isValidPkMobile(customer.phone)) return false;
+  // Explicit-phone path short-circuits all other filters.
+  if (f.phones && f.phones.length) {
+    return f.phones.includes(String(customer.phone || "").replace(/\D/g, ""));
+  }
   if (f.city && String(customer.city || "").toLowerCase() !== f.city) return false;
   if (f.min_orders && Number(customer.total_orders || 0) < f.min_orders) return false;
   if (f.min_revenue && Number(customer.total_revenue_pkr || 0) < f.min_revenue) return false;
@@ -132,7 +140,19 @@ function matches(customer, f) {
 async function loadRecipients(filters) {
   if (!hasSupabase()) return [];
   const all = await supabase("/rest/v1/customers?select=phone,name,city,total_orders,total_revenue_pkr,tags,whatsapp_opt_in,last_seen&order=last_seen.desc");
-  return (all || []).filter((c) => matches(c, filters));
+  const list = (all || []).filter((c) => matches(c, filters));
+  // Explicit-phone path: if any of the supplied phones aren't in the
+  // customers table yet (new lead, brand-new order) we still want to
+  // send to them. Synthesize a minimal customer row for each missing.
+  if (filters.phones && filters.phones.length) {
+    const seen = new Set(list.map((c) => String(c.phone || "").replace(/\D/g, "")));
+    for (const phone of filters.phones) {
+      if (!seen.has(phone) && isValidPkMobile(phone)) {
+        list.push({ phone, name: "", city: "", whatsapp_opt_in: true });
+      }
+    }
+  }
+  return list;
 }
 
 async function resolveTemplate({ template_id, body_override }) {

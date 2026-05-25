@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-color-audit" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-oms-extras" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -112,6 +112,16 @@
                     <small class="kicker">Order acceptance + completion rates</small>
                   </div>
                   <div class="funnel-strip" data-conversion-funnel></div>
+                </section>
+
+                <!-- 30-day order heatmap — quick visual sense of weekly
+                     rhythm. GitHub-style grid, darker = more orders. -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Order heatmap (last 30 days)</h2>
+                    <small class="kicker">Daily volume rhythm</small>
+                  </div>
+                  <div class="order-heatmap" data-order-heatmap></div>
                 </section>
 
                 <!-- SLA dashboard — average time-in-stage over the last 30 days
@@ -335,6 +345,7 @@
                   <select data-bulk-batch-select aria-label="Assign to batch">
                     <option value="">Assign to batch…</option>
                   </select>
+                  <button class="button secondary" type="button" data-action="bulk-whatsapp">Send WhatsApp</button>
                   <button class="button secondary" type="button" data-action="bulk-orders-action" data-bulk-op="export">Export selected CSV</button>
                   <button class="button secondary" type="button" data-action="bulk-orders-action" data-bulk-op="clear">Clear selection</button>
                   <span class="bulk-progress" data-bulk-progress hidden><span data-bulk-progress-bar></span></span>
@@ -681,6 +692,14 @@
                   <label>Support WhatsApp<input name="support_whatsapp" /></label>
                   <button class="button primary" type="submit">Save settings</button>
                 </form>
+                <section class="ops-panel operator-alerts-panel">
+                  <div class="panel-title-row">
+                    <h2>Operator alerts</h2>
+                    <span class="status-pill in_stock">Per browser</span>
+                  </div>
+                  <div data-operator-alerts></div>
+                </section>
+
                 <section class="ops-panel launch-checklist">
                   <div class="panel-title-row">
                     <h2>Production readiness</h2>
@@ -705,6 +724,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-color-audit"></script>
+    <script type="module" src="./assets/app.js?v=20260524-oms-extras"></script>
   </body>
 </html>
