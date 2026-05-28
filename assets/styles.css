@@ -7391,58 +7391,76 @@ body::after {
     display: none !important;
   }
 
-  /* Mobile action bar — moved to the TOP, sticky under the header so
-     navigation is reachable with the thumb at the top of the screen and
-     doesn't compete with the safe-area / home-indicator on iPhones. */
+  /* Mobile action bar — pinned to the BOTTOM as a persistent tab bar so
+     the primary actions (Shop / Quote / Track / WhatsApp / Bag) follow the
+     scroll and stay in the thumb zone. Glass-light to match the unified
+     theme; respects the iPhone home-indicator safe area. */
   .mobile-action-bar {
-    position: sticky;
-    top: 56px;
+    position: fixed;
+    bottom: 0;
     left: 0;
     right: 0;
-    margin: 6px 10px 12px;
-    z-index: 31;
+    margin: 0;
+    z-index: 41;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    padding: 8px;
-    border: 1px solid rgba(255, 216, 232, 0.22);
-    border-radius: var(--radius);
-    background: rgba(7, 5, 7, 0.94);
-    backdrop-filter: blur(14px);
-    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42);
-    backdrop-filter: blur(16px);
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 -10px 30px rgba(216, 142, 155, 0.12);
   }
 
-.mobile-action-bar a,
-.mobile-action-bar button {
+  /* Reserve space so the fixed bar never covers the footer / last section. */
+  body:not([data-page="portal"]) main {
+    padding-bottom: 76px;
+  }
+
+  .mobile-action-bar a,
+  .mobile-action-bar button {
     display: inline-flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 5px;
-    min-height: 44px;
-    border: 1px solid rgba(255, 216, 232, 0.16);
-    border-radius: calc(var(--radius) - 2px);
-    background: rgba(255, 255, 255, 0.045);
-    color: var(--cream);
-    font-size: 0.72rem;
-    font-weight: 800;
+    gap: 2px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .mobile-action-bar a:active,
+  .mobile-action-bar button:active {
+    background: var(--rose);
   }
 
   .mobile-action-bar a[data-current] {
-    border-color: rgba(255, 79, 154, 0.46);
-    background: rgba(255, 79, 154, 0.16);
-    color: var(--cream);
+    color: var(--pink-3);
+    background: var(--rose);
+  }
+
+  .mobile-action-bar .mobile-wa-tab {
+    color: #1f8f4e;
   }
 
   .mobile-action-bar strong {
-    display: grid;
+    display: inline-grid;
     place-items: center;
-    min-width: 20px;
-    height: 20px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     border-radius: 999px;
     background: var(--pink);
-    color: var(--black);
-    font-size: 0.68rem;
+    color: #fff;
+    font-size: 0.64rem;
   }
 }
 
@@ -9427,23 +9445,8 @@ textarea::placeholder {
   color: rgba(122, 90, 100, 0.6);
 }
 
-/* The mobile action bar was dark-glass at the bottom of the viewport. */
-.mobile-action-bar {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-top: 1px solid var(--line);
-  color: var(--ink);
-}
-
-.mobile-action-bar a,
-.mobile-action-bar button {
-  color: var(--ink);
-}
-
-.mobile-action-bar a[data-current] {
-  color: var(--pink-3);
-}
+/* Mobile action-bar styling now lives entirely in the mobile media query
+   (bottom-fixed glass tab bar). Base state stays hidden on desktop. */
 
 /* Editorial bands lift gently off the page. */
 .editorial-band,
@@ -12448,4 +12451,93 @@ textarea:focus-visible,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SOCIAL PROOF — headline metrics + brand wall (Wave 1, P0)
+   The luxury-ecommerce conversion playbook puts an at-a-glance credibility
+   row + a recognizable-brand wall above testimonials. Tokens only.
+   ═══════════════════════════════════════════════════════════════════════ */
+.proof-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 6px 0 26px;
+}
+
+.proof-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  align-items: center;
+}
+
+.proof-metric strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.proof-metric span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.proof-star {
+  color: var(--pink-2);
+  margin-left: 2px;
+  font-size: 0.9em;
+}
+
+.brand-wall {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 12px;
+  margin: 0 auto 30px;
+  padding: 20px 0 26px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand-wall span {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  font-style: italic;
+  color: var(--ink-soft);
+  opacity: 0.78;
+  transition: opacity 220ms var(--ease), color 220ms var(--ease);
+}
+
+.brand-wall span:not(:last-child)::after {
+  content: "·";
+  margin-left: 12px;
+  color: var(--pink-2);
+  opacity: 0.6;
+}
+
+.brand-wall span:hover {
+  opacity: 1;
+  color: var(--pink-3);
+}
+
+@media (max-width: 640px) {
+  .proof-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .proof-metric {
+    padding: 16px 12px;
+  }
 }

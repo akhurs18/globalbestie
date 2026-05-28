@@ -11541,6 +11541,17 @@ function initReveal() {
         child.style.animationDelay = `${i * 85}ms`;
         child.classList.add("stagger-child");
       });
+      // Count-up any proof metrics inside the revealed section (e.g. the
+      // "500+ orders delivered" social-proof stat). Runs once.
+      entry.target.querySelectorAll("[data-count-to]").forEach((node) => {
+        if (node.dataset.counted) return;
+        node.dataset.counted = "1";
+        const to = Number(node.dataset.countTo) || 0;
+        const suffix = /\+$/.test(node.textContent.trim()) ? "+" : "";
+        if (to > 0 && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          animateCountUp(node, 0, to, 1100, (n) => `${Math.round(n)}${suffix}`);
+        }
+      });
       observer.unobserve(entry.target);
     });
   }, { threshold: 0.08 });
