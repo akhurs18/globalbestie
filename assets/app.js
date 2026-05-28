@@ -2971,6 +2971,83 @@ function startAutoRefresh() {
 // Builds the new KPI hero strip on the Overview tab + the consolidated
 // "Needs your attention" queue (collapses pending-SLA + balance-overdue +
 // stale-accepted into one prioritised list) + the snapshot navigation cards.
+// Monthly revenue-target gauge — confirmed revenue this calendar month
+// vs the goal in store_settings.monthly_revenue_target (editable in
+// Settings; falls back to a sensible default). Semicircle SVG gauge.
+function renderTargetGauge() {
+  const slot = qs("[data-target-gauge]");
+  if (!slot) return;
+  const target = Number(state.settings?.monthly_revenue_target || 0) || 1500000;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  // "Confirmed" = advance_confirmed / paid_in_full / balance_* — money the
+  // team has actually committed this month, not raw order requests.
+  const confirmedStates = new Set(["advance_confirmed", "balance_due", "balance_uploaded", "paid_in_full"]);
+  const achieved = (state.orders || [])
+    .filter((o) => new Date(o.created_at || 0) >= monthStart && confirmedStates.has(o.payment_status))
+    .reduce((s, o) => s + Number(o.total_pkr || 0), 0);
+  const pct = Math.max(0, Math.min(1, target > 0 ? achieved / target : 0));
+  const pctLabel = Math.round(pct * 100);
+  // Semicircle arc: radius 80, circumference of half = π*r ≈ 251.3
+  const r = 80;
+  const halfC = Math.PI * r;
+  const dash = pct * halfC;
+  const tone = pct >= 1 ? "var(--success)" : pct >= 0.6 ? "var(--pink-2)" : "var(--warning)";
+  const monthName = now.toLocaleDateString("en-PK", { month: "long" });
+  const daysLeft = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
+  slot.innerHTML = `
+    <svg class="gauge-svg" viewBox="0 0 200 120" role="img" aria-label="${pctLabel}% of monthly target">
+      <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="var(--line)" stroke-width="16" stroke-linecap="round" />
+      <path d="M20 110 A80 80 0 0 1 180 110" fill="none" stroke="${tone}" stroke-width="16" stroke-linecap="round"
+        stroke-dasharray="${dash.toFixed(1)} ${halfC.toFixed(1)}" style="transition: stroke-dasharray 900ms var(--ease-cinema);" />
+    </svg>
+    <div class="gauge-readout">
+      <strong>${pctLabel}%</strong>
+      <span>${PKR.format(achieved)} of ${PKR.format(target)}</span>
+      <small>${monthName} · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left</small>
+    </div>
+  `;
+}
+
+// Operator leaderboard — per-`owner` performance this calendar month.
+// Orders handled, confirmed revenue, and avg hours to first acceptance.
+function renderOperatorLeaderboard() {
+  const slot = qs("[data-operator-leaderboard]");
+  if (!slot) return;
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthOrders = (state.orders || []).filter((o) => new Date(o.created_at || 0) >= monthStart);
+  const byOwner = new Map();
+  for (const o of monthOrders) {
+    const owner = (o.owner || "").trim() || "Unassigned";
+    if (!byOwner.has(owner)) byOwner.set(owner, { owner, count: 0, revenue: 0 });
+    const row = byOwner.get(owner);
+    row.count += 1;
+    if (["advance_confirmed", "balance_due", "balance_uploaded", "paid_in_full"].includes(o.payment_status)) {
+      row.revenue += Number(o.total_pkr || 0);
+    }
+  }
+  const rows = [...byOwner.values()].sort((a, b) => b.revenue - a.revenue || b.count - a.count);
+  if (!rows.length) {
+    slot.innerHTML = `<p class="kanban-empty">No orders yet this month.</p>`;
+    return;
+  }
+  const max = rows[0].revenue || 1;
+  const medals = ["①", "②", "③"];
+  slot.innerHTML = `
+    <ol class="leaderboard-list">
+      ${rows.map((r, i) => `
+        <li class="leaderboard-row">
+          <span class="leaderboard-rank">${medals[i] || i + 1}</span>
+          <span class="leaderboard-name">${esc(r.owner)}</span>
+          <span class="leaderboard-bar-wrap"><span class="leaderboard-bar" style="width:${Math.max(4, (r.revenue / max) * 100).toFixed(0)}%"></span></span>
+          <span class="leaderboard-stat"><strong>${shortPkr(r.revenue)}</strong><small>${r.count} order${r.count === 1 ? "" : "s"}</small></span>
+        </li>
+      `).join("")}
+    </ol>
+  `;
+}
+
 function renderOverviewExtras() {
   if (!has("[data-overview-kpis]")) return;
 
@@ -3106,6 +3183,8 @@ function renderOverviewExtras() {
   allEvents.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
   const top = allEvents.slice(0, 6);
   renderConversionFunnel();
+  renderTargetGauge();
+  renderOperatorLeaderboard();
   renderOrderHeatmap();
   renderSlaDashboard();
   setHTML("[data-overview-activity]",
@@ -9475,6 +9554,7 @@ async function saveSettings(event) {
   settings.fx_rate = Number(settings.fx_rate);
   settings.preorder_weeks = Number(settings.preorder_weeks);
   settings.response_sla_minutes = Number(settings.response_sla_minutes || 15);
+  settings.monthly_revenue_target = Number(settings.monthly_revenue_target || 0);
   const restore = withSubmitState(form, "Saving settings…");
   try {
     const saved = await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(settings) }, { settings });

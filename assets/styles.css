@@ -12541,3 +12541,201 @@ textarea:focus-visible,
     padding: 16px 12px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STORYTELLING BAND (Wave 2, P1 — storefront)
+   "Why us" narrative with an editorial image. Asymmetric two-column.
+   ═══════════════════════════════════════════════════════════════════════ */
+.story-band {
+  width: var(--page);
+  margin: 0 auto;
+  padding: 56px 0;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+}
+
+.story-lead {
+  max-width: 52ch;
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+  line-height: 1.72;
+  margin: 0 0 22px;
+}
+
+.story-points {
+  list-style: none;
+  margin: 0 0 26px;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.story-points li {
+  display: grid;
+  gap: 3px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.story-points li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pink-2);
+}
+
+.story-points strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.08rem;
+  color: var(--ink);
+}
+
+.story-points span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.story-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.story-visual {
+  position: relative;
+  margin: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  aspect-ratio: 4 / 5;
+}
+
+.story-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-stamp {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.story-stamp span { color: var(--muted); font-size: 0.82rem; }
+.story-stamp strong { color: var(--pink-3); font-size: 0.95rem; }
+
+@media (max-width: 880px) {
+  .story-band { grid-template-columns: 1fr; padding: 40px 0; }
+  .story-visual { aspect-ratio: 16 / 11; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TARGET GAUGE + OPERATOR LEADERBOARD (Wave 2, P1 — portal)
+   ═══════════════════════════════════════════════════════════════════════ */
+.target-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.gauge-svg {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+}
+
+.gauge-readout {
+  text-align: center;
+  display: grid;
+  gap: 2px;
+  margin-top: -8px;
+}
+
+.gauge-readout strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.gauge-readout span { color: var(--ink-soft); font-size: 0.9rem; font-weight: 600; }
+.gauge-readout small { color: var(--muted); font-size: 0.78rem; }
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 26px 1fr 1.2fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboard-rank {
+  font-weight: 800;
+  color: var(--pink-3);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.leaderboard-name {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.leaderboard-bar-wrap {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.leaderboard-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink-2), var(--pink));
+  transition: width 800ms var(--ease-cinema);
+}
+
+.leaderboard-stat {
+  text-align: right;
+  display: grid;
+  gap: 0;
+}
+
+.leaderboard-stat strong { color: var(--ink); font-size: 0.9rem; }
+.leaderboard-stat small { color: var(--muted); font-size: 0.72rem; }
+
+@media (max-width: 640px) {
+  .leaderboard-row { grid-template-columns: 22px 1fr auto; }
+  .leaderboard-bar-wrap { display: none; }
+}

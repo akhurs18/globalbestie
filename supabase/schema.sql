@@ -27,6 +27,8 @@ on conflict (id) do nothing;
 
 alter table public.store_settings add column if not exists business_hours text;
 alter table public.store_settings add column if not exists response_sla_minutes integer not null default 15;
+-- Monthly confirmed-revenue target that drives the portal Overview gauge.
+alter table public.store_settings add column if not exists monthly_revenue_target numeric(14, 2) not null default 1500000;
 alter table public.store_settings add column if not exists city_delivery_fees text;
 alter table public.store_settings add column if not exists shipping_rules text;
 alter table public.store_settings add column if not exists balance_reminder_template text;

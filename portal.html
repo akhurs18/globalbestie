@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-wave1-proof" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-wave2-team" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -93,6 +93,26 @@
                   <section class="ops-panel">
                     <h2>Recent activity</h2>
                     <ul class="activity-rail" data-overview-activity></ul>
+                  </section>
+                </div>
+
+                <!-- Two-up: monthly revenue target gauge + operator
+                     leaderboard. The Sales-Intelligence dashboard pattern's
+                     two headline elements for a scaling team. -->
+                <div class="ops-grid">
+                  <section class="ops-panel">
+                    <div class="panel-title-row">
+                      <h2>This month's target</h2>
+                      <small class="kicker">Confirmed revenue vs goal</small>
+                    </div>
+                    <div class="target-gauge" data-target-gauge></div>
+                  </section>
+                  <section class="ops-panel">
+                    <div class="panel-title-row">
+                      <h2>Team leaderboard</h2>
+                      <small class="kicker">This month, by owner</small>
+                    </div>
+                    <div class="leaderboard" data-operator-leaderboard></div>
                   </section>
                 </div>
 
@@ -677,6 +697,7 @@
                   <label>Next shipment ETA<input name="next_shipment_date" type="date" /></label>
                   <label>Business hours<input name="business_hours" /></label>
                   <label>Response SLA minutes<input name="response_sla_minutes" type="number" min="1" step="1" /></label>
+                  <label>Monthly revenue target (PKR)<input name="monthly_revenue_target" type="number" min="0" step="50000" placeholder="1500000" /></label>
                   <label class="span-2">City delivery fees<textarea name="city_delivery_fees" rows="2"></textarea></label>
                   <label class="span-2">Category shipping rules<textarea name="shipping_rules" rows="2"></textarea></label>
                   <label class="span-2">Shipment notice<textarea name="shipment_notice" rows="2"></textarea></label>
@@ -716,6 +737,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-wave1-proof"></script>
+    <script type="module" src="./assets/app.js?v=20260524-wave2-team"></script>
   </body>
 </html>
