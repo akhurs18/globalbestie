@@ -10392,14 +10392,10 @@ function wireEvents() {
       renderOperatorAlertsPanel();
       return;
     }
-    // Dark mode toggle — portal only. Persists to localStorage so the
-    // team's preference survives reloads.
-    if (action === "toggle-theme") {
-      event.preventDefault();
-      const isDark = document.documentElement.classList.toggle("theme-dark");
-      try { localStorage.setItem("gb_theme", isDark ? "dark" : "light"); } catch {}
-      return;
-    }
+    // Dark mode was removed — the portal and storefront now share one
+    // unified light palette. If you need dark, build it as a separate
+    // theme file rather than a runtime toggle.
+
     // Reset the PKR price input back to the URL-autofill suggestion that's
     // stashed in dataset.suggested. Lets the admin try an edit and roll back.
     if (action === "reset-customer-price") {
@@ -11624,13 +11620,10 @@ function wireHeroParallax() {
 }
 
 function init() {
-  // Apply persisted theme before render so there's no flash of light theme
-  // on a reload while in dark mode.
-  try {
-    if (localStorage.getItem("gb_theme") === "dark") {
-      document.documentElement.classList.add("theme-dark");
-    }
-  } catch {}
+  // Dark mode was retired — storefront and portal share one unified light
+  // palette. Clean up any stale preference so an old localStorage value
+  // can't re-add the (now-deleted) theme-dark class.
+  try { localStorage.removeItem("gb_theme"); } catch {}
   wireEvents();
   fillProductForm();
   if (state.adminToken) {
