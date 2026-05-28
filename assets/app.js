@@ -3072,17 +3072,26 @@ function renderOverviewExtras() {
   const ordersSeries  = dailySeries(orders, 14, () => 1);
   const revenueSeries = dailySeries(orders, 14, (o) => Number(o.total_pkr || 0));
 
+  // Delivered in the last 7 days — completion throughput. This replaces the
+  // old "Pending review" hero KPI, which duplicated both the Today ribbon's
+  // "Pending now" snapshot and the action queue that now leads this tab.
+  const weekAgo = Date.now() - 7 * 86400000;
+  const delivered7d = orders.filter((o) =>
+    o.status === "delivered" &&
+    new Date(o.delivered_at || o.updated_at || o.created_at || 0).getTime() >= weekAgo
+  ).length;
+
   renderKpiHero("[data-overview-kpis]", [
     {
-      label: "Pending review",
-      value: String(pending),
-      numeric: pending,
+      label: "Delivered · 7d",
+      value: String(delivered7d),
+      numeric: delivered7d,
       format: "raw",
-      key: "pending-review",
-      sub: pending ? "Approve or reject" : "All caught up",
-      tone: pending > 3 ? "warn" : "ok",
+      key: "delivered-7d",
+      sub: delivered7d ? "Completed & dispatched" : "None this week",
+      tone: "ok",
       action: "jump-tab",
-      actionFilter: "orders",
+      actionFilter: "orders:delivered",
     },
     {
       label: "Orders · 7d",
@@ -5202,6 +5211,14 @@ function isWatched(id) {
   return state.watchedOrders?.has(id) || false;
 }
 
+// Humanize an elapsed-minutes count so SLA chips never read "32496 min".
+// < 60 → "45 min", < 24h → "3 h", else "5 d".
+function humanizeMins(mins) {
+  if (mins < 60) return `${mins} min`;
+  if (mins < 1440) return `${Math.floor(mins / 60)} h`;
+  return `${Math.floor(mins / 1440)} d`;
+}
+
 // SLA windows tuned to the agent file's promise of a 15 min WhatsApp reply.
 // Returns { level: "ok" | "warn" | "danger", label, mins }.
 function orderSlaBadge(order) {
@@ -5211,9 +5228,9 @@ function orderSlaBadge(order) {
   // Pending review — the team has 15 min to acknowledge, 30 to accept.
   if (status === "pending_review") {
     const mins = Math.floor((Date.now() - new Date(order.created_at || 0).getTime()) / 60000);
-    if (mins >= 30) return { level: "danger", label: `${mins} min — overdue`, mins };
-    if (mins >= 15) return { level: "warn", label: `${mins} min — replying late`, mins };
-    return { level: "ok", label: `${mins} min — fresh`, mins };
+    if (mins >= 30) return { level: "danger", label: `${humanizeMins(mins)} — overdue`, mins };
+    if (mins >= 15) return { level: "warn", label: `${humanizeMins(mins)} — replying late`, mins };
+    return { level: "ok", label: `${humanizeMins(mins)} — fresh`, mins };
   }
   // Arrived in PK with balance unpaid — courier dispatch can't happen until
   // paid; >24 h is silent revenue loss.

@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-dash-polish" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-portal-reorg" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -71,8 +71,12 @@
                   <button class="button secondary" type="button" data-action="refresh-admin">Refresh</button>
                 </div>
 
-                <!-- Hero KPIs: 4 big numbers the team needs every morning -->
-                <div class="kpi-hero" data-overview-kpis></div>
+                <!-- ════ TIER 1 · ACT NOW ════
+                     Reorganised action-first (OMS best practice): the work
+                     queue leads, then the performance KPIs. The "right now"
+                     snapshot lives in the sticky Today ribbon above, so these
+                     KPIs are deliberately the 7-day performance lens. -->
+                <p class="tier-label">Act now</p>
 
                 <!-- Single action queue — collapses the old "Orders needing
                      action" panel + SLA breaches into one prioritized list -->
@@ -83,6 +87,13 @@
                   </div>
                   <div data-attention-queue></div>
                 </section>
+
+                <!-- Performance KPIs: 7-day trends (distinct from the Today
+                     ribbon's right-now snapshot above). -->
+                <div class="kpi-hero" data-overview-kpis></div>
+
+                <!-- ════ TIER 2 · MONITOR ════ -->
+                <p class="tier-label">Monitor</p>
 
                 <!-- Two-up: pipeline visualisation + recent activity rail -->
                 <div class="ops-grid">
@@ -116,11 +127,15 @@
                   </section>
                 </div>
 
-                <!-- Conversion funnel — pending → accepted → delivered
-                     conversion rates over the last 30 days. -->
+                <!-- ════ TIER 3 · ANALYZE ════
+                     Review-cadence analytics — not a daily-glance need, so
+                     they sit at the bottom of the scroll. -->
+                <p class="tier-label">Analyze <span>· last 30 days</span></p>
+
+                <!-- Conversion funnel — pending → accepted → delivered. -->
                 <section class="ops-panel">
                   <div class="panel-title-row">
-                    <h2>Conversion funnel (last 30 days)</h2>
+                    <h2>Conversion funnel</h2>
                     <small class="kicker">Order acceptance + completion rates</small>
                   </div>
                   <div class="funnel-strip" data-conversion-funnel></div>
@@ -130,17 +145,17 @@
                      rhythm. GitHub-style grid, darker = more orders. -->
                 <section class="ops-panel">
                   <div class="panel-title-row">
-                    <h2>Order heatmap (last 30 days)</h2>
+                    <h2>Order heatmap</h2>
                     <small class="kicker">Daily volume rhythm</small>
                   </div>
                   <div class="order-heatmap" data-order-heatmap></div>
                 </section>
 
-                <!-- SLA dashboard — average time-in-stage over the last 30 days
-                     so the team sees where the bottleneck is. -->
+                <!-- SLA dashboard — average time-in-stage so the team sees
+                     where the bottleneck is. -->
                 <section class="ops-panel">
                   <div class="panel-title-row">
-                    <h2>Stage timing (last 30 days)</h2>
+                    <h2>Stage timing</h2>
                     <small class="kicker">Average days an order spends in each stage</small>
                   </div>
                   <div class="sla-dashboard" data-sla-dashboard></div>
@@ -747,6 +762,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-dash-polish"></script>
+    <script type="module" src="./assets/app.js?v=20260524-portal-reorg"></script>
   </body>
 </html>
