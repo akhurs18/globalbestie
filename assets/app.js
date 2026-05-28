@@ -3464,10 +3464,66 @@ function renderCashflow() {
     });
   });
 
+  renderCashflowWaterfall(agg, fx);
   renderSourcingQueue();
   renderCashflowBatches(fx);
   renderCashflowWorklists();
   renderLedger();
+}
+
+// True waterfall: each step is a floating bar showing a delta, with the
+// running cumulative position carried across. Reads left-to-right as the
+// money actually moves: advance collected (+) → balance still to collect
+// (+) → USD already spent (−) → net cash position (total).
+function renderCashflowWaterfall(agg, fx) {
+  const slot = qs("[data-cashflow-waterfall]");
+  if (!slot) return;
+  const usdOut = Math.round(agg.usdSpent * fx);
+  const steps = [
+    { label: "Advance in", delta: Math.round(agg.advanceCollected), tone: "in" },
+    // Split the inbound balance: money on parcels already in Pakistan
+    // (collectable now) vs money still in transit (collectable later).
+    { label: "Balance · in PK", delta: Math.round(agg.balanceToCollect), tone: "near" },
+    { label: "Balance · in transit", delta: Math.round(agg.futureBalance), tone: "far" },
+    { label: "USD spend", delta: -usdOut, tone: "out" },
+  ];
+  // Compute running cumulative + the floating top/bottom of each bar.
+  let running = 0;
+  const bars = steps.map((s) => {
+    const start = running;
+    running += s.delta;
+    return { ...s, start, end: running };
+  });
+  const net = running;
+  bars.push({ label: "Net position", delta: net, tone: net >= 0 ? "total-pos" : "total-neg", start: 0, end: net, isTotal: true });
+
+  // Scale: from the lowest point reached to the highest, so negative dips
+  // render correctly.
+  const lo = Math.min(0, ...bars.map((b) => Math.min(b.start, b.end)));
+  const hi = Math.max(0, ...bars.map((b) => Math.max(b.start, b.end)));
+  const span = Math.max(1, hi - lo);
+  const H = 200; // px chart height
+  const y = (v) => H - ((v - lo) / span) * H; // value → pixel y (top-down)
+
+  slot.innerHTML = `
+    <div class="waterfall-chart" style="--wf-h:${H}px">
+      ${bars.map((b, i) => {
+        const top = Math.min(y(b.start), y(b.end));
+        const h = Math.max(2, Math.abs(y(b.start) - y(b.end)));
+        const sign = b.delta >= 0 ? "+" : "−";
+        return `
+          <div class="waterfall-col">
+            <div class="waterfall-bar-track">
+              <span class="waterfall-bar waterfall-${b.tone}"
+                style="--wf-top:${top.toFixed(1)}px; --wf-h-bar:${h.toFixed(1)}px; --wf-i:${i}"
+                title="${b.label}: ${sign}${PKR.format(Math.abs(b.delta))}"></span>
+            </div>
+            <span class="waterfall-val ${b.delta >= 0 ? "is-pos" : "is-neg"}">${b.isTotal ? "" : sign}${shortPkr(Math.abs(b.delta))}</span>
+            <span class="waterfall-label">${esc(b.label)}</span>
+          </div>`;
+      }).join("")}
+    </div>
+  `;
 }
 
 function renderSourcingQueue() {

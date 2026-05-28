@@ -12739,3 +12739,106 @@ textarea:focus-visible,
   .leaderboard-row { grid-template-columns: 22px 1fr auto; }
   .leaderboard-bar-wrap { display: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CASH FLOW WATERFALL (Wave 3, P2 — portal)
+   Floating bars carry the running cash position across each money move.
+   ═══════════════════════════════════════════════════════════════════════ */
+.waterfall-chart {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 14px;
+  align-items: end;
+  padding-top: 8px;
+}
+
+.waterfall-col {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.waterfall-bar-track {
+  position: relative;
+  width: 100%;
+  height: var(--wf-h, 200px);
+}
+
+.waterfall-bar {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: var(--wf-top, 0);
+  height: 0;
+  border-radius: 6px;
+  /* Animate the bar growing to its computed height on render. */
+  animation: wf-grow 700ms var(--ease-cinema) both;
+  animation-delay: calc(var(--wf-i, 0) * 110ms);
+}
+
+@keyframes wf-grow {
+  from { height: 0; }
+  to   { height: var(--wf-h-bar, 0); }
+}
+
+.waterfall-in       { background: var(--success); }
+.waterfall-near     { background: var(--info); }
+.waterfall-far      { background: var(--pink-2); }
+.waterfall-out      { background: var(--red); }
+.waterfall-total-pos { background: var(--ink); }
+.waterfall-total-neg { background: var(--red); }
+
+.waterfall-val {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.waterfall-val.is-neg { color: var(--red); }
+
+.waterfall-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GLASSMORPHISM ACCENTS (Wave 3, P2 — storefront)
+   The skill's #1 luxury-ecommerce style. Applied as a restrained frost on
+   product cards + the cart/account drawer — not everywhere. Storefront
+   only (the portal stays crisp/flat for operator density).
+   ═══════════════════════════════════════════════════════════════════════ */
+body:not([data-page="portal"]) .product-card {
+  background: rgba(255, 255, 255, 0.62);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 8px 28px rgba(216, 142, 155, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+body:not([data-page="portal"]) .product-card:hover,
+body:not([data-page="portal"]) .product-card:focus-within {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: var(--line-strong);
+}
+
+/* Cart + account drawer — frosted glass so the page tints through. */
+body:not([data-page="portal"]) .cart-drawer {
+  background: rgba(255, 247, 248, 0.82);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  backdrop-filter: blur(22px) saturate(140%);
+  border-left: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+/* Graceful fallback: browsers without backdrop-filter get a solid surface
+   so text never sits on a semi-transparent unreadable panel. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  body:not([data-page="portal"]) .product-card { background: var(--surface); }
+  body:not([data-page="portal"]) .cart-drawer { background: var(--surface); }
+}

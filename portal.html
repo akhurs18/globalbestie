@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-wave2-team" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-wave3-polish" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -167,6 +167,16 @@
 
                 <!-- Money-stripe summary bar for all open batches combined -->
                 <div class="cashflow-money-bar" data-cashflow-money-bar></div>
+
+                <!-- Cash flow waterfall — running position: advance in →
+                     balance due in → USD spend out → net cash in hand. -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Cash flow waterfall</h2>
+                    <small class="kicker">Where the money moves across open orders</small>
+                  </div>
+                  <div class="cashflow-waterfall" data-cashflow-waterfall></div>
+                </section>
 
                 <div class="cashflow-grid">
                   <!-- Sourcing queue: every line item not yet marked purchased -->
@@ -737,6 +747,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-wave2-team"></script>
+    <script type="module" src="./assets/app.js?v=20260524-wave3-polish"></script>
   </body>
 </html>
