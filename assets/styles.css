@@ -12842,3 +12842,86 @@ body:not([data-page="portal"]) .cart-drawer {
   body:not([data-page="portal"]) .product-card { background: var(--surface); }
   body:not([data-page="portal"]) .cart-drawer { background: var(--surface); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DASHBOARD POLISH (ui-ux-pro-max pass) — portal only
+   Skill guidance applied: tabular figures for all data (no column jitter),
+   fix the invisible white-on-white KPI bug, stronger hero-number hierarchy
+   (Exaggerated Minimalism), color-not-only status, and consistent section
+   rhythm for a scannable ops surface. Storefront is untouched.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1. FIX: base .kpi-value was color:var(--cream) (white) — invisible on
+   the light card whenever a KPI carried no tone. Force readable ink. */
+body[data-page="portal"] .kpi-value {
+  color: var(--ink);
+}
+
+/* 2. TABULAR FIGURES — every number that sits in a column, gauge, table,
+   or count-up gets fixed-width digits so values align and the count-up
+   animation doesn't reflow width mid-roll. Data reads as a sans (Archivo)
+   for crisp legibility; serif stays for headings only. */
+body[data-page="portal"] .kpi-value,
+body[data-page="portal"] .today-stat strong,
+body[data-page="portal"] .leaderboard td,
+body[data-page="portal"] .leaderboard th,
+body[data-page="portal"] .admin-table td,
+body[data-page="portal"] .waterfall-val,
+body[data-page="portal"] .target-gauge text,
+body[data-page="portal"] .cashflow-card strong,
+body[data-page="portal"] .kpi-trend {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+body[data-page="portal"] .kpi-value {
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* 3. HERO HIERARCHY — the Overview's four morning KPIs should dominate.
+   Bigger, tighter, high-contrast (skill: Exaggerated Minimalism). The
+   dense cashflow strip keeps its smaller size. */
+body[data-page="portal"] [data-overview-kpis] .kpi-value {
+  font-size: clamp(2rem, 3.2vw, 2.9rem);
+  line-height: 1;
+}
+
+body[data-page="portal"] [data-overview-kpis] .kpi-card {
+  padding: 20px 20px 18px;
+}
+
+/* 4. COLOR-NOT-ONLY — status pills get a leading status dot so meaning
+   survives for color-blind operators and grayscale printouts (skill:
+   color-not-only, HIGH severity). Text label already present. */
+body[data-page="portal"] .status-pill::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+/* 5. SECTION RHYTHM — consistent vertical tiers between Overview panels so
+   the long stack reads as grouped sections, not an undifferentiated list
+   (skill: section-spacing-hierarchy 16/24/32/48, whitespace-balance). */
+body[data-page="portal"] [data-admin-panel="overview"] > .ops-panel,
+body[data-page="portal"] [data-admin-panel="overview"] > .ops-grid {
+  margin-top: 28px;
+}
+
+body[data-page="portal"] [data-admin-panel="overview"] .panel-title-row {
+  margin-bottom: 14px;
+}
+
+/* 6. KPI label legibility — slightly stronger contrast + spacing so the
+   label/value pairing reads cleanly at the new larger size. */
+body[data-page="portal"] [data-overview-kpis] .kpi-label {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
