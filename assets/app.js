@@ -8534,6 +8534,20 @@ function handleAdminLogin(event) {
   refreshAdmin();
 }
 
+// Pull a human-readable message out of an apiFetch error. apiFetch throws
+// `new Error(responseBodyText)`, which for our functions is JSON like
+// {"error":"Cannot move…","code":"illegal_transition"}. Falls back to the
+// raw message, then a generic string.
+function parseApiError(err) {
+  const raw = String(err?.message || err || "").trim();
+  if (!raw) return "";
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.error === "string") return parsed.error;
+  } catch {}
+  return raw.length <= 160 ? raw : "";
+}
+
 async function refreshAdmin() {
   // Skeleton state — flag the body so CSS can shimmer KPI cards / list rows
   // while we wait for /api/admin/dashboard. First-load only (state.orders
@@ -9715,14 +9729,24 @@ async function saveOrderStatus(orderId) {
       { status, note: `Team moved order to ${status.replaceAll("_", " ")} with payment marked ${paymentLabel(fallbackOrder.payment_status)}.`, created_at: new Date().toISOString() },
     ];
   }
-  const result = await apiFetch(`/api/admin/orders/${orderId}`, {
-    method: "PATCH",
-    body: JSON.stringify({ status, payment_status: paymentStatus }),
-  }, { order: fallbackOrder });
-  const index = state.orders.findIndex((order) => order.id === orderId);
-  if (index >= 0 && result.order) state.orders[index] = { ...state.orders[index], ...result.order };
-  renderAdmin();
-  toast("Order updated.");
+  const priorStatus = fallbackOrder ? state.orders.find((o) => o.id === orderId)?.status : null;
+  try {
+    const result = await apiFetch(`/api/admin/orders/${orderId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, payment_status: paymentStatus }),
+    }, { order: fallbackOrder });
+    const index = state.orders.findIndex((order) => order.id === orderId);
+    if (index >= 0 && result.order) state.orders[index] = { ...state.orders[index], ...result.order };
+    renderAdmin();
+    toast("Order updated.");
+  } catch (err) {
+    // Server rejected the change (e.g. illegal state transition / payment
+    // gate). Revert the optimistic local mutation and surface why.
+    const msg = parseApiError(err);
+    if (fallbackOrder && priorStatus) fallbackOrder.status = priorStatus;
+    await refreshAdmin().catch(() => renderAdmin());
+    toast(msg || "Couldn't update the order. It was left unchanged.");
+  }
 }
 
 async function verifyOrderPayment(orderId, action) {
@@ -11121,10 +11145,11 @@ function wireEvents() {
           toast("Couldn't undo — try again from the order page.");
         }
       });
-    } catch {
+    } catch (err) {
       order.status = previousStatus;
       renderAdminOrders();
-      toast("Couldn't update — restored.");
+      if (movedCard) movedCard.classList.remove("kanban-card-saving");
+      toast(parseApiError(err) || "Couldn't update — restored.");
     }
   });
 

@@ -111,16 +111,33 @@ export default async (req) => {
     });
 
     // Ensure a customer row exists so future orders can attach to it.
-    const existing = await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}&select=phone`);
+    // Capture optional profile fields supplied at signup (name/email) so a
+    // brand-new account isn't just a bare phone number in the Customers tab.
+    const profileName = String(payload.name || "").trim().slice(0, 120);
+    const profileEmail = String(payload.email || "").trim().slice(0, 160);
+    const nowIso = new Date().toISOString();
+    const existing = await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}&select=phone,name,email`);
     if (!existing?.length) {
       await supabase("/rest/v1/customers", {
         method: "POST",
         body: JSON.stringify({
           phone: canon,
-          first_seen: new Date().toISOString(),
-          last_seen: new Date().toISOString(),
+          name: profileName || undefined,
+          email: profileEmail || undefined,
+          first_seen: nowIso,
+          last_seen: nowIso,
         }),
       });
+    } else {
+      // Returning customer — fill any blanks from this signup, refresh last_seen.
+      const row = existing[0] || {};
+      const patch = { last_seen: nowIso };
+      if (profileName && !row.name) patch.name = profileName;
+      if (profileEmail && !row.email) patch.email = profileEmail;
+      await supabase(`/rest/v1/customers?phone=eq.${encodeURIComponent(canon)}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      }).catch(() => {});
     }
 
     return new Response(JSON.stringify({

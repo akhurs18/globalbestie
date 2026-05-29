@@ -1,5 +1,37 @@
 import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
 
+// ── Order state machine ──────────────────────────────────────────────────
+// Legal forward transitions. Any status change not in this map is rejected
+// (unless the caller passes force:true, which is logged as an override).
+// This stops the team from accidentally skipping stages — e.g. marking an
+// order "delivered" straight from "pending_review" before it was sourced,
+// shipped, or paid.
+const LEGAL_TRANSITIONS = {
+  pending_review: ["accepted", "cancelled"],
+  accepted: ["sourcing", "cancelled"],
+  sourcing: ["in_transit", "cancelled"],
+  in_transit: ["pakistan_processing", "cancelled"],
+  pakistan_processing: ["delivered", "cancelled"],
+  delivered: [],   // terminal
+  cancelled: [],   // terminal
+};
+
+// Payment gate: an order may not be marked delivered until it's paid in full.
+const PAID_STATES = new Set(["paid_in_full"]);
+
+function transitionError(from, to, existing) {
+  if (!to || to === from) return null;                 // no status change
+  const allowed = LEGAL_TRANSITIONS[from];
+  if (allowed === undefined) return null;              // unknown current state — don't block
+  if (!allowed.includes(to)) {
+    return `Cannot move an order from "${from}" to "${to}". Allowed next: ${allowed.join(", ") || "none (terminal)"}.`;
+  }
+  if (to === "delivered" && !PAID_STATES.has(existing.payment_status)) {
+    return `Cannot mark delivered until payment is complete (current payment status: "${existing.payment_status || "unpaid"}").`;
+  }
+  return null;
+}
+
 function nextPaymentStatus(status, current = "") {
   if (status === "pakistan_processing" && !["balance_uploaded", "paid_in_full"].includes(current)) return "balance_due";
   if (status === "delivered") return "paid_in_full";
@@ -68,6 +100,12 @@ export default async (req, context) => {
 
     const existingRows = await supabase(`/rest/v1/orders?id=eq.${encodeURIComponent(id)}&select=*`);
     const existing = existingRows[0] || {};
+
+    // Guard illegal status jumps unless explicitly forced (and force is audited).
+    if (payload.status && !payload.force) {
+      const err = transitionError(existing.status || "", payload.status, existing);
+      if (err) return json({ error: err, code: "illegal_transition" }, { status: 409 });
+    }
 
     // If the caller is sending an `items` array (cashflow sourcing queue saves
     // actual_usd_cost + usd_purchased_at per line item), peel it out and

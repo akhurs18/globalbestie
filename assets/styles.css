@@ -9018,10 +9018,10 @@ button[data-approve-submit]:disabled {
 .demo-data-banner {
   margin: 0 0 22px;
   padding: 14px 18px;
-  border: 1px solid #b45309;
+  border: 1px solid #e6c068;
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(180, 83, 9, 0.18), rgba(180, 83, 9, 0.04));
-  color: #fde68a;
+  background: #fdf6e3;
+  color: #7a5618;
   font-size: 0.85rem;
   display: flex;
   flex-wrap: wrap;
@@ -9030,7 +9030,7 @@ button[data-approve-submit]:disabled {
 }
 
 .demo-data-banner strong {
-  color: #fbbf24;
+  color: #92610f;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.7rem;
@@ -9044,10 +9044,10 @@ button[data-approve-submit]:disabled {
 .fx-stale-banner {
   margin: 0 0 22px;
   padding: 14px 18px;
-  border: 1px solid rgba(251, 113, 133, 0.5);
+  border: 1px solid rgba(196, 80, 106, 0.45);
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(251, 113, 133, 0.18), rgba(251, 113, 133, 0.04));
-  color: #fecaca;
+  background: #fdeef0;
+  color: #8a2d3f;
   font-size: 0.85rem;
   display: flex;
   flex-wrap: wrap;

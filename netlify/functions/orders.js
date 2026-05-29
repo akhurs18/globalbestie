@@ -34,6 +34,35 @@ async function loadAutoTemplate(category) {
 // returned to the customer successfully. We DO write a soft event to
 // order_events when sending so the team can see "auto-message sent" in the
 // timeline, and a "send_failed" event so silent drops are visible.
+// Fire-and-forget team alert on every new order. Posts to TEAM_ALERT_WEBHOOK_URL
+// (Slack/Make/Zapier/n8n incoming webhook) so a new order pings the team even
+// when nobody has the portal tab open — the #1 "we missed an order" fix.
+// Never throws; failures are swallowed so they can't block the customer.
+async function notifyTeamNewOrder(order) {
+  const url = process.env.TEAM_ALERT_WEBHOOK_URL;
+  if (!url) return;
+  const sourcing = order.has_sourcing_request ? " · ⚑ sourcing request (needs quote)" : "";
+  const text = `🛍️ New order ${order.id} — ${order.customer_name || "?"} (${order.city || "?"})\n`
+    + `PKR ${Number(order.total_pkr || 0).toLocaleString()} · ${order.payment_status || "awaiting"}${sourcing}`;
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    // `text` suits Slack; `event`+`order` lets Make/Zapier/n8n branch on data.
+    body: JSON.stringify({
+      event: "order.created",
+      text,
+      order: {
+        id: order.id,
+        customer_name: order.customer_name,
+        city: order.city,
+        total_pkr: order.total_pkr,
+        payment_status: order.payment_status,
+        has_sourcing_request: order.has_sourcing_request,
+      },
+    }),
+  }).catch(() => {});
+}
+
 async function sendAutoAdvanceMessage({ order, hasPreorder }) {
   if (!order?.customer_phone) return;
   if (order.whatsapp_opt_in === false) return; // respect opt-out
@@ -498,7 +527,19 @@ export default async (req) => {
         source_url: item.source_url || "",
         source_status: item.source_status || "",
       }));
-      await insertStrippingMissingColumns("/rest/v1/order_items", items);
+      // Integrity guard: the order header + its line items must both land or
+      // neither should. If the items insert fails we'd otherwise be left with
+      // an orphan order (header with no products) that the team would have to
+      // chase. Roll back the header and surface a clean retry error.
+      try {
+        await insertStrippingMissingColumns("/rest/v1/order_items", items);
+      } catch (itemErr) {
+        await supabase(`/rest/v1/orders?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+        return json({
+          error: "Could not save your order items. Nothing was charged — please try again or WhatsApp us.",
+          detail: String(itemErr?.message || itemErr || "").slice(0, 200),
+        }, { status: 502 });
+      }
 
       await supabase("/rest/v1/order_events", {
         method: "POST",
@@ -540,6 +581,7 @@ export default async (req) => {
       // WhatsApp confirmation seconds after submit. Failures land as an
       // event in the order timeline; they never block the response.
       sendAutoAdvanceMessage({ order: createdOrder || order, hasPreorder }).catch(() => {});
+      notifyTeamNewOrder(createdOrder || order).catch(() => {});
 
       return json({
         order: { ...createdOrder, items, events: [{ status: "pending_review", note: `Order request created. Estimated value: PKR ${order.total_pkr}.`, created_at: now }] },
