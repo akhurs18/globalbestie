@@ -5,10 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 4173",
-    "build": "node scripts/check-static-app.mjs",
+    "build": "node scripts/check-static-app.mjs && node scripts/check-rendered-app.mjs --allow-skip",
+    "check:render": "node scripts/check-rendered-app.mjs",
     "marketing:daily": "node scripts/run-daily-marketing-agent.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "playwright": "^1.48.0"
   }
 }

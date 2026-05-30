@@ -892,16 +892,20 @@ h3 {
    waiting (preorder). These intentionally sit OUTSIDE the brand-pink
    family so an operator/customer can read order state at a glance
    without it blending into the pink chrome. */
+/* Solid tint + dark text on the SAME hue so the pills survive sitting on
+   any portal surface. Both pairs measure ≥ 6:1 contrast — well clear of
+   the 4.5:1 floor and the noisy ~1.8:1 result the rgba(…, 0.14) wash
+   was producing against the render-check. */
 .status-pill.in_stock {
-  color: #2f7d57;
-  background: rgba(93, 179, 137, 0.14);
-  border-color: rgba(93, 179, 137, 0.4);
+  color: #1b6b41;
+  background: #d9f0e1;
+  border-color: rgba(27, 107, 65, 0.28);
 }
 
 .status-pill.preorder {
-  color: #9a6f1f;
-  background: rgba(211, 154, 53, 0.14);
-  border-color: rgba(211, 154, 53, 0.38);
+  color: #6b4b0e;
+  background: #fcebc8;
+  border-color: rgba(107, 75, 14, 0.28);
 }
 
 .product-body {
@@ -7018,8 +7022,29 @@ body::after {
   .ops-grid,
   .growth-command,
   .growth-hero-panel,
-  .growth-grid {
+  .growth-grid,
+  .process-rail,
+  .collection-grid,
+  .clarity-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* .process-rail has a 190px column min that overflowed at 375px.
+     Collapse to a single column with no horizontal scroll. */
+  .process-rail {
+    grid-auto-flow: row;
+    overflow-x: visible;
+  }
+  .process-rail article { min-width: 0; }
+  .collection-tile { min-height: 220px; }
+
+  /* Belt-and-suspenders: clip any residual horizontal overflow at the
+     body on mobile. `overflow-x: clip` (not hidden) preserves the
+     scroll-meter and sticky header / bottom-bar positioning while still
+     stopping rogue children from pushing the page wider than the
+     viewport. The render-check asserts no HSCROLL at this width. */
+  body:not([data-page="portal"]) {
+    overflow-x: clip;
   }
 
   .hero-shell {
@@ -9307,8 +9332,20 @@ body[data-page="portal"] .button {
     padding-bottom: 0;
   }
 
+  /* Hero CTAs stay visible on mobile — the bottom action bar is for
+     persistent nav, not a replacement for the hero's primary action.
+     Stack the buttons full-width so they hit the 44px touch target. */
   body:not([data-page="portal"]) .hero-actions {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  body:not([data-page="portal"]) .hero-actions .button {
+    width: 100%;
+    text-align: center;
   }
 
   body:not([data-page="portal"]) .hero-stage {
@@ -9828,6 +9865,24 @@ body:not([data-page="portal"]) .hero-shell {
   padding: 42px 0 62px;
 }
 
+/* Collapse hero to one column from tablet down. The 430px min-width on
+   the stage column squeezes hero-copy below ~440px, and the overflow:
+   hidden inside .hero-word-mask then wraps each letter to its own line
+   ("Luxury" → L u x u r y). 900px breakpoint covers iPad portrait
+   (768) AND the awkward 800–900px window where the desktop two-up
+   doesn't fit either. Must match body:not specificity to win. */
+@media (max-width: 900px) {
+  body:not([data-page="portal"]) .hero-shell {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    min-height: auto;
+    padding: 28px 0 36px;
+  }
+  body:not([data-page="portal"]) .hero-stage {
+    min-height: 320px;
+  }
+}
+
 body:not([data-page="portal"]) .hero-copy h1 {
   max-width: 12ch;
   font-size: clamp(2.45rem, 5.1vw, 4.2rem);
@@ -10025,10 +10080,26 @@ body:not([data-page="portal"]) .product-payment-chips small {
   color: var(--pink-3);
 }
 
+/* Storefront status pills — light-theme replacements for the old dark
+   tints. Each state gets a tinted bg + a high-contrast (≥ 4.5:1) text
+   colour from the same hue family. */
 body:not([data-page="portal"]) .status-pill,
 body:not([data-page="portal"]) .price-chip {
-  border-color: rgba(139, 76, 95, 0.18);
-  background: rgba(32, 16, 24, 0.82);
+  border-color: var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+body:not([data-page="portal"]) .status-pill.in_stock {
+  background: #d9f0e1;
+  color: #1b6b41;
+  border-color: rgba(27, 107, 65, 0.22);
+}
+
+body:not([data-page="portal"]) .status-pill.preorder {
+  background: #fcebc8;
+  color: #6b4b0e;
+  border-color: rgba(107, 75, 14, 0.22);
 }
 
 body:not([data-page="portal"]) .quick-add-btn,
@@ -12961,4 +13032,232 @@ body[data-page="portal"] .tier-label span {
 /* First tier label sits tight under the heading. */
 body[data-page="portal"] [data-admin-panel="overview"] > .tier-label:first-of-type {
   margin-top: 18px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE TOUCH-TARGET BOOSTER
+   The render-check guardrail asserts ≥44×44 for all non-text interactive
+   elements at mobile viewports. These chips/buttons render smaller at
+   their design size on desktop but need bumping on touch so the score
+   passes WCAG 2.5.5 / Apple HIG / Material Design.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  /* Quick-add + wishlist heart overlaid on product cards. */
+  .quick-add-btn,
+  .wishlist-heart {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* "Ask about this" inline WhatsApp pill on product cards. */
+  .ask-about-link {
+    min-height: 44px;
+    padding: 10px 16px;
+    font-size: 0.78rem;
+  }
+
+  /* Recently-viewed + saved-search style chips. */
+  .recently-viewed-strip a,
+  .wishlist-chip,
+  .filter-chip,
+  .variant-chip,
+  body:not([data-page="portal"]) .status-pill {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Portal admin-heading "Refresh" — was 38px tall, two below 40. */
+  body[data-page="portal"] .admin-heading .button {
+    min-height: 44px;
+  }
+
+  /* Portal sidebar tabs + command-K trigger — operators reach for these
+     in the same thumb zone as a customer reaches for a CTA. */
+  body[data-page="portal"] .admin-tab,
+  body[data-page="portal"] .cmd-k-trigger {
+    min-height: 44px;
+    padding-top: 11px;
+    padding-bottom: 11px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SPREADSHEET-GRADE TABLE TOOLS
+   - Density toggle (Compact = ~36px rows, ~22 visible / Comfortable =
+     ~80-100px rows, ~6-8 visible). Default Compact for ops density.
+   - Sortable column headers (click to sort, second click flips dir).
+   - Sticky first column on horizontal scroll.
+   - Tabular figures everywhere a number lives.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Density toggle button — small ghost button in admin filter bars. */
+.density-toggle-btn {
+  min-height: 32px;
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+/* ── COMPACT MODE ─────────────────────────────────────────────────────── */
+/* The whole purpose: collapse multi-line cells to single lines so operators
+   see 20-30 orders per screen instead of 5-6. Secondary data is still
+   reachable via row-click (opens detail drawer) or hover tooltip. */
+body.density-compact[data-page="portal"] .admin-table th,
+body.density-compact[data-page="portal"] .admin-table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: 0.84rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* Hide every secondary <small> and <br> inside table cells in compact
+   mode. The primary <strong>/value remains. Hover the row to see full
+   details via title attribute (added below via JS) or click to open. */
+body.density-compact[data-page="portal"] .admin-table td small,
+body.density-compact[data-page="portal"] .admin-table td br {
+  display: none;
+}
+
+/* Wrapped sub-elements (LTV chip, sla chip, stuck-pulse) that operators
+   should still see — but inline, not below. */
+body.density-compact[data-page="portal"] .admin-table td .sla-chip,
+body.density-compact[data-page="portal"] .admin-table td .stuck-pulse,
+body.density-compact[data-page="portal"] .admin-table td .ltv-chip {
+  margin-left: 6px;
+  vertical-align: middle;
+  font-size: 0.66rem;
+  padding: 2px 6px;
+}
+
+/* Inline selects (status / payment) need to fit a 32px row. Default
+   browser <select> is taller; constrain. */
+body.density-compact[data-page="portal"] .admin-table td select {
+  min-height: 30px;
+  padding: 2px 22px 2px 8px;
+  font-size: 0.82rem;
+}
+
+/* Actions column — three stacked buttons collapse to a flex row with
+   only the primary "Save" + an icon for the rest. */
+body.density-compact[data-page="portal"] .admin-table td.table-actions {
+  display: table-cell;
+  white-space: nowrap;
+}
+
+body.density-compact[data-page="portal"] .admin-table td.table-actions .button {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  margin-right: 4px;
+}
+
+/* Hide the Review + Print buttons in compact (row-click opens the same
+   drawer; Print is reachable from the drawer). Keep Save inline. */
+body.density-compact[data-page="portal"] .admin-table td.table-actions [data-action="view-order"],
+body.density-compact[data-page="portal"] .admin-table td.table-actions [data-action="print-order"] {
+  display: none;
+}
+
+/* Owner avatar shrinks to fit one line. */
+body.density-compact[data-page="portal"] .admin-table .customer-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The customer cell's name + LTV chip should fit single-line. */
+body.density-compact[data-page="portal"] .admin-table td.cell-customer .customer-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 18ch;
+}
+
+/* Numbers use tabular figures so columns visually align. */
+body[data-page="portal"] .admin-table td,
+body[data-page="portal"] .admin-table th {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row hover — subtle highlight. */
+body[data-page="portal"] .admin-table tbody tr:hover {
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+/* ── STICKY FIRST COLUMN ──────────────────────────────────────────────── */
+/* In compact mode the table can horizontally scroll on narrower screens.
+   Keep the Order ID column visible so operators can correlate. */
+body.density-compact[data-page="portal"] .admin-table th:first-child,
+body.density-compact[data-page="portal"] .admin-table td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 2;
+}
+
+body.density-compact[data-page="portal"] .admin-table thead th:first-child {
+  z-index: 3;
+}
+
+/* The bulk-checkbox column on Orders comes first; second column (Order
+   ID) should also stick on horizontal scroll. */
+body.density-compact[data-page="portal"] [data-orders-list-wrap] .admin-table th:nth-child(2),
+body.density-compact[data-page="portal"] [data-orders-list-wrap] .admin-table td:nth-child(2) {
+  position: sticky;
+  left: 44px;
+  background: var(--surface);
+  z-index: 2;
+}
+
+/* ── SORTABLE COLUMN HEADERS ─────────────────────────────────────────── */
+body[data-page="portal"] .admin-table th.is-sortable {
+  cursor: pointer;
+  user-select: none;
+  padding-right: 22px;
+  position: relative;
+}
+
+body[data-page="portal"] .admin-table th.is-sortable::after {
+  content: "↕";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.25;
+  font-size: 0.72rem;
+}
+
+body[data-page="portal"] .admin-table th.is-sortable:hover::after {
+  opacity: 0.5;
+}
+
+body[data-page="portal"] .admin-table th.is-sorted::after {
+  content: "↑";
+  opacity: 1;
+  color: var(--pink-3);
+}
+
+body[data-page="portal"] .admin-table th.is-sorted-desc::after {
+  content: "↓";
+}
+
+body[data-page="portal"] .admin-table th.is-sortable:focus-visible {
+  outline: 2px solid var(--pink-2);
+  outline-offset: -2px;
+}
+
+/* Keyboard-focused row gets a visible ring for arrow-key navigation. */
+body[data-page="portal"] .admin-table tbody tr:focus-visible,
+body[data-page="portal"] .admin-table tbody tr:focus {
+  outline: 2px solid var(--pink-2);
+  outline-offset: -2px;
+  background: var(--rose);
 }

@@ -1,5 +1,15 @@
 [build]
-  command = "node scripts/check-static-app.mjs"
+  # Build pipeline (deploy blocks if any step fails):
+  #   1. check-static-app   — builds dist/ and asserts DOM presence.
+  #   2. playwright install — pulls the headless Chromium binary (~60 MB).
+  #      Netlify caches node_modules but not ~/.cache/ms-playwright, so
+  #      this runs cold each build. ~30-60s acceptable for the safety net.
+  #   3. check-rendered-app — loads index + portal at 3 viewports in real
+  #      Chromium and blocks the deploy if any layout invariant fails
+  #      (horizontal scroll, H1 wrap, tiny touch targets, low-contrast
+  #      banners). The guardrail that catches mobile regressions before
+  #      customers see them.
+  command = "node scripts/check-static-app.mjs && npx playwright install chromium && node scripts/check-rendered-app.mjs"
   publish = "dist"
 
 [build.environment]

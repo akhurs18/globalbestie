@@ -13,7 +13,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-banner-contrast" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-spreadsheet" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -284,20 +284,20 @@
                       <input type="search" data-ledger-search placeholder="Order ID, customer, phone" />
                     </div>
                   </div>
-                  <div class="admin-table-wrap">
-                    <table class="admin-table cashflow-ledger">
+                  <div class="admin-table-wrap" data-keyboard-table>
+                    <table class="admin-table cashflow-ledger" data-sortable data-table-id="ledger">
                       <thead>
                         <tr>
-                          <th>Order</th>
-                          <th>Customer</th>
-                          <th>Batch</th>
-                          <th>Stage</th>
-                          <th>Payment</th>
-                          <th>PKR sale</th>
-                          <th>USD cost</th>
-                          <th>Advance in</th>
-                          <th>Balance due</th>
-                          <th>Profit</th>
+                          <th data-sort-key="order" data-sort-kind="text">Order</th>
+                          <th data-sort-key="customer" data-sort-kind="text">Customer</th>
+                          <th data-sort-key="batch" data-sort-kind="text">Batch</th>
+                          <th data-sort-key="stage" data-sort-kind="text">Stage</th>
+                          <th data-sort-key="payment" data-sort-kind="text">Payment</th>
+                          <th data-sort-key="pkr_sale" data-sort-kind="num">PKR sale</th>
+                          <th data-sort-key="usd_cost" data-sort-kind="num">USD cost</th>
+                          <th data-sort-key="advance_in" data-sort-kind="num">Advance in</th>
+                          <th data-sort-key="balance_due" data-sort-kind="num">Balance due</th>
+                          <th data-sort-key="profit" data-sort-kind="num">Profit</th>
                         </tr>
                       </thead>
                       <tbody data-ledger-rows></tbody>
@@ -362,6 +362,7 @@
                   </div>
                   <input type="search" data-orders-search placeholder="Order ID, customer, phone" />
                   <span class="orders-count-chip" data-orders-count-chip>0</span>
+                  <button class="button ghost density-toggle-btn" type="button" data-density-toggle aria-pressed="true" title="Switch to comfortable rows">Comfortable</button>
                 </div>
 
                 <div class="sla-filter-banner hidden" data-sla-filter-banner>
@@ -388,16 +389,16 @@
                   <span class="bulk-progress" data-bulk-progress hidden><span data-bulk-progress-bar></span></span>
                 </div>
 
-                <div class="admin-table-wrap" data-orders-list-wrap>
-                  <table class="admin-table">
+                <div class="admin-table-wrap" data-orders-list-wrap data-keyboard-table>
+                  <table class="admin-table" data-sortable data-table-id="orders">
                     <thead>
                       <tr>
                         <th class="bulk-col"><input type="checkbox" data-action="toggle-all-orders" aria-label="Select all" /></th>
-                        <th>Order</th>
-                        <th>Customer</th>
-                        <th>Status</th>
-                        <th>Payment split</th>
-                        <th>Payment status</th>
+                        <th data-sort-key="order" data-sort-kind="text">Order</th>
+                        <th data-sort-key="customer" data-sort-kind="text">Customer</th>
+                        <th data-sort-key="status" data-sort-kind="text">Status</th>
+                        <th data-sort-key="payment_split" data-sort-kind="num">Payment split</th>
+                        <th data-sort-key="payment_status" data-sort-kind="text">Payment status</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -459,17 +460,17 @@
                   <span class="customer-count-chip" data-customer-count-chip>0</span>
                 </div>
 
-                <div class="admin-table-wrap">
-                  <table class="admin-table customer-table">
+                <div class="admin-table-wrap" data-keyboard-table>
+                  <table class="admin-table customer-table" data-sortable data-table-id="customers">
                     <thead>
                       <tr data-customer-headers>
-                        <th>Customer</th>
-                        <th>Phone</th>
-                        <th>City</th>
-                        <th>Orders</th>
-                        <th>Lifetime spend</th>
+                        <th data-sort-key="customer" data-sort-kind="text">Customer</th>
+                        <th data-sort-key="phone" data-sort-kind="text">Phone</th>
+                        <th data-sort-key="city" data-sort-kind="text">City</th>
+                        <th data-sort-key="orders" data-sort-kind="num">Orders</th>
+                        <th data-sort-key="ltv" data-sort-kind="num">Lifetime spend</th>
                         <th data-col-key="trend">Trend <small>(6 mo)</small></th>
-                        <th>Last seen</th>
+                        <th data-sort-key="last_seen" data-sort-kind="date">Last seen</th>
                         <th data-col-key="last_wa">Last WA</th>
                         <th></th>
                       </tr>
@@ -762,6 +763,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-banner-contrast"></script>
+    <script type="module" src="./assets/app.js?v=20260524-spreadsheet"></script>
   </body>
 </html>

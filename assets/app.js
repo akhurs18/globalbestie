@@ -11808,6 +11808,150 @@ function wireHeroParallax() {
   window.addEventListener("resize", update, { passive: true });
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// PORTAL TABLE TOOLS — spreadsheet-grade density, sortable columns,
+// sticky first column, keyboard nav. Operators managing 200+ orders
+// need to see 20-30 rows at once, not 5-6 — same density as Shopify
+// Orders / Linnworks. Default is Compact; toggle in admin headings.
+// ═══════════════════════════════════════════════════════════════════════
+
+// Density — toggle a body class. CSS does the heavy lifting (smaller
+// padding, hidden secondary <small> lines, row-flex action columns,
+// sticky first column). Persisted to localStorage.
+function getDensity() {
+  try { return localStorage.getItem("gb_density") || "compact"; } catch { return "compact"; }
+}
+function setDensity(value) {
+  const v = value === "comfortable" ? "comfortable" : "compact";
+  document.body.classList.toggle("density-compact", v === "compact");
+  document.body.classList.toggle("density-comfortable", v === "comfortable");
+  try { localStorage.setItem("gb_density", v); } catch {}
+  // Update every toggle button's pressed state + label.
+  qsa("[data-density-toggle]").forEach((btn) => {
+    btn.dataset.densityValue = v;
+    btn.setAttribute("aria-pressed", String(v === "compact"));
+    btn.textContent = v === "compact" ? "Comfortable" : "Compact";
+    btn.title = v === "compact" ? "Switch to comfortable rows" : "Switch to compact spreadsheet rows";
+  });
+}
+function applyInitialDensity() { setDensity(getDensity()); }
+
+// Sortable column headers. Tables opt in by adding data-sortable on the
+// <table> and data-sort-key on each sortable <th>. We do the sort in
+// pure DOM by reading the column index's text/numeric value — works for
+// any table without per-table JS. Direction persists per table in
+// localStorage so a reopened tab remembers the operator's preference.
+function tableSortKey(table) {
+  return "gb_sort_" + (table.dataset.tableId || (table.className || "").split(" ")[0] || "table");
+}
+function readSortState(table) {
+  try { return JSON.parse(localStorage.getItem(tableSortKey(table)) || "null"); } catch { return null; }
+}
+function writeSortState(table, state) {
+  try { localStorage.setItem(tableSortKey(table), JSON.stringify(state)); } catch {}
+}
+function compareCells(a, b, kind) {
+  if (kind === "num") {
+    // Extract the first signed number anywhere in the cell text.
+    const na = parseFloat(String(a).replace(/[^\d.\-]/g, "")) || 0;
+    const nb = parseFloat(String(b).replace(/[^\d.\-]/g, "")) || 0;
+    return na - nb;
+  }
+  if (kind === "date") {
+    const ta = Date.parse(a) || 0;
+    const tb = Date.parse(b) || 0;
+    return ta - tb;
+  }
+  return String(a).toLowerCase().localeCompare(String(b).toLowerCase());
+}
+function applyTableSort(table) {
+  const state = readSortState(table);
+  if (!state) return;
+  const tbody = table.tBodies[0];
+  if (!tbody) return;
+  const headers = Array.from(table.tHead?.rows[0]?.cells || []);
+  const colIdx = headers.findIndex((th) => th.dataset.sortKey === state.key);
+  if (colIdx < 0) return;
+  const kind = headers[colIdx].dataset.sortKind || "text";
+  const rows = Array.from(tbody.rows);
+  rows.sort((r1, r2) => {
+    const v1 = r1.cells[colIdx]?.textContent.trim() || "";
+    const v2 = r2.cells[colIdx]?.textContent.trim() || "";
+    const cmp = compareCells(v1, v2, kind);
+    return state.dir === "desc" ? -cmp : cmp;
+  });
+  rows.forEach((r) => tbody.appendChild(r));
+  // Mark headers visually.
+  headers.forEach((th, i) => {
+    th.classList.toggle("is-sorted", i === colIdx);
+    th.classList.toggle("is-sorted-desc", i === colIdx && state.dir === "desc");
+    th.setAttribute("aria-sort", i === colIdx ? (state.dir === "desc" ? "descending" : "ascending") : "none");
+  });
+}
+function wireTableSort(table) {
+  if (!table || table.dataset.sortWired) return;
+  table.dataset.sortWired = "1";
+  const headers = Array.from(table.tHead?.rows[0]?.cells || []);
+  headers.forEach((th) => {
+    if (!th.dataset.sortKey) return;
+    th.classList.add("is-sortable");
+    th.setAttribute("role", "button");
+    th.setAttribute("tabindex", "0");
+    const trigger = () => {
+      const cur = readSortState(table);
+      const next = (cur && cur.key === th.dataset.sortKey && cur.dir === "asc") ? "desc" : "asc";
+      writeSortState(table, { key: th.dataset.sortKey, dir: next });
+      applyTableSort(table);
+    };
+    th.addEventListener("click", trigger);
+    th.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(); }
+    });
+  });
+  // Re-apply sort whenever the tbody contents change (renderAdminOrders
+  // etc. replace innerHTML). MutationObserver is cheap on a single tbody.
+  const tbody = table.tBodies[0];
+  if (tbody) {
+    const mo = new MutationObserver(() => applyTableSort(table));
+    mo.observe(tbody, { childList: true });
+  }
+  applyTableSort(table);
+}
+
+// Keyboard nav: ↑/↓ moves the focused row; Enter triggers data-action
+// (already wired on rows); Space toggles the row's checkbox.
+function wireTableKeyboard(wrap) {
+  if (!wrap || wrap.dataset.kbWired) return;
+  wrap.dataset.kbWired = "1";
+  wrap.addEventListener("keydown", (e) => {
+    const row = e.target.closest("tr[tabindex]");
+    if (!row) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const next = row.nextElementSibling;
+      if (next && next.tagName === "TR") next.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const prev = row.previousElementSibling;
+      if (prev && prev.tagName === "TR") prev.focus();
+    } else if (e.key === " ") {
+      const cb = row.querySelector("input[type='checkbox']");
+      if (cb) { e.preventDefault(); cb.click(); }
+    }
+  });
+}
+
+function initTableTools() {
+  applyInitialDensity();
+  qsa("[data-density-toggle]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      setDensity(getDensity() === "compact" ? "comfortable" : "compact");
+    });
+  });
+  qsa("table[data-sortable]").forEach(wireTableSort);
+  qsa("[data-keyboard-table], .admin-table-wrap").forEach(wireTableKeyboard);
+}
+
 function init() {
   // Dark mode was retired — storefront and portal share one unified light
   // palette. Clean up any stale preference so an old localStorage value
@@ -11834,6 +11978,7 @@ function init() {
   // Portal-only: 5s freshness ticker for the today ribbon's "Updated Xs
   // ago" indicator. Cheap interval — only updates one DOM node.
   if (document.body.dataset.page === "portal") {
+    initTableTools();
     startFreshnessTicker();
     // 30s background refresh — keeps the dashboard live without staring
     // at the Refresh button. Pauses when the tab is hidden.
