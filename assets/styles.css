@@ -13261,3 +13261,427 @@ body[data-page="portal"] .admin-table tbody tr:focus {
   outline-offset: -2px;
   background: var(--rose);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PRODUCT PDP — lean description + Read more toggle
+   The trust-strip + publicDetails <dl> were removed from the public PDP
+   (every product was getting the same generic 6-row metadata block).
+   What's left is the description (truncated by default) + the actionable
+   payment ledger + variant callout.
+   ═══════════════════════════════════════════════════════════════════════ */
+.product-description {
+  margin: 14px 0 10px;
+  font-size: 0.96rem;
+  line-height: 1.62;
+  color: var(--ink-soft);
+}
+
+.product-description p {
+  margin: 0;
+}
+
+.product-description-empty {
+  margin: 14px 0 10px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.description-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--pink-3);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.description-toggle::after {
+  content: "›";
+  display: inline-block;
+  transition: transform 200ms var(--ease);
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.product-description.is-expanded .description-toggle::after {
+  transform: rotate(90deg);
+}
+
+.description-toggle:hover,
+.description-toggle:focus-visible {
+  color: var(--ink);
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL — mature text palette (slate ink, pink accent)
+   The warm pink-brown text family that looks gentle on the storefront
+   reads juvenile in an operations dashboard. Operators are working with
+   money and orders all day; the eye wants the grounded slate family
+   that Linear / Stripe Dashboard / Notion / Vercel admin all use.
+   We override TEXT tokens only — the brand pink stays as accent
+   (chips, CTAs, focus rings, scroll meter), so the portal still reads
+   as Global Bestie, not Generic SaaS Inc.
+   ═══════════════════════════════════════════════════════════════════════ */
+body[data-page="portal"] {
+  /* Cool page chrome */
+  --bg:        #f8fafc;   /* slate-50 — barely-cooler than warm cream */
+  --surface:   #ffffff;
+  --surface-2: #f1f5f9;   /* slate-100 — for raised/active surfaces */
+
+  /* Slate text family — Linear/Stripe/Notion dashboard standard */
+  --ink:       #0f172a;   /* slate-950 — primary text (>= 16:1 on white) */
+  --ink-soft:  #334155;   /* slate-700 — secondary text + h2-h3 */
+  --muted:     #64748b;   /* slate-500 — meta, captions, "Created Xs ago" */
+
+  /* Cool hairlines so dividers don't carry a pink hue */
+  --line:        rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.16);
+
+  /* --pink, --pink-2, --pink-3, --rose, --pink-glow intentionally NOT
+     overridden — they remain the brand accent for active tabs, CTAs,
+     focus rings, status chips, scroll meter. */
+}
+
+/* Headlines inside the portal get true charcoal weight + slate ink. */
+body[data-page="portal"] h1,
+body[data-page="portal"] h2,
+body[data-page="portal"] h3 {
+  color: var(--ink);
+  font-family: "Archivo", "Inter", ui-sans-serif, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* Bring kicker labels (uppercase pink hints) down to a calmer slate so
+   they stop competing with actual headings — pink-3 was too eye-grabby
+   on every section title. */
+body[data-page="portal"] .kicker {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+/* The kicker's hairline ::before stays pink — keeps the brand cue
+   without bleeding pink across all secondary text. */
+body[data-page="portal"] .kicker::before {
+  background: var(--pink-2);
+}
+
+/* Sidebar tabs — slate text, brand-pink active. */
+body[data-page="portal"] .admin-tab {
+  color: var(--ink-soft);
+}
+
+body[data-page="portal"] .admin-tab.active {
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--line), 0 6px 18px rgba(15, 23, 42, 0.06);
+  border-left: 3px solid var(--pink-2);
+}
+
+/* Tab badges keep brand pink so the unread counts still pop. */
+body[data-page="portal"] [data-tab-badge]:not(:empty) {
+  background: var(--rose);
+  color: var(--pink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Brand strong text in sidebar — Playfair stays for brand mark, but
+   slate the secondary "Internal portal" line. */
+body[data-page="portal"] .admin-brand small {
+  color: var(--muted);
+  letter-spacing: 0.16em;
+}
+
+/* Body paragraphs and form labels — slate-700 reads grounded. */
+body[data-page="portal"] p,
+body[data-page="portal"] label,
+body[data-page="portal"] .panel-title-row small {
+  color: var(--ink-soft);
+}
+
+/* Table cells use slate text directly so the tabular figures look
+   like a Stripe Dashboard row, not a candy chip. */
+body[data-page="portal"] .admin-table td {
+  color: var(--ink);
+}
+
+body[data-page="portal"] .admin-table td small,
+body[data-page="portal"] .admin-table td .activity-tooltip {
+  color: var(--muted);
+}
+
+body[data-page="portal"] .admin-table th {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+/* KPI cards — large numbers in slate ink, label in muted slate.
+   Tabular numerals already declared globally on portal. */
+body[data-page="portal"] .kpi-value {
+  color: var(--ink);
+}
+
+body[data-page="portal"] .kpi-label,
+body[data-page="portal"] .kpi-sub,
+body[data-page="portal"] .today-label {
+  color: var(--muted);
+}
+
+body[data-page="portal"] .today-stat strong {
+  color: var(--ink);
+}
+
+/* Tier-label dividers (Act now / Monitor / Analyze) — keep the small
+   uppercase tag, but in slate instead of pink-3. The brand pink stays
+   only on the trailing hairline so the section break is felt, not
+   announced. */
+body[data-page="portal"] .tier-label {
+  color: var(--muted);
+}
+
+body[data-page="portal"] .tier-label::after {
+  background: var(--line);
+}
+
+/* Activity rail / pipeline meta — calmer slate. */
+body[data-page="portal"] .activity-rail li,
+body[data-page="portal"] .pipeline-stage-label,
+body[data-page="portal"] .order-list-row small,
+body[data-page="portal"] .order-list-row-totals small {
+  color: var(--muted);
+}
+
+/* Inputs use the slate ink so the typed text doesn't read pink. */
+body[data-page="portal"] input,
+body[data-page="portal"] select,
+body[data-page="portal"] textarea {
+  color: var(--ink);
+}
+
+body[data-page="portal"] input::placeholder,
+body[data-page="portal"] textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+/* Buttons — primary stays brand (ink on pink hover or ink solid),
+   but the .button.ghost / .button.secondary text now slate. */
+body[data-page="portal"] .button.ghost,
+body[data-page="portal"] .button.secondary {
+  color: var(--ink);
+}
+
+/* Links inside body copy — slate ink with pink underline-on-hover. */
+body[data-page="portal"] a:not(.button):not(.admin-tab):not(.brand) {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--line-strong);
+  text-decoration-thickness: 1px;
+}
+
+body[data-page="portal"] a:not(.button):not(.admin-tab):not(.brand):hover {
+  text-decoration-color: var(--pink-2);
+  color: var(--pink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL — minimal chrome
+   Today-ribbon removed (no per-page top bar). Below tightens the
+   surrounding chrome so the operator gets straight to the work area.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Admin heading — tighter top spacing now that nothing sits above it. */
+body[data-page="portal"] .admin-heading {
+  padding-top: 6px;
+  margin-bottom: 18px;
+}
+
+body[data-page="portal"] .admin-heading h1 {
+  font-size: clamp(1.4rem, 2.4vw, 1.7rem);
+  margin: 4px 0 0;
+  line-height: 1.18;
+}
+
+body[data-page="portal"] .admin-heading .kicker {
+  margin-bottom: 4px;
+}
+
+/* Sidebar brand — calmer hover (no scale+rotate; subtle box-shadow only). */
+body[data-page="portal"] .admin-brand .brand-mark {
+  width: 40px;
+  height: 40px;
+}
+
+body[data-page="portal"] .admin-brand:hover .brand-mark {
+  transform: none;
+  box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.04), 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+body[data-page="portal"] .admin-brand .brand-mark::before {
+  display: none;   /* halo pulse — too much for an internal tool */
+}
+
+body[data-page="portal"] .admin-brand strong {
+  font-size: 1rem;
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+/* First panel sits at the top of the scroll — no extra padding above
+   the heading. */
+body[data-page="portal"] .admin-content {
+  padding-top: 0;
+}
+
+body[data-page="portal"] .admin-content > .admin-panel:first-of-type .admin-heading {
+  margin-top: 0;
+}
+
+/* Page-curtain transition + scroll-meter are storefront cinematic
+   touches. The portal has no scroll-meter anchor anymore, but defend
+   in case anything else tries to render one. */
+body[data-page="portal"] .scroll-meter {
+  display: none !important;
+}
+
+/* Tier-label dividers — already minimal, but now sit slightly tighter. */
+body[data-page="portal"] .tier-label {
+  margin: 22px 0 10px;
+  font-size: 0.66rem;
+}
+
+body[data-page="portal"] [data-admin-panel="overview"] > .tier-label:first-of-type {
+  margin-top: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PORTAL — OMS-FOCUSED CHROME
+   Sidebar tab groups + Overview miss-prevention chips. The visual goal
+   is "this is an order-management tool first, everything else second."
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Sidebar group headers — small uppercase slate labels that separate
+   primary order-mgmt tabs from secondary catalog/config tabs. */
+body[data-page="portal"] .admin-tab-group {
+  margin: 14px 4px 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  user-select: none;
+}
+
+/* First group label tightens up to the brand mark above. */
+body[data-page="portal"] .admin-tab-group:first-of-type {
+  margin-top: 10px;
+}
+
+/* Miss-prevention chips — three buttons that surface unassigned /
+   stuck / balance-overdue counts at the top of the attention panel. */
+body[data-page="portal"] .attention-miss-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+body[data-page="portal"] .attention-miss-chips:empty {
+  display: none;     /* hide the row entirely when every count is zero */
+}
+
+body[data-page="portal"] .miss-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 180ms var(--ease), border-color 180ms var(--ease), transform 120ms var(--ease);
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-page="portal"] .miss-chip:hover,
+body[data-page="portal"] .miss-chip:focus-visible {
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  outline: none;
+}
+
+body[data-page="portal"] .miss-chip:active {
+  transform: translateY(1px);
+}
+
+body[data-page="portal"] .miss-chip strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+body[data-page="portal"] .miss-glyph {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+/* Tone-coded chip indicators — keep brand pink for accent, semantic
+   colors for severity. */
+body[data-page="portal"] .miss-chip.miss-warn {
+  border-color: rgba(217, 154, 53, 0.4);
+  background: #fdf6e3;
+}
+
+body[data-page="portal"] .miss-chip.miss-warn .miss-glyph {
+  background: rgba(217, 154, 53, 0.18);
+  color: #92610f;
+}
+
+body[data-page="portal"] .miss-chip.miss-warn strong {
+  color: #6b4b0e;
+}
+
+body[data-page="portal"] .miss-chip.miss-danger {
+  border-color: rgba(196, 80, 106, 0.4);
+  background: #fdeef0;
+}
+
+body[data-page="portal"] .miss-chip.miss-danger .miss-glyph {
+  background: rgba(196, 80, 106, 0.18);
+  color: #8a2d3f;
+}
+
+body[data-page="portal"] .miss-chip.miss-danger strong {
+  color: #8a2d3f;
+}
+
+body[data-page="portal"] .miss-chip.miss-ok {
+  /* All clear — neutral chip, no alarm. */
+  opacity: 0.7;
+}

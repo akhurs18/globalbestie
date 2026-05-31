@@ -1629,6 +1629,20 @@ function injectProductJsonLd(product) {
   }
 }
 
+// Truncate a long product description to the first ~220 characters,
+// breaking at the nearest word boundary, so the public PDP doesn't drown
+// the customer in copy before the price + CTA. The full text reveals via
+// a "Read more" toggle. Returns the parts the modal template needs.
+function truncateProductDescription(raw, maxLen = 220) {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed) return { full: "", short: "", truncated: false };
+  if (trimmed.length <= maxLen) return { full: trimmed, short: trimmed, truncated: false };
+  let cut = trimmed.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  if (lastSpace > maxLen * 0.6) cut = cut.slice(0, lastSpace);
+  return { full: trimmed, short: cut.replace(/[,;:.\s]+$/, "") + "…", truncated: true };
+}
+
 function showProductDetails(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
@@ -1716,20 +1730,28 @@ function showProductDetails(productId) {
           <span class="status-pill ${attr(product.stock_mode)}">${product.stock_mode === "preorder" ? "Preorder" : "In stock"}</span>
         </div>
         ${isPortal ? "" : priceBreakdown}
-        <p>${esc(product.description || "No description added yet.")}</p>
-        <div class="trust-strip">
-          <span>Authenticity-first sourcing</span>
-          <span>${esc(deliveryCopy)}</span>
-          <span>${esc(product.social_proof || "Concierge quote available on WhatsApp.")}</span>
-        </div>
+        ${(() => {
+          // Public PDP: lean description with a "Read more" toggle so
+          // long copy doesn't dominate the modal. The portal keeps the
+          // full description visible (admins want full context).
+          if (isPortal) return `<p>${esc(product.description || "No description added yet.")}</p>`;
+          const d = truncateProductDescription(product.description);
+          if (!d.full) return `<p class="product-description-empty">No description yet.</p>`;
+          if (!d.truncated) return `<p class="product-description">${esc(d.full)}</p>`;
+          return `
+            <div class="product-description is-clampable">
+              <p data-desc-short>${esc(d.short)}</p>
+              <p data-desc-full hidden>${esc(d.full)}</p>
+              <button class="description-toggle" type="button" data-action="toggle-description" aria-expanded="false">Read more</button>
+            </div>
+          `;
+        })()}
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
           <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextShipmentLabel().replace(/^New orders estimated around /, "Est. ")) : "Local dispatch"}</strong></article>
         </div>
-        <dl class="detail-list">
-          ${isPortal ? portalDetails : publicDetails}
-        </dl>
+        ${isPortal ? `<dl class="detail-list">${portalDetails}</dl>` : ""}
         ${isPortal ? "" : `
           <aside class="variant-callout" aria-label="Variants and customization">
             <strong>Choose your ${esc(variantLabel(product))}</strong>
@@ -3147,6 +3169,40 @@ function renderOverviewExtras() {
   const totalAttention = attentionRows.length + lowStock.length;
   const attentionCountEl = qs("[data-attention-count]");
   if (attentionCountEl) attentionCountEl.textContent = String(totalAttention);
+
+  // ── Miss-prevention chips ────────────────────────────────────────────
+  // Three buckets that fall through the cracks in a busy OMS:
+  //   1. Unassigned — orders with no owner (silently sit in the queue)
+  //   2. Stuck     — same status >2× typical (already flagged per-row)
+  //   3. Balance overdue — pakistan_processing orders with unpaid balance
+  // Each chip is click-filtered to its bucket on the Orders tab so an
+  // operator can drill in immediately. Hidden when its count is zero.
+  const openSet = new Set(["pending_review", "accepted", "sourcing", "in_transit", "pakistan_processing"]);
+  const unassignedCount = orders.filter((o) => openSet.has(o.status) && !(o.owner || "").trim()).length;
+  const stuckCount      = orders.filter((o) => openSet.has(o.status) && isOrderStuck(o)).length;
+  const overdueBalanceCount = orders.filter((o) => {
+    if (o.status !== "pakistan_processing") return false;
+    const balOut = Math.max(0, Number(o.balance_due_pkr || 0) - Number(o.balance_paid_pkr || 0));
+    return balOut > 0;
+  }).length;
+  const missChips = [
+    { count: unassignedCount,     glyph: "⊘",  label: "unassigned",      filter: "orders:unassigned",          tone: unassignedCount > 0 ? "warn" : "ok" },
+    { count: stuckCount,          glyph: "◔",  label: "stuck",           filter: "orders:stuck",               tone: stuckCount > 0 ? "danger" : "ok" },
+    { count: overdueBalanceCount, glyph: "▣",  label: "balance overdue", filter: "orders:pakistan_processing", tone: overdueBalanceCount > 0 ? "warn" : "ok" },
+  ];
+  setHTML(
+    "[data-attention-miss-chips]",
+    missChips
+      .filter((c) => c.count > 0)
+      .map((c) => `
+        <button class="miss-chip miss-${c.tone}" type="button" data-action="jump-tab" data-action-filter="${attr(c.filter)}" title="Filter Orders to ${esc(c.label)}">
+          <span class="miss-glyph" aria-hidden="true">${c.glyph}</span>
+          <strong>${c.count}</strong>
+          <span>${esc(c.label)}</span>
+        </button>
+      `)
+      .join(""),
+  );
   const slaRows = attentionRows.slice(0, 10).map(({ order: o, sla }) => `
     <button class="attention-row tone-${sla.level}" type="button" data-action="view-order" data-order-id="${attr(o.id)}">
       <span class="attention-tone">${sla.level === "danger" ? "●" : "▲"}</span>
@@ -5416,7 +5472,15 @@ function renderAdminOrders() {
   renderOrderViewsChips();
   const filter = qs("[data-admin-order-filter]")?.value || "all";
   const slaFilter = state.adminFilters?.slaOnly || false;
+  const metaFilter = state.adminFilters?.metaFilter || null; // "unassigned" | "stuck" | null
   qs("[data-sla-filter-banner]")?.classList.toggle("hidden", !slaFilter);
+  // Mirror an indicator into the SLA banner area for the meta filters too,
+  // so the operator can see why their list is narrow.
+  const metaBanner = qs("[data-meta-filter-banner]");
+  if (metaBanner) {
+    metaBanner.classList.toggle("hidden", !metaFilter);
+    if (metaFilter) metaBanner.querySelector("[data-meta-filter-label]").textContent = metaFilter;
+  }
 
   // ── Batch filter <select> options refresh ──
   const batchSelect = qs("[data-orders-batch]");
@@ -5463,6 +5527,16 @@ function renderAdminOrders() {
 
   const rows = state.orders.filter((order) => {
     if (filter !== "all" && order.status !== filter) return false;
+    // Meta filters from the Overview attention chips. These can't sit in
+    // the status <select> because they're not stages — they're attributes
+    // across stages (no owner, stuck in same state too long).
+    if (metaFilter === "unassigned") {
+      const terminal = order.status === "delivered" || order.status === "cancelled";
+      if (terminal) return false;
+      if ((order.owner || "").trim()) return false;
+    } else if (metaFilter === "stuck") {
+      if (!isOrderStuck(order)) return false;
+    }
     if (slaFilter) {
       const b = orderSlaBadge(order);
       if (!b || b.level === "ok") return false;
@@ -10569,10 +10643,6 @@ function wireEvents() {
       renderOperatorAlertsPanel();
       return;
     }
-    // Dark mode was removed — the portal and storefront now share one
-    // unified light palette. If you need dark, build it as a separate
-    // theme file rather than a runtime toggle.
-
     // Reset the PKR price input back to the URL-autofill suggestion that's
     // stashed in dataset.suggested. Lets the admin try an edit and roll back.
     if (action === "reset-customer-price") {
@@ -10708,6 +10778,17 @@ function wireEvents() {
     if (action === "decrement-cart") return decrementCart(productId);
     if (action === "remove-cart") return removeFromCart(productId);
     if (action === "view-product") return showProductDetails(productId);
+    if (action === "toggle-description") {
+      // Expand the public PDP description in place — no modal reflow.
+      const wrap = event.target.closest(".product-description");
+      if (!wrap) return;
+      const expanded = wrap.classList.toggle("is-expanded");
+      wrap.querySelector("[data-desc-short]")?.toggleAttribute("hidden", expanded);
+      wrap.querySelector("[data-desc-full]")?.toggleAttribute("hidden", !expanded);
+      event.target.textContent = expanded ? "Read less" : "Read more";
+      event.target.setAttribute("aria-expanded", String(expanded));
+      return;
+    }
     if (action === "view-order") return showOrderDetails(orderId);
     if (action === "refresh-admin") return refreshAdmin();
     if (action === "new-product") return fillProductForm();
@@ -10909,28 +10990,47 @@ function wireEvents() {
       return;
     }
     if (action === "jump-tab") {
-      // Action filter may be "<tab>" or "<tab>:<status>" — the second form
-      // is used by the cashflow KPI drilldowns to land the user on Orders
-      // with a status pre-filter applied. Empty status = "All".
+      // Action filter may be "<tab>" or "<tab>:<filter>". For Orders, the
+      // second segment can be a status ("pending_review") OR a synthetic
+      // meta filter ("unassigned", "stuck") that lives on state, not in
+      // the <select>. Empty = "All".
       const raw = target.dataset.actionFilter || "";
-      const [tab, status] = raw.split(":");
+      const [tab, segment] = raw.split(":");
       if (tab) qs(`[data-admin-tab="${tab}"]`)?.click();
-      if (status && tab === "orders") {
-        // Apply the status filter after the tab switch — small delay so
-        // the panel is in the DOM. The chip set + the <select> both
-        // mirror the same filter state to stay in sync.
-        setTimeout(() => {
-          const sel = qs("[data-admin-order-filter]");
-          if (sel) {
-            sel.value = status;
-            sel.dispatchEvent(new Event("change", { bubbles: true }));
-          }
-          // Update the quick-filter chip row visual state to match.
-          qsa("[data-order-filter-chip]").forEach((c) => {
-            c.classList.toggle("active", c.dataset.orderFilterChip === status);
-          });
-        }, 30);
+      if (segment && tab === "orders") {
+        const META = new Set(["unassigned", "stuck"]);
+        state.adminFilters = state.adminFilters || {};
+        if (META.has(segment)) {
+          // Synthetic meta filter — clear status select back to All so the
+          // two filter mechanisms don't compound unexpectedly.
+          state.adminFilters.metaFilter = segment;
+          setTimeout(() => {
+            const sel = qs("[data-admin-order-filter]");
+            if (sel) { sel.value = "all"; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+            qsa("[data-order-filter-chip]").forEach((c) => c.classList.remove("active"));
+          }, 30);
+        } else {
+          // Real status filter — clear any meta filter, set the select.
+          state.adminFilters.metaFilter = null;
+          setTimeout(() => {
+            const sel = qs("[data-admin-order-filter]");
+            if (sel) { sel.value = segment; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+            qsa("[data-order-filter-chip]").forEach((c) => {
+              c.classList.toggle("active", c.dataset.orderFilterChip === segment);
+            });
+          }, 30);
+        }
+      } else if (tab === "orders") {
+        // Plain "orders" jump with no filter — clear meta so the operator
+        // sees everything.
+        if (state.adminFilters) state.adminFilters.metaFilter = null;
       }
+      return;
+    }
+    // Clear the meta filter when the operator hits "Show all" on the banner.
+    if (action === "clear-meta-filter") {
+      if (state.adminFilters) state.adminFilters.metaFilter = null;
+      renderAdminOrders();
       return;
     }
     if (action === "broadcast-from-filter") {
@@ -11953,10 +12053,6 @@ function initTableTools() {
 }
 
 function init() {
-  // Dark mode was retired — storefront and portal share one unified light
-  // palette. Clean up any stale preference so an old localStorage value
-  // can't re-add the (now-deleted) theme-dark class.
-  try { localStorage.removeItem("gb_theme"); } catch {}
   wireEvents();
   fillProductForm();
   if (state.adminToken) {
@@ -11975,13 +12071,13 @@ function init() {
   registerServiceWorker();
   loadRemoteData();
   checkSession();
-  // Portal-only: 5s freshness ticker for the today ribbon's "Updated Xs
-  // ago" indicator. Cheap interval — only updates one DOM node.
+  // Portal: table tools (density, sortable headers, keyboard nav) +
+  // 30s background refresh that pauses when the tab is hidden. The
+  // freshness ticker is intentionally NOT started — it updated the
+  // today-ribbon's "Updated Xs ago" badge, which has been removed for
+  // a minimal portal chrome.
   if (document.body.dataset.page === "portal") {
     initTableTools();
-    startFreshnessTicker();
-    // 30s background refresh — keeps the dashboard live without staring
-    // at the Refresh button. Pauses when the tab is hidden.
     startAutoRefresh();
   }
 }

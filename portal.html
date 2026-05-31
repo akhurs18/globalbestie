@@ -13,11 +13,10 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-spreadsheet" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-oms-focus" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
-    <div class="scroll-meter" aria-hidden="true"></div>
 
     <main id="main">
       <section class="view active" id="view-admin" data-view="admin">
@@ -31,14 +30,22 @@
               <span>Search anything</span>
               <kbd>⌘K</kbd>
             </button>
+            <!-- Order-management primary tabs (the daily workflow) -->
+            <p class="admin-tab-group">Work</p>
             <button class="admin-tab active" type="button" data-admin-tab="overview">Overview <span data-tab-badge="overview"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="orders">Orders <span data-tab-badge="orders"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="customers">Customers <span data-tab-badge="customers"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="cashflow">Cashflow <span data-tab-badge="cashflow"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="ledger">Ledger <span data-tab-badge="ledger"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments <span data-tab-badge="shipments"></span></button>
+
+            <!-- Secondary: catalog/discovery (touched weekly, not daily) -->
+            <p class="admin-tab-group">Catalog</p>
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
+
+            <!-- Configuration: rarely opened, hold at the bottom -->
+            <p class="admin-tab-group">Config</p>
             <button class="admin-tab" type="button" data-admin-tab="settings">Settings <span data-tab-badge="settings"></span></button>
           </aside>
 
@@ -59,9 +66,6 @@
               <div data-demo-banner hidden></div>
               <div data-fx-banner hidden></div>
 
-              <!-- Today ribbon — sticky daily heartbeat shown on every tab.
-                   4 mini-stats with click-through to the relevant view. -->
-              <div class="today-ribbon" data-today-ribbon></div>
               <section class="admin-panel active" data-admin-panel="overview">
                 <div class="admin-heading">
                   <div>
@@ -72,24 +76,24 @@
                 </div>
 
                 <!-- ════ TIER 1 · ACT NOW ════
-                     Reorganised action-first (OMS best practice): the work
-                     queue leads, then the performance KPIs. The "right now"
-                     snapshot lives in the sticky Today ribbon above, so these
-                     KPIs are deliberately the 7-day performance lens. -->
+                     Action-first layout: the work queue leads, then the
+                     performance KPIs. The Today ribbon was removed for
+                     minimal chrome — operators don't want a stat strip on
+                     every tab. -->
                 <p class="tier-label">Act now</p>
 
-                <!-- Single action queue — collapses the old "Orders needing
-                     action" panel + SLA breaches into one prioritized list -->
                 <section class="ops-panel attention-panel">
                   <div class="panel-title-row">
                     <h2>Needs your attention</h2>
                     <span class="status-pill preorder" data-attention-count>0</span>
                   </div>
+                  <!-- Miss-prevention chips — populated by renderAttentionMissChips().
+                       Each click-filters the Orders tab to the at-risk bucket. -->
+                  <div class="attention-miss-chips" data-attention-miss-chips></div>
                   <div data-attention-queue></div>
                 </section>
 
-                <!-- Performance KPIs: 7-day trends (distinct from the Today
-                     ribbon's right-now snapshot above). -->
+                <!-- 7-day performance KPIs: Delivered / Orders / Revenue / Pipeline -->
                 <div class="kpi-hero" data-overview-kpis></div>
 
                 <!-- ════ TIER 2 · MONITOR ════ -->
@@ -368,6 +372,10 @@
                 <div class="sla-filter-banner hidden" data-sla-filter-banner>
                   <span>⚠️ Showing SLA breaches only</span>
                   <button class="button secondary" type="button" data-action="toggle-sla-filter">Show all</button>
+                </div>
+                <div class="sla-filter-banner hidden" data-meta-filter-banner>
+                  <span>Filtered to <strong data-meta-filter-label>—</strong> orders</span>
+                  <button class="button secondary" type="button" data-action="clear-meta-filter">Show all</button>
                 </div>
                 <div class="quick-filter-row" aria-label="Order quick filters">
                   <button class="active" type="button" data-order-filter-chip="all">All</button>
@@ -763,6 +771,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260524-spreadsheet"></script>
+    <script type="module" src="./assets/app.js?v=20260524-oms-focus"></script>
   </body>
 </html>
