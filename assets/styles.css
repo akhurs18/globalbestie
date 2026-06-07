@@ -6058,8 +6058,9 @@ output {
   margin: 16px -20px -20px;
   padding: 12px 20px;
   border-top: 1px solid var(--line);
-  background: rgba(11, 7, 10, 0.94);
-  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.94);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
 }
 
 @keyframes modal-scale-in {
@@ -6140,8 +6141,9 @@ output {
   gap: 10px;
   flex-wrap: wrap;
   border-top: 1px solid var(--line);
-  background: rgba(11, 7, 10, 0.96);
-  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.96);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(14px) saturate(140%);
 }
 
 .product-modal-cta .button.wide {
@@ -7322,9 +7324,10 @@ body::after {
     right: 0;
     margin: 0;
     padding: 12px 14px calc(12px + env(safe-area-inset-bottom)) 14px;
-    border-top: 1px solid rgba(255, 79, 154, 0.42);
-    background: rgba(7, 5, 7, 0.96);
-    backdrop-filter: blur(18px);
+    border-top: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.96);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
     z-index: 5;
     display: flex;
     flex-wrap: wrap;
@@ -8304,11 +8307,13 @@ body[data-active-view="checkout"] .whatsapp-fab {
   left: 12px;
   bottom: 12px;
   padding: 6px 11px;
-  border: 1px solid rgba(255, 216, 232, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-  background: rgba(7, 5, 7, 0.78);
-  backdrop-filter: blur(8px);
-  color: var(--rose);
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  backdrop-filter: blur(10px) saturate(140%);
+  color: var(--pink-3);
+  box-shadow: 0 4px 14px rgba(26, 14, 20, 0.12);
   font-family: "Archivo", sans-serif;
   font-size: 0.7rem;
   font-weight: 800;
@@ -13684,4 +13689,30 @@ body[data-page="portal"] .miss-chip.miss-danger strong {
 body[data-page="portal"] .miss-chip.miss-ok {
   /* All clear — neutral chip, no alarm. */
   opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PRODUCT DETAIL POPUP — light primary CTA
+   The global .button.primary is dark-ink for the portal where contrast
+   = authority. In the storefront product popup we want the primary CTA
+   to read luxe/brand-pink instead of slate-dark so the whole modal is
+   light and on-brand. Scoped overrides only — admin/portal buttons
+   stay slate.
+   ═══════════════════════════════════════════════════════════════════════ */
+body:not([data-page="portal"]) .product-detail-modal .button.primary,
+body:not([data-page="portal"]) .product-detail-modal .button.primary.wide {
+  background: var(--pink);
+  color: var(--ink);
+  box-shadow: 0 12px 30px rgba(216, 142, 155, 0.32);
+}
+
+body:not([data-page="portal"]) .product-detail-modal .button.primary::after {
+  /* Disable the dark→pink crossfade overlay — the base IS already pink. */
+  background: var(--pink-2);
+}
+
+body:not([data-page="portal"]) .product-detail-modal .button.primary:hover {
+  background: var(--pink-2);
+  color: var(--ink);
+  box-shadow: 0 14px 34px rgba(216, 142, 155, 0.42);
 }

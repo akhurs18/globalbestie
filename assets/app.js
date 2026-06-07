@@ -887,6 +887,30 @@ function nextShipmentLabel() {
   return "New orders estimated based on the next USA batch";
 }
 
+// Find the next open shipment batch and return a customer-facing arrival
+// label like "Arrives June 5" or "Arrives June 5 (June USA Batch)". Used
+// on the public PDP so the estimate tracks the actual batch ETA the team
+// is managing, not a hand-entered store_settings date that goes stale.
+//
+// Selection: the soonest open batch (status in collecting / sourcing /
+// in_transit / arriving) whose eta_date is today or later. Falls back to
+// nextShipmentLabel() when no batches are loaded yet.
+function nextBatchArrivalLabel({ includeBatchName = false } = {}) {
+  const batches = Array.isArray(state.shipmentBatches) ? state.shipmentBatches : [];
+  const OPEN = new Set(["collecting", "sourcing", "in_transit", "arriving"]);
+  const todayMs = Date.now() - 86_400_000; // include today in case of TZ slack
+  const candidates = batches
+    .filter((b) => b && b.eta_date && OPEN.has(b.status))
+    .map((b) => ({ b, ts: new Date(`${b.eta_date}T12:00:00`).getTime() }))
+    .filter((x) => !Number.isNaN(x.ts) && x.ts >= todayMs)
+    .sort((a, b) => a.ts - b.ts);
+  if (!candidates.length) return nextShipmentLabel();
+  const { b, ts } = candidates[0];
+  const dt = new Date(ts);
+  const pretty = dt.toLocaleDateString("en-PK", { month: "long", day: "numeric" });
+  return includeBatchName && b.name ? `Arrives ${pretty} (${b.name})` : `Arrives ${pretty}`;
+}
+
 function currentDoorstepWindow() {
   // Only return the window string if it's set AND the end date hasn't
   // already passed — stops us from claiming "doorstep delivery May 25-27"
@@ -1073,7 +1097,7 @@ function productCard(product, options = {}) {
     : (dMax ? `Delivered in ${dMax} days` : "Delivered in 3-5 days");
   const publicMeta = [
     product.stock_mode === "preorder"
-      ? nextShipmentLabel()
+      ? nextBatchArrivalLabel()
       : `${Number(product.inventory || 0)} available · ${inStockDeliveryLabel}`,
   ].filter(Boolean);
   const adminMeta = [
@@ -1749,13 +1773,13 @@ function showProductDetails(productId) {
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
-          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextShipmentLabel().replace(/^New orders estimated around /, "Est. ")) : "Local dispatch"}</strong></article>
+          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextBatchArrivalLabel()) : "Local dispatch"}</strong></article>
         </div>
         ${isPortal ? `<dl class="detail-list">${portalDetails}</dl>` : ""}
         ${isPortal ? "" : `
           <aside class="variant-callout" aria-label="Variants and customization">
             <strong>Choose your ${esc(variantLabel(product))}</strong>
-            <p class="variant-hint">${esc(product.variants && product.variants.trim() ? product.variants : "Tell us your preferred option below — we confirm availability on WhatsApp before payment.")}</p>
+            <p class="variant-hint">${esc(product.variants && product.variants.trim() ? product.variants : "Tell us your preferred size, shade, or colour below — we'll confirm availability on WhatsApp once your order's in.")}</p>
             <label class="variant-input-label">
               <span>${esc(variantLabel(product))}</span>
               <input type="text" data-pdp-variant data-product-id="${attr(product.id)}" placeholder="${esc(variantPlaceholder(product))}" autocomplete="off" />
@@ -6099,7 +6123,7 @@ function updateQuoteEstimator(options = {}) {
         <li>International shipping to Pakistan</li>
         <li>Service &amp; door-to-door delivery</li>
       </ul>
-      <p class="quote-note">Working estimate. Our team confirms the final PKR price, availability, and shipment batch before sourcing — no payment until we confirm.</p>
+      <p class="quote-note">Working estimate — the final PKR price you pay is shown at checkout. We share the exact shipment batch on WhatsApp after you order.</p>
     `;
   }
   const wa = qs("[data-quote-whatsapp]");
@@ -9510,10 +9534,10 @@ async function submitSourceRequest() {
         <div style="flex:1;min-width:0;">
           <p class="source-result-title">${esc(c.title || url)}</p>
           <p class="source-result-price">Estimated total: ${PKR.format(lastSourceEstimate.estimated_pkr)}</p>
-          <p class="source-result-meta">Includes sourcing, international shipping, and our service. ~${lastSourceEstimate.preorder_weeks}-week preorder · 50% advance after team confirms.</p>
+          <p class="source-result-meta">Includes sourcing, international shipping, and our service. ~${lastSourceEstimate.preorder_weeks}-week preorder · 50% advance at checkout, balance on arrival.</p>
         </div>
       </div>
-      <small class="source-result-note">${esc(payload.notes || "Estimate. Team confirms the final PKR price within 15 min before any payment is collected.")}</small>
+      <small class="source-result-note">${esc(payload.notes || "Working estimate — final PKR price shown at checkout. We share the shipment batch on WhatsApp within 15 min.")}</small>
       <div class="source-modal-actions">
         <button class="button primary" type="button" data-action="add-sourcing-to-cart">Add to cart for team review</button>
         <button class="button ghost" type="button" data-action="close-modal">Close</button>
@@ -9680,7 +9704,7 @@ async function submitQuoteFromUrl() {
         <li>International shipping</li>
         <li>Delivery to your door</li>
       </ul>
-      <small class="source-result-note">${esc(payload.notes || "Estimate. Team confirms the final PKR price within 15 minutes — no payment until we confirm.")}</small>
+      <small class="source-result-note">${esc(payload.notes || "Working estimate — final PKR price shown at checkout. We share the shipment batch on WhatsApp within 15 min.")}</small>
       <div class="source-modal-actions">
         <button class="button primary" type="button" data-action="add-sourcing-to-cart">Add to cart for team review</button>
         <a class="button ghost" href="https://wa.me/13362556023?text=${encodeURIComponent(`Hi Global Bestie, can you confirm this quote?\n${url}\nVariant: ${variantInput?.value || ""}\nPKR estimate shown: ${PKR.format(lastSourceEstimate.estimated_pkr)}`)}" target="_blank" rel="noopener noreferrer">Confirm on WhatsApp</a>
@@ -10105,7 +10129,7 @@ function replyLead(leadId) {
   if (!lead) return;
   const product = state.products.find((item) => item.title === lead.product);
   const firstName = String(lead.name || "bestie").split(" ")[0] || "bestie";
-  const suggested = `Hi ${firstName}, yes bestie. Please share your city, WhatsApp number, and exact ${product?.category === "makeup" ? "shade" : "size/color"} so we can confirm availability and final PKR price before payment.`;
+  const suggested = `Hi ${firstName}, yes bestie. Please share your city, WhatsApp number, and exact ${product?.category === "makeup" ? "shade" : "size/color"} so we can confirm the right ${product?.category === "makeup" ? "shade" : "size"} and get your order moving.`;
   openModal(`
     <div class="lead-reply-modal">
       <p class="kicker">${esc(lead.source || "")} · ${esc(lead.sla || "SLA pending")}</p>

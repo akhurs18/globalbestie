@@ -15,7 +15,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-oms-focus" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260524-no-confirm-copy" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -419,7 +419,8 @@
 
         <!-- Public "source any USA product" CTA. Customer pastes a USA
              retailer URL, gets an instant PKR estimate, can add to cart
-             as a sourcing request. Server confirms before any payment. -->
+             as a sourcing request. -->
+
         <div class="source-cta-band">
           <div>
             <p class="kicker">Don't see what you want?</p>
@@ -668,8 +669,8 @@
             </fieldset>
 
             <fieldset class="ack-box">
-              <legend>Confirm before placing your order</legend>
-              <label class="check-row"><input name="terms_ack" type="checkbox" required /> I understand preorder shipment timing can vary by batch, and the exact ETA will be confirmed on WhatsApp after my order.</label>
+              <legend>Before you order</legend>
+              <label class="check-row"><input name="terms_ack" type="checkbox" required /> I understand preorder shipment timing can vary by batch, and the exact ETA will be shared on WhatsApp after my order.</label>
               <label class="check-row"><input name="balance_ack" type="checkbox" required /> I understand the remaining 50% balance is collected after my parcel arrives in Pakistan, before local dispatch.</label>
             </fieldset>
 
@@ -680,7 +681,7 @@
             </ul>
             <button class="button primary wide checkout-place-order" type="submit">Place order</button>
             <p class="checkout-reassure">
-              We confirm your order details, shipment batch, and exact ETA on WhatsApp within about 15 minutes.
+              We'll share your order details, shipment batch, and exact ETA on WhatsApp within about 15 minutes.
             </p>
           </form>
 
@@ -966,6 +967,6 @@
 
     <div id="page-curtain" aria-hidden="true"></div>
 
-    <script type="module" src="./assets/app.js?v=20260524-oms-focus"></script>
+    <script type="module" src="./assets/app.js?v=20260524-no-confirm-copy"></script>
   </body>
 </html>
