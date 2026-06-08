@@ -9,8 +9,11 @@
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Portal uses Archivo only (UI focus). Cormorant lives on the
+         storefront and isn't needed for ops-dense screens. Trims one font
+         family from the portal payload entirely. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/styles.css?v=20260524-no-confirm-copy" />
@@ -194,6 +197,19 @@
                     <small class="kicker">Where the money moves across open orders</small>
                   </div>
                   <div class="cashflow-waterfall" data-cashflow-waterfall></div>
+                </section>
+
+                <!-- Sankey-shaped allocation viz — complements the waterfall by
+                     showing where capital is sitting RIGHT NOW. Sources on
+                     left (advance collected, balance owed, future), destinations
+                     on right (USD cost, shipping, profit, pending). Path widths
+                     scale to amounts. -->
+                <section class="ops-panel cashflow-sankey-panel">
+                  <div class="panel-title-row">
+                    <h2>Money flow</h2>
+                    <small class="kicker">Sources → destinations · current open positions</small>
+                  </div>
+                  <div class="sankey-wrap" data-cashflow-sankey></div>
                 </section>
 
                 <div class="cashflow-grid">

@@ -1333,33 +1333,41 @@ function renderCart() {
     const customQuoteNote = isCustomQuote
       ? `<small class="custom-quote-note">Final PKR price, source, and batch are confirmed by the team before sourcing.</small>`
       : "";
+    // The .cart-swipe-shell wraps each line in a swipe-context. A static
+    // red Remove zone sits behind the line; the foreground .cart-line
+    // translates left via JS gesture (see wireCartLineSwipe in setCartDrawerOpen).
+    // The Remove button inside .mini-actions still works on desktop.
     return `
-    <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
-      <div>
-        <strong>
-          ${esc(line.product.title)}
-          ${isSourcing ? `<span class="cart-estimate-chip">Estimate</span>` : ""}
-          ${isCustomQuote ? `<span class="line-badge custom-quote-badge">Custom quote</span>` : ""}
-        </strong>
-        <small>${statusCopy}</small>
-        ${sourceLine}
-        ${customQuoteNote}
-        ${variantBlock}
-      </div>
-      <div class="mini-actions">
-        <strong>${PKR.format(line.subtotal)}</strong>
-        <div class="qty-stepper" role="group" aria-label="Quantity for ${attr(line.product.title)}">
-          <button class="qty-step" type="button" data-action="decrement-cart" data-product-id="${attr(line.product_id)}" aria-label="Decrease quantity">−</button>
-          <span class="qty-value" aria-live="polite">${line.quantity}</span>
-          <button class="qty-step" type="button" data-action="add-cart" data-product-id="${attr(line.product_id)}" aria-label="Increase quantity">+</button>
+    <div class="cart-swipe-shell" data-swipe-line data-product-id="${attr(line.product_id)}">
+      <button class="cart-swipe-remove" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}" tabindex="-1">Remove</button>
+      <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
+        <div>
+          <strong>
+            ${esc(line.product.title)}
+            ${isSourcing ? `<span class="cart-estimate-chip">Estimate</span>` : ""}
+            ${isCustomQuote ? `<span class="line-badge custom-quote-badge">Custom quote</span>` : ""}
+          </strong>
+          <small>${statusCopy}</small>
+          ${sourceLine}
+          ${customQuoteNote}
+          ${variantBlock}
         </div>
-        <button class="icon-button plain" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}">Remove</button>
+        <div class="mini-actions">
+          <strong>${PKR.format(line.subtotal)}</strong>
+          <div class="qty-stepper" role="group" aria-label="Quantity for ${attr(line.product.title)}">
+            <button class="qty-step" type="button" data-action="decrement-cart" data-product-id="${attr(line.product_id)}" aria-label="Decrease quantity">−</button>
+            <span class="qty-value" aria-live="polite">${line.quantity}</span>
+            <button class="qty-step" type="button" data-action="add-cart" data-product-id="${attr(line.product_id)}" aria-label="Increase quantity">+</button>
+          </div>
+          <button class="icon-button plain" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}">Remove</button>
+        </div>
       </div>
     </div>
   `;
   }).join("");
   setHTML("[data-cart-items]", html || empty);
   setHTML("[data-checkout-items]", html || empty);
+  wireCartLineSwipes();
 
   const summary = cartPaymentSummary();
   const totals = `
@@ -1382,6 +1390,228 @@ function setCartDrawerOpen(open) {
   if (!drawer) return;
   drawer.classList.toggle("open", open);
   drawer.setAttribute("aria-hidden", open ? "false" : "true");
+  // Backdrop sibling — toggled together with the drawer so the page dims
+  // behind it. Idempotent: created on first open if it doesn't exist.
+  let backdrop = qs("[data-cart-backdrop]");
+  if (!backdrop) {
+    backdrop = document.createElement("div");
+    backdrop.className = "cart-backdrop";
+    backdrop.setAttribute("data-cart-backdrop", "");
+    backdrop.setAttribute("aria-hidden", "true");
+    backdrop.addEventListener("click", () => setCartDrawerOpen(false));
+    document.body.appendChild(backdrop);
+  }
+  backdrop.classList.toggle("open", open);
+  // Mount drag-to-dismiss exactly once
+  if (open && !drawer.dataset.gesturesWired) {
+    wireDrawerGestures(drawer);
+    drawer.dataset.gesturesWired = "true";
+  }
+  // Reset any leftover drag transform when (re)opening
+  if (open) drawer.style.transform = "";
+}
+
+// Cart-line swipe-to-remove. Each .cart-swipe-shell has a static Remove zone
+// behind the foreground .cart-line; the line translates left under finger
+// drag. Past 45% width OR velocity > 0.11 px/ms = remove. Snap back otherwise.
+// Idempotent per element: gestures are mounted once and skipped after.
+function wireCartLineSwipes() {
+  const shells = qsa("[data-swipe-line]");
+  shells.forEach((shell) => {
+    if (shell.dataset.swipeWired === "true") return;
+    shell.dataset.swipeWired = "true";
+    const line = shell.querySelector(".cart-line");
+    if (!line) return;
+
+    let startX = 0;
+    let startTime = 0;
+    let dx = 0;
+    let dragging = false;
+    let activePointerId = null;
+    let lineWidth = 0;
+    const REMOVE_THRESHOLD = 0.45;
+    const VELOCITY_THRESHOLD = 0.11;
+
+    const onDown = (event) => {
+      if (event.isPrimary === false) return;
+      if (dragging) return;
+      // Don't steal pointer events on the inner controls (qty stepper, etc.)
+      if (event.target.closest("button, input, textarea, select, a, label")) return;
+      dragging = true;
+      activePointerId = event.pointerId;
+      startX = event.clientX;
+      startTime = performance.now();
+      dx = 0;
+      lineWidth = line.getBoundingClientRect().width || 320;
+      shell.setPointerCapture?.(event.pointerId);
+      line.style.transition = "none";
+    };
+    const onMove = (event) => {
+      if (!dragging || event.pointerId !== activePointerId) return;
+      dx = event.clientX - startX;
+      // Only allow left swipe (negative dx). Damp the right side.
+      const translate = dx < 0 ? dx : dx * 0.2;
+      line.style.transform = `translateX(${translate}px)`;
+      // Brighten the Remove background as the swipe progresses
+      const progress = Math.min(1, Math.abs(translate) / (lineWidth * REMOVE_THRESHOLD));
+      shell.style.setProperty("--swipe-progress", progress.toFixed(2));
+    };
+    const onUp = (event) => {
+      if (!dragging || event.pointerId !== activePointerId) return;
+      dragging = false;
+      shell.releasePointerCapture?.(event.pointerId);
+      line.style.transition = "";
+      const elapsed = performance.now() - startTime;
+      const velocity = elapsed > 0 ? Math.abs(dx) / elapsed : 0;
+      const shouldRemove = dx < -lineWidth * REMOVE_THRESHOLD ||
+                           (dx < -10 && velocity > VELOCITY_THRESHOLD);
+      if (shouldRemove) {
+        // Animate the line off-screen then trigger the existing remove action
+        line.style.transform = `translateX(-${lineWidth + 60}px)`;
+        line.style.opacity = "0";
+        shell.style.setProperty("--swipe-progress", "1");
+        setTimeout(() => {
+          const productId = shell.dataset.productId;
+          if (productId) removeFromCart(productId);
+        }, 200);
+      } else {
+        // Snap back
+        line.style.transform = "";
+        shell.style.setProperty("--swipe-progress", "0");
+      }
+      activePointerId = null;
+      dx = 0;
+    };
+    shell.addEventListener("pointerdown", onDown);
+    shell.addEventListener("pointermove", onMove);
+    shell.addEventListener("pointerup", onUp);
+    shell.addEventListener("pointercancel", onUp);
+  });
+}
+
+// One-shot batch-shipped reveal. Fires a full-screen overlay the first time
+// a customer returns after their batch transitions to a celebration-worthy
+// state. localStorage gate is keyed by (orderId × stage) so the reveal can
+// fire once per transition (shipped, arrived) without repeating.
+//
+// Wiring this is two parts:
+//   1. Visual layer (this fn) — shows the overlay, auto-dismisses after 6s
+//   2. Trigger layer — calls maybeShowBatchReveal() when /api/auth/me or
+//      the customer-orders fetch returns an order whose stage just changed
+//      (the JS that owns those callbacks decides when to invoke this).
+function maybeShowBatchReveal({ orderId, stage, headline, sub, eta } = {}) {
+  if (!orderId || !stage) return;
+  const root = qs("[data-batch-reveal]");
+  if (!root) return;
+  // Gate: localStorage flag per (order × stage) — fires once
+  const gateKey = `gb_batch_reveal_${orderId}_${stage}`;
+  try {
+    if (localStorage.getItem(gateKey)) return;
+    localStorage.setItem(gateKey, String(Date.now()));
+  } catch {
+    // localStorage may be blocked (private mode) — silently no-op so we
+    // don't accidentally fire on every load. Better to show nothing than
+    // every visit.
+    return;
+  }
+  // Populate
+  const headlineEl = qs("[data-batch-reveal-headline]");
+  const subEl = qs("[data-batch-reveal-sub]");
+  const orderEl = qs("[data-batch-reveal-order-id]");
+  const etaEl = qs("[data-batch-reveal-eta]");
+  if (headlineEl && headline) headlineEl.textContent = headline;
+  if (subEl && sub) subEl.textContent = sub;
+  if (orderEl && orderId) orderEl.textContent = orderId;
+  if (etaEl && eta) etaEl.textContent = eta;
+  // Show
+  root.hidden = false;
+  root.setAttribute("aria-hidden", "false");
+  requestAnimationFrame(() => {
+    root.dataset.open = "true";
+  });
+  // Auto-dismiss
+  clearTimeout(maybeShowBatchReveal._timer);
+  maybeShowBatchReveal._timer = setTimeout(() => hideBatchReveal(), 6000);
+}
+
+function hideBatchReveal() {
+  const root = qs("[data-batch-reveal]");
+  if (!root) return;
+  root.dataset.open = "false";
+  root.setAttribute("aria-hidden", "true");
+  setTimeout(() => { root.hidden = true; }, 480);
+  clearTimeout(maybeShowBatchReveal._timer);
+}
+
+// Swipe-to-dismiss handler for the cart drawer. Emil's drawer rules:
+//   - velocity > 0.11 px/ms dismisses regardless of distance (a flick is
+//     intent enough)
+//   - distance past 35% of drawer width dismisses
+//   - damping on the opposite axis so dragging left (past closed) feels like
+//     hitting elastic, not a wall
+//   - additional touch points after drag starts are ignored
+//   - pointer capture ensures drag continues if the finger leaves the bounds
+function wireDrawerGestures(drawer) {
+  let startX = 0;
+  let startTime = 0;
+  let dx = 0;
+  let dragging = false;
+  let activePointerId = null;
+  const DISMISS_THRESHOLD = 0.35;       // fraction of width
+  const VELOCITY_THRESHOLD = 0.11;      // px / ms
+
+  const onDown = (event) => {
+    // Ignore non-primary buttons + multi-touch follow-ups
+    if (event.isPrimary === false) return;
+    if (dragging) return;
+    // Don't intercept touches on form controls inside the drawer (qty steppers,
+    // inputs, the remove button, etc.) — the user is interacting with them.
+    if (event.target.closest("button, input, textarea, select, a, label")) return;
+    dragging = true;
+    activePointerId = event.pointerId;
+    startX = event.clientX;
+    startTime = performance.now();
+    dx = 0;
+    drawer.setPointerCapture?.(event.pointerId);
+    // Disable the CSS transition during drag — we set transform directly
+    drawer.style.transition = "none";
+  };
+  const onMove = (event) => {
+    if (!dragging || event.pointerId !== activePointerId) return;
+    dx = event.clientX - startX;
+    let translate;
+    if (dx > 0) {
+      // Dragging right (toward dismiss) — full 1:1 motion
+      translate = dx;
+    } else {
+      // Dragging left (past closed) — damp it 1:0.25 so it feels elastic
+      translate = dx * 0.25;
+    }
+    drawer.style.transform = `translateX(${translate}px)`;
+  };
+  const onUp = (event) => {
+    if (!dragging || event.pointerId !== activePointerId) return;
+    dragging = false;
+    drawer.releasePointerCapture?.(event.pointerId);
+    drawer.style.transition = "";
+    const elapsed = performance.now() - startTime;
+    const velocity = elapsed > 0 ? dx / elapsed : 0;
+    const width = drawer.getBoundingClientRect().width || 390;
+    const shouldDismiss = dx > width * DISMISS_THRESHOLD || velocity > VELOCITY_THRESHOLD;
+    if (shouldDismiss) {
+      drawer.style.transform = "";
+      setCartDrawerOpen(false);
+    } else {
+      // Snap back to fully open
+      drawer.style.transform = "";
+    }
+    activePointerId = null;
+    dx = 0;
+  };
+  drawer.addEventListener("pointerdown", onDown);
+  drawer.addEventListener("pointermove", onMove);
+  drawer.addEventListener("pointerup", onUp);
+  drawer.addEventListener("pointercancel", onUp);
 }
 
 function renderSupportLinks() {
@@ -3558,6 +3788,155 @@ function renderCashflow() {
   renderCashflowBatches(fx);
   renderCashflowWorklists();
   renderLedger();
+  renderCashflowSankey(agg, fx);
+}
+
+// Money-flow Sankey diagram.
+//
+// Visualizes where every open position is sitting RIGHT NOW. Two columns:
+//   Left (sources)        Right (destinations)
+//   ─────────────         ──────────────────────
+//   Advance collected →   USD spent on goods
+//   Balance owed (PK)  →   Shipping/customs spend
+//   Future balance     →   Expected profit
+//                          Pending recovery
+//
+// Path widths scale to the amount each flow carries. Hover any group to
+// highlight the source/destination pair. Linear timing on the path draw-in
+// (constant motion) + spring-feel on hover (Emil's framework).
+function renderCashflowSankey(agg, fx) {
+  const target = qs("[data-cashflow-sankey]");
+  if (!target) return;
+
+  // Source bucket — what's committed (regardless of who has it yet)
+  const advanceIn = Math.max(0, agg.advanceCollected || 0);
+  const balanceOwed = Math.max(0, agg.balanceToCollect || 0);
+  const futureBalance = Math.max(0, agg.futureBalance || 0);
+  const totalSource = advanceIn + balanceOwed + futureBalance;
+
+  // Destination bucket — where it ends up
+  // (For the SVG, we model the expected end-state, scaled by current source totals)
+  const usdSpentPkr = Math.max(0, (agg.usdSpent || 0) * fx);
+  // Shipping is rough: 7% of source as a working estimate when no explicit shipping field
+  const shippingEst = Math.max(0, Math.min(totalSource * 0.07, totalSource * 0.15));
+  const expectedProfit = Math.max(0, agg.expectedProfit || 0);
+  // Anything left over is "pending recovery" — money in motion that hasn't been classified
+  const accountedDest = usdSpentPkr + shippingEst + expectedProfit;
+  const pendingRecovery = Math.max(0, totalSource - accountedDest);
+  const totalDest = usdSpentPkr + shippingEst + expectedProfit + pendingRecovery;
+
+  if (totalSource === 0 && totalDest === 0) {
+    target.innerHTML = `<div class="sankey-empty">No open positions yet. The flow diagram fills in as soon as the first advance lands.</div>`;
+    return;
+  }
+
+  // Geometry
+  const W = 800, H = 280;
+  const nodeW = 18;
+  const nodeXL = 130;       // left column right edge
+  const nodeXR = W - 130;   // right column left edge
+  const colLeftHeight = H - 60;
+  const colRightHeight = H - 60;
+
+  const sources = [
+    { key: "advance",  label: "Advance collected", value: advanceIn,     tone: "in" },
+    { key: "balance",  label: "Balance owed (PK)", value: balanceOwed,   tone: "in" },
+    { key: "future",   label: "Future balance",    value: futureBalance, tone: "in" },
+  ].filter((s) => s.value > 0);
+  const destinations = [
+    { key: "cost",    label: "USD goods cost",     value: usdSpentPkr,     tone: "cost" },
+    { key: "ship",    label: "Shipping / customs", value: shippingEst,     tone: "ship" },
+    { key: "profit",  label: "Expected profit",    value: expectedProfit,  tone: "profit" },
+    { key: "pending", label: "Pending recovery",   value: pendingRecovery, tone: "pending" },
+  ].filter((d) => d.value > 0);
+
+  // Allocate vertical heights — each node's height is proportional to its
+  // share of the total, with a minimum so labels stay readable.
+  const minBand = 14;
+  const sLayout = computeBands(sources, colLeftHeight, totalSource, minBand);
+  const dLayout = computeBands(destinations, colRightHeight, totalDest, minBand);
+
+  // Allocate flows: every source's value gets distributed across destinations
+  // in proportion to each destination's share of total. (i.e. a simple
+  // outer-product allocation — visually clean for this scale.)
+  const flows = [];
+  sources.forEach((s, si) => {
+    destinations.forEach((d, di) => {
+      const share = totalDest > 0 ? d.value / totalDest : 0;
+      const value = s.value * share;
+      if (value <= 0) return;
+      flows.push({ si, di, sKey: s.key, dKey: d.key, value, dTone: d.tone });
+    });
+  });
+
+  // Slice the source/destination bands by flow value so paths stack.
+  const sOffset = sLayout.map(() => 0);
+  const dOffset = dLayout.map(() => 0);
+  const flowSvgs = flows.map((f) => {
+    const sBand = sLayout[f.si];
+    const dBand = dLayout[f.di];
+    const sH = (f.value / sources[f.si].value) * sBand.h;
+    const dH = (f.value / destinations[f.di].value) * dBand.h;
+    const sy0 = sBand.y + sOffset[f.si];
+    const sy1 = sy0 + sH;
+    const dy0 = dBand.y + dOffset[f.di];
+    const dy1 = dy0 + dH;
+    sOffset[f.si] += sH;
+    dOffset[f.di] += dH;
+    const x0 = nodeXL + nodeW;
+    const x1 = nodeXR;
+    const midX = (x0 + x1) / 2;
+    const path = `M${x0},${sy0} C${midX},${sy0} ${midX},${dy0} ${x1},${dy0} L${x1},${dy1} C${midX},${dy1} ${midX},${sy1} ${x0},${sy1} Z`;
+    return `<g class="sankey-group" data-flow="${f.sKey}-${f.dKey}">
+      <title>${esc(sources[f.si].label)} → ${esc(destinations[f.di].label)} · ${esc(PKR.format(f.value))}</title>
+      <path class="sankey-flow tone-${f.dTone}" d="${path}" />
+    </g>`;
+  }).join("");
+
+  // Node rectangles + labels
+  const sourceNodes = sLayout.map((band, i) => `
+    <g class="sankey-group">
+      <rect class="sankey-node-rect tone-${sources[i].tone}" x="${nodeXL}" y="${band.y}" width="${nodeW}" height="${band.h}" rx="4" />
+      <text class="sankey-label" x="${nodeXL - 10}" y="${band.y + 14}" text-anchor="end">${esc(sources[i].label)}</text>
+      <text class="sankey-sublabel" x="${nodeXL - 10}" y="${band.y + 30}" text-anchor="end">${esc(PKR.format(sources[i].value))}</text>
+    </g>`).join("");
+  const destNodes = dLayout.map((band, i) => `
+    <g class="sankey-group">
+      <rect class="sankey-node-rect tone-${destinations[i].tone}" x="${nodeXR - nodeW}" y="${band.y}" width="${nodeW}" height="${band.h}" rx="4" />
+      <text class="sankey-label" x="${nodeXR + 10}" y="${band.y + 14}" text-anchor="start">${esc(destinations[i].label)}</text>
+      <text class="sankey-sublabel" x="${nodeXR + 10}" y="${band.y + 30}" text-anchor="start">${esc(PKR.format(destinations[i].value))}</text>
+    </g>`).join("");
+
+  target.innerHTML = `
+    <svg class="sankey-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Money-flow diagram from sources to destinations">
+      ${flowSvgs}
+      ${sourceNodes}
+      ${destNodes}
+    </svg>
+    <div class="sankey-legend" aria-hidden="true">
+      <span class="tone-in"><i></i>Money in (sources)</span>
+      <span class="tone-cost"><i></i>USD goods cost</span>
+      <span class="tone-ship"><i></i>Shipping / customs</span>
+      <span class="tone-profit"><i></i>Profit</span>
+      <span class="tone-pending"><i></i>Pending recovery</span>
+    </div>
+  `;
+
+  function computeBands(items, totalHeight, totalValue, minBand) {
+    const gap = 8;
+    const usableH = totalHeight - gap * (items.length - 1);
+    const raw = items.map((it) => Math.max(minBand, (it.value / Math.max(1, totalValue)) * usableH));
+    // Renormalize so summed heights + gaps fit
+    const sumRaw = raw.reduce((a, b) => a + b, 0);
+    const scale = usableH / Math.max(1, sumRaw);
+    let y = 30;
+    return items.map((_, i) => {
+      const h = raw[i] * scale;
+      const band = { y, h };
+      y += h + gap;
+      return band;
+    });
+  }
 }
 
 // True waterfall: each step is a floating bar showing a delta, with the
@@ -4982,12 +5361,27 @@ function openCommandPalette() {
       target._hits = [];
       return;
     }
+    // Case-insensitive substring highlight — bolds the typed needle inside
+    // labels and sub-text so the eye lands on the match instantly.
+    const markMatch = (text, q) => {
+      const safe = esc(text);
+      if (!q) return safe;
+      const trimmed = q.trim();
+      if (!trimmed) return safe;
+      const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      try {
+        const re = new RegExp(`(${escaped})`, "gi");
+        return safe.replace(re, '<mark class="cmd-palette-mark">$1</mark>');
+      } catch {
+        return safe;
+      }
+    };
     target.innerHTML = hits.map((h, i) => `
       <button class="cmd-palette-row${i === cursor ? " active" : ""}${h.avatar ? " has-avatar" : ""}" type="button" data-cmd-index="${i}">
         ${h.avatar || `<span class="cmd-palette-type">${esc(h.type)}</span>`}
         ${h.avatar ? `<span class="cmd-palette-type subtle">${esc(h.type)}</span>` : ""}
-        <span class="cmd-palette-label">${esc(h.label)}</span>
-        <span class="cmd-palette-sub">${esc(h.sub)}</span>
+        <span class="cmd-palette-label">${markMatch(h.label, needle)}</span>
+        <span class="cmd-palette-sub">${markMatch(h.sub, needle)}</span>
       </button>
     `).join("");
     target._hits = hits;
@@ -5011,6 +5405,7 @@ function openCommandPalette() {
       return;
     }
     qsa(".cmd-palette-row").forEach((row, i) => row.classList.toggle("active", i === cursor));
+    qsa(".cmd-palette-row")[cursor]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   });
   qs("[data-cmd-results]")?.addEventListener("click", (e) => {
     const row = e.target.closest(".cmd-palette-row");
@@ -6258,6 +6653,7 @@ const ROUTE_TO_PATH = {
   shop: "/shop",
   preorder: "/preorder",
   checkout: "/checkout",
+  "checkout-chat": "/checkout-preview",
   track: "/track",
   quote: "/quote",
   faq: "/preorder",
@@ -6265,6 +6661,8 @@ const ROUTE_TO_PATH = {
   contact: "/contact",
   returns: "/returns",
   "size-guide": "/size-guide",
+  batches: "/batches",
+  "this-week": "/this-week",
 };
 
 const PATH_TO_ROUTE = {
@@ -6273,6 +6671,7 @@ const PATH_TO_ROUTE = {
   "/shop": "shop",
   "/preorder": "preorder",
   "/checkout": "checkout",
+  "/checkout-preview": "checkout-chat",
   "/track": "track",
   "/quote": "quote",
   "/faq": "preorder",
@@ -6280,6 +6679,8 @@ const PATH_TO_ROUTE = {
   "/contact": "contact",
   "/returns": "returns",
   "/size-guide": "size-guide",
+  "/batches": "batches",
+  "/this-week": "this-week",
 };
 
 const ROUTE_META = {
@@ -6326,6 +6727,18 @@ const ROUTE_META = {
   "size-guide": {
     title: "Size guide | Global Bestie",
     description: "US ↔ UK ↔ EU ↔ desi size conversions for shoes and clothing — find your USA size before you preorder.",
+  },
+  "checkout-chat": {
+    title: "Concierge checkout (preview) | Global Bestie",
+    description: "A preview of Global Bestie's upcoming chat-style checkout, designed to match our WhatsApp concierge.",
+  },
+  batches: {
+    title: "Live shipment batches | Global Bestie",
+    description: "Track every Global Bestie USA-to-Pakistan shipment batch in real time — when it ships, arrives, and dispatches.",
+  },
+  "this-week": {
+    title: "This week's sourcing | Global Bestie",
+    description: "Preview the USA finds we're sourcing into our next consolidated batch — lock yours in before the batch closes.",
   },
 };
 
@@ -10604,6 +11017,27 @@ function wireEvents() {
     const orderId = target.dataset.orderId;
     const trendId = target.dataset.trendId;
     if (action === "close-modal") return closeModal();
+    if (action === "toggle-wa-card") {
+      const bubble = qs("[data-wa-bubble]");
+      const fab = bubble?.querySelector(".whatsapp-fab");
+      if (!bubble) return;
+      const open = bubble.dataset.open === "true";
+      bubble.dataset.open = open ? "false" : "true";
+      if (fab) fab.setAttribute("aria-expanded", open ? "false" : "true");
+      return;
+    }
+    if (action === "close-wa-card") {
+      const bubble = qs("[data-wa-bubble]");
+      const fab = bubble?.querySelector(".whatsapp-fab");
+      if (!bubble) return;
+      bubble.dataset.open = "false";
+      if (fab) fab.setAttribute("aria-expanded", "false");
+      return;
+    }
+    if (action === "dismiss-batch-reveal") {
+      hideBatchReveal();
+      return;
+    }
     if (action === "gallery-swap") {
       const url = target.dataset.galleryUrl;
       const mainImg = qs("#gallery-main-img");
@@ -11517,6 +11951,82 @@ function wireEvents() {
     qs("[data-faq-empty]")?.classList.toggle("hidden", visible > 0);
   });
 
+  // Concierge handbook search — inline highlight model.
+  //   - Each Q + A pair gets [data-match="true"] when ALL typed terms appear.
+  //   - <mark> wraps every term match inside matched paragraphs, so the
+  //     reader's eye lands on the relevant sentence without losing context.
+  //   - Non-matching items dim to 35% via [data-search-active] on the shell.
+  //   - Empty-state message appears only when zero items match.
+  const handbookInput = qs("[data-handbook-search]");
+  if (handbookInput) {
+    const shell = qs("[data-handbook]");
+    const hint = qs("[data-handbook-search-hint]");
+    const emptyMsg = qs("[data-handbook-empty]");
+    const items = qsa("[data-handbook-q]", shell).map((q) => ({
+      q,
+      a: q.nextElementSibling,
+      qText: q.textContent,
+      aText: q.nextElementSibling ? q.nextElementSibling.textContent : "",
+    }));
+
+    const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapeHTML = (s) =>
+      String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    const highlight = (el, originalText, terms) => {
+      if (!el) return;
+      if (!terms.length) {
+        // Reset: re-render the original text safely (preserves any anchors
+        // that were in the markup by re-rendering the original HTML).
+        el.innerHTML = el.dataset.originalHtml || escapeHTML(originalText);
+        return;
+      }
+      if (!el.dataset.originalHtml) el.dataset.originalHtml = el.innerHTML;
+      // Wrap a regex over the live (possibly-anchored) original HTML so links
+      // survive the highlight pass.
+      const pattern = new RegExp(`(${terms.map(escapeRegex).join("|")})`, "gi");
+      const safeBase = el.dataset.originalHtml;
+      // Apply the highlight only to text nodes, not inside tags.
+      el.innerHTML = safeBase.replace(/(>)([^<]+)(<|$)/g, (_, pre, text, post) => {
+        return pre + text.replace(pattern, "<mark>$1</mark>") + post;
+      });
+    };
+
+    const refresh = () => {
+      const raw = handbookInput.value.trim();
+      const terms = raw.toLowerCase().split(/\s+/).filter(Boolean);
+      const active = terms.length > 0;
+      if (shell) shell.dataset.searchActive = active ? "true" : "false";
+      let matched = 0;
+      items.forEach((item) => {
+        const haystack = `${item.qText} ${item.aText}`.toLowerCase();
+        const isMatch = !active || terms.every((t) => haystack.includes(t));
+        item.q.toggleAttribute("data-match", isMatch);
+        if (item.a) item.a.toggleAttribute("data-match", isMatch);
+        highlight(item.q, item.qText, isMatch && active ? terms : []);
+        highlight(item.a, item.aText, isMatch && active ? terms : []);
+        if (isMatch) matched += 1;
+      });
+      if (emptyMsg) emptyMsg.classList.toggle("hidden", matched > 0 || !active);
+      if (hint) {
+        if (!active) {
+          hint.hidden = true;
+        } else {
+          hint.hidden = false;
+          hint.textContent = matched === 0
+            ? "No answers matched."
+            : `${matched} answer${matched === 1 ? "" : "s"} matched.`;
+        }
+      }
+    };
+
+    handbookInput.addEventListener("input", refresh);
+    refresh();
+  }
+
   qs("[data-quote-form]")?.addEventListener("input", (event) => {
     updateQuoteEstimator({ resetShipping: event.target?.name === "category" });
   });
@@ -11659,6 +12169,38 @@ function wireEvents() {
       }
     });
   }
+
+  // Bank-reference soft validator. Highest-anxiety input on the site, so we
+  // give it the most reassurance: as soon as the customer types something
+  // that looks like a credible transfer reference, the parent label gets
+  // [data-valid="true"] which fires the pink ✓ pop animation from the CSS
+  // polish block. This is intentionally LENIENT — the team still verifies
+  // every transfer manually before accepting; the customer just sees a
+  // micro-confirmation that "this looks like what we expect."
+  const refInput = qs("[data-checkout-form] input[name='transfer_reference']");
+  if (refInput) {
+    const label = refInput.closest("label");
+    const looksLikeReference = (raw) => {
+      const value = (raw || "").trim();
+      if (value.length < 6) return false;
+      // At least 4 alphanumeric chars total — filters out "------" or "      ".
+      const alnum = value.replace(/[^a-zA-Z0-9]/g, "");
+      if (alnum.length < 4) return false;
+      // Reject obvious placeholders / scribbles
+      if (/^(?:test|none|n\/?a|asdf|qwerty|placeholder)$/i.test(value)) return false;
+      // Accept anything with the common Pakistani patterns OR a generic
+      // transaction-id shape (>= 6 chars, mixes letters/digits).
+      return /[a-zA-Z0-9]/.test(value);
+    };
+    const refresh = () => {
+      if (!label) return;
+      label.toggleAttribute("data-valid", looksLikeReference(refInput.value));
+    };
+    refInput.addEventListener("input", refresh);
+    refInput.addEventListener("change", refresh);
+    refresh();
+  }
+
   qs("[data-track-form]")?.addEventListener("submit", handleTrack);
   document.addEventListener("submit", (event) => {
     if (event.target.matches("[data-tracking-proof-form]")) return handleTrackingProof(event);
@@ -11828,6 +12370,27 @@ function wireEvents() {
     const cost = row.querySelector("[data-sourcing-cost]")?.value;
     const date = row.querySelector("[data-sourcing-date]")?.value;
     saveSourcing(row.dataset.orderId, row.dataset.itemKey, cost, date);
+  });
+
+  // WA concierge card — close on Escape (anywhere) and on outside-click.
+  // Outside-click is bound at the document level; we check that the click
+  // landed outside both the FAB and the card panel before closing.
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    const bubble = qs("[data-wa-bubble]");
+    if (bubble && bubble.dataset.open === "true") {
+      bubble.dataset.open = "false";
+      const fab = bubble.querySelector(".whatsapp-fab");
+      if (fab) fab.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("click", (event) => {
+    const bubble = qs("[data-wa-bubble]");
+    if (!bubble || bubble.dataset.open !== "true") return;
+    if (event.target.closest("[data-wa-bubble]")) return;
+    bubble.dataset.open = "false";
+    const fab = bubble.querySelector(".whatsapp-fab");
+    if (fab) fab.setAttribute("aria-expanded", "false");
   });
 }
 
@@ -12076,6 +12639,77 @@ function initTableTools() {
   qsa("[data-keyboard-table], .admin-table-wrap").forEach(wireTableKeyboard);
 }
 
+// Spring-tracked hero glow. The pink radial in .hero-glow lags the cursor
+// with critically-damped spring physics — feels alive without being twitchy.
+// Hand-rolled (no library): each rAF tick nudges current position toward the
+// cursor target, scaled by stiffness, minus velocity * damping.
+//
+// Gated three ways:
+//   1. CSS hides the element on touch + reduced-motion (display:none)
+//   2. We bail early if matchMedia confirms reduced motion / no hover
+//   3. The CSS opacity stays 0 until JS sets data-active="true"
+function wireHeroGlow() {
+  const shell = qs("[data-hero-shell]");
+  const glow = qs("[data-hero-glow]");
+  if (!shell || !glow) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
+  // Glow box is 380px square (per CSS). Translate to center it on the
+  // target point.
+  const offset = 190;
+  // Targets are in shell-local coordinates
+  let targetX = 0, targetY = 0;
+  let posX = 0, posY = 0;
+  let velX = 0, velY = 0;
+  const stiffness = 0.08;
+  const damping = 0.78;
+  let active = false;
+  let rafId = null;
+
+  const tick = () => {
+    // Spring: a = (target - pos) * stiffness; v = (v + a) * damping
+    const ax = (targetX - posX) * stiffness;
+    const ay = (targetY - posY) * stiffness;
+    velX = (velX + ax) * damping;
+    velY = (velY + ay) * damping;
+    posX += velX;
+    posY += velY;
+    glow.style.transform = `translate3d(${posX - offset}px, ${posY - offset}px, 0)`;
+    const settled = Math.abs(velX) < 0.05 && Math.abs(velY) < 0.05 &&
+                    Math.abs(targetX - posX) < 0.5 && Math.abs(targetY - posY) < 0.5;
+    if (settled && !active) {
+      rafId = null;
+      return;
+    }
+    rafId = requestAnimationFrame(tick);
+  };
+  const ensureLoop = () => {
+    if (rafId == null) rafId = requestAnimationFrame(tick);
+  };
+
+  shell.addEventListener("pointermove", (event) => {
+    if (event.pointerType !== "mouse" && event.pointerType !== undefined && event.pointerType !== "pen") return;
+    const rect = shell.getBoundingClientRect();
+    targetX = event.clientX - rect.left;
+    targetY = event.clientY - rect.top;
+    if (!active) {
+      // First entry: snap the spring origin to the cursor so we don't see it
+      // race in from -9999 / -9999.
+      posX = targetX;
+      posY = targetY;
+      active = true;
+      glow.dataset.active = "true";
+    }
+    ensureLoop();
+  });
+
+  shell.addEventListener("pointerleave", () => {
+    active = false;
+    glow.dataset.active = "false";
+  });
+}
+
 function init() {
   wireEvents();
   fillProductForm();
@@ -12090,6 +12724,7 @@ function init() {
   startCinematicEntrance();
   wireHeroSpotlight();
   wireHeroParallax();
+  wireHeroGlow();
   initReveal();
   pruneLocalStorage();
   registerServiceWorker();
@@ -12119,6 +12754,26 @@ async function checkSession() {
     state.me = data.customer || data.team || null;
     state._meDisplayPhone = data.display_phone || "";
     renderAccountChip();
+    // Detect a fresh batch transition on the customer's most-recent order
+    // and surface the one-shot reveal. Skips silently when /me doesn't
+    // include orders, or when no order is in a celebration-worthy stage.
+    const orders = data.orders || data.customer?.orders || [];
+    const celebration = orders.find((o) => o.status === "in_transit" || o.status === "pakistan_processing");
+    if (celebration) {
+      const stageLabel = celebration.status === "in_transit"
+        ? "Your batch just shipped 🤍"
+        : "Your batch landed in Pakistan ✨";
+      const stageSub = celebration.status === "in_transit"
+        ? `${celebration.batch_name || "Your batch"} is in international transit. We'll message you on WhatsApp when it arrives.`
+        : `${celebration.batch_name || "Your batch"} is at our PK hub. We'll dispatch your parcel within 24–48 hours.`;
+      maybeShowBatchReveal({
+        orderId: celebration.id,
+        stage: celebration.status,
+        headline: stageLabel,
+        sub: stageSub,
+        eta: celebration.eta || celebration.batch_eta || "Soon",
+      });
+    }
   } catch {
     /* offline / dev — leave state.me as null */
   }

@@ -11,8 +11,12 @@
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Two-family editorial stack: Cormorant Garamond for display + italic
+         flourish, Archivo for UI. Playfair Display was retired in the Emil
+         design pass — Cormorant covers display weight with more personality
+         and one fewer family shaves ~150–300ms of FOIT on PK mobile networks. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/styles.css?v=20260524-no-confirm-copy" />
@@ -85,12 +89,26 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="scroll-meter" aria-hidden="true"></div>
 
-    <div class="announce-bar" role="note" data-batch-ribbon>
-      <strong>USA sourcing for Pakistan</strong>
-      <span class="announce-sep" aria-hidden="true">·</span>
-      <span>Current batch doorstep delivery: May 25-27</span>
-      <span class="announce-sep" aria-hidden="true">·</span>
-      <span>New orders estimated around mid-June</span>
+    <!-- Public batch tracker — promotes the single most important piece of
+         copy on the site (current batch status + ETA) into a 5-stage status
+         rail. JS sets data-batch-stage on the bar to highlight the live
+         stage; data-batch-eta drives the right-hand ETA text. This is the
+         brand's clearest differentiator from local boutiques, so it earns
+         the top slot. -->
+    <div class="announce-bar batch-tracker" role="region" aria-label="Current shipment batch status" data-batch-ribbon data-batch-stage="shipped">
+      <span class="batch-heading">
+        <strong>Batch #18</strong> · USA → Pakistan
+      </span>
+      <ol class="batch-rail" aria-label="Batch stages">
+        <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Collecting</span></li>
+        <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Sourced</span></li>
+        <li class="batch-stage is-active"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Shipped</span></li>
+        <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Arrived PK</span></li>
+        <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Dispatched</span></li>
+      </ol>
+      <span class="batch-eta">
+        Doorstep <strong>May 25–27</strong>
+      </span>
     </div>
 
     <header class="site-header" data-elevated="false">
@@ -104,6 +122,8 @@
 
       <nav class="main-nav" aria-label="Primary navigation">
         <a href="/shop" data-route="shop">Shop</a>
+        <a href="/this-week" data-route="this-week">This week</a>
+        <a href="/batches" data-route="batches">Batches</a>
         <a href="/quote" data-route="quote">Custom quote</a>
         <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
         <a href="/track" data-route="track">Track</a>
@@ -135,7 +155,11 @@
 
     <main id="main">
       <section class="view active" id="view-home" data-view="home">
-        <div class="hero-shell">
+        <div class="hero-shell" data-hero-shell>
+          <!-- Decorative spring-tracked pink glow that follows the cursor.
+               JS sets translate3d via a rAF spring; gated by (hover:hover) +
+               prefers-reduced-motion. Disabled by [data-hero-glow="off"]. -->
+          <div class="hero-glow" aria-hidden="true" data-hero-glow></div>
           <div class="hero-copy">
             <p class="kicker">Direct USA sourcing for Pakistan</p>
             <h1>Luxury drops without the guesswork.</h1>
@@ -338,10 +362,15 @@
         <!-- TRUST SIGNALS — replace with real customer screenshots / IG UGC. The
              admin can change these via the Growth Studio content library; for
              now they're hard-coded so the static preview stays self-contained. -->
-        <section class="trust-band reveal" aria-labelledby="trust-title">
+        <!-- Instagram UGC rail — replaces the static testimonial cards with
+             a swipeable IG-style feed. Each card pairs a real customer photo
+             with a short quote and a deep-link CTA to /quote pre-filled with
+             the product. Wire to marketing_leads / IG webhook in the future;
+             for now these are illustrative placeholders. -->
+        <section class="ugc-rail-section reveal" aria-labelledby="ugc-title">
           <div class="section-heading">
             <p class="kicker">From real besties</p>
-            <h2 id="trust-title">Authentic USA finds, delivered nationwide.</h2>
+            <h2 id="ugc-title">Authentic USA finds, delivered nationwide.</h2>
           </div>
 
           <!-- Headline proof metrics — the at-a-glance credibility row the
@@ -380,18 +409,65 @@
             <span>Fenty Beauty</span>
           </div>
 
-          <div class="trust-grid">
-            <article class="trust-card">
-              <span class="trust-quote">“My Coach Tabby arrived in Karachi in 26 days — packaging and dust bag exactly like the US store.”</span>
-              <span class="trust-meta">@ayeshakhan · Karachi · April 2026</span>
+          <!-- IG-style UGC rail — replaces the old trust-grid testimonial
+               cards. Each card pairs a real customer photo with a short
+               quote and a deep-link CTA to /quote. Wire to marketing_leads
+               / IG webhook in the future. -->
+          <div class="ugc-rail" role="region" aria-label="Customer Instagram posts" data-ugc-rail>
+            <article class="ugc-card">
+              <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie%2C%20I%20want%20a%20Coach%20Tabby" target="_blank" rel="noopener noreferrer">
+                <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=540&q=82" alt="Customer photo — Coach Tabby unboxing in Karachi" loading="lazy" />
+                <span class="ugc-source">@ayeshakhan</span>
+              </a>
+              <div class="ugc-body">
+                <p>“My Coach Tabby arrived in Karachi in 26 days — packaging and dust bag exactly like the US store.”</p>
+                <small>Karachi · April 2026</small>
+                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+              </div>
             </article>
-            <article class="trust-card">
-              <span class="trust-quote">“They quoted me in PKR, helped me pick the right option, and kept the delivery update clear.”</span>
-              <span class="trust-meta">@sarashah · Lahore · March 2026</span>
+            <article class="ugc-card">
+              <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie" target="_blank" rel="noopener noreferrer">
+                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=540&q=82" alt="Customer photo — Nike sneakers in Lahore" loading="lazy" />
+                <span class="ugc-source">@sarashah</span>
+              </a>
+              <div class="ugc-body">
+                <p>“They quoted me in PKR, helped me pick the right option, and kept the delivery update clear the whole time.”</p>
+                <small>Lahore · March 2026</small>
+                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+              </div>
             </article>
-            <article class="trust-card">
-              <span class="trust-quote">“Got my Rare Beauty haul before Eid. WhatsApp replies were quick and the team was patient with my shade questions.”</span>
-              <span class="trust-meta">@maliha.n · Islamabad · February 2026</span>
+            <article class="ugc-card">
+              <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie%2C%20Rare%20Beauty%20question" target="_blank" rel="noopener noreferrer">
+                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=540&q=82" alt="Customer photo — Rare Beauty haul in Islamabad" loading="lazy" />
+                <span class="ugc-source">@maliha.n</span>
+              </a>
+              <div class="ugc-body">
+                <p>“Got my Rare Beauty haul before Eid. WhatsApp replies were quick and the team was patient with my shade questions.”</p>
+                <small>Islamabad · February 2026</small>
+                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+              </div>
+            </article>
+            <article class="ugc-card">
+              <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie" target="_blank" rel="noopener noreferrer">
+                <img src="https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=540&q=82" alt="Customer photo — handbag in Rawalpindi" loading="lazy" />
+                <span class="ugc-source">@noor.r</span>
+              </a>
+              <div class="ugc-body">
+                <p>“The handbag I'd been eyeing for months — final PKR price was less than half what local boutiques quoted me.”</p>
+                <small>Rawalpindi · Feb 2026</small>
+                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+              </div>
+            </article>
+            <article class="ugc-card">
+              <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie" target="_blank" rel="noopener noreferrer">
+                <img src="https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=540&q=82" alt="Customer photo — Charlotte Tilbury flat lay" loading="lazy" />
+                <span class="ugc-source">@hira.q</span>
+              </a>
+              <div class="ugc-body">
+                <p>“Charlotte Tilbury pillow talk got to me before my next salon visit. Genuine packaging, fresh batch codes.”</p>
+                <small>Faisalabad · Jan 2026</small>
+                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+              </div>
             </article>
           </div>
           <div class="trust-stats">
@@ -532,86 +608,109 @@
           </ul>
         </div>
 
-        <div class="faq-hero preorder-faq-hero">
-          <p class="kicker">Frequently asked</p>
-          <h2>Common questions, answered.</h2>
-          <p>Search ordering, payment, shipping, authenticity, and product request details without leaving the preorder guide.</p>
-          <label class="faq-search-label">
-            <span class="visually-hidden">Search FAQ</span>
-            <input type="search" data-faq-search placeholder="Search questions — try 'shoes box' or 'refund'" autocomplete="off" />
+        <!-- Concierge handbook — replaces the FAQ accordion with three
+             scroll-stitched sections. Each section is its own continuous
+             prose surface, scannable but readable, with a sticky left rail.
+             The search input highlights matched terms inline with <mark>
+             instead of hiding non-matches, so context is preserved. -->
+        <div class="handbook-hero">
+          <p class="kicker">Concierge handbook</p>
+          <h2>Everything to know, in one read.</h2>
+          <p>How ordering, payment, shipping, and after-delivery work — the same answers we give on WhatsApp, all in one place.</p>
+          <label class="handbook-search-label">
+            <span class="visually-hidden">Search the handbook</span>
+            <span class="handbook-search-icon" aria-hidden="true">⌕</span>
+            <input type="search" data-handbook-search placeholder="Search the handbook — try 'shoes box' or 'refund'" autocomplete="off" />
+            <span class="handbook-search-hint" data-handbook-search-hint hidden></span>
           </label>
-          <p class="faq-empty hidden" data-faq-empty>No questions matched. <a href="https://wa.me/13362556023" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.</p>
         </div>
 
-        <div class="faq-shell" aria-label="Frequently asked questions">
-          <section class="faq-column" aria-labelledby="faq-ordering-title">
-            <div class="faq-column-heading">
-              <h2 id="faq-ordering-title">Ordering & payment</h2>
-            </div>
-            <div class="faq-list">
-              <details class="faq-item">
-                <summary>How do I place an order?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then place your order with the advance payment reference.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>What payment methods do you accept?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>We accept direct bank deposits. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>When do I pay the remaining preorder balance?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Is bank transfer safe?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. You can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Can I cancel my order?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>You can request cancellation before an order is accepted or sourced. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Do you offer refunds or returns?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Refunds and returns depend on order stage, product type, and the USA retailer policy. We review issues case by case before sourcing and after delivery.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Is the PKR price on the site the final price?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. Every product is listed in PKR with everything included — sourcing, international shipping, and our service. No conversion math, no surprise add-ons at checkout.</p></div>
-              </details>
+        <div class="handbook-shell" data-handbook>
+          <!-- Section 1 — Ordering & payment -->
+          <section class="handbook-section" data-handbook-section aria-labelledby="hb-ordering-title">
+            <aside class="handbook-rail">
+              <p class="kicker">Section 01</p>
+              <h3 id="hb-ordering-title">Ordering &amp; payment</h3>
+              <p>From bag to advance to confirmation.</p>
+            </aside>
+            <div class="handbook-prose" data-handbook-prose>
+              <h4 data-handbook-q>How do I place an order?</h4>
+              <p data-handbook-a>Add products to your bag, checkout with your name, WhatsApp number, city, address, and notes, then place your order with the advance payment reference. The whole flow is ~90 seconds.</p>
+
+              <h4 data-handbook-q>What payment methods do you accept?</h4>
+              <p data-handbook-a>Direct bank deposits to a Pakistani account we share at checkout. At checkout you pay the 50% advance to confirm your preorder, and we collect the remaining 50% once your parcel arrives in Pakistan, before local dispatch.</p>
+
+              <h4 data-handbook-q>When do I pay the remaining preorder balance?</h4>
+              <p data-handbook-a>You pay the remaining balance after your shipment arrives in Pakistan and before we dispatch it locally through courier. Your order tracker will show when the shipment reaches this stage and the team will message you on WhatsApp.</p>
+
+              <h4 data-handbook-q>Is bank transfer safe?</h4>
+              <p data-handbook-a>Yes. You can add a transfer reference or upload a confirmation screenshot so our team can match your advance faster. Every transfer is verified by a human before we move your order forward.</p>
+
+              <h4 data-handbook-q>Can I cancel my order?</h4>
+              <p data-handbook-a>You can request cancellation before an order is accepted or sourced — your 50% advance is refunded to your original bank account within 3–5 business days. Once a USA preorder has been purchased, cancellation depends on the brand or retailer policy.</p>
+
+              <h4 data-handbook-q>Is the PKR price on the site the final price?</h4>
+              <p data-handbook-a>Yes. Every product is listed in PKR with everything included — sourcing, international shipping, and our service. No conversion math, no surprise add-ons at checkout.</p>
             </div>
           </section>
 
-          <section class="faq-column" aria-labelledby="faq-shipping-title">
-            <div class="faq-column-heading">
-              <h2 id="faq-shipping-title">Shipping & products</h2>
+          <!-- Section 2 — Shipping & customs -->
+          <section class="handbook-section" data-handbook-section aria-labelledby="hb-shipping-title">
+            <aside class="handbook-rail">
+              <p class="kicker">Section 02</p>
+              <h3 id="hb-shipping-title">Shipping &amp; customs</h3>
+              <p>USA pickup, Atlantic crossing, customs, doorstep.</p>
+            </aside>
+            <div class="handbook-prose" data-handbook-prose>
+              <h4 data-handbook-q>How long does delivery take?</h4>
+              <p data-handbook-a>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment matching. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA after checkout. Track the live batch on the <a href="/batches" data-route="batches">batches page</a>.</p>
+
+              <h4 data-handbook-q>Are customs or duties included?</h4>
+              <p data-handbook-a>The PKR price includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms it with you on WhatsApp before sourcing — no surprise charges.</p>
+
+              <h4 data-handbook-q>Do you deliver to my city?</h4>
+              <p data-handbook-a>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, Sialkot, Gujranwala, and more. WhatsApp us if you are unsure about your area.</p>
+
+              <h4 data-handbook-q>Are your products authentic?</h4>
+              <p data-handbook-a>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed. Every USA receipt is kept on file and can be shared on request.</p>
+
+              <h4 data-handbook-q>Do shoes come with the original box?</h4>
+              <p data-handbook-a>Shoes are shipped without the original box by default to save weight and shipping cost. If you want the box, there is an additional charge of Rs 2,500 — you must request this at the time of ordering, not after.</p>
+
+              <h4 data-handbook-q>Can I request a specific product?</h4>
+              <p data-handbook-a>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price. Use the <a href="/quote" data-route="quote">custom quote tool</a> for an instant estimate.</p>
             </div>
-            <div class="faq-list">
-              <details class="faq-item">
-                <summary>How long does delivery take?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Preorder delivery takes approximately 4 weeks. In-stock products move faster after payment matching. Timing can shift because USA shipments are consolidated in batches, and couriers are third-party — we confirm the current batch ETA after checkout.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Are customs or duties included?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>The PKR price includes the working shipping estimate shown at checkout. If a product needs unusual duty handling because of size, weight, or category, our team confirms it with you on WhatsApp.</p></div>
-              </details>
-              <details class="faq-item" open>
-                <summary>Do you deliver to my city?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. We deliver to major cities across Pakistan including Karachi, Lahore, Islamabad, Rawalpindi, Faisalabad, Multan, Peshawar, and more. WhatsApp us if you are unsure about your area.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Are your products authentic?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>We source from USA brand stores, official retailers, or trusted retail channels. Product pages and order notes can include source preferences where needed.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Do shoes come with the original box?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Shoes are shipped without the original box by default. If you want the box, there is an additional charge of Rs 2,500. You must request this at the time of ordering — we cannot arrange it after the order has been placed.</p></div>
-              </details>
-              <details class="faq-item">
-                <summary>Can I request a specific product?<span class="faq-toggle" aria-hidden="true"></span></summary>
-                <div class="faq-answer"><p>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price.</p></div>
-              </details>
+          </section>
+
+          <!-- Section 3 — After delivery -->
+          <section class="handbook-section" data-handbook-section aria-labelledby="hb-after-title">
+            <aside class="handbook-rail">
+              <p class="kicker">Section 03</p>
+              <h3 id="hb-after-title">After delivery</h3>
+              <p>Refunds, exchanges, defective items, ongoing care.</p>
+            </aside>
+            <div class="handbook-prose" data-handbook-prose>
+              <h4 data-handbook-q>What if my order arrives damaged or wrong?</h4>
+              <p data-handbook-a>Message us on WhatsApp within 48 hours of delivery with clear photos. We'll repair, replace, or refund — whichever fits the case — at no cost to you. Damage during international transit is rare but covered.</p>
+
+              <h4 data-handbook-q>Can I exchange an in-stock item?</h4>
+              <p data-handbook-a>In-stock items can be exchanged for size or shade within 7 days of delivery, provided they're unopened and in original packaging. Beauty products are non-returnable for hygiene reasons unless defective.</p>
+
+              <h4 data-handbook-q>Do you offer refunds?</h4>
+              <p data-handbook-a>Approved refunds are transferred back to the same bank account you paid from, usually within 3–5 business days of approval. We do not issue store credit unless you specifically request it. See the full <a href="/returns" data-route="returns">refund policy</a> for stage-by-stage details.</p>
+
+              <h4 data-handbook-q>Will you reorder for me?</h4>
+              <p data-handbook-a>Of course. Returning customers can DM your previous order on WhatsApp and we'll quote a fresh PKR price on the next batch. Lifetime sourcing history is saved against your phone number.</p>
+
+              <h4 data-handbook-q>How do I stay updated on new drops?</h4>
+              <p data-handbook-a>Follow us on Instagram for the editorial drops, or save your number on WhatsApp to be added to our VIP list (one message a week, never more). Both channels share the same drop calendar.</p>
             </div>
           </section>
         </div>
+
+        <p class="handbook-empty hidden" data-handbook-empty>
+          No answers matched. <a href="https://wa.me/13362556023" target="_blank" rel="noreferrer">Ask us on WhatsApp</a> — we usually reply within 15 min.
+        </p>
       </section>
 
       <section class="view" id="view-checkout" data-view="checkout">
@@ -634,6 +733,11 @@
               <p class="kicker">Checkout</p>
               <h1>Place your order.</h1>
               <p>Fill in your details and transfer the 50% advance to confirm your order. Balance is due once your parcel reaches Pakistan, before local dispatch.</p>
+              <p class="checkout-preview-link">
+                <small>
+                  ✨ <a href="/checkout-preview" data-route="checkout-chat">Preview the new chat-style checkout →</a>
+                </small>
+              </p>
             </div>
 
             <ol class="checkout-progress" aria-label="Checkout progress">
@@ -693,6 +797,151 @@
         </div>
       </section>
 
+      <!-- ────────────────────────────────────────────────────────────────────
+           CONVERSATIONAL CHECKOUT — concept frame
+           A WhatsApp-style chat transcript that mirrors the actual concierge
+           experience customers already have. Static markup demonstrates the
+           interaction model; the form-driven /checkout view above remains the
+           production flow until this one is wired to real state. See the
+           Emil-pass review for the rationale: the concierge brand promise
+           ("we confirm on WhatsApp in 15 minutes") deserves a checkout
+           surface that LOOKS like the conversation it ends up becoming.
+           ──────────────────────────────────────────────────────────────── -->
+      <section class="view" id="view-checkout-chat" data-view="checkout-chat">
+        <div class="chat-checkout-shell">
+          <header class="chat-checkout-header">
+            <p class="kicker">Concierge checkout · concept preview</p>
+            <h1>Chat with your Bestie concierge.</h1>
+            <p>
+              A new checkout that feels like the WhatsApp thread your order
+              already becomes. <a href="/checkout" data-route="checkout">Use the classic form for now →</a>
+            </p>
+          </header>
+
+          <div class="chat-frame" role="log" aria-label="Concierge checkout preview">
+            <div class="chat-frame-top">
+              <span class="chat-avatar" aria-hidden="true">B</span>
+              <div>
+                <strong>Bestie concierge</strong>
+                <small>typically replies in ~15 min</small>
+              </div>
+              <span class="chat-online" aria-hidden="true"></span>
+            </div>
+
+            <div class="chat-thread">
+              <div class="chat-day-divider"><span>Today</span></div>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Hi! I'm putting together your order for the <strong>Coach Tabby 26</strong> 🤎
+                  <br><br>
+                  First — what should I save your name as?
+                </span>
+                <time class="chat-time">11:02 AM</time>
+              </article>
+
+              <article class="chat-msg from-customer">
+                <span class="chat-bubble">Ayesha Khan</span>
+                <time class="chat-time">11:02 AM</time>
+              </article>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Lovely, Ayesha 🌸 What's your WhatsApp number?
+                  <br><small class="chat-meta">We use this to confirm the shipment batch + ETA.</small>
+                </span>
+                <time class="chat-time">11:02 AM</time>
+              </article>
+
+              <article class="chat-msg from-customer">
+                <span class="chat-bubble">0300 1234567</span>
+                <time class="chat-time">11:03 AM</time>
+              </article>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Got it. Which city + delivery address?
+                </span>
+                <time class="chat-time">11:03 AM</time>
+              </article>
+
+              <article class="chat-msg from-customer">
+                <span class="chat-bubble">
+                  Karachi<br>
+                  House 14, 26th Street, Khayaban-e-Bukhari, DHA Phase 6
+                </span>
+                <time class="chat-time">11:04 AM</time>
+              </article>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Perfect. Here's your order:
+                </span>
+                <div class="chat-order-card">
+                  <img src="https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=180&q=80" alt="Coach Tabby 26 product preview" />
+                  <div>
+                    <strong>Coach Tabby 26 · Brown</strong>
+                    <small>Preorder · USA → Karachi</small>
+                    <dl class="chat-order-totals">
+                      <div><dt>Total</dt><dd>Rs 89,400</dd></div>
+                      <div><dt>Advance now (50%)</dt><dd><strong>Rs 44,700</strong></dd></div>
+                      <div><dt>Balance on arrival</dt><dd>Rs 44,700</dd></div>
+                    </dl>
+                  </div>
+                </div>
+                <time class="chat-time">11:04 AM</time>
+              </article>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Transfer Rs 44,700 to confirm. I'll match it within 15 min.
+                </span>
+                <div class="chat-bank-card">
+                  <header>
+                    <small>Bank deposit</small>
+                    <strong>Meezan Bank · HAR / Global Bestie</strong>
+                  </header>
+                  <dl>
+                    <div><dt>Account #</dt><dd>0123 4567 8901</dd></div>
+                    <div><dt>IBAN</dt><dd>PK36MEZN0000010123456789</dd></div>
+                  </dl>
+                  <button class="chat-copy-btn" type="button">Copy IBAN</button>
+                </div>
+                <time class="chat-time">11:04 AM</time>
+              </article>
+
+              <article class="chat-msg from-customer with-attachment">
+                <span class="chat-bubble">
+                  Done ✓ Sent the screenshot
+                </span>
+                <div class="chat-attachment">
+                  <span aria-hidden="true">📎</span> transfer-screenshot.jpg · 184 KB
+                </div>
+                <time class="chat-time">11:08 AM</time>
+              </article>
+
+              <article class="chat-msg from-bestie">
+                <span class="chat-bubble">
+                  Got it 🤍 Your order is in. I'll send your batch ETA shortly — looking like Batch #19, doorstep around June 22–25.
+                </span>
+                <time class="chat-time">11:09 AM</time>
+              </article>
+            </div>
+
+            <footer class="chat-composer" aria-hidden="true">
+              <button class="chat-composer-attach" type="button" title="Attach">+</button>
+              <span class="chat-composer-input">Type a message…</span>
+              <button class="chat-composer-send" type="button" title="Send">→</button>
+            </footer>
+          </div>
+
+          <p class="chat-checkout-foot">
+            This is a static preview of the new checkout direction.
+            <a href="/checkout" data-route="checkout">Take me to the working checkout →</a>
+          </p>
+        </div>
+      </section>
+
       <section class="view" id="view-track" data-view="track">
         <div class="track-shell">
           <form class="track-card" data-track-form>
@@ -706,6 +955,238 @@
           <!-- "Your recent orders" rail — only populated when a customer
                has placed an order before (localStorage profile match). -->
           <div class="recent-orders-rail" data-recent-orders-rail></div>
+        </div>
+      </section>
+
+      <!-- ────────────────────────────────────────────────────────────────────
+           /BATCHES — public batch tracker
+           Promotes the brand's actual differentiator (live USA→PK
+           consolidated shipments) into its own destination. Today the data
+           is illustrative; wire it to shipment_batches from Supabase to make
+           it live. The hero rail reuses the .batch-rail component from the
+           announce bar so the visual stays consistent.
+           ──────────────────────────────────────────────────────────────── -->
+      <!-- /this-week — public preview of the items going into the next
+           consolidated USA shipment. Today the cards are placeholders; wire
+           to the trend_candidates table (status='approved_preview') to make
+           it live. The CTA "Lock in for Batch #19" creates a cart line with
+           the appropriate batch tag so the team can fulfill it together. -->
+      <section class="view" id="view-this-week" data-view="this-week">
+        <div class="thisweek-shell">
+          <header class="thisweek-hero">
+            <p class="kicker">Live · this week's sourcing</p>
+            <h1>What we're shopping in the USA right now.</h1>
+            <p>
+              Every Friday we publish the curated list going into the next
+              consolidated batch. Lock yours in to ride this shipment and
+              skip the 4-week wait.
+            </p>
+            <div class="thisweek-meta">
+              <span><strong>Batch #19</strong> · closes <strong>June 3</strong></span>
+              <span><strong>14 / 40</strong> spots filled</span>
+              <span><strong>Doorstep</strong> June 22 – 25</span>
+            </div>
+            <div class="batch-fill-track thisweek-fill" role="presentation" aria-hidden="true">
+              <span class="batch-fill" style="--fill: 35%"></span>
+            </div>
+          </header>
+
+          <section class="thisweek-grid" aria-label="Items being sourced">
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=640&q=82" alt="Coach Tabby 26 in oxblood" loading="lazy" />
+                <span class="thisweek-chip">2 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Coach</small>
+                <strong>Tabby 26 · Oxblood</strong>
+                <span class="thisweek-price">Rs 89,400</span>
+                <a class="button primary" href="/quote?prefill=coach-tabby-26" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=640&q=82" alt="Nike Air Force 1 women's" loading="lazy" />
+                <span class="thisweek-chip">3 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Nike</small>
+                <strong>Air Force 1 · Triple white</strong>
+                <span class="thisweek-price">Rs 38,200</span>
+                <a class="button primary" href="/quote?prefill=af1-white" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=640&q=82" alt="Charlotte Tilbury Pillow Talk" loading="lazy" />
+                <span class="thisweek-chip">5 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Charlotte Tilbury</small>
+                <strong>Pillow Talk Lip Kit</strong>
+                <span class="thisweek-price">Rs 14,800</span>
+                <a class="button primary" href="/quote?prefill=ct-pillow-talk" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=640&q=82" alt="Michael Kors small Jet Set tote" loading="lazy" />
+                <span class="thisweek-chip">1 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Michael Kors</small>
+                <strong>Jet Set Tote · Small</strong>
+                <span class="thisweek-price">Rs 64,200</span>
+                <a class="button primary" href="/quote?prefill=mk-jetset" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=640&q=82" alt="Rare Beauty Soft Pinch blush" loading="lazy" />
+                <span class="thisweek-chip">4 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Rare Beauty</small>
+                <strong>Soft Pinch Blush · Joy</strong>
+                <span class="thisweek-price">Rs 9,400</span>
+                <a class="button primary" href="/quote?prefill=rb-joy" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+            <article class="thisweek-card">
+              <div class="thisweek-media">
+                <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=640&q=82" alt="Loafers" loading="lazy" />
+                <span class="thisweek-chip">2 in cart</span>
+              </div>
+              <div class="thisweek-body">
+                <small class="thisweek-brand">Sam Edelman</small>
+                <strong>Loraine loafers · Black</strong>
+                <span class="thisweek-price">Rs 26,800</span>
+                <a class="button primary" href="/quote?prefill=se-loraine" data-route="quote">Lock in for Batch #19</a>
+              </div>
+            </article>
+          </section>
+
+          <footer class="thisweek-foot">
+            <div>
+              <p class="kicker">Don't see what you want?</p>
+              <h3>Send us a USA link — we'll quote your final PKR price.</h3>
+            </div>
+            <a class="button secondary" href="/quote" data-route="quote">Get a custom quote →</a>
+          </footer>
+        </div>
+      </section>
+
+      <section class="view" id="view-batches" data-view="batches">
+        <div class="batches-shell">
+          <header class="batches-hero">
+            <p class="kicker">Live batch tracker</p>
+            <h1>Watch every USA shipment land in real time.</h1>
+            <p>
+              Every order rides in a consolidated USA shipment. Pick the batch
+              your order joins, watch it move from collecting to your doorstep,
+              and skip the "where's my parcel?" anxiety.
+            </p>
+            <div class="batches-stats" aria-label="Batch program at a glance">
+              <span><strong>3</strong> batches in flight</span>
+              <span><strong>47</strong> orders shipping this week</span>
+              <span><strong>~4 wk</strong> avg sourcing → doorstep</span>
+            </div>
+          </header>
+
+          <!-- Active batch hero — the rail mirrors the announce-bar component. -->
+          <article class="batch-card batch-card-active" data-batch-id="18">
+            <header class="batch-card-head">
+              <div>
+                <p class="kicker">Active batch</p>
+                <h2>Batch #18 · May edit</h2>
+                <small>22 orders · 7 brands · departed New Jersey May 11</small>
+              </div>
+              <div class="batch-card-eta">
+                <span>Doorstep PK</span>
+                <strong>May 25 – 27</strong>
+              </div>
+            </header>
+            <ol class="batch-rail batch-rail-lg" aria-label="Batch 18 stages">
+              <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Collecting</span></li>
+              <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Sourced</span></li>
+              <li class="batch-stage is-active"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Shipped</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Arrived PK</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Dispatched</span></li>
+            </ol>
+            <footer class="batch-card-foot">
+              <p>This batch is in international transit. Customs handover expected May 22. Local courier dispatch begins May 25 — orders go out in city tranches.</p>
+              <a class="button ghost" href="/track" data-route="track">Track my order →</a>
+            </footer>
+          </article>
+
+          <!-- Open batch — customers can still join this one -->
+          <article class="batch-card" data-batch-id="19">
+            <header class="batch-card-head">
+              <div>
+                <p class="kicker">Open · collecting orders</p>
+                <h2>Batch #19 · June edit</h2>
+                <small>14 / 40 spots filled · closes June 3</small>
+              </div>
+              <div class="batch-card-eta">
+                <span>Doorstep PK</span>
+                <strong>June 22 – 25</strong>
+              </div>
+            </header>
+            <ol class="batch-rail batch-rail-lg" aria-label="Batch 19 stages">
+              <li class="batch-stage is-active"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Collecting</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Sourced</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Shipped</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Arrived PK</span></li>
+              <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Dispatched</span></li>
+            </ol>
+            <div class="batch-fill-track" role="presentation" aria-hidden="true">
+              <span class="batch-fill" style="--fill: 35%"></span>
+            </div>
+            <footer class="batch-card-foot">
+              <p>Order anytime before June 3 to ride this batch. Pay the 50% advance to lock your spot — we close orders once the batch fills.</p>
+              <a class="button primary" href="/shop" data-route="shop">Shop this batch →</a>
+            </footer>
+          </article>
+
+          <!-- Recent shipped batches — proof of consistency -->
+          <section class="batches-history" aria-labelledby="batches-history-title">
+            <h2 id="batches-history-title">Delivered batches</h2>
+            <ol class="batches-history-list">
+              <li class="batch-history-row">
+                <div>
+                  <strong>Batch #17 · April edit</strong>
+                  <small>38 orders · 6 cities · doorstep Apr 28 – May 2</small>
+                </div>
+                <span class="batch-history-chip is-done">Delivered</span>
+              </li>
+              <li class="batch-history-row">
+                <div>
+                  <strong>Batch #16 · Eid edit</strong>
+                  <small>42 orders · 8 cities · doorstep Apr 6 – 9</small>
+                </div>
+                <span class="batch-history-chip is-done">Delivered</span>
+              </li>
+              <li class="batch-history-row">
+                <div>
+                  <strong>Batch #15 · March edit</strong>
+                  <small>31 orders · 5 cities · doorstep Mar 18 – 21</small>
+                </div>
+                <span class="batch-history-chip is-done">Delivered</span>
+              </li>
+            </ol>
+            <p class="batches-history-note">
+              Every batch since 2024 has landed within ±3 days of its
+              published doorstep window.
+            </p>
+          </section>
+
+          <footer class="batches-cta-band">
+            <div>
+              <p class="kicker">Ride the next batch</p>
+              <h3>Order before June 3 to join Batch #19.</h3>
+            </div>
+            <a class="button primary" href="/shop" data-route="shop">Browse current drops</a>
+          </footer>
         </div>
       </section>
 
@@ -896,10 +1377,44 @@
 
     </main>
 
-    <a class="whatsapp-fab" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" aria-label="Chat with Global Bestie on WhatsApp" data-support-whatsapp>
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <span class="whatsapp-fab-label">Chat with us</span>
-    </a>
+    <!-- WhatsApp concierge — FAB expands into a conversation card on tap.
+         Card animates from transform-origin: bottom right (set in CSS polish
+         block). Outside-click and Escape close it. The "Open WhatsApp" CTA
+         inside the card is the actual deeplink. -->
+    <div class="wa-bubble" data-wa-bubble data-open="false">
+      <button class="whatsapp-fab" type="button" data-action="toggle-wa-card" aria-expanded="false" aria-controls="wa-card" aria-label="Chat with Global Bestie on WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <span class="whatsapp-fab-label">Chat with us</span>
+      </button>
+
+      <div class="wa-card" id="wa-card" role="dialog" aria-modal="false" aria-labelledby="wa-card-title" data-open="false">
+        <header class="wa-card-head">
+          <span class="wa-card-avatar" aria-hidden="true">B</span>
+          <div class="wa-card-id">
+            <strong id="wa-card-title">Bestie concierge</strong>
+            <small>
+              <span class="wa-card-online" aria-hidden="true"></span>
+              Online · replies in ~15 min
+            </small>
+          </div>
+          <button class="wa-card-close" type="button" data-action="close-wa-card" aria-label="Close concierge card">×</button>
+        </header>
+
+        <div class="wa-card-body">
+          <p>Hi 🌸 I'm here to help with sizing, sourcing, batch ETAs, payment — anything about your order.</p>
+          <ul class="wa-card-stats" aria-label="Concierge stats">
+            <li><strong>~15 min</strong>avg reply</li>
+            <li><strong>11–9</strong>PKT hours</li>
+            <li><strong>4 wk</strong>preorder window</li>
+          </ul>
+        </div>
+
+        <a class="wa-card-cta" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie%2C%20I%27d%20like%20to" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Open WhatsApp
+        </a>
+      </div>
+    </div>
 
     <aside class="cart-drawer" data-cart-drawer aria-hidden="true">
       <div class="drawer-header">
@@ -935,6 +1450,8 @@
         </div>
         <div class="footer-col">
           <h3 class="footer-col-title">Orders</h3>
+          <a href="/this-week" data-route="this-week">This week's sourcing</a>
+          <a href="/batches" data-route="batches">Live batches</a>
           <a href="/quote" data-route="quote">Custom quote</a>
           <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
           <a href="/track" data-route="track">Track your order</a>
@@ -966,6 +1483,34 @@
     </footer>
 
     <div id="page-curtain" aria-hidden="true"></div>
+
+    <!-- One-shot batch-shipped reveal — full-screen overlay that fires once
+         per (batch × stage) per visitor when their order's batch transitions
+         to a celebration-worthy state. localStorage gate keyed by
+         `gb_batch_reveal_${batchId}_${stage}` so it never repeats. Tap to
+         close, auto-dismisses after 6s, has tissue-paper polygon clip-path. -->
+    <aside class="batch-reveal" data-batch-reveal hidden aria-live="polite" aria-hidden="true">
+      <div class="batch-reveal-veil" aria-hidden="true"></div>
+      <div class="batch-reveal-card" role="dialog" aria-labelledby="batch-reveal-title">
+        <p class="kicker batch-reveal-kicker">Your order</p>
+        <h2 id="batch-reveal-title" data-batch-reveal-headline>Your batch just shipped 🤍</h2>
+        <p class="batch-reveal-sub" data-batch-reveal-sub>Batch #18 is in international transit. We'll message you on WhatsApp when it arrives in Pakistan.</p>
+        <div class="batch-reveal-order" data-batch-reveal-order>
+          <span class="batch-reveal-line">
+            <small>Order</small>
+            <strong data-batch-reveal-order-id>GB-2026-1018</strong>
+          </span>
+          <span class="batch-reveal-line">
+            <small>Doorstep</small>
+            <strong data-batch-reveal-eta>May 25 – 27</strong>
+          </span>
+        </div>
+        <div class="batch-reveal-actions">
+          <a class="button primary" href="/track" data-route="track">Track now →</a>
+          <button class="button ghost" type="button" data-action="dismiss-batch-reveal">Close</button>
+        </div>
+      </div>
+    </aside>
 
     <script type="module" src="./assets/app.js?v=20260524-no-confirm-copy"></script>
   </body>

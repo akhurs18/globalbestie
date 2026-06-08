@@ -180,7 +180,7 @@ button {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink);
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.16rem;
   font-weight: 800;
   box-shadow: 0 8px 22px rgba(216, 142, 155, 0.18);
@@ -204,7 +204,7 @@ button {
 }
 
 .brand strong {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1rem;
 }
 
@@ -371,7 +371,7 @@ p {
 h1,
 h2 {
   margin: 0;
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   line-height: 1;
   letter-spacing: 0;
 }
@@ -661,7 +661,7 @@ h3 {
 
 .hero-card figcaption strong {
   color: var(--ink);
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-weight: 700;
   font-size: 0.78rem;
   text-transform: none;
@@ -803,7 +803,7 @@ h3 {
   border: 1px solid var(--line);
   border-radius: 6px;
   color: var(--ink);
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.16rem;
   z-index: 1;
   transition: transform 480ms var(--ease-cinema), color 320ms var(--ease);
@@ -924,7 +924,7 @@ h3 {
 }
 
 .product-title-row strong {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.04rem;
   line-height: 1.12;
 }
@@ -1581,7 +1581,7 @@ dl div,
 }
 
 .content-shell h1 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(2rem, 4vw, 2.6rem);
   font-weight: 600;
   margin: 6px 0 16px;
@@ -1589,7 +1589,7 @@ dl div,
 }
 
 .content-shell h2 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.35rem;
   font-weight: 600;
   margin: 28px 0 10px;
@@ -5257,7 +5257,7 @@ button[type="submit"][data-busy]::after {
 .drawer-header h2,
 .order-summary h2 {
   margin: 0;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
 }
 
 .ops-panel .panel-title-row h2,
@@ -6560,7 +6560,7 @@ output {
   font-size: 0.7rem;
   font-weight: 800;
   margin-bottom: 16px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-style: italic;
 }
 
@@ -9522,14 +9522,14 @@ textarea::placeholder {
   border-radius: 999px;
   background: var(--ink);
   color: var(--surface);
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 0.95rem;
 }
 
 .clarity-grid article span {
   display: block;
   margin-top: 12px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.08rem;
   color: var(--ink);
 }
@@ -9718,7 +9718,7 @@ p::selection {
 /* Lockup typography — brand name in Playfair, tagline in tracked-out
    small caps so the two read as a proper editorial masthead. */
 .brand strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.18rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -9758,7 +9758,7 @@ p::selection {
 
 body:not([data-page="portal"]) h1,
 body:not([data-page="portal"]) h2 {
-  font-family: "Playfair Display", "Times New Roman", serif;
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
   font-weight: 500;
   letter-spacing: -0.018em;
   line-height: 0.98;
@@ -9788,7 +9788,7 @@ body:not([data-page="portal"]) .faq-hero h2 {
 }
 
 body:not([data-page="portal"]) h3 {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-weight: 600;
   font-size: 1.08rem;
   letter-spacing: -0.005em;
@@ -10018,7 +10018,7 @@ body:not([data-page="portal"]) .product-empty-state h2 {
   max-width: 12ch;
   margin: 0;
   color: var(--ink);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(2rem, 4vw, 3.35rem);
   line-height: 0.98;
 }
@@ -10412,7 +10412,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 }
 
 .quote-total strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(2rem, 4vw, 3.4rem);
   line-height: 0.95;
 }
@@ -10496,7 +10496,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 
 .sourcing-tray-head strong {
   display: block;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.08rem;
   color: var(--ink);
 }
@@ -10620,7 +10620,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 }
 
 .sourcing-row .row-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 0.98rem;
   color: var(--ink);
   white-space: nowrap;
@@ -10744,7 +10744,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 
 .source-cta-band h3 {
   margin: 6px 0 4px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.4rem;
   color: var(--ink);
 }
@@ -10763,7 +10763,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 
 .source-modal h3 {
   margin: 0;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.5rem;
   color: var(--ink);
 }
@@ -10817,14 +10817,14 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 }
 
 .source-result-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.16rem;
   color: var(--ink);
   margin: 0;
 }
 
 .source-result-price {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.5rem;
   color: var(--ink);
 }
@@ -11067,14 +11067,14 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 
 .quote-result-meta .source-result-title {
   margin: 0 0 6px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.16rem;
   color: var(--ink);
 }
 
 .quote-result-meta .source-result-price {
   margin: 0 0 8px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.7rem;
   color: var(--ink);
   letter-spacing: -0.01em;
@@ -11196,7 +11196,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 }
 
 .customer-price-prefix {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.6rem;
   font-weight: 600;
   color: var(--pink-3);
@@ -11204,7 +11204,7 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
 }
 
 .customer-price-input-wrap input[data-customer-price] {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.8rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -11808,7 +11808,7 @@ body.admin-loading [data-orders-board] .kanban-card::before {
 }
 
 .suggest-field-title input {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.02rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -11835,14 +11835,14 @@ body.admin-loading [data-orders-board] .kanban-card::before {
 }
 
 .suggest-price-prefix {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--pink-3);
 }
 
 .suggest-field-price input[type="number"] {
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.2rem;
   font-weight: 600;
   border-color: var(--line);
@@ -12265,7 +12265,7 @@ body[data-page="portal"] .admin-table thead th {
 
 .bulk-wa-modal h3 {
   margin: 0;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.4rem;
 }
 
@@ -12330,7 +12330,7 @@ body[data-page="portal"] .admin-table thead th {
 
 .customer-orders-head h3 {
   margin: 6px 0 2px;
-  font-family: "Playfair Display", serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.4rem;
 }
 
@@ -12555,7 +12555,7 @@ textarea:focus-visible,
 }
 
 .proof-metric strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(1.7rem, 3vw, 2.4rem);
   font-weight: 600;
   line-height: 1;
@@ -12588,7 +12588,7 @@ textarea:focus-visible,
 }
 
 .brand-wall span {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(0.95rem, 2vw, 1.25rem);
   font-style: italic;
   color: var(--ink-soft);
@@ -12667,7 +12667,7 @@ textarea:focus-visible,
 }
 
 .story-points strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.08rem;
   color: var(--ink);
 }
@@ -12712,7 +12712,7 @@ textarea:focus-visible,
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border: 1px solid var(--line);
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
 }
 
 .story-stamp span { color: var(--muted); font-size: 0.82rem; }
@@ -12747,7 +12747,7 @@ textarea:focus-visible,
 }
 
 .gauge-readout strong {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 2.2rem;
   line-height: 1;
   color: var(--ink);
@@ -12866,7 +12866,7 @@ textarea:focus-visible,
 .waterfall-total-neg { background: var(--red); }
 
 .waterfall-val {
-  font-family: "Playfair Display", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--ink);
@@ -13716,3 +13716,2396 @@ body:not([data-page="portal"]) .product-detail-modal .button.primary:hover {
   color: var(--ink);
   box-shadow: 0 14px 34px rgba(216, 142, 155, 0.42);
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   EMIL DESIGN PASS · v2026-06-07
+   Foundational micro-interactions, hover gating, transform-origin awareness,
+   motion-token split for the portal, signature components. Appended at the
+   end so cascade order makes every rule below decisive over the earlier
+   stylesheet without touching the legacy blocks.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* — Motion tokens (additive). These compose with the existing --ease /
+   --ease-cinema tokens. The storefront keeps its cinematic atmosphere; the
+   portal gets its own crisp scale below. */
+:root {
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);     /* iOS sheet curve */
+  --motion-press: 100ms;
+  --motion-fast: 160ms;
+  --motion-base: 200ms;
+  --motion-slow: 280ms;
+}
+
+/* — :ACTIVE PRESS FEEDBACK
+   Buttons must feel like they heard the tap. Subtle scale + faster duration
+   on press so release feels snappy. Applied to every button-shaped surface. */
+.button,
+.icon-button,
+.admin-tab,
+.cmd-k-trigger,
+.kanban-card,
+.product-card,
+.collection-tile,
+.kpi-card.kpi-action,
+.attention-row,
+.snapshot-card,
+.today-stat,
+.faq-item > summary,
+.brand,
+.quick-add-btn,
+.wishlist-heart,
+.action-tone-chips button,
+.quick-filter-row button,
+.view-toggle button {
+  transition: transform var(--motion-fast) var(--ease-out-strong),
+              background var(--motion-fast) var(--ease-out-strong),
+              border-color var(--motion-fast) var(--ease-out-strong),
+              box-shadow var(--motion-fast) var(--ease-out-strong),
+              color var(--motion-fast) var(--ease-out-strong);
+}
+
+.button:active,
+.icon-button:active,
+.admin-tab:active,
+.cmd-k-trigger:active,
+.kanban-card:active,
+.collection-tile:active,
+.kpi-card.kpi-action:active,
+.attention-row:active,
+.snapshot-card:active,
+.today-stat:active,
+.quick-filter-row button:active,
+.action-tone-chips button:active,
+.view-toggle button:active {
+  transform: scale(0.97);
+  transition-duration: var(--motion-press);
+}
+
+.product-card:active {
+  transform: scale(0.99);
+  transition-duration: var(--motion-press);
+}
+
+.brand:active .brand-mark {
+  transform: scale(0.96) rotate(-2deg);
+  transition-duration: var(--motion-press);
+}
+
+/* — HOVER GATING
+   Touch devices (most of PK mobile traffic) fire :hover on tap and persist
+   the state until the next tap elsewhere. Decorative hover lifts and color
+   washes get gated behind (hover: hover) and (pointer: fine) so they only
+   apply on mouse-equipped surfaces. */
+@media not all and (hover: hover) and (pointer: fine) {
+  .button:hover,
+  .icon-button:hover,
+  .product-card:hover,
+  .collection-tile:hover,
+  .kpi-card.kpi-action:hover,
+  .attention-row:hover,
+  .snapshot-card:hover,
+  .today-stat:hover,
+  .kanban-card:hover,
+  .brand:hover .brand-mark,
+  .hero-card:hover img,
+  .collection-tile:hover img,
+  .collection-tile:hover span,
+  .product-card:hover .product-media img,
+  .reorder-btn,
+  .sla-chip:hover,
+  .sla-chip,
+  .order-list-row:hover,
+  .customer-order-row:hover,
+  button.repeat-customer-banner:hover,
+  .segment-chip:hover .segment-chip-delete,
+  .msg-filter-chips button:hover,
+  .tag-chip button:hover,
+  .risk-city-chip:hover,
+  .kanban-show-all:hover {
+    transform: none;
+    filter: none;
+    opacity: 1;
+  }
+  /* Keep background/color washes static on touch; only :active provides feedback. */
+  .button.primary:hover,
+  .button.secondary:hover,
+  .button.ghost:hover,
+  .admin-tab:hover,
+  .main-nav a:hover {
+    background: inherit;
+    color: inherit;
+    border-color: inherit;
+  }
+  .button.primary:hover::after { opacity: 0; }
+  /* quick-add chip stays at its baseline opacity 0.92 (existing visual) */
+
+  /* product-media bloom + zoom firing on tap is the most visually annoying
+     sticky-hover case. Neutralize both. */
+  .product-card:hover .product-media::after,
+  .product-card:focus-within .product-media::after {
+    opacity: 0;
+  }
+  .product-card:hover .product-media img,
+  .product-card:focus-within .product-media img {
+    transform: none;
+    filter: none;
+  }
+}
+
+/* — TRANSFORM-ORIGIN AWARENESS
+   Modals stay centered (no anchored trigger). The command palette drops from
+   the top viewport region, so it should scale-down from its top-center origin
+   instead of blooming from middle-center. */
+.cmd-palette {
+  transform-origin: top center;
+}
+.cmd-palette-backdrop {
+  /* allow the inner cmd-palette to animate independently */
+  transition: opacity var(--motion-base) var(--ease-out-strong);
+}
+
+/* Use transition + @starting-style for the modal entrance so an interruption
+   (rapid open/close) retargets smoothly. We keep the existing keyframe as a
+   fallback for older browsers via the original .detail-modal rule above. */
+@supports (transition-behavior: allow-discrete) {
+  .detail-modal {
+    animation: none; /* take over with transition */
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    transform-origin: center;
+    transition: opacity var(--motion-base) var(--ease-out-strong),
+                transform var(--motion-base) var(--ease-out-strong);
+  }
+  @starting-style {
+    .detail-modal {
+      opacity: 0;
+      transform: scale(0.96) translateY(8px);
+    }
+  }
+}
+
+/* — DRAWER iOS CURVE
+   The cart drawer slides in from the right; iOS-style curve makes it feel
+   native. Backdrop fades in parallel. */
+.cart-drawer {
+  transition: transform 320ms var(--ease-drawer);
+}
+
+/* — FAQ TOGGLE
+   Animate the [open] glyph with a 45° rotation instead of the existing
+   hover-only translate. */
+.faq-item > summary {
+  /* keep summary's existing hover background, just refine the toggle */
+  transition: background var(--motion-fast) var(--ease-out-strong);
+}
+.faq-toggle::before {
+  transition: transform 200ms var(--ease-out-strong),
+              color 200ms var(--ease-out-strong);
+}
+.faq-item[open] .faq-toggle::before {
+  transform: rotate(45deg);
+}
+
+/* — TOAST ENTER/EXIT
+   Use transitions (interruptible) instead of keyframes. Entry from the right
+   edge; exit slides back out. Honors the data-toast lifecycle the JS already
+   manages. */
+.toast {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity var(--motion-base) var(--ease-out-strong),
+              transform var(--motion-base) var(--ease-out-strong);
+}
+@supports (transition-behavior: allow-discrete) {
+  @starting-style {
+    .toast {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+}
+.toast[data-removing="true"] {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+/* — PULSE DISCIPLINE
+   Convert infinite `sla-pulse` to a one-time pulse on stage change. Keep
+   `track-pulse` (genuine status indicator) but slow it to feel gentler.
+   `ambient-drift` stays as-is (single hero ornament). */
+.sla-chip.sla-danger {
+  /* override the earlier infinite animation */
+  animation: sla-pulse-once 800ms var(--ease-out-strong) 1 both;
+}
+@keyframes sla-pulse-once {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* — REDUCED MOTION (gentler, not zero)
+   Reduced motion still wants visible state transitions, just no translate/scale
+   physical motion. We allow opacity/color/background transitions through and
+   only strip transforms. Overrides the earlier blanket 1ms rule for the bits
+   that benefit from preserved comprehension. */
+@media (prefers-reduced-motion: reduce) {
+  .button,
+  .icon-button,
+  .admin-tab,
+  .cmd-k-trigger,
+  .faq-toggle::before,
+  .toast,
+  .modal-backdrop,
+  .cart-drawer,
+  .detail-modal {
+    animation-duration: 240ms !important;
+    transition-duration: 240ms !important;
+    transition-property: opacity, background-color, color, border-color !important;
+  }
+  .button:active,
+  .icon-button:active,
+  .product-card:active,
+  .brand:active .brand-mark {
+    transform: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PORTAL MOTION SCALE
+   Storefront = cinematic. Portal = calm + crisp. All portal interactions
+   cap at 200ms with a strong ease-out so dashboard work feels responsive
+   instead of atmospheric.
+   ══════════════════════════════════════════════════════════════════════════ */
+body[data-page="portal"] {
+  --ease-portal: var(--ease-out-strong);
+}
+
+body[data-page="portal"] .admin-tab,
+body[data-page="portal"] .kpi-card,
+body[data-page="portal"] .kanban-card,
+body[data-page="portal"] .attention-row,
+body[data-page="portal"] .snapshot-card,
+body[data-page="portal"] .today-stat,
+body[data-page="portal"] .ops-panel,
+body[data-page="portal"] .segment-chip,
+body[data-page="portal"] .msg-filter-chips button,
+body[data-page="portal"] .quick-filter-row button,
+body[data-page="portal"] .action-tone-chips button,
+body[data-page="portal"] .view-toggle button,
+body[data-page="portal"] .button {
+  transition-duration: 120ms !important;
+  transition-timing-function: var(--ease-portal) !important;
+}
+
+body[data-page="portal"] .kpi-card.kpi-action:active,
+body[data-page="portal"] .kanban-card:active,
+body[data-page="portal"] .attention-row:active,
+body[data-page="portal"] .snapshot-card:active,
+body[data-page="portal"] .today-stat:active,
+body[data-page="portal"] .admin-tab:active,
+body[data-page="portal"] .button:active {
+  transform: scale(0.97);
+  transition-duration: var(--motion-press) !important;
+}
+
+/* Portal reveal animations cap at 280ms (they default to 700–1100ms inherited
+   from storefront). The reveal still works, just no longer cinematic. */
+body[data-page="portal"] .reveal {
+  transition-duration: 280ms !important;
+}
+
+/* Portal cmd-palette rows: spring-feeling background slide via a moving glow
+   instead of a hard recolor. */
+body[data-page="portal"] .cmd-palette-row {
+  position: relative;
+  transition: background var(--motion-press) var(--ease-portal);
+}
+body[data-page="portal"] .cmd-palette-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255, 79, 154, 0.16), rgba(255, 79, 154, 0.04));
+  opacity: 0;
+  transform: scale(0.98);
+  transform-origin: center;
+  transition: opacity 140ms var(--ease-portal),
+              transform 140ms var(--ease-portal);
+  pointer-events: none;
+}
+body[data-page="portal"] .cmd-palette-row.active::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Substring highlight inside cmd-palette label + sub */
+.cmd-palette-mark {
+  background: var(--pink-glow);
+  color: var(--cream);
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 800;
+}
+.cmd-palette-row .cmd-palette-sub .cmd-palette-mark {
+  color: var(--pink-2);
+  background: transparent;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: var(--pink-2);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INSTAGRAM UGC RAIL
+   Horizontally-scrollable IG-shaped card rail. Cards reveal with a clip-path
+   inset on scroll-into-view (set via IntersectionObserver in app.js, but
+   degrades gracefully without). Each card has a square photo + caption +
+   "Order this look" CTA.
+   ══════════════════════════════════════════════════════════════════════════ */
+.ugc-rail-section {
+  padding: 56px 0;
+  display: grid;
+  gap: 22px;
+}
+.ugc-rail-section .section-heading {
+  padding: 0 max(20px, 6vw);
+}
+.ugc-rail {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(280px, 320px);
+  gap: 16px;
+  padding: 4px max(20px, 6vw) 24px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+.ugc-rail::-webkit-scrollbar { height: 8px; }
+.ugc-rail::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
+.ugc-rail::-webkit-scrollbar-track { background: transparent; }
+
+.ugc-card {
+  scroll-snap-align: start;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  /* Entry reveal — clip-path slides up from bottom on first paint */
+  opacity: 0;
+  transform: translateY(12px);
+  animation: ugc-card-in 600ms var(--ease-out-strong) forwards;
+}
+.ugc-rail-section.visible .ugc-card:nth-child(1) { animation-delay: 0ms; }
+.ugc-rail-section.visible .ugc-card:nth-child(2) { animation-delay: 80ms; }
+.ugc-rail-section.visible .ugc-card:nth-child(3) { animation-delay: 160ms; }
+.ugc-rail-section.visible .ugc-card:nth-child(4) { animation-delay: 240ms; }
+.ugc-rail-section.visible .ugc-card:nth-child(5) { animation-delay: 320ms; }
+@keyframes ugc-card-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ugc-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+.ugc-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms var(--ease-cinema), filter 600ms var(--ease-cinema);
+  /* clip-path reveal on first appearance — handled at card-level above */
+}
+@media (hover: hover) and (pointer: fine) {
+  .ugc-card:hover .ugc-media img {
+    transform: scale(1.05);
+    filter: brightness(1.04) saturate(1.08);
+  }
+}
+.ugc-source {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.ugc-body {
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 6px;
+}
+.ugc-body p {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+.ugc-body small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+.ugc-cta {
+  justify-self: start;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--pink-3);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  position: relative;
+  padding-bottom: 2px;
+}
+.ugc-cta::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: var(--pink-2);
+  transform: scaleX(0.4);
+  transform-origin: left;
+  transition: transform var(--motion-base) var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ugc-cta:hover::after { transform: scaleX(1); }
+}
+.ugc-cta:active { transform: scale(0.97); transition-duration: var(--motion-press); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ugc-card { animation: none; opacity: 1; transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BATCH-SHIPPED REVEAL · signature one-shot moment
+   Full-page overlay that fires ONCE per (batch × stage) per visitor via
+   localStorage gate. Polygon clip-path unfolds the card like tissue paper.
+   Auto-dismisses after 6 seconds.
+   ══════════════════════════════════════════════════════════════════════════ */
+.batch-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.batch-reveal[hidden] { display: none; }
+.batch-reveal-veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(232, 166, 176, 0.42) 0%, rgba(26, 14, 20, 0.55) 70%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  opacity: 0;
+  transition: opacity 480ms var(--ease-out-strong);
+}
+.batch-reveal[data-open="true"] .batch-reveal-veil { opacity: 1; }
+
+.batch-reveal-card {
+  position: relative;
+  width: min(440px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 28px 26px 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 0 40px 120px rgba(26, 14, 20, 0.36),
+              0 4px 20px rgba(26, 14, 20, 0.12);
+  text-align: center;
+  /* Tissue-paper unfold via clip-path polygon */
+  clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%);
+  opacity: 0;
+  transition: clip-path 720ms var(--ease-cinema),
+              opacity 380ms var(--ease-out-strong) 80ms,
+              transform 600ms var(--ease-cinema);
+  transform: scale(0.92);
+}
+.batch-reveal[data-open="true"] .batch-reveal-card {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 100% 100%, 50% 100%, 0% 100%, 0% 50%, 0% 0%);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.batch-reveal-kicker {
+  margin: 0;
+  color: var(--pink-3);
+}
+.batch-reveal-card h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4.5vw, 2.4rem);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  line-height: 1.15;
+}
+.batch-reveal-sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.batch-reveal-order {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 6px 0 4px;
+  padding: 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.batch-reveal-line {
+  display: grid;
+  gap: 2px;
+}
+.batch-reveal-line small {
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.batch-reveal-line strong {
+  color: var(--ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.batch-reveal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .batch-reveal-card {
+    transition: opacity 240ms ease, transform 240ms ease;
+    clip-path: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CART LINE SWIPE-TO-REMOVE
+   Each cart line is wrapped in .cart-swipe-shell. A static red Remove zone
+   sits behind; the foreground .cart-line translates left under finger drag.
+   Background brightens proportional to --swipe-progress (set by JS).
+   ══════════════════════════════════════════════════════════════════════════ */
+.cart-swipe-shell {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  --swipe-progress: 0;
+}
+.cart-swipe-remove {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 22px 0 14px;
+  border: 0;
+  background: linear-gradient(90deg,
+    rgba(196, 80, 106, calc(0.18 + var(--swipe-progress) * 0.55)) 0%,
+    rgba(196, 80, 106, calc(0.42 + var(--swipe-progress) * 0.5)) 100%);
+  color: var(--cream);
+  font-weight: 800;
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--motion-base) var(--ease-out-strong);
+  z-index: 0;
+}
+.cart-swipe-remove::before {
+  content: "✕";
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  opacity: calc(0.5 + var(--swipe-progress) * 0.5);
+}
+.cart-swipe-shell .cart-line {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  transition: transform 280ms var(--ease-drawer),
+              opacity 200ms var(--ease-out-strong);
+  /* The shell already provides the rounded outline; the line should be
+     visually inseparable from it during swipe. */
+  border-radius: 14px;
+  touch-action: pan-y;  /* allow vertical scroll while we own horizontal */
+}
+
+/* Only show swipe affordance in the drawer (not the checkout summary, which
+   uses the same markup but doesn't want gesture removal). */
+.order-summary .cart-swipe-shell .cart-swipe-remove { display: none; }
+.order-summary .cart-swipe-shell { overflow: visible; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cart-swipe-shell .cart-line { transition-duration: 80ms; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   /THIS-WEEK — public sourcing preview
+   Friday drop preview of items entering the next batch. Reuses the batch
+   fill-track + button language from /batches so the two pages feel like
+   companion surfaces.
+   ══════════════════════════════════════════════════════════════════════════ */
+.thisweek-shell {
+  width: min(1100px, 100% - 32px);
+  margin: 32px auto 80px;
+  display: grid;
+  gap: 28px;
+}
+.thisweek-hero {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+.thisweek-hero h1 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.01em;
+}
+.thisweek-hero p {
+  margin: 0 auto;
+  max-width: 620px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.thisweek-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px 24px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.thisweek-meta strong { color: var(--ink); font-weight: 800; }
+.thisweek-fill {
+  max-width: 380px;
+  margin: 4px auto 0;
+}
+
+.thisweek-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+.thisweek-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  transition: transform var(--motion-base) var(--ease-out-strong),
+              box-shadow var(--motion-base) var(--ease-out-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .thisweek-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+  }
+}
+
+.thisweek-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+.thisweek-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 600ms var(--ease-cinema);
+}
+@media (hover: hover) and (pointer: fine) {
+  .thisweek-card:hover .thisweek-media img {
+    transform: scale(1.04);
+  }
+}
+.thisweek-chip {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--pink-3);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.thisweek-body {
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 6px;
+}
+.thisweek-brand {
+  color: var(--muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.thisweek-card strong {
+  font-size: 1rem;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.thisweek-price {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--pink-3);
+  letter-spacing: -0.005em;
+  margin-bottom: 6px;
+}
+.thisweek-body .button.primary {
+  margin-top: 4px;
+  border-radius: 12px;
+  padding: 11px 14px;
+  font-size: 0.84rem;
+}
+
+.thisweek-foot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 22px 26px;
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.thisweek-foot h3 {
+  margin: 4px 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.005em;
+}
+@media (max-width: 720px) {
+  .thisweek-foot { grid-template-columns: 1fr; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SINGLE EDITORIAL SERIF · Cormorant takes over from Playfair
+   The original stylesheet uses both; Cormorant has more personality across
+   weights + italic. We retire Playfair globally with a sweep here. The HTML
+   font-load is also pruned (see index.html / portal.html head).
+   ══════════════════════════════════════════════════════════════════════════ */
+.drawer-header h2,
+.order-summary h2,
+h1, h2, h3 {
+  /* override any earlier Playfair reference */
+}
+
+[style*="Playfair"],
+.brand strong,
+.hero-copy h1,
+.section-heading h2,
+.page-intro h1,
+.empty-checkout h1,
+.detail-modal h2,
+.quote-estimator-hero h1,
+.preorder-intro h1,
+.content-shell h1,
+.content-shell h2,
+.drawer-header h2,
+.order-summary h2,
+.faq-hero h2 {
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ANNOUNCE BAR → BATCH TRACKER
+   Promotes the single most important piece of copy on the site (current
+   batch ETA) into a 5-dot status ticker. JS can set the active stage via
+   [data-batch-stage="sourced"] on the bar; the dots and labels read it.
+   ══════════════════════════════════════════════════════════════════════════ */
+.announce-bar.batch-tracker {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 10px max(20px, 6vw);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line);
+}
+.announce-bar.batch-tracker .batch-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.announce-bar.batch-tracker .batch-heading strong {
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+.announce-bar.batch-tracker .batch-eta {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.announce-bar.batch-tracker .batch-eta strong {
+  color: var(--pink-3);
+  font-weight: 800;
+}
+
+.batch-rail {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  position: relative;
+  align-items: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.batch-rail::before {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 50%;
+  height: 1px;
+  background: var(--line);
+  transform: translateY(-50%);
+  z-index: 0;
+}
+.batch-rail .batch-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.batch-rail .batch-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1.5px solid var(--line-strong);
+  transition: background var(--motion-base) var(--ease-out-strong),
+              border-color var(--motion-base) var(--ease-out-strong),
+              transform var(--motion-base) var(--ease-out-strong);
+}
+.batch-rail .batch-stage.is-done .batch-dot {
+  background: var(--pink-2);
+  border-color: var(--pink-2);
+}
+.batch-rail .batch-stage.is-active .batch-dot {
+  background: var(--pink-2);
+  border-color: var(--pink-2);
+  transform: scale(1.25);
+  box-shadow: 0 0 0 6px var(--pink-glow);
+  animation: batch-pulse 1800ms var(--ease-out-strong) infinite;
+}
+.batch-rail .batch-stage.is-active .batch-label {
+  color: var(--ink);
+}
+@keyframes batch-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--pink-glow); }
+  50%      { box-shadow: 0 0 0 9px rgba(232, 166, 176, 0.08); }
+}
+
+@media (max-width: 720px) {
+  .announce-bar.batch-tracker {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .announce-bar.batch-tracker .batch-heading,
+  .announce-bar.batch-tracker .batch-eta {
+    justify-self: center;
+    text-align: center;
+  }
+  .batch-rail .batch-stage .batch-label {
+    font-size: 0.58rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRODUCT CARD — KEEP EXISTING VISUAL, ADD EMIL MICRO-FEEDBACK
+   The original dark-circle chip + heart design (line ~4193 / ~4223) reads
+   well against product imagery. We only layer in: press feedback, wishlist
+   spring pop, and a smoother hover lift on mouse. The visual base is
+   untouched.
+   ══════════════════════════════════════════════════════════════════════════ */
+.product-card .quick-add-btn {
+  transition: transform var(--motion-fast) var(--ease-out-strong),
+              background var(--motion-fast) var(--ease-out-strong),
+              opacity var(--motion-fast) var(--ease-out-strong);
+}
+.product-card .quick-add-btn:active {
+  transform: scale(0.92);
+  transition-duration: var(--motion-press);
+}
+
+.product-card .wishlist-heart {
+  transition: transform 240ms var(--ease-out-strong),
+              color 200ms var(--ease-out-strong),
+              background var(--motion-fast) var(--ease-out-strong);
+}
+.product-card .wishlist-heart.is-wished,
+.product-card .wishlist-heart[aria-pressed="true"] {
+  color: var(--pink);
+  animation: heart-pop 380ms var(--ease-out-strong);
+}
+.product-card .wishlist-heart:active {
+  transform: scale(0.9);
+  transition-duration: var(--motion-press);
+}
+@keyframes heart-pop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   IMAGE CROSSFADE BLUR
+   Gallery / hero / product images get a subtle blur during their opacity
+   transition so the eye reads one transformation, not two ghosts.
+   ══════════════════════════════════════════════════════════════════════════ */
+.gallery-main,
+.product-media img {
+  transition: opacity var(--motion-base) var(--ease-out-strong),
+              filter var(--motion-base) var(--ease-out-strong);
+}
+.gallery-main[data-swapping="true"],
+.product-media img[data-swapping="true"] {
+  filter: blur(3px);
+  opacity: 0.6;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHATSAPP FAB — CONVERSATION CARD
+   Press to expand into a small floating card (origin-aware: scales from
+   bottom-right). Falls back to plain link on devices that don't support
+   :has().
+   ══════════════════════════════════════════════════════════════════════════ */
+.whatsapp-fab {
+  transform-origin: bottom right;
+  transition: transform var(--motion-fast) var(--ease-out-strong),
+              box-shadow var(--motion-fast) var(--ease-out-strong);
+}
+.whatsapp-fab:active {
+  transform: scale(0.95);
+  transition-duration: var(--motion-press);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HERO STAGGER TIGHTEN
+   Original delays land the last hero card at 460ms — half a beat behind the
+   headline. Bring everything into a single 0/120/240 cadence.
+   ══════════════════════════════════════════════════════════════════════════ */
+.hero-card-large.is-visible { transition-delay: 0ms; }
+.hero-card-small.top.is-visible { transition-delay: 120ms; }
+.hero-card-small.bottom.is-visible { transition-delay: 240ms; }
+.hero-card.is-visible {
+  /* faster transform; opacity keeps its longer fade for cinematic feel */
+  transition:
+    opacity 700ms var(--ease-cinema),
+    transform 350ms var(--ease-cinema);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SIGNATURE: PASTE-AWARE BANK REFERENCE FIELD
+   Highest-anxiety input on the site. Pink check icon fades in on valid
+   reference (JS toggles [data-valid="true"]); placeholder blurs on focus.
+   ══════════════════════════════════════════════════════════════════════════ */
+.bank-box label input[name="transfer_reference"] {
+  position: relative;
+  transition: border-color var(--motion-base) var(--ease-out-strong),
+              background var(--motion-base) var(--ease-out-strong);
+}
+.bank-box label input[name="transfer_reference"]:focus {
+  border-color: var(--pink-2);
+  background: var(--surface-2);
+}
+.bank-box label input[name="transfer_reference"]::placeholder {
+  transition: filter 200ms var(--ease-out-strong),
+              opacity 200ms var(--ease-out-strong);
+}
+.bank-box label input[name="transfer_reference"]:focus::placeholder {
+  filter: blur(2px);
+  opacity: 0.5;
+}
+.bank-box label[data-valid="true"]::after {
+  content: "✓";
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--pink-3);
+  font-weight: 800;
+  animation: check-pop 260ms var(--ease-out-strong) both;
+}
+@keyframes check-pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVERSATIONAL CHECKOUT — concept frame
+   Static preview view that shows what the form-driven /checkout becomes when
+   it adopts the WhatsApp conversation shape. Visual fidelity over interaction
+   wiring — the production form still ships behind /checkout.
+   ══════════════════════════════════════════════════════════════════════════ */
+.chat-checkout-shell {
+  width: min(540px, 100% - 32px);
+  margin: 32px auto 80px;
+  display: grid;
+  gap: 18px;
+}
+.chat-checkout-header {
+  text-align: center;
+  display: grid;
+  gap: 8px;
+}
+.chat-checkout-header h1 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.chat-checkout-header p { color: var(--muted); margin: 0; }
+.chat-checkout-header a { color: var(--pink-3); font-weight: 700; }
+
+.chat-frame {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 540px;
+}
+.chat-frame-top {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border-bottom: 1px solid var(--line);
+}
+.chat-frame-top .chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-2) 100%);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.chat-frame-top strong { display: block; font-size: 0.86rem; color: var(--ink); }
+.chat-frame-top small { display: block; color: var(--muted); font-size: 0.7rem; }
+.chat-frame-top .chat-online {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(93, 179, 137, 0.18);
+}
+
+.chat-thread {
+  padding: 18px 14px;
+  display: grid;
+  gap: 10px;
+  background: var(--surface-2);
+  background-image:
+    radial-gradient(circle at 20% 20%, var(--pink-glow), transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(232, 166, 176, 0.16), transparent 60%);
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.chat-day-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 6px 0 10px;
+}
+.chat-day-divider::before,
+.chat-day-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.chat-msg {
+  display: grid;
+  gap: 4px;
+  max-width: 80%;
+}
+.chat-msg.from-bestie { justify-self: start; }
+.chat-msg.from-customer { justify-self: end; text-align: right; }
+.chat-bubble {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.from-bestie .chat-bubble {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+.from-customer .chat-bubble {
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-2) 100%);
+  color: var(--surface);
+  border-bottom-right-radius: 4px;
+}
+.from-customer .chat-bubble strong { color: var(--surface); }
+.chat-meta {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.from-bestie .chat-bubble .chat-meta { color: var(--muted); }
+.chat-time {
+  color: var(--muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 0 6px;
+}
+
+.chat-order-card {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+}
+.chat-order-card img {
+  width: 78px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+.chat-order-card strong { display: block; font-size: 0.92rem; }
+.chat-order-card small { display: block; color: var(--muted); font-size: 0.74rem; margin: 2px 0 8px; }
+.chat-order-totals { margin: 0; display: grid; gap: 4px; }
+.chat-order-totals div { display: flex; justify-content: space-between; font-size: 0.78rem; }
+.chat-order-totals dt { color: var(--muted); margin: 0; }
+.chat-order-totals dd { margin: 0; color: var(--ink); }
+.chat-order-totals strong { color: var(--pink-3); font-size: 0.92rem; }
+
+.chat-bank-card {
+  background: linear-gradient(135deg, var(--ink) 0%, var(--black-2) 100%);
+  color: var(--surface);
+  padding: 14px;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  display: grid;
+  gap: 10px;
+}
+.chat-bank-card header small {
+  display: block;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.chat-bank-card header strong { font-size: 0.92rem; }
+.chat-bank-card dl { margin: 0; display: grid; gap: 4px; }
+.chat-bank-card dl div { display: flex; justify-content: space-between; font-size: 0.82rem; }
+.chat-bank-card dt { color: rgba(255, 255, 255, 0.6); margin: 0; font-size: 0.74rem; }
+.chat-bank-card dd { margin: 0; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.chat-copy-btn {
+  align-self: start;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--surface);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform var(--motion-fast) var(--ease-out-strong),
+              background var(--motion-fast) var(--ease-out-strong);
+}
+.chat-copy-btn:active { transform: scale(0.96); transition-duration: var(--motion-press); }
+@media (hover: hover) and (pointer: fine) {
+  .chat-copy-btn:hover { background: rgba(255, 255, 255, 0.2); }
+}
+
+.chat-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: rgba(232, 166, 176, 0.18);
+  border-radius: 12px;
+  color: var(--pink-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  align-self: end;
+}
+
+.chat-composer {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.chat-composer-attach,
+.chat-composer-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.1rem;
+  display: grid;
+  place-items: center;
+  cursor: not-allowed;
+}
+.chat-composer-send {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+.chat-composer-input {
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.chat-checkout-foot {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.chat-checkout-foot a { color: var(--pink-3); font-weight: 700; }
+
+/* Message stagger — each bubble slides in 60ms after the previous */
+.chat-msg {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: chat-msg-in 360ms var(--ease-out-strong) forwards;
+}
+.view.active#view-checkout-chat .chat-msg:nth-of-type(1) { animation-delay: 0ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(2) { animation-delay: 80ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(3) { animation-delay: 160ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(4) { animation-delay: 240ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(5) { animation-delay: 320ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(6) { animation-delay: 400ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(7) { animation-delay: 480ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(8) { animation-delay: 560ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(9) { animation-delay: 640ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(10) { animation-delay: 720ms; }
+.view.active#view-checkout-chat .chat-msg:nth-of-type(n+11) { animation-delay: 800ms; }
+@keyframes chat-msg-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat-msg { animation-duration: 1ms; opacity: 1; transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   /BATCHES PUBLIC PAGE
+   Reuses the .batch-rail component from the announce bar at a larger scale.
+   Stages slide in on view-activation; the open-batch fill bar uses linear
+   timing (constant motion).
+   ══════════════════════════════════════════════════════════════════════════ */
+.batches-shell {
+  width: min(940px, 100% - 32px);
+  margin: 36px auto 80px;
+  display: grid;
+  gap: 28px;
+}
+.batches-hero {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+.batches-hero h1 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.batches-hero p {
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+.batches-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+.batches-stats strong {
+  color: var(--ink);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-right: 6px;
+  letter-spacing: -0.01em;
+}
+
+.batch-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 24px 18px;
+  box-shadow: var(--shadow-soft);
+  display: grid;
+  gap: 18px;
+}
+.batch-card-active {
+  border-color: var(--pink-2);
+  box-shadow: 0 24px 80px rgba(216, 142, 155, 0.18),
+              0 2px 10px rgba(26, 14, 20, 0.04);
+}
+.batch-card-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: start;
+}
+.batch-card-head h2 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  letter-spacing: -0.01em;
+  margin: 4px 0 2px;
+}
+.batch-card-head small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.batch-card-eta {
+  text-align: right;
+}
+.batch-card-eta span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.batch-card-eta strong {
+  color: var(--pink-3);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+/* Larger variant of the rail used on /batches */
+.batch-rail.batch-rail-lg {
+  max-width: 100%;
+  padding: 8px 0;
+}
+.batch-rail.batch-rail-lg::before {
+  left: 4%;
+  right: 4%;
+}
+.batch-rail.batch-rail-lg .batch-stage { font-size: 0.7rem; }
+.batch-rail.batch-rail-lg .batch-dot { width: 12px; height: 12px; }
+.batch-rail.batch-rail-lg .batch-stage.is-active .batch-dot {
+  transform: scale(1.35);
+  box-shadow: 0 0 0 8px var(--pink-glow);
+}
+
+.batch-card-foot {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.batch-card-foot p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.batch-fill-track {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.batch-fill {
+  display: block;
+  width: var(--fill, 0%);
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink) 0%, var(--pink-2) 100%);
+  border-radius: 999px;
+  transition: width 700ms linear;
+}
+
+.batches-history {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px 24px;
+  display: grid;
+  gap: 12px;
+}
+.batches-history h2 {
+  margin: 0 0 4px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  letter-spacing: -0.005em;
+}
+.batches-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.batch-history-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.batch-history-row strong { display: block; font-size: 0.92rem; }
+.batch-history-row small { display: block; color: var(--muted); font-size: 0.78rem; }
+.batch-history-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.batch-history-chip.is-done {
+  background: rgba(93, 179, 137, 0.16);
+  color: #2f7e57;
+}
+.batches-history-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.batches-cta-band {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.batches-cta-band h3 {
+  margin: 4px 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -0.005em;
+}
+
+@media (max-width: 720px) {
+  .batch-card-head,
+  .batch-card-foot,
+  .batches-cta-band {
+    grid-template-columns: 1fr;
+  }
+  .batch-card-eta { text-align: left; }
+}
+
+.checkout-preview-link {
+  margin: 6px 0 0;
+}
+.checkout-preview-link small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.checkout-preview-link a {
+  color: var(--pink-3);
+  font-weight: 700;
+  text-decoration: none;
+}
+.checkout-preview-link a:hover {
+  text-decoration: underline;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WHATSAPP CONCIERGE — bubble + conversation card
+   The .wa-bubble wrapper holds both the FAB button and the floating card.
+   The card scales in from bottom-right (matches the FAB's anchor) so it
+   feels physically connected to the trigger. Outside-click and Escape close
+   it (wired in app.js).
+   ══════════════════════════════════════════════════════════════════════════ */
+.wa-bubble {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 55;
+  display: grid;
+  gap: 12px;
+  /* Card sits ABOVE the FAB; bottom of card == top of FAB + 12px gap */
+  align-items: end;
+}
+/* The fab now lives inside the bubble wrapper, so its own positioning
+   resets — the parent does the fixed-position work. */
+.wa-bubble .whatsapp-fab {
+  position: static;
+  left: auto;
+  bottom: auto;
+  border: 0;
+  cursor: pointer;
+  justify-self: start;
+  transform-origin: bottom left;
+}
+
+.wa-card {
+  position: absolute;
+  bottom: calc(100% + 12px); /* above the FAB */
+  left: 0;
+  width: min(320px, calc(100vw - 48px));
+  display: grid;
+  gap: 14px;
+  padding: 18px 18px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 28px 80px rgba(26, 14, 20, 0.18),
+              0 4px 16px rgba(26, 14, 20, 0.06);
+  transform-origin: bottom left;
+  opacity: 0;
+  transform: scale(0.94) translateY(8px);
+  transition: opacity var(--motion-base) var(--ease-out-strong),
+              transform var(--motion-base) var(--ease-out-strong);
+  pointer-events: none;
+}
+.wa-bubble[data-open="true"] .wa-card {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.wa-card-head {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+.wa-card-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--pink-2) 100%);
+  color: var(--surface);
+  display: grid;
+  place-items: center;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.wa-card-id strong {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.wa-card-id small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.wa-card-online {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(93, 179, 137, 0.18);
+}
+.wa-card-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-out-strong),
+              transform var(--motion-fast) var(--ease-out-strong);
+}
+.wa-card-close:active {
+  transform: scale(0.92);
+  transition-duration: var(--motion-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wa-card-close:hover { background: var(--surface-2); }
+}
+
+.wa-card-body p {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.wa-card-stats {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.wa-card-stats li {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+.wa-card-stats strong {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  color: var(--ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+}
+
+.wa-card-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 14px;
+  background: #25d366;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.28);
+  transition: transform var(--motion-fast) var(--ease-out-strong),
+              box-shadow var(--motion-fast) var(--ease-out-strong);
+}
+.wa-card-cta:active {
+  transform: scale(0.97);
+  transition-duration: var(--motion-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wa-card-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 32px rgba(37, 211, 102, 0.36);
+  }
+}
+
+/* Open state: FAB rotates slightly to signal "active" */
+.wa-bubble[data-open="true"] .whatsapp-fab {
+  transform: rotate(-6deg);
+}
+
+/* Mobile: keep the FAB in the same corner but make the card wider */
+@media (max-width: 720px) {
+  .wa-bubble { left: 16px; bottom: 16px; }
+  .wa-card { width: calc(100vw - 32px); }
+}
+
+/* When body has modal-open, hide the whole bubble (cart drawer / modal
+   shouldn't compete with the WA card). */
+body.modal-open .wa-bubble { display: none; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONCIERGE HANDBOOK — /preorder rebuild
+   Three scroll-stitched sections replace the FAQ accordion. Each section
+   has a sticky left rail (kicker + label) and a continuous prose column.
+   Search highlights matches inline with <mark> instead of hiding non-matches.
+   ══════════════════════════════════════════════════════════════════════════ */
+.handbook-hero {
+  width: min(720px, 100% - 32px);
+  margin: 28px auto 36px;
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+.handbook-hero h2 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.handbook-hero p { margin: 0; color: var(--muted); line-height: 1.55; }
+
+.handbook-search-label {
+  position: relative;
+  margin: 12px auto 0;
+  width: min(480px, 100%);
+}
+.handbook-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+.handbook-search-label input[type="search"] {
+  width: 100%;
+  padding: 14px 14px 14px 42px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.92rem;
+  color: var(--ink);
+  transition: border-color var(--motion-fast) var(--ease-out-strong),
+              box-shadow var(--motion-fast) var(--ease-out-strong);
+}
+.handbook-search-label input[type="search"]:focus {
+  outline: none;
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 4px var(--pink-glow);
+}
+.handbook-search-hint {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.handbook-shell {
+  width: min(1080px, 100% - 32px);
+  margin: 0 auto 60px;
+  display: grid;
+  gap: 36px;
+}
+
+.handbook-section {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 36px;
+  align-items: start;
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+}
+.handbook-section:first-of-type { border-top: 0; padding-top: 8px; }
+
+.handbook-rail {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  display: grid;
+  gap: 8px;
+}
+.handbook-rail h3 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 1.7rem;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+.handbook-rail .kicker { margin: 0; }
+.handbook-rail p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.handbook-prose {
+  display: grid;
+  gap: 22px;
+}
+.handbook-prose h4 {
+  margin: 0;
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.handbook-prose p {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+.handbook-prose p a {
+  color: var(--pink-3);
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* Search highlight — wraps matched terms in <mark> with a soft pink wash */
+.handbook-prose mark {
+  background: var(--pink-glow);
+  color: var(--ink);
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* Match-dimming: when a search is active, items without a match drop to
+   40% opacity and pause. The matching items stay legible. */
+.handbook-shell[data-search-active="true"] [data-handbook-q]:not([data-match="true"]),
+.handbook-shell[data-search-active="true"] [data-handbook-a]:not([data-match="true"]) {
+  opacity: 0.35;
+  transition: opacity var(--motion-base) var(--ease-out-strong);
+}
+.handbook-shell[data-search-active="true"] [data-match="true"] {
+  opacity: 1;
+  transition: opacity var(--motion-base) var(--ease-out-strong);
+}
+
+.handbook-empty {
+  width: min(540px, 100% - 32px);
+  margin: 0 auto 60px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+.handbook-empty a {
+  color: var(--pink-3);
+  font-weight: 700;
+}
+
+@media (max-width: 880px) {
+  .handbook-section {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .handbook-rail {
+    position: static;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CART DRAWER — backdrop + light theme refinement
+   The drawer surface was already flipped to var(--surface) by earlier
+   overrides; we add a coordinated backdrop, refine the header, give cart
+   lines breathing room, and dial in the totals + CTA.
+   ══════════════════════════════════════════════════════════════════════════ */
+.cart-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 58;
+  background: rgba(26, 14, 20, 0.32);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-slow) var(--ease-out-strong);
+}
+.cart-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sit above the backdrop and adopt the light surface + shadow. */
+.cart-drawer {
+  z-index: 60;
+  padding: 24px 22px 30px;
+  background: var(--surface);
+  color: var(--ink);
+  border-left: 1px solid var(--line);
+  box-shadow: -28px 0 80px rgba(26, 14, 20, 0.16),
+              -4px 0 16px rgba(26, 14, 20, 0.04);
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 16px;
+}
+
+.cart-drawer .drawer-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  justify-content: space-between;
+}
+.cart-drawer .drawer-header h2 {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+/* Cart items area — scrollable middle */
+.cart-drawer [data-cart-items] {
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  padding-right: 4px;
+}
+.cart-drawer .order-line.cart-line {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 0;
+  align-items: start;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+.cart-drawer .order-line.cart-line strong {
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+.cart-drawer .order-line.cart-line small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.cart-drawer .mini-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.cart-drawer .mini-actions > strong {
+  color: var(--pink-3);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.cart-drawer .qty-stepper {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+}
+.cart-drawer .qty-step {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  transition: background var(--motion-fast) var(--ease-out-strong);
+}
+.cart-drawer .qty-step:active { transform: scale(0.9); transition-duration: var(--motion-press); }
+@media (hover: hover) and (pointer: fine) {
+  .cart-drawer .qty-step:hover { background: var(--surface-2); }
+}
+.cart-drawer .qty-value {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+.cart-drawer .icon-button.plain {
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 8px;
+  transition: color var(--motion-fast) var(--ease-out-strong),
+              background var(--motion-fast) var(--ease-out-strong);
+}
+.cart-drawer .icon-button.plain:active {
+  transform: scale(0.95);
+  transition-duration: var(--motion-press);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cart-drawer .icon-button.plain:hover {
+    color: var(--red);
+    background: var(--rose);
+  }
+}
+
+/* Cart line variant editor */
+.cart-drawer .cart-variant-edit {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.cart-drawer .cart-variant-edit input {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.82rem;
+}
+.cart-drawer .cart-variant-edit input:focus {
+  outline: none;
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 3px var(--pink-glow);
+}
+
+/* Empty state in drawer */
+.cart-drawer [data-cart-items] .muted {
+  padding: 28px 14px;
+  text-align: center;
+  background: var(--surface-2);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+/* Totals block — sits above the CTA */
+.cart-drawer .cart-totals {
+  margin: 0;
+  padding: 14px 0 6px;
+  border-top: 1px solid var(--line);
+  gap: 8px;
+}
+.cart-drawer .cart-totals div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.cart-drawer .cart-totals dt { margin: 0; }
+.cart-drawer .cart-totals dd { margin: 0; color: var(--ink); font-weight: 700; }
+.cart-drawer .cart-totals div:first-child dd {
+  color: var(--pink-3);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Checkout CTA */
+.cart-drawer .button.primary.wide {
+  margin-top: 4px;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PORTAL CASHFLOW SANKEY
+   SVG-based 2-column flow viz. Sources on the left, destinations on the
+   right; path widths scale to the amount they carry. Linear timing for path
+   draw-in (constant motion), spring-feel for hover.
+   ══════════════════════════════════════════════════════════════════════════ */
+.cashflow-sankey-panel {
+  margin-top: 14px;
+}
+.sankey-wrap {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+}
+.sankey-svg {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 6;
+  display: block;
+  font-family: "Archivo", ui-sans-serif, sans-serif;
+}
+.sankey-node-rect {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+  transition: stroke var(--motion-fast) var(--ease-out-strong),
+              filter var(--motion-fast) var(--ease-out-strong);
+}
+.sankey-node-rect.tone-in { fill: rgba(232, 166, 176, 0.18); stroke: var(--pink-2); }
+.sankey-node-rect.tone-cost { fill: rgba(196, 80, 106, 0.14); stroke: var(--red); }
+.sankey-node-rect.tone-profit { fill: rgba(93, 179, 137, 0.14); stroke: var(--green); }
+.sankey-node-rect.tone-ship { fill: rgba(211, 154, 53, 0.14); stroke: var(--amber); }
+.sankey-node-rect.tone-pending { fill: rgba(232, 166, 176, 0.08); stroke: var(--line-strong); }
+
+.sankey-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--ink);
+  letter-spacing: 0.02em;
+}
+.sankey-sublabel {
+  font-size: 10.5px;
+  font-weight: 500;
+  fill: var(--muted);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  letter-spacing: -0.005em;
+}
+.sankey-flow {
+  fill-opacity: 0.4;
+  transition: fill-opacity var(--motion-fast) var(--ease-out-strong);
+  /* draw-in animation */
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: sankey-draw 900ms linear forwards;
+}
+@keyframes sankey-draw {
+  to { stroke-dashoffset: 0; }
+}
+.sankey-flow.tone-cost { fill: var(--red); }
+.sankey-flow.tone-ship { fill: var(--amber); }
+.sankey-flow.tone-profit { fill: var(--green); }
+.sankey-flow.tone-pending { fill: var(--pink-2); }
+.sankey-group:hover .sankey-flow {
+  fill-opacity: 0.7;
+}
+.sankey-group:hover .sankey-node-rect {
+  filter: drop-shadow(0 4px 12px rgba(232, 166, 176, 0.36));
+}
+
+.sankey-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+.sankey-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+.sankey-legend .tone-in i { background: var(--pink-2); }
+.sankey-legend .tone-cost i { background: var(--red); }
+.sankey-legend .tone-ship i { background: var(--amber); }
+.sankey-legend .tone-profit i { background: var(--green); }
+.sankey-legend .tone-pending i { background: var(--line-strong); }
+
+.sankey-empty {
+  padding: 36px 22px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.86rem;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+  .sankey-svg { aspect-ratio: 4 / 5; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HERO MOUSE GLOW
+   Soft pink radial that lags the cursor with spring damping. Decorative
+   only — the JS gates this behind (hover:hover) and prefers-reduced-motion
+   so touch + motion-sensitive users never see it.
+   ══════════════════════════════════════════════════════════════════════════ */
+.hero-shell { position: relative; }
+.hero-glow {
+  position: absolute;
+  pointer-events: none;
+  width: 380px;
+  height: 380px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(232, 166, 176, 0.32) 0%, rgba(244, 194, 201, 0.14) 40%, transparent 70%);
+  filter: blur(28px);
+  mix-blend-mode: multiply;
+  /* JS will set translate3d via inline style. Starts centered + invisible. */
+  transform: translate3d(-9999px, -9999px, 0);
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out-strong);
+  z-index: 0;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.hero-glow[data-active="true"] { opacity: 1; }
+
+.hero-copy, .hero-stage { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow { display: none; }
+}
+@media not all and (hover: hover) and (pointer: fine) {
+  .hero-glow { display: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE TOUCH-TARGET FIXES — bring all interactive elements to >= 40x40
+   Caught by scripts/check-rendered-app.mjs which enforces the 40x40 WCAG /
+   Apple HIG threshold at <768px viewports. The visual sizes on desktop stay
+   compact; only the tap surfaces grow on phone.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  /* UGC rail "Order this look →" — was a thin underlined text link.
+     Becomes a properly-padded inline-flex pill on mobile. */
+  .ugc-cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 9px 14px 9px 0;
+  }
+
+  /* WhatsApp concierge card — close button and CTA both need to clear 40.
+     The card sits at transform: scale(0.94) when closed, which scales the
+     close button's bounding rect down too — so the button has to be 44px
+     (44 × 0.94 = 41.36) to land above the threshold even at rest. */
+  .wa-card-close {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 1.4rem;
+  }
+  /* Same scaling concern applies to the avatar's size — but it's not
+     interactive, so no fix needed. */
+  .wa-card-cta {
+    min-height: 44px;
+  }
+
+  /* Cart drawer steppers — visual width keeps the cart line tidy on desktop,
+     but on mobile the buttons need to be tappable. The qty value stays
+     visually centered. */
+  .cart-drawer .qty-step {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 1.05rem;
+  }
+  .cart-drawer .qty-value {
+    min-width: 28px;
+    font-size: 0.95rem;
+  }
+
+  /* Cart drawer "Remove" text button — pad to a proper hit area. */
+  .cart-drawer .icon-button.plain {
+    min-height: 40px;
+    padding: 10px 14px;
+  }
+
+  /* Chat checkout preview — composer buttons + Copy IBAN. */
+  .chat-copy-btn {
+    min-height: 40px;
+    padding: 10px 16px;
+  }
+  .chat-composer-attach,
+  .chat-composer-send {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* Concierge handbook search input + IG rail-internal anchors. */
+  .handbook-search-label input[type="search"] {
+    min-height: 44px;
+  }
+
+  /* Batch tracker page CTAs inside cards already use .button (>=42px min-height
+     via the base .button rule). The fill-track and stage dots are decorative
+     spans, not interactive, so they're excluded from the check. */
+
+  /* /this-week card CTAs already use .button. The product chips ("X in cart")
+     are spans, not interactive. */
+
+  /* Cart swipe shell — the underlying remove button fills the row so it's
+     already >= 40 high, but enforce the min-height in case a single-line
+     cart entry compresses too much. */
+  .cart-swipe-remove {
+    min-height: 64px;
+  }
+}
+
