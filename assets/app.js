@@ -4199,7 +4199,7 @@ function renderReceivablesAging() {
           return `
             <button class="aging-col aging-${tone}" type="button" data-action="jump-tab" data-action-filter="orders" title="${b.count} order${b.count === 1 ? "" : "s"} · ${PKR.format(b.total)}">
               <span class="aging-amount">${shortPkr(b.total)}</span>
-              <span class="aging-bar"><span style="height:${Math.max(4, pct)}%"></span></span>
+              <span class="aging-bar"><span style="height:${b.total > 0 ? Math.max(6, pct) : 0}%"></span></span>
               <span class="aging-label">${b.label}</span>
               <span class="aging-count">${b.count} order${b.count === 1 ? "" : "s"}</span>
             </button>`;
