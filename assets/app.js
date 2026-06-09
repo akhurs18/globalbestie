@@ -5453,6 +5453,20 @@ function openCommandPalette() {
   });
   const input = qs(".cmd-palette-input");
   let cursor = 0;
+  // Case-insensitive substring highlight — wraps the typed query in <mark>
+  // inside labels + sub-text so the eye lands on the match. Defined at the
+  // top of render() so BOTH the action path and the search path can use it.
+  const markMatch = (text, q) => {
+    const safe = esc(text);
+    const trimmed = (q || "").trim();
+    if (!trimmed) return safe;
+    const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    try {
+      return safe.replace(new RegExp(`(${escaped})`, "gi"), '<mark class="cmd-palette-mark">$1</mark>');
+    } catch {
+      return safe;
+    }
+  };
   const render = (q) => {
     const needle = q.trim().toLowerCase();
     const hits = [];
@@ -5488,8 +5502,8 @@ function openCommandPalette() {
           target.innerHTML = hits.map((h, i) => `
             <button class="cmd-palette-row${i === cursor ? " active" : ""}" type="button" data-cmd-index="${i}">
               <span class="cmd-palette-type tone-action">⌘</span>
-              <span class="cmd-palette-label">${esc(h.label)}</span>
-              <span class="cmd-palette-sub">${esc(h.sub)}</span>
+              <span class="cmd-palette-label">${markMatch(h.label, aq)}</span>
+              <span class="cmd-palette-sub">${markMatch(h.sub, aq)}</span>
             </button>
           `).join("");
           target._hits = hits;
@@ -5558,21 +5572,6 @@ function openCommandPalette() {
       target._hits = [];
       return;
     }
-    // Case-insensitive substring highlight — bolds the typed needle inside
-    // labels and sub-text so the eye lands on the match instantly.
-    const markMatch = (text, q) => {
-      const safe = esc(text);
-      if (!q) return safe;
-      const trimmed = q.trim();
-      if (!trimmed) return safe;
-      const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      try {
-        const re = new RegExp(`(${escaped})`, "gi");
-        return safe.replace(re, '<mark class="cmd-palette-mark">$1</mark>');
-      } catch {
-        return safe;
-      }
-    };
     target.innerHTML = hits.map((h, i) => `
       <button class="cmd-palette-row${i === cursor ? " active" : ""}${h.avatar ? " has-avatar" : ""}" type="button" data-cmd-index="${i}">
         ${h.avatar || `<span class="cmd-palette-type">${esc(h.type)}</span>`}
