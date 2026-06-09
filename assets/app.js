@@ -645,7 +645,20 @@ function showUndoToast(message, onUndo) {
   setTimeout(() => node.remove(), 10_000);
 }
 
+// Luxury price rounding — computed preorder prices land on ugly figures like
+// Rs 153,738, which read as algorithmic and undercut the premium feel. Round
+// UP to the nearest 100 (never undercharge; the few rupees become service
+// buffer) so prices look intentional: Rs 153,800. Rounding up to 100 also
+// makes the 50/50 split land clean (153,800 → 76,900 + 76,900).
+function roundLuxuryPrice(amount) {
+  const n = Number(amount) || 0;
+  if (n <= 0) return 0;
+  return Math.ceil(n / 100) * 100;
+}
+
 function calculatePrice(product) {
+  // In-stock items use the team's directly-entered PKR price verbatim — they
+  // set these by hand and we respect that exact control (no auto-rounding).
   if (Number(product.customer_price_pkr || product.price_pkr || 0) > 0) {
     return Math.ceil(Number(product.customer_price_pkr || product.price_pkr));
   }
@@ -654,7 +667,8 @@ function calculatePrice(product) {
   const retailPkr = Number(product.usa_price_usd || 0) * fx;
   const serviceMargin = retailPkr * markup;
   const shipping = Number(product.shipping_pkr || 0);
-  return Math.ceil(retailPkr + serviceMargin + shipping);
+  // Computed preorder total → round to a clean luxury figure.
+  return roundLuxuryPrice(retailPkr + serviceMargin + shipping);
 }
 
 function productPricingParts(product) {
@@ -2199,7 +2213,9 @@ function showProductDetails(productId) {
         ${isPortal ? "" : `
           <aside class="variant-callout" aria-label="Variants and customization">
             <strong>Choose your ${esc(variantLabel(product))}</strong>
-            <p class="variant-hint">${esc(product.variants && product.variants.trim() ? product.variants : "Tell us your preferred size, shade, or colour below — we'll confirm availability on WhatsApp once your order's in.")}</p>
+            <p class="variant-hint">${product.variants && product.variants.trim()
+              ? `Available: ${esc(product.variants.trim())}`
+              : "Tell us your preferred size, shade, or colour below — we'll confirm availability on WhatsApp once your order's in."}</p>
             <label class="variant-input-label">
               <span>${esc(variantLabel(product))}</span>
               <input type="text" data-pdp-variant data-product-id="${attr(product.id)}" placeholder="${esc(variantPlaceholder(product))}" autocomplete="off" />
@@ -2210,7 +2226,6 @@ function showProductDetails(productId) {
           ${isPortal ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : `<button class="button primary wide" type="button" data-action="add-cart" data-product-id="${attr(product.id)}" data-add-from-pdp="1">Add to bag · ${PKR.format(parts.total)}</button>`}
           ${isPortal ? "" : `<a class="button secondary" href="${safeUrl(supportWhatsAppHref(`Hi Global Bestie, I want details for ${product.title}`))}" target="_blank" rel="noreferrer">Ask on WhatsApp</a>`}
           ${isPortal ? "" : `<small class="cta-helper">50% advance at checkout · balance on Pakistan arrival</small>`}
-          <button class="button secondary" type="button" data-action="close-modal">Done</button>
         </div>
       </div>
       ${!isPortal ? renderRecentlyViewedStrip(product.id) : ""}

@@ -6048,7 +6048,16 @@ output {
 }
 
 .product-ledger {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Container-driven, not viewport-driven. The ledger lives in the modal's
+     narrow info column (~370px even on desktop), so viewport media queries
+     can't tell when it's tight. auto-fit + a content-safe 118px minimum lets
+     it hold 3 columns when there's room and wrap to 2/1 when narrow — the
+     6-figure PKR amounts (Rs 76,869) and "Arrives 18 June" never clip. */
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+}
+/* PKR figures wrap as whole tokens between words, never mid-number. */
+.product-ledger strong {
+  overflow-wrap: break-word;
 }
 
 .product-modal-actions {
@@ -10230,7 +10239,10 @@ body:not([data-page="portal"]) .trust-strip span {
 }
 
 body:not([data-page="portal"]) .product-ledger {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Container-driven sizing so the 6-figure PKR amounts never clip in the
+     narrow modal info column (see the base .product-ledger rule). auto-fit
+     holds 3 across when there's room, wraps to 2/1 when tight. */
+  grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
   gap: 8px;
 }
 
