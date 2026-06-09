@@ -181,28 +181,51 @@ const PAGE_ASSERTIONS = `(() => {
     }
     return { r: 255, g: 255, b: 255, a: 1 };
   }
+  // Reveal every SPA view so labels in inactive views (checkout, quote, track,
+  // size-guide, returns…) are measurable for the contrast probe. Safe here:
+  // this runs AFTER the hero/overflow/touch checks above, so it can't create
+  // layout false-positives for them, and the page is discarded after.
+  document.querySelectorAll(".view").forEach((v) => { v.style.display = "block"; });
+
+  // Probe set: alert/warning banners + KPI values + status pills (the
+  // historically-broken elements) PLUS form labels/legends. A 1.18:1 label
+  // bug shipped on the checkout because labels weren't probed — they're real,
+  // must-read text, so they belong here. We still avoid a full-DOM walk
+  // (false positives explode on decorative/muted spans).
   const probes = document.querySelectorAll(
-    ".demo-data-banner, .fx-stale-banner, .toast, .banner, [role='alert'], .attention-row, .status-pill, .kpi-value, .kpi-label"
+    ".demo-data-banner, .fx-stale-banner, .toast, .banner, [role='alert'], .attention-row, .status-pill, .kpi-value, .kpi-label, label, legend"
   );
   let lowCount = 0;
   const lowSamples = [];
   probes.forEach((el) => {
+    // For form labels the text node is often a direct child alongside an
+    // <input>; only judge elements that actually render their own text.
+    const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (!ownText && !el.matches(".status-pill, .kpi-value, .kpi-label, [role='alert']")) return;
     if (!el.textContent.trim()) return;
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) return;
-    const fg = rgbParse(getComputedStyle(el).color);
+    const cs = getComputedStyle(el);
+    if (cs.visibility === "hidden" || cs.display === "none") return;
+    const fg = rgbParse(cs.color);
     if (!fg || fg.a < 0.05) return;
     const bg = effectiveBg(el);
     const ratio = contrast(fg, bg);
-    if (ratio < 4.5) {
+    // WCAG large-text exemption: >=24px, or >=18.66px when bold, needs only
+    // 3:1. Everything else needs 4.5:1.
+    const px = parseFloat(cs.fontSize) || 16;
+    const bold = (parseInt(cs.fontWeight, 10) || 400) >= 700;
+    const threshold = px >= 24 || (bold && px >= 18.66) ? 3 : 4.5;
+    if (ratio < threshold) {
       lowCount += 1;
-      if (lowSamples.length < 3) {
-        lowSamples.push((el.className || el.tagName).split(" ")[0] + " ratio=" + ratio.toFixed(2));
+      if (lowSamples.length < 4) {
+        const name = (el.className && typeof el.className === "string" ? el.className : el.tagName).split(" ")[0];
+        lowSamples.push(name + " \\"" + el.textContent.trim().slice(0, 16) + "\\" " + ratio.toFixed(2) + ":1");
       }
     }
   });
   if (lowCount > 0) {
-    fails.push("CONTRAST: " + lowCount + " text element(s) below 4.5:1 — e.g. " + lowSamples.join("; "));
+    fails.push("CONTRAST: " + lowCount + " text element(s) below WCAG AA — e.g. " + lowSamples.join("; "));
   }
 
   return fails;
