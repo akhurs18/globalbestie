@@ -46,6 +46,7 @@
             <p class="admin-tab-group">Catalog</p>
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="besties">Besties (UGC) <span data-tab-badge="besties"></span></button>
 
             <!-- Configuration: rarely opened, hold at the bottom -->
             <p class="admin-tab-group">Config</p>
@@ -726,6 +727,66 @@
                 </div>
                 <div class="bulk-run-status" data-trends-run-status aria-live="polite"></div>
                 <div class="trend-grid" data-trend-candidates></div>
+              </section>
+
+              <!-- Besties (UGC) — curate the customer photos + quotes that
+                   render on the storefront "From real besties" rail. Add a
+                   post, approve pending ones, reorder, or remove. Public read
+                   is /api/public/ugc (approved only); writes hit /api/admin/ugc. -->
+              <section class="admin-panel" data-admin-panel="besties">
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Social proof</p>
+                    <h1>Besties — customer photos &amp; quotes.</h1>
+                    <p class="portal-login-note">Approved posts appear on the storefront homepage rail. Seed photos show until you approve real ones.</p>
+                  </div>
+                  <div class="mini-actions">
+                    <span class="bulk-count-chip" data-ugc-approved-count>0 live</span>
+                  </div>
+                </div>
+
+                <!-- Add / edit form -->
+                <form class="ugc-add-form" data-ugc-form>
+                  <div class="ugc-form-grid">
+                    <label>Instagram handle
+                      <input name="handle" placeholder="@ayeshakhan" required />
+                    </label>
+                    <label>City
+                      <input name="city" placeholder="Karachi" />
+                    </label>
+                    <label>Category
+                      <select name="category">
+                        <option value="">—</option>
+                        <option value="handbags">Handbags</option>
+                        <option value="shoes">Shoes</option>
+                        <option value="makeup">Makeup</option>
+                        <option value="fragrance">Fragrance</option>
+                        <option value="accessories">Accessories</option>
+                      </select>
+                    </label>
+                    <label>Sort order
+                      <input name="sort_order" type="number" value="0" min="0" step="1" />
+                    </label>
+                  </div>
+                  <label>Photo URL
+                    <input name="image_url" type="url" placeholder="https://...supabase.co/storage/.../photo.jpg" />
+                  </label>
+                  <label>Quote
+                    <textarea name="quote" rows="2" placeholder="My Coach Tabby arrived in Karachi in 26 days — exactly like the US store." required></textarea>
+                  </label>
+                  <input type="hidden" name="id" />
+                  <div class="mini-actions">
+                    <label class="ugc-approve-now">
+                      <input type="checkbox" name="approve_now" checked />
+                      Approve immediately
+                    </label>
+                    <button class="button primary" type="submit" data-ugc-submit>Add post</button>
+                    <button class="button secondary hidden" type="button" data-action="ugc-cancel-edit">Cancel edit</button>
+                  </div>
+                  <div class="ugc-form-status" data-ugc-status aria-live="polite"></div>
+                </form>
+
+                <div class="ugc-admin-grid" data-ugc-admin-list></div>
               </section>
 
               <section class="admin-panel" data-admin-panel="settings">

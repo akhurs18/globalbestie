@@ -6365,6 +6365,148 @@ function renderTrends() {
   updateTrendBulkBar();
 }
 
+// ════════════════════════════════════════════════════════════════════════
+// BESTIES (UGC) ADMIN — curate the storefront testimonial rail.
+// Lazy-loaded when the Besties tab opens (not part of the dashboard payload).
+// ════════════════════════════════════════════════════════════════════════
+async function loadUgcAdmin() {
+  const list = qs("[data-ugc-admin-list]");
+  if (list && !state.ugcPosts) list.innerHTML = `<p class="muted">Loading…</p>`;
+  const data = await apiFetch("/api/admin/ugc", {}, { posts: state.ugcPosts || [], configured: false });
+  state.ugcPosts = data.posts || [];
+  state._ugcConfigured = data.configured;
+  renderUgcAdmin();
+}
+
+function renderUgcAdmin() {
+  const list = qs("[data-ugc-admin-list]");
+  if (!list) return;
+  const posts = state.ugcPosts || [];
+  const liveCount = posts.filter((p) => p.status === "approved").length;
+  const chip = qs("[data-ugc-approved-count]");
+  if (chip) chip.textContent = `${liveCount} live`;
+  const badge = qs('[data-tab-badge="besties"]');
+  if (badge) {
+    const pending = posts.filter((p) => p.status === "pending").length;
+    badge.textContent = pending > 0 ? String(pending) : "";
+    badge.classList.toggle("has-count", pending > 0);
+  }
+
+  if (!posts.length) {
+    list.innerHTML = `<p class="muted">${state._ugcConfigured === false
+      ? "Supabase isn't connected here — the storefront shows the curated seed rail. Add posts once the database is configured."
+      : "No posts yet. Add your first customer photo above — approved posts appear on the homepage rail."}</p>`;
+    return;
+  }
+
+  list.innerHTML = posts.map((p) => {
+    const isApproved = p.status === "approved";
+    const statusClass = isApproved ? "in_stock" : p.status === "rejected" ? "soldout" : "preorder";
+    const img = p.image_url
+      ? `<img src="${safeUrl(p.image_url, "")}" alt="${attr(p.handle)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ugc-admin-noimg',textContent:'No image'}));" />`
+      : `<div class="ugc-admin-noimg">No image</div>`;
+    return `
+      <article class="ugc-admin-card${isApproved ? " is-live" : ""}">
+        <div class="ugc-admin-media">${img}<span class="status-pill ${statusClass}">${esc(p.status)}</span></div>
+        <div class="ugc-admin-body">
+          <strong>${esc(p.handle)}${p.city ? ` · ${esc(p.city)}` : ""}</strong>
+          <p>"${esc(p.quote)}"</p>
+          <small>${esc(p.category || "uncategorized")} · sort ${esc(p.sort_order ?? 0)}</small>
+          <div class="mini-actions">
+            ${isApproved
+              ? `<button class="button secondary" type="button" data-action="ugc-unapprove" data-ugc-id="${attr(p.id)}">Unpublish</button>`
+              : `<button class="button primary" type="button" data-action="ugc-approve" data-ugc-id="${attr(p.id)}">Approve</button>`}
+            <button class="button secondary" type="button" data-action="ugc-edit" data-ugc-id="${attr(p.id)}">Edit</button>
+            <button class="button secondary" type="button" data-action="ugc-delete" data-ugc-id="${attr(p.id)}">Delete</button>
+          </div>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+async function saveUgcPost(payload) {
+  const status = qs("[data-ugc-status]");
+  if (status) { status.textContent = "Saving…"; status.className = "ugc-form-status"; }
+  const result = await apiFetch("/api/admin/ugc", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, null);
+  if (!result || result.error) {
+    if (status) { status.textContent = result?.error || "Save failed — check Supabase connection."; status.className = "ugc-form-status warn"; }
+    return false;
+  }
+  if (status) { status.textContent = "Saved ✓"; status.className = "ugc-form-status ok"; }
+  await loadUgcAdmin();
+  return true;
+}
+
+async function handleUgcSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const fd = new FormData(form);
+  const payload = {
+    id: fd.get("id") || undefined,
+    handle: String(fd.get("handle") || "").trim(),
+    city: String(fd.get("city") || "").trim(),
+    category: fd.get("category") || "",
+    sort_order: Number(fd.get("sort_order") || 0),
+    image_url: String(fd.get("image_url") || "").trim(),
+    quote: String(fd.get("quote") || "").trim(),
+    status: fd.get("approve_now") ? "approved" : "pending",
+  };
+  if (!payload.handle || !payload.quote) {
+    toast("Handle and quote are required.");
+    return;
+  }
+  const ok = await saveUgcPost(payload);
+  if (ok) {
+    form.reset();
+    form.elements.id.value = "";
+    form.elements.sort_order.value = "0";
+    qs("[data-ugc-submit]").textContent = "Add post";
+    qs("[data-action='ugc-cancel-edit']")?.classList.add("hidden");
+  }
+}
+
+function startUgcEdit(id) {
+  const post = (state.ugcPosts || []).find((p) => p.id === id);
+  const form = qs("[data-ugc-form]");
+  if (!post || !form) return;
+  form.elements.id.value = post.id;
+  form.elements.handle.value = post.handle || "";
+  form.elements.city.value = post.city || "";
+  form.elements.category.value = post.category || "";
+  form.elements.sort_order.value = post.sort_order ?? 0;
+  form.elements.image_url.value = post.image_url || "";
+  form.elements.quote.value = post.quote || "";
+  form.elements.approve_now.checked = post.status === "approved";
+  qs("[data-ugc-submit]").textContent = "Save changes";
+  qs("[data-action='ugc-cancel-edit']")?.classList.remove("hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function cancelUgcEdit() {
+  const form = qs("[data-ugc-form]");
+  if (!form) return;
+  form.reset();
+  form.elements.id.value = "";
+  form.elements.sort_order.value = "0";
+  qs("[data-ugc-submit]").textContent = "Add post";
+  qs("[data-action='ugc-cancel-edit']")?.classList.add("hidden");
+}
+
+async function setUgcStatus(id, status) {
+  const post = (state.ugcPosts || []).find((p) => p.id === id);
+  if (!post) return;
+  await saveUgcPost({ ...post, status });
+}
+
+async function deleteUgcPost(id) {
+  await apiFetch(`/api/admin/ugc?id=${encodeURIComponent(id)}`, { method: "DELETE" }, { ok: true });
+  await loadUgcAdmin();
+  toast("Post removed.");
+}
+
 // Bulk-bar labels: button text adapts to selection count instead of literally
 // rendering "Remove 0 from site". Idle reads natural ("Remove from site"),
 // active reads as a count ("Remove 5 from site"). Count chip in the "Select
@@ -11641,6 +11783,16 @@ function wireEvents() {
       if (id && window.confirm("Delete this segment?")) deleteSegment(id);
       return;
     }
+    // Besties (UGC) admin actions
+    if (action === "ugc-approve") return setUgcStatus(target.dataset.ugcId, "approved");
+    if (action === "ugc-unapprove") return setUgcStatus(target.dataset.ugcId, "pending");
+    if (action === "ugc-edit") return startUgcEdit(target.dataset.ugcId);
+    if (action === "ugc-cancel-edit") return cancelUgcEdit();
+    if (action === "ugc-delete") {
+      const id = target.dataset.ugcId;
+      if (id && window.confirm("Remove this post from the rail?")) deleteUgcPost(id);
+      return;
+    }
     if (action === "jump-tab") {
       // Action filter may be "<tab>" or "<tab>:<filter>". For Orders, the
       // second segment can be a status ("pending_review") OR a synthetic
@@ -12095,8 +12247,13 @@ function wireEvents() {
     tab.addEventListener("click", () => {
       qsa("[data-admin-tab]").forEach((item) => item.classList.toggle("active", item === tab));
       qsa("[data-admin-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.adminPanel === tab.dataset.adminTab));
+      // Lazy-load the Besties (UGC) feed the first time its tab is opened,
+      // and refresh it on subsequent opens so approvals stay current.
+      if (tab.dataset.adminTab === "besties") loadUgcAdmin();
     });
   });
+
+  qs("[data-ugc-form]")?.addEventListener("submit", handleUgcSubmit);
 
   qsa("[data-admin-tab-jump]").forEach((button) => {
     button.addEventListener("click", () => {

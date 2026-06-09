@@ -16146,3 +16146,163 @@ body.modal-open .wa-bubble { display: none; }
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   PORTAL · BESTIES (UGC) TAB
+   Uses the portal's own token values (which adapt to the light blush portal
+   theme). Add-form on top, then a responsive grid of curation cards.
+   ══════════════════════════════════════════════════════════════════════════ */
+.ugc-add-form {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg, 16px);
+}
+.ugc-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.ugc-add-form label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.ugc-add-form input,
+.ugc-add-form select,
+.ugc-add-form textarea {
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2, var(--surface));
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+.ugc-add-form input:focus,
+.ugc-add-form select:focus,
+.ugc-add-form textarea:focus {
+  outline: none;
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 3px var(--pink-glow);
+}
+.ugc-approve-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-right: auto;
+}
+.ugc-approve-now input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 0;          /* override the global input min-height: 44px */
+  flex: 0 0 18px;
+  padding: 0;
+  accent-color: var(--pink-2);
+  cursor: pointer;
+}
+.ugc-form-status {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1em;
+}
+.ugc-form-status.ok { color: var(--green, #5db389); font-weight: 700; }
+.ugc-form-status.warn { color: var(--red, #c4506a); font-weight: 700; }
+
+.ugc-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.ugc-admin-card {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  transition: border-color var(--motion-fast, 160ms) ease,
+              box-shadow var(--motion-fast, 160ms) ease;
+}
+.ugc-admin-card.is-live {
+  border-color: var(--pink-2);
+  box-shadow: 0 0 0 1px var(--pink-glow);
+}
+.ugc-admin-media {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2, var(--rose));
+}
+.ugc-admin-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ugc-admin-media .status-pill {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  font-size: 0.6rem;
+  padding: 2px 7px;
+}
+.ugc-admin-noimg {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: repeating-linear-gradient(45deg, var(--rose) 0 8px, var(--surface-2, var(--surface)) 8px 16px);
+}
+.ugc-admin-body {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+.ugc-admin-body strong { font-size: 0.88rem; color: var(--ink); }
+.ugc-admin-body p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--ink-soft, var(--ink));
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ugc-admin-body small { color: var(--muted); font-size: 0.72rem; }
+.ugc-admin-body .mini-actions { margin-top: 6px; gap: 6px; }
+.ugc-admin-body .mini-actions .button {
+  padding: 6px 10px;
+  font-size: 0.74rem;
+}
+
+/* Pending-count badge on the sidebar tab */
+[data-tab-badge="besties"].has-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: var(--pink-2);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .ugc-form-grid { grid-template-columns: 1fr 1fr; }
+}
+
