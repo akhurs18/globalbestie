@@ -275,6 +275,62 @@ const sampleProducts = [
 
 const sampleOrders = [
   {
+    id: "GB-2026-0998",
+    customer_name: "Hina Raza",
+    customer_phone: "03008887777",
+    customer_email: "hina@example.com",
+    customer_instagram: "@hinaraza",
+    city: "Lahore",
+    address: "Gulberg III, Lahore",
+    channel: "WhatsApp",
+    owner: "Sara",
+    priority: "Standard",
+    status: "cancelled",
+    payment_status: "advance_confirmed",
+    total_pkr: 48000,
+    advance_due_pkr: 24000,
+    balance_due_pkr: 24000,
+    advance_paid_pkr: 24000,
+    balance_paid_pkr: 0,
+    cost_pkr: 38000,
+    margin_pkr: 10000,
+    cancel_reason: "item_unavailable",
+    cancelled_at: "2026-05-29T12:00:00Z",
+    refund_due_pkr: 24000,
+    refund_paid_pkr: 0,
+    refund_status: "due",
+    proof_url: "advance-hina.jpg",
+    transfer_reference: "IBFT-55120",
+    transfer_sender: "Hina Raza",
+    source_retailer: "Sephora US",
+    source_url: "https://www.sephora.com/",
+    source_purchase_id: "",
+    usa_tracking: "",
+    local_courier: "",
+    tracking_number: "",
+    eta: "",
+    next_action: "Refund Rs 24,000 to the customer, then mark it sent.",
+    internal_notes: "Item went out of stock at Sephora before we purchased.",
+    created_at: "2026-05-22T15:30:00Z",
+    items: [{
+      product_id: "makeup-rare-blush",
+      title: "Rare Beauty Soft Pinch Blush",
+      quantity: 2,
+      unit_price_pkr: 24000,
+      stock_mode: "preorder",
+      image_url: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=900&q=84",
+      variant: "Joy + Hope",
+      source_url: "https://www.sephora.com/",
+      source_status: "Cancelled before purchase",
+    }],
+    events: [
+      { status: "pending_review", note: "Order created. Waiting for admin review.", created_at: "2026-05-22T15:30:00Z" },
+      { status: "accepted", note: "Team accepted order and locked pricing.", created_at: "2026-05-22T17:00:00Z" },
+      { status: "advance_confirmed", note: "Advance Rs 24,000 confirmed.", created_at: "2026-05-23T09:00:00Z" },
+      { status: "cancelled", note: "Order cancelled — Item unavailable at source · refund Rs 24,000 owed.", created_at: "2026-05-29T12:00:00Z" },
+    ],
+  },
+  {
     id: "GB-2026-1001",
     customer_name: "Ayesha Khan",
     customer_phone: "03001234567",
@@ -866,6 +922,18 @@ function amountDueForOrder(order) {
   const advancePaid = Number(order?.advance_paid_pkr || 0);
   const balancePaid = Number(order?.balance_paid_pkr || 0);
   return Math.max(0, payment.advanceDue - advancePaid) + Math.max(0, payment.balanceDue - balancePaid);
+}
+
+// Total PKR actually received from the customer so far (advance + balance).
+function orderCollectedPkr(order) {
+  return Number(order?.advance_paid_pkr || 0) + Number(order?.balance_paid_pkr || 0);
+}
+
+// Refund still owed back to the customer on a cancelled order. Zero once the
+// refund is marked paid, or when nothing was collected before cancelling.
+function orderRefundOutstanding(order) {
+  if (!order || order.refund_status === "refunded") return 0;
+  return Math.max(0, Number(order.refund_due_pkr || 0) - Number(order.refund_paid_pkr || 0));
 }
 
 function batchStatusLabel(status = "") {
@@ -2306,8 +2374,14 @@ function showOrderDetails(orderId) {
           <button class="button secondary" type="button" data-action="mark-balance-due" data-order-id="${attr(order.id)}">Mark balance due</button>
           <button class="button secondary" type="button" data-action="send-balance-reminder" data-order-id="${attr(order.id)}">Balance reminder</button>
           <button class="button secondary" type="button" data-action="open-wa-templates" data-order-id="${attr(order.id)}">WhatsApp templates</button>
+          ${!["cancelled", "delivered"].includes(order.status) ? `<button class="button ghost danger-ghost" type="button" data-action="cancel-order" data-order-id="${attr(order.id)}">Cancel order</button>` : ""}
         </div>
       </div>
+      ${order.status === "cancelled" ? `
+        <div class="cancelled-banner">
+          <strong>✕ Order cancelled</strong>
+          <span>${esc(cancelReasonLabel(order.cancel_reason))}${order.cancelled_at ? ` · ${formatDate(order.cancelled_at.slice(0, 10))}` : ""}</span>
+        </div>` : ""}
       ${repeatBanner}
       ${(() => {
         // If the auto-WhatsApp on this order failed silently, surface it
@@ -2349,6 +2423,26 @@ function showOrderDetails(orderId) {
           <button class="button secondary" type="button" data-action="reject-payment" data-order-id="${order.id}">Reject proof</button>
         </div>
       </section>
+      ${(order.status === "cancelled" && Number(order.refund_due_pkr || 0) > 0) ? (() => {
+        const due = orderRefundOutstanding(order);
+        const refunded = order.refund_status === "refunded" || due <= 0;
+        return `
+          <section class="detail-panel refund-review-panel">
+            <div class="panel-title-row">
+              <h3>Refund</h3>
+              <span class="status-pill ${refunded ? "in_stock" : "preorder"}">${refunded ? "Refunded" : "Refund owed"}</span>
+            </div>
+            <div class="verification-grid">
+              <div><span>Collected</span><strong>${PKR.format(orderCollectedPkr(order))}</strong></div>
+              <div><span>Refund ${refunded ? "paid" : "owed"}</span><strong>${PKR.format(refunded ? Number(order.refund_paid_pkr || 0) : due)}</strong></div>
+              <div><span>Reason</span><strong>${esc(cancelReasonLabel(order.cancel_reason))}</strong></div>
+            </div>
+            ${refunded
+              ? `<p class="refund-done-note">↩ Refund sent${order.refunded_at ? ` on ${formatDate(order.refunded_at.slice(0, 10))}` : ""}${order.refund_reference ? ` · ref ${esc(order.refund_reference)}` : ""}.</p>`
+              : `<label>Refund reference (optional)<input type="text" data-refund-reference="${attr(order.id)}" placeholder="Bank ref / transaction id" /></label>
+                 <button class="button primary wide" type="button" data-action="mark-order-refunded" data-order-id="${attr(order.id)}">Mark ${PKR.format(due)} refunded</button>`}
+          </section>`;
+      })() : ""}
       <div class="detail-columns tri">
         <section class="detail-panel">
           <h3>Customer</h3>
@@ -3868,10 +3962,26 @@ function cashflowAggregate(orders, fx) {
   let futureBalance = 0;
   let expectedProfit = 0;
   let openCount = 0;
+  // Refund / cancellation tracking — a cancelled order's collected advance is
+  // a real cash position (held until refunded), and refunds are real cash out.
+  let refundsPaid = 0;     // cash already returned to customers
+  let refundsDue = 0;      // cash still owed back on cancelled orders
+  let cancelledHeld = 0;   // collected − refunded on cancelled orders (cash retained)
+  let cancelledCount = 0;
   for (const order of orders) {
-    if (!OPEN_STAGES.has(order.status)) continue;
-    openCount += 1;
+    const isCancelled = order.status === "cancelled";
+    if (!OPEN_STAGES.has(order.status) && !isCancelled) continue;
+    // USD on the card is spent regardless of where the order ends up — if you
+    // sourced it then it cancelled, that's a real (sunk) outflow.
     usdSpent += orderUsdSpent(order);
+    if (isCancelled) {
+      cancelledCount += 1;
+      refundsPaid += Number(order.refund_paid_pkr || 0);
+      refundsDue += orderRefundOutstanding(order);
+      cancelledHeld += Math.max(0, orderCollectedPkr(order) - Number(order.refund_paid_pkr || 0));
+      continue;
+    }
+    openCount += 1;
     advanceCollected += Number(order.advance_paid_pkr || 0);
     const payment = orderPaymentSummary(order);
     const balanceOutstanding = Math.max(0, payment.balanceDue - Number(order.balance_paid_pkr || 0));
@@ -3882,7 +3992,10 @@ function cashflowAggregate(orders, fx) {
     }
     expectedProfit += orderExpectedProfit(order, fx);
   }
-  const pkrInHand = advanceCollected - usdSpent * fx;
+  // Cash in hand = advances held on open orders + cash retained from cancelled
+  // orders − USD already spent. Refunds already left your hand (netted into
+  // cancelledHeld), so they're not subtracted twice.
+  const pkrInHand = advanceCollected + cancelledHeld - usdSpent * fx;
   return {
     pkrInHand,
     usdSpent,
@@ -3891,6 +4004,10 @@ function cashflowAggregate(orders, fx) {
     expectedProfit,
     openCount,
     advanceCollected,
+    refundsPaid,
+    refundsDue,
+    cancelledHeld,
+    cancelledCount,
   };
 }
 
@@ -3915,7 +4032,7 @@ function renderCashflow() {
       numeric: agg.pkrInHand,
       format: "short-pkr",
       key: "pkr-in-hand",
-      sub: `${shortPkr(agg.advanceCollected)} collected − ${shortPkr(agg.usdSpent * fx)} USD spend`,
+      sub: `${shortPkr(agg.advanceCollected + agg.cancelledHeld)} collected − ${shortPkr(agg.usdSpent * fx)} USD spend`,
       tone: agg.pkrInHand < 0 ? "warn" : "ok",
     },
     {
@@ -3957,6 +4074,19 @@ function renderCashflow() {
       tone: agg.expectedProfit < 0 ? "warn" : "ok",
     },
     {
+      // Refunds — surfaces money owed back (or already returned) on
+      // cancellations so it never silently leaks out of the cash position.
+      label: agg.refundsDue > 0 ? "Refunds owed" : "Refunds paid",
+      value: shortPkr(agg.refundsDue > 0 ? agg.refundsDue : agg.refundsPaid),
+      numeric: agg.refundsDue > 0 ? agg.refundsDue : agg.refundsPaid,
+      format: "short-pkr",
+      key: "refunds",
+      sub: agg.refundsDue > 0
+        ? `${shortPkr(agg.refundsPaid)} paid · ${agg.cancelledCount} cancelled`
+        : `${agg.cancelledCount} cancelled order${agg.cancelledCount === 1 ? "" : "s"}`,
+      tone: agg.refundsDue > 0 ? "warn" : "ok",
+    },
+    {
       label: "Open orders",
       value: String(agg.openCount),
       numeric: agg.openCount,
@@ -3973,7 +4103,7 @@ function renderCashflow() {
   // PKR to collect on arrival (blue, near); PKR future balance (grey, far).
   const totalScale = Math.max(
     1,
-    agg.usdSpent * fx + agg.advanceCollected + agg.balanceToCollect + agg.futureBalance
+    agg.usdSpent * fx + agg.advanceCollected + agg.balanceToCollect + agg.futureBalance + agg.refundsPaid
   );
   const segments = [
     ["USD spent (PKR equiv)", agg.usdSpent * fx, "out"],
@@ -3981,6 +4111,9 @@ function renderCashflow() {
     ["PKR balance to collect", agg.balanceToCollect, "near"],
     ["PKR future balance", agg.futureBalance, "far"],
   ];
+  // Refunds paid show as a distinct outflow band so cancellations are visible
+  // in the capital picture, not hidden inside "USD spent".
+  if (agg.refundsPaid > 0) segments.push(["Refunds paid", agg.refundsPaid, "refund"]);
   // Money bar — segments fill left-to-right with a staggered animation
   // on render. CSS does the work (transition on width); we render with
   // width:0 and bump to the real width on next frame.
@@ -4011,12 +4144,68 @@ function renderCashflow() {
     });
   });
 
+  renderReceivablesAging();
   renderCashflowWaterfall(agg, fx);
   renderSourcingQueue();
   renderCashflowBatches(fx);
   renderCashflowWorklists();
   renderLedger();
   renderCashflowSankey(agg, fx);
+}
+
+// Receivables aging — buckets every outstanding balance (advance not yet paid,
+// or PK-arrived balance still owed) by how long the order has been waiting, so
+// the team can see which money is going cold. Top dashboards (and every
+// accounting tool) lead with an A/R aging view; the lump "balance to collect"
+// number hid which receivables were at risk.
+function renderReceivablesAging() {
+  const slot = qs("[data-receivables-aging]");
+  if (!slot) return;
+  const buckets = [
+    { key: "0-7", label: "0–7 days", max: 7, total: 0, count: 0 },
+    { key: "8-14", label: "8–14 days", max: 14, total: 0, count: 0 },
+    { key: "15-30", label: "15–30 days", max: 30, total: 0, count: 0 },
+    { key: "30+", label: "30+ days", max: Infinity, total: 0, count: 0 },
+  ];
+  let grandTotal = 0;
+  for (const order of state.orders || []) {
+    if (!OPEN_STAGES.has(order.status)) continue;
+    const due = amountDueForOrder(order);
+    if (due <= 0) continue;
+    // Age from the last stage change if we have it, else order creation.
+    const events = orderEvents(order) || [];
+    const since = events.length ? events[events.length - 1].created_at : order.created_at;
+    const age = daysSince(since) ?? 0;
+    const bucket = buckets.find((b) => age <= b.max) || buckets[buckets.length - 1];
+    bucket.total += due;
+    bucket.count += 1;
+    grandTotal += due;
+  }
+  if (grandTotal <= 0) {
+    slot.innerHTML = `<section class="ops-panel"><div class="panel-title-row"><h2>Receivables aging</h2></div><p class="cashflow-empty">No outstanding balances — every open order is paid up.</p></section>`;
+    return;
+  }
+  const max = Math.max(1, ...buckets.map((b) => b.total));
+  slot.innerHTML = `
+    <section class="ops-panel receivables-aging-panel">
+      <div class="panel-title-row">
+        <h2>Receivables aging</h2>
+        <small class="kicker">${PKR.format(grandTotal)} outstanding across open orders</small>
+      </div>
+      <div class="aging-grid">
+        ${buckets.map((b) => {
+          const pct = (b.total / max) * 100;
+          const tone = b.key === "30+" ? "danger" : b.key === "15-30" ? "warn" : b.key === "8-14" ? "soft" : "ok";
+          return `
+            <button class="aging-col aging-${tone}" type="button" data-action="jump-tab" data-action-filter="orders" title="${b.count} order${b.count === 1 ? "" : "s"} · ${PKR.format(b.total)}">
+              <span class="aging-amount">${shortPkr(b.total)}</span>
+              <span class="aging-bar"><span style="height:${Math.max(4, pct)}%"></span></span>
+              <span class="aging-label">${b.label}</span>
+              <span class="aging-count">${b.count} order${b.count === 1 ? "" : "s"}</span>
+            </button>`;
+        }).join("")}
+      </div>
+    </section>`;
 }
 
 // Money-flow Sankey diagram.
@@ -4568,34 +4757,57 @@ function renderLedger() {
   let totalAdvance = 0;
   let totalBalance = 0;
   let totalProfit = 0;
+  let totalRefundPaid = 0;
+  let totalRefundDue = 0;
 
   tbody.innerHTML = rows
     .map((o) => {
+      const isCancelled = o.status === "cancelled";
       const payment = orderPaymentSummary(o);
       const usd = orderUsdExpected(o);
       const usdActual = orderUsdSpent(o);
-      const balanceLeft = Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
-      const profit = payment.total - usd * fx;
+      const collected = orderCollectedPkr(o);
+      const refundPaid = Number(o.refund_paid_pkr || 0);
+      const refundOut = orderRefundOutstanding(o);
+      const balanceLeft = isCancelled ? 0 : Math.max(0, payment.balanceDue - Number(o.balance_paid_pkr || 0));
+      // A cancelled order recognises no sale — its P&L is the cash kept
+      // (collected − refunded) minus any USD already sunk into sourcing.
+      const saleValue = isCancelled ? 0 : payment.total;
+      // On a cancellation the committed refund (owed or paid) is the liability,
+      // so P&L = cash genuinely kept − any USD already sunk. A fully-refunded
+      // cancel nets ~0; a partial/zero refund keeps the retained portion.
+      const refundCommitment = Math.max(refundPaid, Number(o.refund_due_pkr || 0));
+      const profit = isCancelled ? (collected - refundCommitment) - usdActual * fx : payment.total - usd * fx;
       const batch = shipmentBatchForOrder(o);
       const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
       const waNum = canonPhone(o.customer_phone);
-      const waHref = isValidPkMobile(waNum) && balanceLeft > 0
+      const waHref = !isCancelled && isValidPkMobile(waNum) && balanceLeft > 0
         ? `https://wa.me/${waNum}?text=${encodeURIComponent(`Hi ${(o.customer_name || "").split(" ")[0]}, your Global Bestie order ${o.id} has a remaining balance of Rs ${balanceLeft.toLocaleString()}. Please transfer when convenient — thank you!`)}`
         : "";
-      totalPkr += payment.total;
+      totalPkr += saleValue;
       totalUsd += usdActual;
       totalAdvance += Number(o.advance_paid_pkr || 0);
       totalBalance += balanceLeft;
       totalProfit += profit;
+      totalRefundPaid += refundPaid;
+      totalRefundDue += refundOut;
+      const refundBadge = isCancelled
+        ? (refundOut > 0
+            ? ` <span class="ledger-refund-badge due" title="Refund still owed">refund ${PKR.format(refundOut)}</span>`
+            : refundPaid > 0
+              ? ` <span class="ledger-refund-badge done" title="Refunded ${PKR.format(refundPaid)}">refunded</span>`
+              : "")
+        : "";
+      const stageCell = isCancelled ? `cancelled${refundBadge}` : o.status.replaceAll("_", " ");
       return `
-        <tr role="button" tabindex="0" class="order-row" data-action="view-order" data-order-id="${o.id}" data-payment="${o.payment_status}">
+        <tr role="button" tabindex="0" class="order-row${isCancelled ? " ledger-cancelled" : ""}" data-action="view-order" data-order-id="${o.id}" data-payment="${o.payment_status}">
           <td><strong>${o.id}</strong>${waHref ? `<br><a class="ledger-wa-link" href="${waHref}" target="_blank" rel="noreferrer" data-stop-row title="WhatsApp balance reminder">↗ WA</a>` : ""}</td>
           <td>${esc(o.customer_name || "")}<br><small>${esc(formatPkDisplay(canonPhone(o.customer_phone)) || o.customer_phone || "")}</small></td>
           <td>${batch ? batch.name : "—"}</td>
-          <td>${o.status.replaceAll("_", " ")}</td>
+          <td>${stageCell}</td>
           <td>${paymentLabel(o.payment_status)}</td>
-          <td>${PKR.format(payment.total)}</td>
-          <td>${USD.format(usdActual)}${usdActual < usd ? `<br><small>est ${USD.format(usd)}</small>` : ""}</td>
+          <td>${isCancelled ? `<s>${PKR.format(payment.total)}</s>` : PKR.format(payment.total)}</td>
+          <td>${USD.format(usdActual)}${usdActual < usd && !isCancelled ? `<br><small>est ${USD.format(usd)}</small>` : ""}</td>
           <td>${PKR.format(Number(o.advance_paid_pkr || 0))}</td>
           <td>${PKR.format(balanceLeft)}</td>
           <td class="${profitClass}">${PKR.format(profit)}</td>
@@ -4614,6 +4826,13 @@ function renderLedger() {
         <td class="${totalProfitClass}"><strong>${PKR.format(totalProfit)}</strong></td>
        </tr>`
     : "";
+  // Refunds memo — keeps cancellations visible in the ledger's bottom line
+  // instead of vanishing. Only shown when there's something to report.
+  const refundMemo = (totalRefundPaid > 0 || totalRefundDue > 0)
+    ? `<tr class="ledger-refund-row">
+        <td colspan="10">↩ Refunds — <strong>${PKR.format(totalRefundPaid)}</strong> paid${totalRefundDue > 0 ? ` · <strong class="profit-negative">${PKR.format(totalRefundDue)}</strong> still owed` : ""}</td>
+       </tr>`
+    : "";
   const table = tbody.closest("table");
   if (table) {
     let tfoot = table.querySelector("tfoot");
@@ -4621,7 +4840,7 @@ function renderLedger() {
       tfoot = document.createElement("tfoot");
       table.appendChild(tfoot);
     }
-    tfoot.innerHTML = tfootRow;
+    tfoot.innerHTML = tfootRow + refundMemo;
   }
 
   // Stash current filtered rows so the CSV export uses exactly what is shown.
@@ -10644,6 +10863,13 @@ async function acceptOrder(orderId) {
 async function commitOrderStage(orderId, status, paymentStatus, { undoLabel } = {}) {
   const order = state.orders.find((o) => o.id === orderId);
   if (!order || !status) return;
+  // Cancelling routes through the refund-capture modal so money owed back is
+  // never lost. (The modal + undo set status directly, bypassing this guard.)
+  if (status === "cancelled" && order.status !== "cancelled") {
+    openCancelOrderModal(orderId);
+    renderAdminOrders(); // resync the status dropdown — cancel commits via the modal
+    return;
+  }
   const prior = { status: order.status, payment_status: order.payment_status };
   const nextPayment = paymentStatus || activePaymentStatusForOrder(order, status);
   if (prior.status === status && prior.payment_status === nextPayment) return;
@@ -10788,6 +11014,148 @@ async function verifyOrderPayment(orderId, action) {
   renderAll();
   showOrderDetails(orderId);
   toast("Payment status updated.");
+}
+
+// ─────────────────────────── Cancellations & refunds ───────────────────────
+// Cancelling isn't just a status flip: if the customer already transferred an
+// advance (or balance), that money has to go back and be accounted for. This
+// flow captures a reason, computes the refund owed, and drives it through a
+// mark-as-sent step mirroring the payment-proof pattern — so refunds land in
+// the ledger + cashflow instead of silently leaking out of the cash position.
+const CANCEL_REASONS = [
+  ["customer_changed_mind", "Customer changed their mind"],
+  ["item_unavailable", "Item unavailable at source"],
+  ["price_changed", "Source price changed / too high"],
+  ["payment_failed", "Payment never completed"],
+  ["duplicate", "Duplicate order"],
+  ["undeliverable", "Address undeliverable"],
+  ["other", "Other"],
+];
+
+function cancelReasonLabel(key) {
+  return (CANCEL_REASONS.find(([k]) => k === key) || [])[1] || (key ? key.replaceAll("_", " ") : "Not given");
+}
+
+function openCancelOrderModal(orderId) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order) return;
+  const collected = orderCollectedPkr(order);
+  openModal(`
+    <form class="cancel-order-modal" data-cancel-order-form data-order-id="${attr(orderId)}" onsubmit="return false">
+      <p class="kicker">Cancel order</p>
+      <h2>${esc(orderId)} · ${esc(order.customer_name || "")}</h2>
+      <p class="cancel-modal-note">Moves the order to <strong>Cancelled</strong> and logs it on the timeline.</p>
+      <label>Reason
+        <select data-cancel-reason>
+          ${CANCEL_REASONS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join("")}
+        </select>
+      </label>
+      <label>Note (optional)
+        <input type="text" data-cancel-note placeholder="Anything the team should know" />
+      </label>
+      <div class="cancel-refund-summary ${collected > 0 ? "has-refund" : ""}">
+        ${collected > 0
+          ? `<div class="cancel-refund-line"><span>Collected so far</span><strong>${PKR.format(collected)}</strong></div>
+             <label class="cancel-refund-toggle"><input type="checkbox" data-cancel-refund checked /> Log a refund of <strong>${PKR.format(collected)}</strong> as owed</label>`
+          : `<span class="cancel-refund-none">No money collected yet — nothing to refund.</span>`}
+      </div>
+      <div class="modal-actions">
+        <button class="button ghost" type="button" data-action="close-modal">Keep order</button>
+        <button class="button danger" type="button" data-action="submit-cancel-order" data-order-id="${attr(orderId)}">Cancel order</button>
+      </div>
+    </form>
+  `);
+}
+
+async function submitCancelOrder(orderId) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order) return;
+  const reason = qs("[data-cancel-reason]")?.value || "other";
+  const note = (qs("[data-cancel-note]")?.value || "").trim();
+  const refundWanted = qs("[data-cancel-refund]") ? qs("[data-cancel-refund]").checked : false;
+  const collected = orderCollectedPkr(order);
+  const refundDue = refundWanted ? collected : 0;
+  const prior = {
+    status: order.status, payment_status: order.payment_status, next_action: order.next_action,
+    refund_status: order.refund_status, refund_due_pkr: order.refund_due_pkr,
+    cancel_reason: order.cancel_reason, cancelled_at: order.cancelled_at,
+  };
+  const now = new Date().toISOString();
+  order.status = "cancelled";
+  order.cancel_reason = reason;
+  order.cancelled_at = now;
+  order.refund_due_pkr = refundDue;
+  order.refund_paid_pkr = Number(order.refund_paid_pkr || 0);
+  order.refund_status = refundDue > 0 ? "due" : "none";
+  order.next_action = refundDue > 0
+    ? `Refund ${PKR.format(refundDue)} to the customer, then mark it sent.`
+    : "Cancelled. No refund owed.";
+  order.events = [
+    ...(order.events || []),
+    { status: "cancelled", note: `Order cancelled — ${cancelReasonLabel(reason)}${note ? ` · ${note}` : ""}${refundDue > 0 ? ` · refund ${PKR.format(refundDue)} owed` : ""}.`, created_at: now },
+  ];
+  closeModal();
+  try {
+    const result = await apiFetch(`/api/admin/orders/${orderId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "cancelled", cancel_reason: reason, refund_due_pkr: refundDue, order, note: `Cancelled — ${cancelReasonLabel(reason)}` }),
+    }, { order });
+    const idx = state.orders.findIndex((o) => o.id === orderId);
+    if (idx >= 0 && result.order) state.orders[idx] = { ...state.orders[idx], ...result.order };
+    renderAll();
+    syncOpenOrderDrawer(orderId);
+    showUndoToast(`${orderId} cancelled${refundDue > 0 ? ` · ${PKR.format(refundDue)} refund logged` : ""}`, () => {
+      Object.assign(order, prior);
+      order.events = (order.events || []).slice(0, -1);
+      renderAll();
+      syncOpenOrderDrawer(orderId);
+    });
+  } catch (err) {
+    Object.assign(order, prior);
+    order.events = (order.events || []).slice(0, -1);
+    renderAll();
+    syncOpenOrderDrawer(orderId);
+    toast(parseApiError(err) || "Couldn't cancel the order. It was left unchanged.");
+  }
+}
+
+async function markOrderRefunded(orderId) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order) return;
+  const due = orderRefundOutstanding(order);
+  if (due <= 0) { toast("No refund outstanding on this order."); return; }
+  const reference = (qs(`[data-refund-reference="${orderId}"]`)?.value || "").trim();
+  const prior = {
+    refund_paid_pkr: order.refund_paid_pkr, refund_status: order.refund_status,
+    refunded_at: order.refunded_at, refund_reference: order.refund_reference, next_action: order.next_action,
+  };
+  const now = new Date().toISOString();
+  order.refund_paid_pkr = Number(order.refund_paid_pkr || 0) + due;
+  order.refund_status = "refunded";
+  order.refunded_at = now;
+  order.refund_reference = reference || order.refund_reference || "";
+  order.next_action = "Refund sent. Order closed.";
+  order.events = [
+    ...(order.events || []),
+    { status: "cancelled", note: `Refund of ${PKR.format(due)} sent${reference ? ` · ref ${reference}` : ""}.`, created_at: now },
+  ];
+  try {
+    const result = await apiFetch(`/api/admin/orders/${orderId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ refund_action: "mark_refunded", refund_reference: reference, order, note: `Refund sent: ${PKR.format(due)}` }),
+    }, { order });
+    const idx = state.orders.findIndex((o) => o.id === orderId);
+    if (idx >= 0 && result.order) state.orders[idx] = { ...state.orders[idx], ...result.order };
+    renderAll();
+    showOrderDetails(orderId);
+    toast(`Refund of ${PKR.format(due)} marked sent.`);
+  } catch (err) {
+    Object.assign(order, prior);
+    order.events = (order.events || []).slice(0, -1);
+    renderAll();
+    showOrderDetails(orderId);
+    toast(parseApiError(err) || "Couldn't record the refund.");
+  }
 }
 
 async function assignShipmentBatch(orderId) {
@@ -11748,6 +12116,9 @@ function wireEvents() {
     }
     if (action === "save-order-status") return saveOrderStatus(orderId);
     if (action === "advance-order") return advanceOrderStage(orderId);
+    if (action === "cancel-order") return openCancelOrderModal(orderId);
+    if (action === "submit-cancel-order") return submitCancelOrder(orderId);
+    if (action === "mark-order-refunded") return markOrderRefunded(orderId);
     if (action === "accept-order") return acceptOrder(orderId);
     if (action === "confirm-advance") return verifyOrderPayment(orderId, "confirm_advance");
     if (action === "confirm-balance") return verifyOrderPayment(orderId, "confirm_balance");

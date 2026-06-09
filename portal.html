@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260609-oms-advance" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260609-refunds" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -189,6 +189,10 @@
 
                 <!-- Money-stripe summary bar for all open batches combined -->
                 <div class="cashflow-money-bar" data-cashflow-money-bar></div>
+
+                <!-- Receivables aging — outstanding balances bucketed by how
+                     long they've been waiting, so cold money is visible. -->
+                <div data-receivables-aging></div>
 
                 <!-- Cash flow waterfall — running position: advance in →
                      balance due in → USD spend out → net cash in hand. -->
@@ -847,6 +851,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260609-oms-advance"></script>
+    <script type="module" src="./assets/app.js?v=20260609-refunds"></script>
   </body>
 </html>

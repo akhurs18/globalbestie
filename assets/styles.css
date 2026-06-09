@@ -16436,3 +16436,85 @@ body.modal-open .wa-bubble { display: none; }
   .ugc-form-grid { grid-template-columns: 1fr 1fr; }
 }
 
+/* ───────────────────────── Cancellations & refunds ───────────────────────── */
+.button.danger { background: #e5484d; color: #fff; border-color: #e5484d; }
+.button.danger:hover { background: #d23b40; border-color: #d23b40; }
+.button.danger:active { transform: scale(0.97); }
+.button.ghost.danger-ghost { color: #c5343a; }
+.button.ghost.danger-ghost:hover { background: rgba(229, 72, 77, 0.08); }
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+@media (max-width: 520px) {
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .button { width: 100%; }
+}
+
+.cancel-order-modal { display: grid; gap: 12px; }
+.cancel-order-modal h2 { margin: 0; }
+.cancel-modal-note { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.cancel-order-modal label { display: grid; gap: 5px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.cancel-order-modal select,
+.cancel-order-modal input[type="text"] {
+  padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  font: inherit; background: var(--bg); color: var(--ink);
+}
+.cancel-refund-summary {
+  border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 12px;
+  display: grid; gap: 8px; background: rgba(211, 154, 53, 0.06);
+}
+.cancel-refund-summary.has-refund { border-color: rgba(211, 154, 53, 0.5); }
+.cancel-refund-line { display: flex; justify-content: space-between; align-items: baseline; }
+.cancel-refund-line strong { font-size: 1.1rem; }
+.cancel-refund-toggle { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; }
+.cancel-refund-toggle input { width: 16px; height: 16px; accent-color: #e5484d; }
+.cancel-refund-none { color: var(--muted); font-size: 0.9rem; }
+
+.cancelled-banner {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 12px 0;
+  border-radius: var(--radius); background: rgba(229, 72, 77, 0.08); border: 1px solid rgba(229, 72, 77, 0.25);
+}
+.cancelled-banner strong { color: #c5343a; }
+.cancelled-banner span { color: var(--muted); font-size: 0.9rem; }
+
+.refund-review-panel { border-color: rgba(229, 72, 77, 0.3); }
+.refund-done-note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+.refund-review-panel .button.wide { margin-top: 10px; }
+
+/* Ledger: cancelled rows + refund badges + refund memo */
+.admin-table tr.order-row.ledger-cancelled td { opacity: 0.72; }
+.admin-table tr.order-row.ledger-cancelled s { color: var(--muted); }
+.ledger-refund-badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 1px 7px;
+  border-radius: 999px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.02em;
+}
+.ledger-refund-badge.due { background: rgba(229, 72, 77, 0.14); color: #c5343a; }
+.ledger-refund-badge.done { background: rgba(56, 161, 105, 0.14); color: #2f8a5b; }
+.ledger-refund-row td { padding: 10px 12px; background: rgba(229, 72, 77, 0.05); font-size: 0.9rem; color: var(--ink-soft); }
+
+/* Money bar: refund segment (rose outflow) */
+.money-bar-refund { background: repeating-linear-gradient(45deg, #e5848a, #e5848a 6px, #d96b72 6px, #d96b72 12px); }
+.money-bar-key.money-bar-refund i { background: #e5848a; }
+
+/* Receivables aging */
+.receivables-aging-panel .aging-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
+.aging-col {
+  display: grid; grid-template-rows: auto 1fr auto auto; gap: 6px; justify-items: center;
+  padding: 12px 8px; min-height: 150px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg); cursor: pointer; text-align: center;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.aging-amount { font-weight: 800; font-size: 1.05rem; color: var(--ink); }
+.aging-bar { width: 26px; height: 70px; display: flex; align-items: flex-end; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; }
+.aging-bar > span { width: 100%; border-radius: 5px 5px 0 0; transition: height 420ms var(--ease-cinema, var(--ease)); }
+.aging-label { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
+.aging-count { font-size: 0.72rem; color: var(--muted); }
+.aging-ok .aging-bar > span { background: #6fce9f; }
+.aging-soft .aging-bar > span { background: #d9c06a; }
+.aging-warn .aging-bar > span { background: var(--amber); }
+.aging-danger .aging-bar > span { background: #fb7185; }
+.aging-danger { border-color: rgba(251, 113, 133, 0.4); }
+@media (hover: hover) and (pointer: fine) {
+  .aging-col:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: 0 8px 18px -12px rgba(0,0,0,0.3); }
+}
+@media (max-width: 720px) { .receivables-aging-panel .aging-grid { grid-template-columns: 1fr 1fr; } }
+
