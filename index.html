@@ -95,18 +95,21 @@
          stage; data-batch-eta drives the right-hand ETA text. This is the
          brand's clearest differentiator from local boutiques, so it earns
          the top slot. -->
-    <div class="announce-bar batch-tracker" role="region" aria-label="Current shipment batch status" data-batch-ribbon data-batch-stage="shipped">
-      <span class="batch-heading">
+    <!-- Batch ribbon — hydrated from /api/public/batches on load by
+         hydrateAnnounceBar(). The markup below is the static fallback shown
+         until (or if) the fetch resolves. -->
+    <div class="announce-bar batch-tracker" role="region" aria-label="Current shipment batch status" data-batch-ribbon data-announce-bar>
+      <span class="batch-heading" data-announce-heading>
         <strong>Batch #18</strong> · USA → Pakistan
       </span>
-      <ol class="batch-rail" aria-label="Batch stages">
+      <ol class="batch-rail" aria-label="Batch stages" data-announce-rail>
         <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Collecting</span></li>
         <li class="batch-stage is-done"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Sourced</span></li>
         <li class="batch-stage is-active"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Shipped</span></li>
         <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Arrived PK</span></li>
         <li class="batch-stage"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">Dispatched</span></li>
       </ol>
-      <span class="batch-eta">
+      <span class="batch-eta" data-announce-eta>
         Doorstep <strong>May 25–27</strong>
       </span>
     </div>
@@ -413,7 +416,9 @@
                cards. Each card pairs a real customer photo with a short
                quote and a deep-link CTA to /quote. Wire to marketing_leads
                / IG webhook in the future. -->
-          <div class="ugc-rail" role="region" aria-label="Customer Instagram posts" data-ugc-rail>
+          <!-- Hydrated from /api/public/ugc by renderUgcRail(); static cards
+               below are the fallback. -->
+          <div class="ugc-rail" role="region" aria-label="Customer Instagram posts" data-ugc-rail data-ugc-fallback>
             <article class="ugc-card">
               <a class="ugc-media" href="https://wa.me/13362556023?text=Hi%20Global%20Bestie%2C%20I%20want%20a%20Coach%20Tabby" target="_blank" rel="noopener noreferrer">
                 <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=540&q=82" alt="Customer photo — Coach Tabby unboxing in Karachi" loading="lazy" />
@@ -981,17 +986,19 @@
               consolidated batch. Lock yours in to ride this shipment and
               skip the 4-week wait.
             </p>
-            <div class="thisweek-meta">
+            <div class="thisweek-meta" data-thisweek-meta>
               <span><strong>Batch #19</strong> · closes <strong>June 3</strong></span>
               <span><strong>14 / 40</strong> spots filled</span>
               <span><strong>Doorstep</strong> June 22 – 25</span>
             </div>
             <div class="batch-fill-track thisweek-fill" role="presentation" aria-hidden="true">
-              <span class="batch-fill" style="--fill: 35%"></span>
+              <span class="batch-fill" style="--fill: 35%" data-thisweek-fill></span>
             </div>
           </header>
 
-          <section class="thisweek-grid" aria-label="Items being sourced">
+          <!-- Hydrated from /api/public/this-week by renderThisWeek(); the
+               six static cards below are the fallback. -->
+          <section class="thisweek-grid" aria-label="Items being sourced" data-thisweek-grid>
             <article class="thisweek-card">
               <div class="thisweek-media">
                 <img src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=640&q=82" alt="Coach Tabby 26 in oxblood" loading="lazy" />
@@ -1093,6 +1100,10 @@
             </div>
           </header>
 
+          <!-- Live batch cards — hydrated from /api/public/batches by
+               renderBatchesPage(). The active + open cards below are the
+               static fallback shown until the fetch resolves. -->
+          <div data-batches-feed>
           <!-- Active batch hero — the rail mirrors the announce-bar component. -->
           <article class="batch-card batch-card-active" data-batch-id="18">
             <header class="batch-card-head">
@@ -1147,11 +1158,12 @@
               <a class="button primary" href="/shop" data-route="shop">Shop this batch →</a>
             </footer>
           </article>
+          </div><!-- /data-batches-feed -->
 
           <!-- Recent shipped batches — proof of consistency -->
           <section class="batches-history" aria-labelledby="batches-history-title">
             <h2 id="batches-history-title">Delivered batches</h2>
-            <ol class="batches-history-list">
+            <ol class="batches-history-list" data-batches-history>
               <li class="batch-history-row">
                 <div>
                   <strong>Batch #17 · April edit</strong>

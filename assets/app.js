@@ -978,6 +978,26 @@ async function loadRemoteData() {
     state.shipmentBatches = catalog.shipmentBatches;
   }
   renderAll();
+
+  // Storefront-only live surfaces. Fire-and-forget; each leaves its static
+  // fallback in place on failure. The announce bar is global (every page),
+  // the UGC rail is on home — both hydrate once on load.
+  if (document.body.dataset.page !== "portal") {
+    loadAnnounceBar();
+    renderUgcRail();
+  }
+}
+
+// Fetch the batch feed once and hydrate the global announce ribbon. Shares
+// the same cached endpoint renderBatchesPage uses (max-age 300), so visiting
+// /batches afterward is essentially free.
+async function loadAnnounceBar() {
+  try {
+    const data = await apiFetch("/api/public/batches", {}, null);
+    if (data?.announce) hydrateAnnounceBar(data.announce);
+  } catch {
+    // Static announce-bar markup stays — non-fatal.
+  }
 }
 
 // What to call the variant field for a given product. Shoes get "size",
@@ -1248,6 +1268,169 @@ function productEmptyState() {
 
 function isCustomQuoteProduct(product) {
   return product?.id?.startsWith("quote-") || product?.brand === "Customer request";
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// LIVE-DATA SURFACES — /batches, /this-week, UGC rail, announce bar.
+// Each renderer fetches its public endpoint and swaps the static fallback
+// markup for live content. On any failure the static markup is left intact,
+// so the page never breaks — it just shows the seed content.
+// ════════════════════════════════════════════════════════════════════════
+
+// Render the 5-stage rail markup for a given active stage index.
+function batchRailHTML(stages, activeIndex, large) {
+  const cls = large ? "batch-rail batch-rail-lg" : "batch-rail";
+  const dots = stages.map((label, i) => {
+    const state = i < activeIndex ? "is-done" : i === activeIndex ? "is-active" : "";
+    return `<li class="batch-stage ${state}"><span class="batch-dot" aria-hidden="true"></span><span class="batch-label">${esc(label)}</span></li>`;
+  }).join("");
+  return `<ol class="${cls}" aria-label="Batch stages">${dots}</ol>`;
+}
+
+// Hydrate the top-of-page announce ribbon from the active/announce batch.
+function hydrateAnnounceBar(announce) {
+  if (!announce) return;
+  const heading = qs("[data-announce-heading]");
+  const rail = qs("[data-announce-rail]");
+  const eta = qs("[data-announce-eta]");
+  if (heading) heading.innerHTML = `<strong>${esc(announce.name || "Current batch")}</strong> · USA → Pakistan`;
+  if (rail) {
+    rail.outerHTML = batchRailHTML(announce.stages || [], announce.stageIndex ?? 0, false)
+      .replace("<ol ", '<ol data-announce-rail ');
+  }
+  if (eta && announce.etaWindow) eta.innerHTML = `Doorstep <strong>${esc(announce.etaWindow)}</strong>`;
+}
+
+// One batch card for /batches (active or open variant).
+function batchCardHTML(b, variant) {
+  const isOpen = variant === "open";
+  const kicker = isOpen ? "Open · collecting orders" : "Active batch";
+  const cardCls = isOpen ? "batch-card" : "batch-card batch-card-active";
+  const fill = isOpen && b.capacity > 0
+    ? `<div class="batch-fill-track" role="presentation" aria-hidden="true"><span class="batch-fill" style="--fill: ${b.fillPct}%"></span></div>`
+    : "";
+  const meta = isOpen
+    ? `${b.used} / ${b.capacity} spots filled${b.closesOn ? ` · closes ${esc(b.closesOn)}` : ""}`
+    : `${b.used} orders en route`;
+  const foot = isOpen
+    ? `<p>Order before it fills to ride this batch. Pay the 50% advance to lock your spot.</p><a class="button primary" href="/shop" data-route="shop">Shop this batch →</a>`
+    : `<p>This batch is ${esc(b.stageKey || "in transit").toLowerCase()}. We confirm each stage on WhatsApp as it moves.</p><a class="button ghost" href="/track" data-route="track">Track my order →</a>`;
+  return `
+    <article class="${cardCls}" data-batch-id="${attr(b.id)}">
+      <header class="batch-card-head">
+        <div>
+          <p class="kicker">${esc(kicker)}</p>
+          <h2>${esc(b.name)}</h2>
+          <small>${esc(meta)}</small>
+        </div>
+        <div class="batch-card-eta">
+          <span>Doorstep PK</span>
+          <strong>${esc(b.etaWindow || "TBC")}</strong>
+        </div>
+      </header>
+      ${batchRailHTML(b.stages || [], b.stageIndex ?? 0, true)}
+      ${fill}
+      <footer class="batch-card-foot">${foot}</footer>
+    </article>`;
+}
+
+async function renderBatchesPage() {
+  const feed = qs("[data-batches-feed]");
+  if (!feed) return;
+  const data = await apiFetch("/api/public/batches", {}, null);
+  if (!data) return; // keep static fallback
+  hydrateAnnounceBar(data.announce);
+
+  const cards = [
+    ...(data.active || []).map((b) => batchCardHTML(b, "active")),
+    ...(data.open || []).map((b) => batchCardHTML(b, "open")),
+  ].join("");
+  if (cards) feed.innerHTML = cards;
+
+  // History list
+  const history = qs("[data-batches-history]");
+  if (history && data.delivered?.length) {
+    history.innerHTML = data.delivered.map((b) => `
+      <li class="batch-history-row">
+        <div>
+          <strong>${esc(b.name)}</strong>
+          <small>${b.used} orders${b.etaWindow ? ` · doorstep ${esc(b.etaWindow)}` : ""}</small>
+        </div>
+        <span class="batch-history-chip is-done">Delivered</span>
+      </li>`).join("");
+  }
+
+  // Hero stats
+  const inFlight = (data.active?.length || 0);
+  const stat = qs("[data-batches-stats]") || qs(".batches-stats");
+  if (stat && (data.active || data.open)) {
+    const shipping = (data.active || []).reduce((s, b) => s + (b.used || 0), 0);
+    stat.innerHTML = `
+      <span><strong>${inFlight + (data.open?.length || 0)}</strong> batches in flight</span>
+      <span><strong>${shipping}</strong> orders shipping now</span>
+      <span><strong>~4 wk</strong> avg sourcing → doorstep</span>`;
+  }
+}
+
+async function renderThisWeek() {
+  const grid = qs("[data-thisweek-grid]");
+  if (!grid) return;
+  const data = await apiFetch("/api/public/this-week", {}, null);
+  if (!data || !data.items?.length) return; // keep static fallback
+
+  grid.innerHTML = data.items.map((item) => {
+    const img = item.image_url
+      ? `<img src="${safeUrl(item.image_url, "")}" alt="${attr(item.title)}" loading="lazy" decoding="async" onerror="this.closest('.thisweek-media')?.classList.add('media-missing'); this.remove();" />`
+      : `<div class="media-placeholder"><span>Image soon</span></div>`;
+    const batchName = data.batch?.name ? esc(data.batch.name) : "this batch";
+    return `
+      <article class="thisweek-card">
+        <div class="thisweek-media">${img}</div>
+        <div class="thisweek-body">
+          ${item.brand ? `<small class="thisweek-brand">${esc(item.brand)}</small>` : ""}
+          <strong>${esc(item.title)}</strong>
+          <span class="thisweek-price">${PKR.format(item.price_pkr)}</span>
+          <a class="button primary" href="/quote" data-route="quote">Lock in for ${batchName}</a>
+        </div>
+      </article>`;
+  }).join("");
+
+  // Hero meta + fill
+  if (data.batch) {
+    const meta = qs("[data-thisweek-meta]");
+    if (meta) {
+      meta.innerHTML = `
+        <span><strong>${esc(data.batch.name)}</strong>${data.batch.closesOn ? ` · closes <strong>${esc(data.batch.closesOn)}</strong>` : ""}</span>
+        ${typeof data.batch.spotsLeft === "number" ? `<span><strong>${data.batch.spotsLeft}</strong> spots left</span>` : ""}
+        ${data.batch.etaWindow ? `<span><strong>Doorstep</strong> ${esc(data.batch.etaWindow)}</span>` : ""}`;
+    }
+  }
+}
+
+async function renderUgcRail() {
+  const rail = qs("[data-ugc-rail]");
+  if (!rail) return;
+  const data = await apiFetch("/api/public/ugc", {}, null);
+  if (!data || !data.items?.length) return; // keep static fallback
+
+  rail.innerHTML = data.items.map((p) => {
+    const waBase = "https://wa.me/13362556023?text=Hi%20Global%20Bestie";
+    const img = p.image_url
+      ? `<img src="${safeUrl(p.image_url, "")}" alt="Customer photo — ${attr(p.handle)}${p.city ? ` in ${attr(p.city)}` : ""}" loading="lazy" decoding="async" onerror="this.closest('.ugc-media')?.classList.add('media-missing'); this.remove();" />`
+      : `<div class="media-placeholder"><span>${esc(p.handle)}</span></div>`;
+    return `
+      <article class="ugc-card">
+        <a class="ugc-media" href="${waBase}" target="_blank" rel="noopener noreferrer">
+          ${img}
+          <span class="ugc-source">${esc(p.handle)}</span>
+        </a>
+        <div class="ugc-body">
+          <p>${esc(p.quote)}</p>
+          ${p.city ? `<small>${esc(p.city)}</small>` : ""}
+          <a class="ugc-cta" href="${safeUrl(p.cta_href || "/quote")}" data-route="quote">${esc(p.cta_text || "Order this look →")}</a>
+        </div>
+      </article>`;
+  }).join("");
 }
 
 function renderProducts() {
@@ -6904,6 +7087,10 @@ async function setRoute() {
     syncShopFiltersFromRoute(params);
     renderProducts();
   }
+  // Live-data surfaces — fetch on entry. Each renderer no-ops gracefully and
+  // leaves the static fallback markup in place if the fetch fails.
+  if (safeView === "batches") renderBatchesPage();
+  if (safeView === "this-week") renderThisWeek();
   setCartDrawerOpen(false);
   window.scrollTo({ top: 0 });
 

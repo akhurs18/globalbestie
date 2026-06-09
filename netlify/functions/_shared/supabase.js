@@ -101,6 +101,43 @@ const FALLBACK_SHIPMENT_BATCHES = [
   },
 ];
 
+// Demo UGC rail — used when Supabase has no approved ugc_posts (or isn't
+// configured at all) so the storefront "From real besties" rail always
+// renders something credible. Replaced by real rows the moment the team
+// approves customer photos in the portal.
+const FALLBACK_UGC = [
+  {
+    id: "ugc-1", handle: "@ayeshakhan", city: "Karachi",
+    quote: "My Coach Tabby arrived in Karachi in 26 days — packaging and dust bag exactly like the US store.",
+    image_url: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=540&q=82",
+    category: "handbags", cta_text: "Order this look →", cta_href: "/quote", sort_order: 1,
+  },
+  {
+    id: "ugc-2", handle: "@sarashah", city: "Lahore",
+    quote: "They quoted me in PKR, helped me pick the right option, and kept the delivery update clear the whole time.",
+    image_url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=540&q=82",
+    category: "shoes", cta_text: "Order this look →", cta_href: "/quote", sort_order: 2,
+  },
+  {
+    id: "ugc-3", handle: "@maliha.n", city: "Islamabad",
+    quote: "Got my Rare Beauty haul before Eid. WhatsApp replies were quick and the team was patient with my shade questions.",
+    image_url: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=540&q=82",
+    category: "makeup", cta_text: "Order this look →", cta_href: "/quote", sort_order: 3,
+  },
+  {
+    id: "ugc-4", handle: "@noor.r", city: "Rawalpindi",
+    quote: "The handbag I'd been eyeing for months — final PKR price was less than half what local boutiques quoted me.",
+    image_url: "https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&fit=crop&w=540&q=82",
+    category: "handbags", cta_text: "Order this look →", cta_href: "/quote", sort_order: 4,
+  },
+  {
+    id: "ugc-5", handle: "@hira.q", city: "Faisalabad",
+    quote: "Charlotte Tilbury pillow talk got to me before my next salon visit. Genuine packaging, fresh batch codes.",
+    image_url: "https://images.unsplash.com/photo-1631730486572-226d1f595b68?auto=format&fit=crop&w=540&q=82",
+    category: "makeup", cta_text: "Order this look →", cta_href: "/quote", sort_order: 5,
+  },
+];
+
 function env(name) {
   return globalThis.Netlify?.env?.get(name) || "";
 }
@@ -205,6 +242,35 @@ export async function getTrends() {
 export async function getShipmentBatches() {
   if (!hasSupabase()) return FALLBACK_SHIPMENT_BATCHES;
   return supabase("/rest/v1/shipment_batches?select=*&order=eta_date.asc,created_at.desc");
+}
+
+// Approved trend candidates for the storefront "This week" preview. Optional
+// batchId scopes to a single upcoming batch; otherwise returns all approved
+// candidates by score. Falls back to approved-shaped FALLBACK_TRENDS offline.
+export async function getApprovedCandidates(batchId) {
+  if (!hasSupabase()) {
+    return FALLBACK_TRENDS.map((t) => ({ ...t, status: "approved" }));
+  }
+  const batchFilter = batchId ? `&batch_id=eq.${encodeURIComponent(batchId)}` : "";
+  return supabase(
+    `/rest/v1/trend_candidates?status=eq.approved${batchFilter}&select=*&order=score.desc,created_at.desc`
+  );
+}
+
+// Approved, sorted UGC posts for the "From real besties" rail. Falls back to
+// the curated demo set when Supabase is empty or unconfigured so the rail
+// never renders blank.
+export async function getUgcPosts() {
+  if (!hasSupabase()) return FALLBACK_UGC;
+  try {
+    const rows = await supabase(
+      "/rest/v1/ugc_posts?status=eq.approved&select=*&order=sort_order.asc,created_at.desc"
+    );
+    return rows?.length ? rows : FALLBACK_UGC;
+  } catch {
+    // Table may not exist yet (migration not run) — degrade to demo set.
+    return FALLBACK_UGC;
+  }
 }
 
 // Allowlist of columns the products table can actually have. Anything not
