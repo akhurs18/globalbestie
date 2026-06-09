@@ -5575,6 +5575,98 @@ button[type="submit"][data-busy]::after {
   min-width: 170px;
 }
 
+/* ───────── Orders table — one-click stage advance + clearer next step ─────────
+   Advance is the primary forward path (90% case); the stage <select> stays for
+   jumps / going back / cancelling. next_action is promoted out of small-print so
+   a row can be triaged without opening it. */
+.cell-status {
+  min-width: 212px;
+}
+
+.status-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.button.primary.stage-advance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.stage-advance .stage-advance-next {
+  font-weight: 800;
+  opacity: 0.92;
+}
+
+.stage-terminal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.order-next-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 7px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.order-next-action .order-next-action-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--pink-2);
+  box-shadow: 0 0 0 3px var(--pink-glow);
+}
+
+.order-next-action.is-empty {
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.order-next-action.is-empty .order-next-action-dot {
+  background: var(--line-strong);
+  box-shadow: none;
+}
+
+.order-row .order-risk {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+/* Crisper keyboard focus ring for j/k row navigation. */
+.order-row:focus-visible {
+  outline: 2px solid var(--pink-2);
+  outline-offset: -2px;
+}
+
 .quick-filter-row,
 .subnav-tabs {
   display: flex;
@@ -16343,4 +16435,134 @@ body.modal-open .wa-bubble { display: none; }
 @media (max-width: 720px) {
   .ugc-form-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ───────────────────────── Cancellations & refunds ───────────────────────── */
+.button.danger { background: #e5484d; color: #fff; border-color: #e5484d; }
+.button.danger:hover { background: #d23b40; border-color: #d23b40; }
+.button.danger:active { transform: scale(0.97); }
+.button.ghost.danger-ghost { color: #c5343a; }
+.button.ghost.danger-ghost:hover { background: rgba(229, 72, 77, 0.08); }
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+@media (max-width: 520px) {
+  .modal-actions { flex-direction: column-reverse; }
+  .modal-actions .button { width: 100%; }
+}
+
+.cancel-order-modal { display: grid; gap: 12px; }
+.cancel-order-modal h2 { margin: 0; }
+.cancel-modal-note { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.cancel-order-modal label { display: grid; gap: 5px; font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.cancel-order-modal select,
+.cancel-order-modal input[type="text"] {
+  padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--radius);
+  font: inherit; background: var(--bg); color: var(--ink);
+}
+.cancel-refund-summary {
+  border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 12px;
+  display: grid; gap: 8px; background: rgba(211, 154, 53, 0.06);
+}
+.cancel-refund-summary.has-refund { border-color: rgba(211, 154, 53, 0.5); }
+.cancel-refund-line { display: flex; justify-content: space-between; align-items: baseline; }
+.cancel-refund-line strong { font-size: 1.1rem; }
+.cancel-refund-toggle { display: flex; align-items: center; gap: 8px; font-weight: 500; font-size: 0.85rem; cursor: pointer; }
+.cancel-refund-toggle input { width: 16px; height: 16px; accent-color: #e5484d; }
+.cancel-refund-none { color: var(--muted); font-size: 0.9rem; }
+
+.cancelled-banner {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; margin: 12px 0;
+  border-radius: var(--radius); background: rgba(229, 72, 77, 0.08); border: 1px solid rgba(229, 72, 77, 0.25);
+}
+.cancelled-banner strong { color: #c5343a; }
+.cancelled-banner span { color: var(--muted); font-size: 0.9rem; }
+
+.refund-review-panel { border-color: rgba(229, 72, 77, 0.3); }
+.refund-done-note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+.refund-review-panel .button.wide { margin-top: 10px; }
+
+/* Ledger: cancelled rows + refund badges + refund memo */
+.admin-table tr.order-row.ledger-cancelled td { opacity: 0.72; }
+.admin-table tr.order-row.ledger-cancelled s { color: var(--muted); }
+.ledger-refund-badge {
+  display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 1px 7px;
+  border-radius: 999px; vertical-align: middle; text-transform: uppercase; letter-spacing: 0.02em;
+}
+.ledger-refund-badge.due { background: rgba(229, 72, 77, 0.14); color: #c5343a; }
+.ledger-refund-badge.done { background: rgba(56, 161, 105, 0.14); color: #2f8a5b; }
+.ledger-refund-row td { padding: 10px 12px; background: rgba(229, 72, 77, 0.05); font-size: 0.9rem; color: var(--ink-soft); }
+
+/* Money bar: refund segment (rose outflow) */
+.money-bar-refund { background: repeating-linear-gradient(45deg, #e5848a, #e5848a 6px, #d96b72 6px, #d96b72 12px); }
+.money-bar-key.money-bar-refund i { background: #e5848a; }
+
+/* Receivables aging */
+.receivables-aging-panel .aging-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
+.aging-col {
+  display: grid; grid-template-rows: auto 1fr auto auto; gap: 6px; justify-items: center;
+  padding: 12px 8px; min-height: 150px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--bg); cursor: pointer; text-align: center;
+  transition: transform 160ms var(--ease), border-color 160ms var(--ease), box-shadow 160ms var(--ease);
+}
+.aging-amount { font-weight: 800; font-size: 1.05rem; color: var(--ink); }
+.aging-bar { width: 26px; height: 70px; display: flex; align-items: flex-end; background: rgba(0,0,0,0.04); border-radius: 5px; overflow: hidden; }
+.aging-bar > span { width: 100%; border-radius: 5px 5px 0 0; transition: height 420ms var(--ease-cinema, var(--ease)); }
+.aging-label { font-size: 0.8rem; font-weight: 600; color: var(--ink-soft); }
+.aging-count { font-size: 0.72rem; color: var(--muted); }
+.aging-ok .aging-bar > span { background: #6fce9f; }
+.aging-soft .aging-bar > span { background: #d9c06a; }
+.aging-warn .aging-bar > span { background: var(--amber); }
+.aging-danger .aging-bar > span { background: #fb7185; }
+.aging-danger { border-color: rgba(251, 113, 133, 0.4); }
+@media (hover: hover) and (pointer: fine) {
+  .aging-col:hover { transform: translateY(-2px); border-color: var(--line-strong); box-shadow: 0 8px 18px -12px rgba(0,0,0,0.3); }
+}
+@media (max-width: 720px) { .receivables-aging-panel .aging-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ───────────────── Readability: legible rose text ─────────────────
+   Panel headings + pink accent labels used --pink-2 (#d88e9b ≈ 2.3:1 on the
+   light portal background) and were blending in. Lift the portal's --pink-2 to
+   a rose that clears WCAG AA (~5.4:1) while staying on-brand. Scoped to the
+   portal so the storefront's softer pink is untouched; box-shadows use rgba
+   literals (not the token), so they stay soft. */
+/* Portal text tokens lifted for legibility: the brand pink/green/amber were
+   tuned for fills, not text, so as text on the light UI they sat at 2.3–2.5:1.
+   These darker variants clear ~4–5:1. Backgrounds that use these as fills are
+   few and small (swatches, progress/aging bars) and read fine slightly deeper;
+   the tint backgrounds use rgba literals, so they're untouched. */
+body[data-page="portal"] { --pink-2: #b0425f; --green: #2f8a5b; --amber: #9a6a1a; }
+
+/* The soft-pink wash --rose (#fbe6ea) was used as TEXT in many portal spots —
+   ~1.1:1 on the light UI, effectively invisible (the "SAVED VIEWS" label, money
+   amounts, etc.). Remap those text-on-light uses to the readable rose. Pills
+   that intentionally put --rose on a saturated pink background are left alone. */
+body[data-page="portal"] .segment-bar-label,
+body[data-page="portal"] .price,
+body[data-page="portal"] .broadcast-helper code,
+body[data-page="portal"] .sla-row:not(.tone-ok):not(.tone-warn):not(.tone-danger) .sla-value,
+body[data-page="portal"] .segment-count,
+body[data-page="portal"] .bulk-action-bar strong,
+body[data-page="portal"] .view-toggle button.active,
+body[data-page="portal"] .kanban-amount,
+body[data-page="portal"] .kanban-show-all,
+body[data-page="portal"] .recent-price,
+body[data-page="portal"] .recent-order-tile span,
+body[data-page="portal"] .funnel-summary strong,
+body[data-page="portal"] .account-order-amount,
+body[data-page="portal"] .sparkline-headline,
+body[data-page="portal"] .today-card strong,
+body[data-page="portal"] .manual-total strong,
+body[data-page="portal"] .manual-line-subtotal,
+body[data-page="portal"] .action-tone-chips span,
+body[data-page="portal"] .cmd-k-trigger kbd {
+  color: var(--pink-2);
+}
+
+/* The money-bar segment tints (.money-bar-out/in/near/far) were leaking onto the
+   legend chips (they share the class), putting slate text on a solid colour. The
+   legend should be plain text + the small colour swatch (i), so clear the chip bg. */
+body[data-page="portal"] .money-bar-legend .money-bar-key { background: transparent; }
+
+/* Owner-avatar initials: subtle shadow keeps the white letter legible on any
+   generated hue (belt-and-suspenders with the lower avatar lightness). */
+body[data-page="portal"] .owner-chip { text-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.35); }
 
