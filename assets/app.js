@@ -6238,7 +6238,9 @@ function ownerAvatarColor(name) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 52%, 56%)`;
+  // Lightness kept low (40%) so the white initials clear 3:1 across every
+  // generated hue — at 56% the lighter hues (cyan/yellow) dropped to ~2:1.
+  return `hsl(${hue}, 52%, 40%)`;
 }
 
 function ownerAvatar(name) {

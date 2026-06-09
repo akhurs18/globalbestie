@@ -16518,3 +16518,51 @@ body.modal-open .wa-bubble { display: none; }
 }
 @media (max-width: 720px) { .receivables-aging-panel .aging-grid { grid-template-columns: 1fr 1fr; } }
 
+/* ───────────────── Readability: legible rose text ─────────────────
+   Panel headings + pink accent labels used --pink-2 (#d88e9b ≈ 2.3:1 on the
+   light portal background) and were blending in. Lift the portal's --pink-2 to
+   a rose that clears WCAG AA (~5.4:1) while staying on-brand. Scoped to the
+   portal so the storefront's softer pink is untouched; box-shadows use rgba
+   literals (not the token), so they stay soft. */
+/* Portal text tokens lifted for legibility: the brand pink/green/amber were
+   tuned for fills, not text, so as text on the light UI they sat at 2.3–2.5:1.
+   These darker variants clear ~4–5:1. Backgrounds that use these as fills are
+   few and small (swatches, progress/aging bars) and read fine slightly deeper;
+   the tint backgrounds use rgba literals, so they're untouched. */
+body[data-page="portal"] { --pink-2: #b0425f; --green: #2f8a5b; --amber: #9a6a1a; }
+
+/* The soft-pink wash --rose (#fbe6ea) was used as TEXT in many portal spots —
+   ~1.1:1 on the light UI, effectively invisible (the "SAVED VIEWS" label, money
+   amounts, etc.). Remap those text-on-light uses to the readable rose. Pills
+   that intentionally put --rose on a saturated pink background are left alone. */
+body[data-page="portal"] .segment-bar-label,
+body[data-page="portal"] .price,
+body[data-page="portal"] .broadcast-helper code,
+body[data-page="portal"] .sla-row:not(.tone-ok):not(.tone-warn):not(.tone-danger) .sla-value,
+body[data-page="portal"] .segment-count,
+body[data-page="portal"] .bulk-action-bar strong,
+body[data-page="portal"] .view-toggle button.active,
+body[data-page="portal"] .kanban-amount,
+body[data-page="portal"] .kanban-show-all,
+body[data-page="portal"] .recent-price,
+body[data-page="portal"] .recent-order-tile span,
+body[data-page="portal"] .funnel-summary strong,
+body[data-page="portal"] .account-order-amount,
+body[data-page="portal"] .sparkline-headline,
+body[data-page="portal"] .today-card strong,
+body[data-page="portal"] .manual-total strong,
+body[data-page="portal"] .manual-line-subtotal,
+body[data-page="portal"] .action-tone-chips span,
+body[data-page="portal"] .cmd-k-trigger kbd {
+  color: var(--pink-2);
+}
+
+/* The money-bar segment tints (.money-bar-out/in/near/far) were leaking onto the
+   legend chips (they share the class), putting slate text on a solid colour. The
+   legend should be plain text + the small colour swatch (i), so clear the chip bg. */
+body[data-page="portal"] .money-bar-legend .money-bar-key { background: transparent; }
+
+/* Owner-avatar initials: subtle shadow keeps the white letter legible on any
+   generated hue (belt-and-suspenders with the lower avatar lightness). */
+body[data-page="portal"] .owner-chip { text-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.35); }
+
