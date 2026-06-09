@@ -14312,15 +14312,18 @@ body[data-page="portal"] .cmd-palette-row.active::before {
    CART LINE SWIPE-TO-REMOVE
    Each cart line is wrapped in .cart-swipe-shell. A static red Remove zone
    sits behind; the foreground .cart-line translates left under finger drag.
-   Background brightens proportional to --swipe-progress (set by JS).
+   Background brightens proportional to --swipe-progress, which JS writes
+   directly on .cart-swipe-remove (the sole consumer) so the per-frame style
+   recalc stays scoped to one element instead of the whole line subtree.
    ══════════════════════════════════════════════════════════════════════════ */
 .cart-swipe-shell {
   position: relative;
   border-radius: 14px;
   overflow: hidden;
-  --swipe-progress: 0;
 }
 .cart-swipe-remove {
+  /* Variable home: written here by JS, read here + by ::before (inherits). */
+  --swipe-progress: 0;
   position: absolute;
   inset: 0;
   display: flex;
@@ -14649,15 +14652,44 @@ h1, h2, h3 {
   background: var(--pink-2);
   border-color: var(--pink-2);
   transform: scale(1.25);
-  box-shadow: 0 0 0 6px var(--pink-glow);
-  animation: batch-pulse 1800ms var(--ease-out-strong) infinite;
+  /* The active dot needs a ring anchor; position context for ::after. */
+  position: relative;
+}
+/* Composite-only pulse ring. Lives as a pseudo-element so it animates
+   transform + opacity (GPU) instead of box-shadow (paint every frame).
+   By default the ring is a STATIC halo — the global announce bar is visible
+   on every page, and Emil's rule is that constantly-seen UI shouldn't move.
+   The animation is opted into ONLY on the /batches destination page below. */
+.batch-rail .batch-stage.is-active .batch-dot::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 999px;
+  background: var(--pink-glow);
+  opacity: 0.6;
+  z-index: -1;
+  /* No animation here — static halo for the always-on announce bar. */
 }
 .batch-rail .batch-stage.is-active .batch-label {
   color: var(--ink);
 }
+
+/* Pulse only where the tracker is a deliberate destination, not chrome.
+   .batch-rail-lg is the large variant used exclusively on the /batches page
+   cards — never in the always-visible announce bar — so this targets the
+   destination precisely without touching global chrome. transform + opacity
+   keep the ring on the compositor (no paint). */
+.batch-rail-lg .batch-stage.is-active .batch-dot::after {
+  animation: batch-pulse 1800ms var(--ease-out-strong) infinite;
+}
 @keyframes batch-pulse {
-  0%, 100% { box-shadow: 0 0 0 4px var(--pink-glow); }
-  50%      { box-shadow: 0 0 0 9px rgba(232, 166, 176, 0.08); }
+  0%, 100% { transform: scale(1);   opacity: 0.6; }
+  50%      { transform: scale(1.9); opacity: 0;   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .batch-rail-lg .batch-stage.is-active .batch-dot::after {
+    animation: none;
+  }
 }
 
 @media (max-width: 720px) {
@@ -15188,7 +15220,12 @@ h1, h2, h3 {
 .batch-rail.batch-rail-lg .batch-dot { width: 12px; height: 12px; }
 .batch-rail.batch-rail-lg .batch-stage.is-active .batch-dot {
   transform: scale(1.35);
-  box-shadow: 0 0 0 8px var(--pink-glow);
+  /* Halo handled by the animated ::after ring (composite-only). The old
+     box-shadow was a per-frame paint; the larger inset gives the lg dot a
+     proportionally bigger resting ring. */
+}
+.batch-rail.batch-rail-lg .batch-stage.is-active .batch-dot::after {
+  inset: -7px;
 }
 
 .batch-card-foot {

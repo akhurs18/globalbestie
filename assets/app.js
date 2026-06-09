@@ -1422,6 +1422,13 @@ function wireCartLineSwipes() {
     shell.dataset.swipeWired = "true";
     const line = shell.querySelector(".cart-line");
     if (!line) return;
+    // The Remove background is the only consumer of --swipe-progress, so we
+    // write the variable on IT, not the shell. Writing a custom property on
+    // the parent would recalc styles for the whole cart-line subtree every
+    // pointermove (Emil); scoping it to the single consumer keeps the recalc
+    // to one element.
+    const removeZone = shell.querySelector(".cart-swipe-remove");
+    const setProgress = (v) => removeZone && removeZone.style.setProperty("--swipe-progress", v);
 
     let startX = 0;
     let startTime = 0;
@@ -1454,7 +1461,7 @@ function wireCartLineSwipes() {
       line.style.transform = `translateX(${translate}px)`;
       // Brighten the Remove background as the swipe progresses
       const progress = Math.min(1, Math.abs(translate) / (lineWidth * REMOVE_THRESHOLD));
-      shell.style.setProperty("--swipe-progress", progress.toFixed(2));
+      setProgress(progress.toFixed(2));
     };
     const onUp = (event) => {
       if (!dragging || event.pointerId !== activePointerId) return;
@@ -1469,7 +1476,7 @@ function wireCartLineSwipes() {
         // Animate the line off-screen then trigger the existing remove action
         line.style.transform = `translateX(-${lineWidth + 60}px)`;
         line.style.opacity = "0";
-        shell.style.setProperty("--swipe-progress", "1");
+        setProgress("1");
         setTimeout(() => {
           const productId = shell.dataset.productId;
           if (productId) removeFromCart(productId);
@@ -1477,7 +1484,7 @@ function wireCartLineSwipes() {
       } else {
         // Snap back
         line.style.transform = "";
-        shell.style.setProperty("--swipe-progress", "0");
+        setProgress("0");
       }
       activePointerId = null;
       dx = 0;
