@@ -5575,6 +5575,98 @@ button[type="submit"][data-busy]::after {
   min-width: 170px;
 }
 
+/* ───────── Orders table — one-click stage advance + clearer next step ─────────
+   Advance is the primary forward path (90% case); the stage <select> stays for
+   jumps / going back / cancelling. next_action is promoted out of small-print so
+   a row can be triaged without opening it. */
+.cell-status {
+  min-width: 212px;
+}
+
+.status-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.button.primary.stage-advance {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.stage-advance .stage-advance-next {
+  font-weight: 800;
+  opacity: 0.92;
+}
+
+.stage-terminal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.order-next-action {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 7px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.order-next-action .order-next-action-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--pink-2);
+  box-shadow: 0 0 0 3px var(--pink-glow);
+}
+
+.order-next-action.is-empty {
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.order-next-action.is-empty .order-next-action-dot {
+  background: var(--line-strong);
+  box-shadow: none;
+}
+
+.order-row .order-risk {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+}
+
+/* Crisper keyboard focus ring for j/k row navigation. */
+.order-row:focus-visible {
+  outline: 2px solid var(--pink-2);
+  outline-offset: -2px;
+}
+
 .quick-filter-row,
 .subnav-tabs {
   display: flex;

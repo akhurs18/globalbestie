@@ -63,6 +63,23 @@ const ORDER_STEPS = [
   ["delivered", "Delivered"],
 ];
 
+// Compact stage labels for dense table chips / the Advance button.
+const ORDER_STAGE_SHORT = {
+  pending_review: "Received",
+  accepted: "Accepted",
+  sourcing: "Sourcing",
+  in_transit: "In transit",
+  pakistan_processing: "Arrived PK",
+  delivered: "Delivered",
+};
+
+// The next forward stage for an order, or null at the end (delivered/cancelled).
+function nextOrderStage(status) {
+  const i = ORDER_STEPS.findIndex(([s]) => s === status);
+  if (i < 0 || i >= ORDER_STEPS.length - 1) return null;
+  return ORDER_STEPS[i + 1][0];
+}
+
 const PAYMENT_STATES = [
   ["awaiting_advance", "Awaiting advance"],
   ["advance_uploaded", "Advance uploaded"],
@@ -2273,10 +2290,22 @@ function showOrderDetails(orderId) {
           <p>${esc(order.customer_name || "")} · ${esc(formatPkDisplay(canon) || order.customer_phone || "")} · ${esc(order.channel || "Storefront")} · ${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</p>
         </div>
         <div class="drawer-actions">
-          ${order.status === "pending_review" ? `<button class="button primary" type="button" data-action="accept-order" data-order-id="${order.id}">Accept order</button>` : ""}
-          <button class="button primary" type="button" data-action="mark-balance-due" data-order-id="${order.id}">Mark balance due</button>
-          <button class="button secondary" type="button" data-action="send-balance-reminder" data-order-id="${order.id}">Balance reminder</button>
-          <button class="button secondary" type="button" data-action="open-wa-templates" data-order-id="${order.id}">WhatsApp templates</button>
+          ${(() => {
+            // Exactly one filled primary — the single most likely next action
+            // for this order's state. Everything else is secondary so the eye
+            // doesn't have to weigh five equal-weight buttons.
+            if (order.status === "pending_review") {
+              return `<button class="button primary" type="button" data-action="accept-order" data-order-id="${attr(order.id)}">Accept order</button>`;
+            }
+            const next = nextOrderStage(order.status);
+            if (next) {
+              return `<button class="button primary" type="button" data-action="advance-order" data-order-id="${attr(order.id)}">Advance to ${esc(ORDER_STAGE_SHORT[next] || next)} →</button>`;
+            }
+            return "";
+          })()}
+          <button class="button secondary" type="button" data-action="mark-balance-due" data-order-id="${attr(order.id)}">Mark balance due</button>
+          <button class="button secondary" type="button" data-action="send-balance-reminder" data-order-id="${attr(order.id)}">Balance reminder</button>
+          <button class="button secondary" type="button" data-action="open-wa-templates" data-order-id="${attr(order.id)}">WhatsApp templates</button>
         </div>
       </div>
       ${repeatBanner}
@@ -2466,7 +2495,7 @@ function backFromOrderFullscreen() {
   qs(`[data-admin-tab="${tab}"]`)?.click();
 }
 
-function renderAdmin() {
+function renderAdmin({ skipOrdersSurfaces = false } = {}) {
   if (!has("[data-admin-content]")) return;
   const orders = state.orders;
   const revenue = orders.reduce((sum, order) => sum + Number(order.total_pkr || 0), 0);
@@ -2529,7 +2558,9 @@ function renderAdmin() {
     </div>
   `).join(""));
 
-  renderAdminOrders();
+  // commitOrderStage skips this: it already patched the one row in place, and
+  // re-swapping the tbody would destroy the focused row mid-keyboard-flow.
+  if (!skipOrdersSurfaces) renderAdminOrders();
   renderShipmentBatches();
   renderTrends();
   fillSettingsForm();
@@ -6082,8 +6113,82 @@ function orderActivityTooltip(order) {
   return `<div class="row-activity-pop" role="tooltip"><strong>Recent activity</strong><ol>${items}</ol></div>`;
 }
 
+// Builds one order row. Extracted so a single status change can repaint just
+// its <tr> (see patchOrderRow) instead of re-rendering the whole table.
+function orderRowHTML(order) {
+  const payment = orderPaymentSummary(order);
+  const due = amountDueForOrder(order);
+  const sla = orderSlaBadge(order);
+  const slaClass = sla ? ` sla-${sla.level}` : "";
+  const slaChip = sla
+    ? `<button class="sla-chip sla-${sla.level}" type="button" data-action="toggle-sla-filter" data-stop-row title="Filter to SLA breaches only">${esc(sla.label)}</button>`
+    : "";
+  const isSelected = state.selectedOrders?.has(order.id);
+  // OMS-style row treatments — age tint, stuck pulse, owner avatar, LTV chip,
+  // inline activity-tooltip-on-hover (revealed via CSS :hover, no JS cost).
+  const ageTone = orderAgeTone(order);
+  const stuck = isOrderStuck(order);
+  const stuckChip = stuck ? `<span class="stuck-pulse" title="Same status for 2× typical — chase this">stuck</span>` : "";
+  const ageHint = ageTone === "hot" ? "Aged 3+ days — chase or close" : ageTone === "warm" ? "Aged 1–3 days" : "";
+  // One-click forward motion: Advance steps to the next stage (the 90% action).
+  // The <select> stays for the exceptions — jumping, going back, cancelling.
+  const next = nextOrderStage(order.status);
+  const nextShort = next ? (ORDER_STAGE_SHORT[next] || next) : "";
+  const advanceControl = next
+    ? `<button class="button primary stage-advance" type="button" data-action="advance-order" data-order-id="${attr(order.id)}" aria-label="Advance to ${attr(nextShort)}" title="Advance to ${attr(nextShort)}">Advance <span class="stage-advance-next">${esc(nextShort)}</span> →</button>`
+    : `<span class="stage-terminal">${order.status === "cancelled" ? "Cancelled" : "✓ Delivered"}</span>`;
+  const nextActionLine = order.next_action
+    ? `<div class="order-next-action" title="Recommended next step"><span class="order-next-action-dot"></span><span>${esc(order.next_action)}</span></div>`
+    : `<div class="order-next-action is-empty"><span class="order-next-action-dot"></span><span>No next action set</span></div>`;
+  return `
+    <tr class="order-row${slaClass}${isSelected ? " is-selected" : ""} age-${ageTone}${stuck ? " is-stuck" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
+      <td class="bulk-col" data-stop-row><input type="checkbox" data-order-select="${attr(order.id)}" ${isSelected ? "checked" : ""} aria-label="Select order ${attr(order.id)}" /></td>
+      <td>
+        <strong>${esc(order.id)}</strong>${slaChip}${stuckChip}
+        <br /><small${ageHint ? ` title="${attr(ageHint)}"` : ""}>${new Date(order.created_at).toLocaleString()}</small>
+      </td>
+      <td class="cell-customer">
+        <div class="customer-row">${ownerAvatar(order.owner)}<span>${esc(order.customer_name)}</span>${customerLtvChip(order)}</div>
+        <small>${esc(order.customer_phone)} · ${esc(order.city)}</small>
+        <br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small>
+        ${orderActivityTooltip(order)}
+      </td>
+      <td class="cell-status">
+        <div class="status-control" data-stop-row>
+          ${advanceControl}
+          <select data-order-status="${attr(order.id)}" aria-label="Set stage for ${attr(order.id)}">
+            ${ORDER_STEPS.map(([status, label]) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${label}</option>`).join("")}
+            <option value="cancelled" ${order.status === "cancelled" ? "selected" : ""}>Cancelled</option>
+          </select>
+        </div>
+        ${nextActionLine}
+        <small class="order-risk">${esc(orderCompletionRisk(order))}</small>
+      </td>
+      <td>${PKR.format(payment.total)}<br /><small>Due ${PKR.format(due)} · Advance ${PKR.format(payment.advanceDue)} · Balance ${PKR.format(payment.balanceDue)}</small></td>
+      <td>
+        <select data-order-payment="${attr(order.id)}" data-stop-row>
+          ${PAYMENT_STATES.map(([status, label]) => `<option value="${status}" ${activePaymentStatusForOrder(order) === status ? "selected" : ""}>${label}</option>`).join("")}
+        </select>
+        <small>${esc(order.transfer_reference || "No reference")} · ${order.proof_url ? "Proof on file" : "No proof"}</small>
+      </td>
+      <td class="table-actions">
+        <button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(order.id)}" data-stop-row>Review</button>
+        <button class="button secondary" type="button" data-action="save-order-status" data-order-id="${attr(order.id)}" data-stop-row title="Apply the stage / payment dropdowns">Save edits</button>
+        <button class="button ghost" type="button" data-action="print-order" data-order-id="${attr(order.id)}" data-stop-row title="Open packing slip">⎙ Print</button>
+        <small>${esc(order.local_courier || "Courier TBD")} · ${esc(order.tracking_number || "No tracking")}</small>
+      </td>
+    </tr>
+  `;
+}
+
 function renderAdminOrders() {
   if (!has("[data-admin-orders]")) return;
+  // Preserve the operator's place in the queue across the tbody/cards swap so
+  // an inline status change doesn't bounce them back to the top of the list.
+  const _ordersWrap = qs("[data-orders-list-wrap]");
+  const _ordersWrapScroll = _ordersWrap ? _ordersWrap.scrollTop : 0;
+  const _ordersScrollY = window.scrollY;
+  const _ordersFocusedId = document.activeElement?.closest?.("tr.order-row")?.dataset?.orderId || null;
   renderOrderViewsChips();
   const filter = qs("[data-admin-order-filter]")?.value || "all";
   const slaFilter = state.adminFilters?.slaOnly || false;
@@ -6202,59 +6307,7 @@ function renderAdminOrders() {
   qs("[data-orders-board]")?.classList.toggle("hidden", state.ordersView !== "board");
   qsa("[data-action='set-orders-view']").forEach((b) => b.classList.toggle("active", b.dataset.ordersView === (state.ordersView || "list")));
   if (state.ordersView === "board") renderKanbanBoard(rows);
-  const tableRows = rows.map((order) => {
-    const payment = orderPaymentSummary(order);
-    const due = amountDueForOrder(order);
-    const sla = orderSlaBadge(order);
-    const slaClass = sla ? ` sla-${sla.level}` : "";
-    const slaChip = sla
-      ? `<button class="sla-chip sla-${sla.level}" type="button" data-action="toggle-sla-filter" data-stop-row title="Filter to SLA breaches only">${esc(sla.label)}</button>`
-      : "";
-    const isSelected = state.selectedOrders?.has(order.id);
-    // OMS-style row treatments — age tint, stuck pulse, owner avatar, LTV
-    // chip, inline activity-tooltip-on-hover. The tooltip is rendered as a
-    // sibling element revealed via CSS :hover so we don't pay JS cost
-    // unless the operator hovers.
-    const ageTone = orderAgeTone(order);
-    const stuck = isOrderStuck(order);
-    const stuckChip = stuck ? `<span class="stuck-pulse" title="Same status for 2× typical — chase this">stuck</span>` : "";
-    const ageHint = ageTone === "hot" ? "Aged 3+ days — chase or close" : ageTone === "warm" ? "Aged 1–3 days" : "";
-    return `
-    <tr class="order-row${slaClass}${isSelected ? " is-selected" : ""} age-${ageTone}${stuck ? " is-stuck" : ""}" data-action="view-order" data-order-id="${attr(order.id)}" tabindex="0">
-      <td class="bulk-col" data-stop-row><input type="checkbox" data-order-select="${attr(order.id)}" ${isSelected ? "checked" : ""} aria-label="Select order ${attr(order.id)}" /></td>
-      <td>
-        <strong>${esc(order.id)}</strong>${slaChip}${stuckChip}
-        <br /><small${ageHint ? ` title="${attr(ageHint)}"` : ""}>${new Date(order.created_at).toLocaleString()}</small>
-      </td>
-      <td class="cell-customer">
-        <div class="customer-row">${ownerAvatar(order.owner)}<span>${esc(order.customer_name)}</span>${customerLtvChip(order)}</div>
-        <small>${esc(order.customer_phone)} · ${esc(order.city)}</small>
-        <br /><small>${esc(order.priority || "Standard")} · Owner ${esc(order.owner || "Unassigned")}</small>
-        ${orderActivityTooltip(order)}
-      </td>
-      <td>
-        <select data-order-status="${attr(order.id)}" data-stop-row>
-          ${ORDER_STEPS.map(([status, label]) => `<option value="${status}" ${order.status === status ? "selected" : ""}>${label}</option>`).join("")}
-          <option value="cancelled" ${order.status === "cancelled" ? "selected" : ""}>Cancelled</option>
-        </select>
-        <small>${esc(orderCompletionRisk(order))} · ${esc(order.next_action || "No next action")}</small>
-      </td>
-      <td>${PKR.format(payment.total)}<br /><small>Due ${PKR.format(due)} · Advance ${PKR.format(payment.advanceDue)} · Balance ${PKR.format(payment.balanceDue)}</small></td>
-      <td>
-        <select data-order-payment="${attr(order.id)}" data-stop-row>
-          ${PAYMENT_STATES.map(([status, label]) => `<option value="${status}" ${activePaymentStatusForOrder(order) === status ? "selected" : ""}>${label}</option>`).join("")}
-        </select>
-        <small>${esc(order.transfer_reference || "No reference")} · ${order.proof_url ? "Proof on file" : "No proof"}</small>
-      </td>
-      <td class="table-actions">
-        <button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(order.id)}" data-stop-row>Review</button>
-        <button class="button primary" type="button" data-action="save-order-status" data-order-id="${attr(order.id)}" data-stop-row>Save</button>
-        <button class="button ghost" type="button" data-action="print-order" data-order-id="${attr(order.id)}" data-stop-row title="Open packing slip">⎙ Print</button>
-        <small>${esc(order.local_courier || "Courier TBD")} · ${esc(order.tracking_number || "No tracking")}</small>
-      </td>
-    </tr>
-  `;
-  });
+  const tableRows = rows.map(orderRowHTML);
   setHTML("[data-admin-orders]", tableRows.join(""));
   setHTML("[data-admin-order-cards]", rows.map((order) => {
     const payment = orderPaymentSummary(order);
@@ -6277,12 +6330,23 @@ function renderAdminOrders() {
         </div>
         <p>${esc(order.next_action || "Review order and assign next step.")}</p>
         <div class="mini-actions">
-          ${order.status === "pending_review" ? `<button class="button primary" type="button" data-action="accept-order" data-order-id="${attr(order.id)}" data-stop-row>Accept</button>` : ""}
+          ${order.status === "pending_review"
+            ? `<button class="button primary" type="button" data-action="accept-order" data-order-id="${attr(order.id)}" data-stop-row>Accept</button>`
+            : (nextOrderStage(order.status)
+              ? `<button class="button primary" type="button" data-action="advance-order" data-order-id="${attr(order.id)}" data-stop-row>Advance → ${esc(ORDER_STAGE_SHORT[nextOrderStage(order.status)])}</button>`
+              : "")}
           <button class="button secondary" type="button" data-action="view-order" data-order-id="${attr(order.id)}" data-stop-row>Review</button>
         </div>
       </article>
     `;
   }).join("") || "<p>No orders match this filter.</p>");
+
+  // Restore scroll + focus after the swap (see capture at the top).
+  if (_ordersWrap) _ordersWrap.scrollTop = _ordersWrapScroll;
+  if (_ordersScrollY) window.scrollTo({ top: _ordersScrollY });
+  if (_ordersFocusedId) {
+    qs(`[data-admin-orders] tr.order-row[data-order-id="${CSS.escape(_ordersFocusedId)}"]`)?.focus({ preventScroll: true });
+  }
 }
 
 function renderShipmentBatches() {
@@ -10570,36 +10634,120 @@ async function acceptOrder(orderId) {
   toast("Order accepted. Customer payment request is ready.");
 }
 
-async function saveOrderStatus(orderId) {
-  const status = qs(`[data-order-status="${orderId}"]`).value;
-  const paymentStatus = qs(`[data-order-payment="${orderId}"]`)?.value;
-  const fallbackOrder = state.orders.find((order) => order.id === orderId);
-  if (fallbackOrder) {
-    fallbackOrder.status = status;
-    fallbackOrder.payment_status = paymentStatus || activePaymentStatusForOrder(fallbackOrder, status);
-    fallbackOrder.events = [
-      ...(fallbackOrder.events || []),
-      { status, note: `Team moved order to ${status.replaceAll("_", " ")} with payment marked ${paymentLabel(fallbackOrder.payment_status)}.`, created_at: new Date().toISOString() },
-    ];
-  }
-  const priorStatus = fallbackOrder ? state.orders.find((o) => o.id === orderId)?.status : null;
+// ── Inline stage / payment commits ───────────────────────────────────────────
+// One shared path for the Advance button, the row's "Save edits", and the →
+// shortcut. It optimistically repaints just the affected <tr> for instant
+// feedback, persists, reconciles the rest of the dashboard without bouncing the
+// operator's scroll, and offers a one-tap Undo. The revert is exact because we
+// snapshot the prior state BEFORE mutating (the old code snapshotted it after,
+// so its "revert" silently did nothing).
+async function commitOrderStage(orderId, status, paymentStatus, { undoLabel } = {}) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order || !status) return;
+  const prior = { status: order.status, payment_status: order.payment_status };
+  const nextPayment = paymentStatus || activePaymentStatusForOrder(order, status);
+  if (prior.status === status && prior.payment_status === nextPayment) return;
+  // In list view we patch the one row and refresh everything EXCEPT the orders
+  // table, so the focused <tr> is never destroyed — that's what lets →/j chain.
+  // Board view has no rows, so it takes the normal full re-render (kanban).
+  const listView = state.ordersView !== "board";
+  const rowHadFocus = document.activeElement?.closest?.("tr.order-row")?.dataset?.orderId === orderId;
+
+  order.status = status;
+  order.payment_status = nextPayment;
+  order.events = [
+    ...(order.events || []),
+    { status, note: `Team moved order to ${status.replaceAll("_", " ")} with payment marked ${paymentLabel(order.payment_status)}.`, created_at: new Date().toISOString() },
+  ];
+  patchOrderRow(order); // instant: update just this row, in place
+
   try {
     const result = await apiFetch(`/api/admin/orders/${orderId}`, {
       method: "PATCH",
-      body: JSON.stringify({ status, payment_status: paymentStatus }),
-    }, { order: fallbackOrder });
-    const index = state.orders.findIndex((order) => order.id === orderId);
+      body: JSON.stringify({ status, payment_status: order.payment_status }),
+    }, { order });
+    const index = state.orders.findIndex((o) => o.id === orderId);
     if (index >= 0 && result.order) state.orders[index] = { ...state.orders[index], ...result.order };
-    renderAdmin();
-    toast("Order updated.");
+    if (listView) {
+      patchOrderRow(state.orders[index] || order);
+      renderAdmin({ skipOrdersSurfaces: true });
+      pruneFilteredOutRow(orderId, rowHadFocus);
+    } else {
+      renderAdmin();
+    }
+    syncOpenOrderDrawer(orderId);
+    if (undoLabel) showUndoToast(undoLabel, () => commitOrderStage(orderId, prior.status, prior.payment_status, {}));
+    else toast("Order updated.");
   } catch (err) {
-    // Server rejected the change (e.g. illegal state transition / payment
-    // gate). Revert the optimistic local mutation and surface why.
-    const msg = parseApiError(err);
-    if (fallbackOrder && priorStatus) fallbackOrder.status = priorStatus;
-    await refreshAdmin().catch(() => renderAdmin());
-    toast(msg || "Couldn't update the order. It was left unchanged.");
+    // Illegal transition / payment gate — revert to the exact prior state.
+    order.status = prior.status;
+    order.payment_status = prior.payment_status;
+    if (listView) { patchOrderRow(order); renderAdmin({ skipOrdersSurfaces: true }); }
+    else renderAdmin();
+    syncOpenOrderDrawer(orderId);
+    toast(parseApiError(err) || "Couldn't update the order. It was left unchanged.");
   }
+}
+
+// Update an order's <tr> in place. We rewrite the EXISTING row's innerHTML +
+// className rather than replacing the element (outerHTML), because re-creating
+// a focused <tr> drops keyboard focus to <body> — fatal for →/j chaining.
+function patchOrderRow(order) {
+  // Scope to the orders table — the ledger tab also renders tr.order-row with
+  // the same data-order-id, and an unscoped query can hit that read-only row.
+  const tr = qs(`[data-admin-orders] tr.order-row[data-order-id="${CSS.escape(order.id)}"]`);
+  if (!tr) return;
+  const scratch = document.createElement("tbody");
+  scratch.innerHTML = orderRowHTML(order).trim();
+  const fresh = scratch.firstElementChild;
+  if (!fresh) return;
+  tr.className = fresh.className;
+  tr.innerHTML = fresh.innerHTML;
+}
+
+// After an in-place advance, drop the row if the active status filter no longer
+// includes it, moving focus to a neighbour so keyboard nav keeps going. Also
+// keeps the "X of Y" count chip honest since we skipped the table re-render.
+function pruneFilteredOutRow(orderId, rowHadFocus) {
+  const filter = qs("[data-admin-order-filter]")?.value || "all";
+  const order = state.orders.find((o) => o.id === orderId);
+  const tr = qs(`[data-admin-orders] tr.order-row[data-order-id="${CSS.escape(orderId)}"]`);
+  if (tr && order && filter !== "all" && order.status !== filter) {
+    const after = tr.nextElementSibling?.classList.contains("order-row") ? tr.nextElementSibling : null;
+    const before = tr.previousElementSibling?.classList.contains("order-row") ? tr.previousElementSibling : null;
+    const neighbour = after || before;
+    tr.remove();
+    if (rowHadFocus && neighbour) neighbour.focus();
+  }
+  const chip = qs("[data-orders-count-chip]");
+  if (chip) chip.textContent = `${qsa("[data-admin-orders] tr.order-row").length} of ${state.orders.length}`;
+}
+
+// If the fullscreen order drawer is open on this order, re-render it so its
+// stage tracker and actions reflect the change.
+function syncOpenOrderDrawer(orderId) {
+  const panel = qs('[data-admin-panel="order-detail"]');
+  if (panel?.classList.contains("active")) showOrderDetails(orderId);
+}
+
+// One-click forward motion — used by the row Advance button, the drawer's
+// primary action, the mobile card, and the → keyboard shortcut.
+function advanceOrderStage(orderId) {
+  const order = state.orders.find((o) => o.id === orderId);
+  if (!order) return;
+  const next = nextOrderStage(order.status);
+  if (!next) { toast("This order is already at the final stage."); return; }
+  const nextShort = ORDER_STAGE_SHORT[next] || next;
+  commitOrderStage(orderId, next, activePaymentStatusForOrder(order, next), {
+    undoLabel: `Moved ${orderId} to ${nextShort}`,
+  });
+}
+
+// The row's "Save edits" button — commits whatever the two dropdowns now show.
+async function saveOrderStatus(orderId) {
+  const status = qs(`[data-order-status="${orderId}"]`)?.value;
+  const paymentStatus = qs(`[data-order-payment="${orderId}"]`)?.value;
+  await commitOrderStage(orderId, status, paymentStatus, {});
 }
 
 async function verifyOrderPayment(orderId, action) {
@@ -11599,6 +11747,7 @@ function wireEvents() {
       return;
     }
     if (action === "save-order-status") return saveOrderStatus(orderId);
+    if (action === "advance-order") return advanceOrderStage(orderId);
     if (action === "accept-order") return acceptOrder(orderId);
     if (action === "confirm-advance") return verifyOrderPayment(orderId, "confirm_advance");
     if (action === "confirm-balance") return verifyOrderPayment(orderId, "confirm_balance");
@@ -12095,6 +12244,14 @@ function wireEvents() {
     };
     if (event.key === "j" || event.key === "ArrowDown") return move(1);
     if (event.key === "k" || event.key === "ArrowUp")   return move(-1);
+    if (event.key === "ArrowRight" && currentIdx >= 0) {
+      // → advances the focused order one stage (works in list + board).
+      event.preventDefault();
+      const el = items[currentIdx];
+      const id = el?.dataset?.orderId || el?.closest?.("[data-order-id]")?.dataset?.orderId;
+      if (id) advanceOrderStage(id);
+      return;
+    }
     if (event.key === "Enter" && currentIdx >= 0) {
       event.preventDefault();
       items[currentIdx].click();
@@ -12102,7 +12259,7 @@ function wireEvents() {
     }
     if (event.key === "?" && event.shiftKey) {
       event.preventDefault();
-      toast("Shortcuts: j/k or ↑/↓ to navigate · Enter to open · drag (board) or status select (list) to advance");
+      toast("Shortcuts: j/k or ↑/↓ navigate · → advance a stage · Enter open · drag (board) to move");
       return;
     }
   });
