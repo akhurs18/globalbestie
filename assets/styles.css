@@ -4329,9 +4329,15 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
     justify-content: center;
   }
 
-  /* Hide the inline filter panel by default on mobile; reveal as a slide-up sheet */
+  /* Hide the inline filter panel by default on mobile; reveal as a slide-up sheet.
+     NOTE: selector is `.shop-layout .filter-panel` (specificity 0,2,0) on purpose
+     — the `@media (max-width: 980px)` block below sets `.filter-panel { position:
+     static }` to un-stick the sidebar, and since that rule comes later in source
+     with equal specificity it would otherwise win and break the drawer (panel
+     ends up position:static + translateY(100%) = a shifted in-flow gap instead of
+     a hidden bottom sheet). The descendant selector guarantees fixed wins. */
   .shop-layout { grid-template-columns: 1fr; }
-  .filter-panel {
+  .shop-layout .filter-panel {
     position: fixed;
     inset: auto 0 0 0;
     z-index: 80;
@@ -4345,7 +4351,7 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
     background: var(--surface);
     box-shadow: 0 -22px 60px rgba(0, 0, 0, 0.55);
   }
-  .filter-panel.is-open { transform: translateY(0); }
+  .shop-layout .filter-panel.is-open { transform: translateY(0); }
   body.filter-drawer-open { overflow: hidden; }
   body.filter-drawer-open::after {
     content: "";
