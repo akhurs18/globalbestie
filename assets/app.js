@@ -1190,28 +1190,20 @@ function productCard(product, options = {}) {
             <span><small>Balance on arrival</small>${PKR.format(balanceDue)}</span>
           </div>
         ` : ""}
-        <p class="product-description-line">${esc(product.description || "")}</p>
-        ${!isPortal && variantChip ? `
-          <a class="variant-chip" href="${safeUrl(variantWA)}" target="_blank" rel="noreferrer" aria-label="Ask about ${attr(variantChip)} on WhatsApp">
-            <span>${esc(variantChip)}</span><span aria-hidden="true">›</span>
-          </a>
-        ` : ""}
+        ${isPortal ? `<p class="product-description-line">${esc(product.description || "")}</p>` : ""}
         <div class="product-meta ${isPortal ? "" : "public-listing"}" aria-label="${isPortal ? "Internal pricing details" : "Product details"}">
           ${(isPortal ? adminMeta : publicMeta).map((item) => `<span>${esc(item)}</span>`).join("")}
         </div>
         ${isPortal && options.admin ? renderProductSparkline(product.id) : ""}
         <div class="product-actions">
-          <button class="button secondary" type="button" data-action="view-product" data-product-id="${attr(product.id)}">View details</button>
+          ${isPortal ? `<button class="button secondary" type="button" data-action="view-product" data-product-id="${attr(product.id)}">View details</button>` : ""}
           ${options.admin ? `<button class="button primary" type="button" data-action="edit-product" data-product-id="${attr(product.id)}">Edit product</button>` : renderAddToBag(product, disabled)}
         </div>
         ${!isPortal && !options.admin ? `
-          <div class="card-secondary-row">
-            <button class="ask-about-link" type="button" data-action="ask-about-product" data-product-id="${attr(product.id)}" aria-label="Ask about ${attr(product.title)} on WhatsApp">
-              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="14" height="14"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
-              Ask about this
-            </button>
-            <small class="cta-helper">${product.stock_mode === "preorder" ? "50% advance at checkout · balance on Pakistan arrival" : `Pay in full at checkout · ${inStockDeliveryLabel.toLowerCase()}`}</small>
-          </div>
+          <button class="ask-about-link" type="button" data-action="ask-about-product" data-product-id="${attr(product.id)}" aria-label="Ask about ${attr(product.title)} on WhatsApp">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="14" height="14"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
+            Ask about this
+          </button>
         ` : ""}
       </div>
     </article>

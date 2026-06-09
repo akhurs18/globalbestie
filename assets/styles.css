@@ -8465,6 +8465,7 @@ body[data-active-view="checkout"] .whatsapp-fab {
 .ask-about-link {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;   /* content-width pill in the column-flex card body */
   gap: 5px;
   padding: 5px 10px;
   border: 1px solid rgba(37, 211, 102, 0.36);
