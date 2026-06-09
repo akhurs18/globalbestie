@@ -15801,6 +15801,12 @@ body.modal-open .wa-bubble { display: none; }
 .cart-drawer [data-cart-items] {
   overflow-y: auto;
   display: grid;
+  /* Pack rows to the top at their content height. Without this, the grid
+     stretches each row to fill the tall (1fr) items area, so a single
+     swipe-shell balloons to full height and its absolutely-positioned
+     red "Remove" zone (inset:0) shows as a huge band below the item —
+     looks like the item is half-deleted. align-content:start fixes it. */
+  align-content: start;
   gap: 10px;
   padding-right: 4px;
 }
