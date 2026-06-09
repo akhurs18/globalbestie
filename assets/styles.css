@@ -1043,7 +1043,12 @@ h3 {
 label {
   display: grid;
   gap: 8px;
-  color: var(--rose);
+  /* Was var(--rose) (#fbe6ea) — a ~1.18:1 contrast on the light storefront,
+     making every form label (checkout, filters, quote, track) effectively
+     invisible. --ink-soft matches the portal's label colour and clears WCAG
+     AA comfortably. Portal labels are unaffected (they already override to
+     --ink-soft). */
+  color: var(--ink-soft);
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -14833,12 +14838,20 @@ h1, h2, h3 {
   filter: blur(2px);
   opacity: 0.5;
 }
-.bank-box label[data-valid="true"]::after {
+/* Anchor for the valid-state checkmark. */
+.bank-box label { position: relative; }
+/* JS sets the attribute via toggleAttribute, which writes data-valid="" (empty)
+   — so match on presence, not [data-valid="true"]. Pin the ✓ to the top-right
+   beside the label text (the label is display:grid, so an inline ::after would
+   drop to its own row). Green reads as "this looks valid". */
+.bank-box label[data-valid]::after {
   content: "✓";
-  display: inline-block;
-  margin-left: 8px;
-  color: var(--pink-3);
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--green);
   font-weight: 800;
+  font-size: 0.95rem;
   animation: check-pop 260ms var(--ease-out-strong) both;
 }
 @keyframes check-pop {
