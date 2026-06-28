@@ -1,14 +1,31 @@
-/* Global Bestie — Ads workspace theme.
+/* Global Bestie — Ads workspace theme (self-contained).
  *
- * Scoped entirely under body[data-page="ads"] so it restyles ONLY the ads
- * page and never leaks into the portal or storefront. It layers on top of
- * styles.css (which provides base primitives the shared JS renderers rely on)
- * and overrides the look for a calm, professional growth dashboard:
- * dark focused sidebar, light workspace, hairline cards, restrained accent.
+ * This stylesheet is the ONLY one the ads page loads. It deliberately does not
+ * depend on styles.css (the portal/storefront theme) so the portal's design
+ * passes can never leak serif headings or conflicting .ops-panel/.admin-* rules
+ * into this page again. Everything the ad page renders — including the markup
+ * produced by the shared JS renderers (ops-panel, status-pill, today-stat,
+ * ugc-admin-card, admin-table, ads-* …) — is styled here.
  *
  * Motion follows Emil Kowalski's principles: transform/opacity only, custom
- * ease-out curves, sub-300ms, scale-on-press, short staggered entrance, and
- * full prefers-reduced-motion support. */
+ * ease-out curves, sub-300ms, scale-on-press, short staggered entrance, full
+ * prefers-reduced-motion support. Everything is scoped under body[data-page="ads"]
+ * as defence-in-depth. */
+
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"],
+body[data-page="ads"] * ,
+body[data-page="ads"] *::before,
+body[data-page="ads"] *::after { box-sizing: border-box; }
+body[data-page="ads"] { margin: 0; }
+body[data-page="ads"] h1,
+body[data-page="ads"] h2,
+body[data-page="ads"] h3,
+body[data-page="ads"] p,
+body[data-page="ads"] ul,
+body[data-page="ads"] figure { margin: 0; }
+body[data-page="ads"] ul { list-style: none; padding: 0; }
+body[data-page="ads"] img { max-width: 100%; display: block; }
 
 body[data-page="ads"] {
   /* ── Palette ─────────────────────────────────────────────────────────── */
@@ -20,8 +37,8 @@ body[data-page="ads"] {
   --ad-text: #15151c;
   --ad-muted: #5d5d68;
   --ad-faint: #92929c;
-  --ad-accent: #b23a63;          /* grown-up berry-rose, on-brand but calm */
-  --ad-accent-press: #97315323;
+  --ad-accent: #b23a63;
+  --ad-accent-hover: #9c3055;
   --ad-accent-soft: rgba(178, 58, 99, 0.10);
   --ad-sidebar: #16161c;
   --ad-sidebar-2: #1d1d25;
@@ -38,31 +55,58 @@ body[data-page="ads"] {
   --ad-radius-lg: 18px;
   --ad-shadow-sm: 0 1px 2px rgba(20, 20, 31, 0.04), 0 1px 3px rgba(20, 20, 31, 0.05);
   --ad-shadow-md: 0 6px 20px -6px rgba(20, 20, 31, 0.12), 0 2px 6px rgba(20, 20, 31, 0.05);
+  --ad-shadow-lg: 0 18px 48px -12px rgba(20, 20, 31, 0.22);
   --ad-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 
   background: var(--ad-bg);
   color: var(--ad-text);
-  font-family: "Archivo", system-ui, sans-serif;
+  font-family: "Archivo", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* ── Shell layout ───────────────────────────────────────────────────────── */
+/* Headings are sans (Archivo) here — never the storefront serif. */
+body[data-page="ads"] h1,
+body[data-page="ads"] h2,
+body[data-page="ads"] h3 {
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ad-text);
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+body[data-page="ads"] .hidden { display: none !important; }
+body[data-page="ads"] .skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ad-accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 10px 0;
+  z-index: 50;
+}
+body[data-page="ads"] .skip-link:focus { left: 0; }
+body[data-page="ads"] .view { display: block; }
+
+/* ── Shell layout ──────────────────────────────────────────────────────── */
 body[data-page="ads"] .admin-shell {
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
   min-height: 100vh;
-  background: var(--ad-bg);
 }
 
 /* ── Sidebar (dark, focused) ───────────────────────────────────────────── */
 body[data-page="ads"] .admin-sidebar {
-  background: var(--ad-sidebar);
-  background-image: linear-gradient(180deg, var(--ad-sidebar-2), var(--ad-sidebar));
+  background: linear-gradient(180deg, var(--ad-sidebar-2), var(--ad-sidebar));
   border-right: 1px solid rgba(255, 255, 255, 0.06);
   padding: 22px 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -74,14 +118,14 @@ body[data-page="ads"] .admin-brand {
   padding: 4px 8px 18px;
   color: #fff;
 }
-body[data-page="ads"] .admin-brand .brand-mark img,
-body[data-page="ads"] .admin-brand .brand-mark {
+body[data-page="ads"] .brand-mark img,
+body[data-page="ads"] .brand-mark {
   width: 38px;
   height: 38px;
   border-radius: 11px;
   object-fit: cover;
 }
-body[data-page="ads"] .admin-brand strong { display: block; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; color: #fff; font-family: "Archivo", system-ui, sans-serif; }
+body[data-page="ads"] .admin-brand strong { display: block; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
 body[data-page="ads"] .admin-brand small { display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
 
 body[data-page="ads"] .admin-tab-group {
@@ -113,13 +157,12 @@ body[data-page="ads"] .admin-tab-link {
 }
 @media (hover: hover) and (pointer: fine) {
   body[data-page="ads"] .admin-tab:hover,
-  body[data-page="ads"] .admin-tab-link:hover {
-    background: rgba(255, 255, 255, 0.07);
-    color: #fff;
-  }
+  body[data-page="ads"] .admin-tab-link:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 }
 body[data-page="ads"] .admin-tab:active,
 body[data-page="ads"] .admin-tab-link:active { transform: scale(0.98); }
+body[data-page="ads"] .admin-tab:focus-visible,
+body[data-page="ads"] .admin-tab-link:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
 body[data-page="ads"] .admin-tab.active {
   background: var(--ad-accent);
   color: #fff;
@@ -130,6 +173,23 @@ body[data-page="ads"] .admin-tab-link[href="/portal.html"] {
   font-size: 0.82rem;
   margin-bottom: 4px;
 }
+/* Nav count badges */
+body[data-page="ads"] [data-ads-nav-badge] {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-page="ads"] [data-ads-nav-badge]:empty { display: none; }
+body[data-page="ads"] .admin-tab.active [data-ads-nav-badge] { background: rgba(255, 255, 255, 0.28); }
 
 /* ── Main workspace ────────────────────────────────────────────────────── */
 body[data-page="ads"] .admin-main {
@@ -149,8 +209,10 @@ body[data-page="ads"] .admin-login {
   padding: 32px 30px;
   animation: ad-rise 420ms var(--ad-ease-out) both;
 }
-body[data-page="ads"] .admin-login h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 6px 0 8px; }
+body[data-page="ads"] .admin-login h1 { font-size: 1.5rem; margin: 6px 0 8px; }
 body[data-page="ads"] .admin-login label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--ad-muted); margin: 18px 0 0; }
+body[data-page="ads"] .admin-login input { margin-top: 8px; width: 100%; }
+body[data-page="ads"] .admin-login .button { margin-top: 18px; }
 
 /* ── Page heading ──────────────────────────────────────────────────────── */
 body[data-page="ads"] .admin-heading {
@@ -160,16 +222,28 @@ body[data-page="ads"] .admin-heading {
   gap: 16px;
   margin-bottom: 22px;
 }
-body[data-page="ads"] .admin-heading h1 { font-size: 1.7rem; letter-spacing: -0.025em; margin: 4px 0 6px; }
+body[data-page="ads"] .admin-heading h1 { font-size: 1.7rem; margin: 4px 0 6px; }
 body[data-page="ads"] .kicker {
   color: var(--ad-accent);
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.11em;
+  font-style: normal;
 }
 body[data-page="ads"] .portal-login-note,
 body[data-page="ads"] .broadcast-helper { color: var(--ad-muted); font-size: 0.88rem; line-height: 1.55; }
+body[data-page="ads"] .broadcast-helper code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82em;
+  background: var(--ad-neutral-bg);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+/* ── Section show/hide (sidebar nav drives these) ──────────────────────── */
+body[data-page="ads"] .admin-panel { display: none; }
+body[data-page="ads"] .admin-panel.active { display: block; animation: ad-fade 220ms var(--ad-ease-out) both; }
 
 /* ── Panels / cards ────────────────────────────────────────────────────── */
 body[data-page="ads"] .ops-panel {
@@ -179,15 +253,7 @@ body[data-page="ads"] .ops-panel {
   box-shadow: var(--ad-shadow-sm);
   padding: 22px 22px 24px;
   margin-bottom: 16px;
-  animation: ad-rise 460ms var(--ad-ease-out) both;
 }
-/* Short staggered entrance — decorative, never blocks interaction. */
-body[data-page="ads"] .admin-content .ops-panel:nth-child(1) { animation-delay: 20ms; }
-body[data-page="ads"] .admin-content .ops-panel:nth-child(2) { animation-delay: 60ms; }
-body[data-page="ads"] .admin-content .ops-panel:nth-child(3) { animation-delay: 100ms; }
-body[data-page="ads"] .admin-content .ops-panel:nth-child(4) { animation-delay: 140ms; }
-body[data-page="ads"] .admin-content .ops-panel:nth-child(n+5) { animation-delay: 170ms; }
-
 body[data-page="ads"] .panel-title-row {
   display: flex;
   align-items: center;
@@ -195,7 +261,14 @@ body[data-page="ads"] .panel-title-row {
   gap: 12px;
   margin-bottom: 14px;
 }
-body[data-page="ads"] .panel-title-row h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+body[data-page="ads"] .panel-title-row h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ad-text);
+  margin: 0;
+}
 
 /* ── KPI stat grid ─────────────────────────────────────────────────────── */
 body[data-page="ads"] .today-stats-grid {
@@ -224,6 +297,7 @@ body[data-page="ads"] .status-pill {
   font-size: 0.74rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  text-transform: none;
   background: var(--ad-neutral-bg);
   color: var(--ad-muted);
   border: none;
@@ -245,22 +319,25 @@ body[data-page="ads"] .button {
   border-radius: 10px;
   border: 1px solid transparent;
   cursor: pointer;
+  text-decoration: none;
   transition: transform 140ms var(--ad-ease-out), background-color 160ms var(--ad-ease-out), border-color 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
 }
 body[data-page="ads"] .button:active { transform: scale(0.97); }
+body[data-page="ads"] .button:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+body[data-page="ads"] .button:disabled { opacity: 0.6; cursor: progress; }
 body[data-page="ads"] .button.primary {
   background: var(--ad-accent);
   color: #fff;
   box-shadow: 0 1px 2px rgba(20, 20, 31, 0.12);
 }
-@media (hover: hover) and (pointer: fine) {
-  body[data-page="ads"] .button.primary:hover { background: #9c3055; box-shadow: var(--ad-shadow-md); }
-  body[data-page="ads"] .button.secondary:hover { background: var(--ad-surface-2); border-color: var(--ad-border-strong); }
-}
 body[data-page="ads"] .button.secondary {
   background: var(--ad-surface);
   color: var(--ad-text);
   border-color: var(--ad-border-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .button.primary:hover { background: var(--ad-accent-hover); box-shadow: var(--ad-shadow-md); }
+  body[data-page="ads"] .button.secondary:hover { background: var(--ad-surface-2); border-color: var(--ad-border-strong); }
 }
 
 /* ── Forms ─────────────────────────────────────────────────────────────── */
@@ -271,6 +348,7 @@ body[data-page="ads"] .settings-form {
   gap: 14px;
 }
 body[data-page="ads"] .settings-form { align-items: end; }
+body[data-page="ads"] .ugc-add-form { display: block; }
 body[data-page="ads"] label {
   display: flex;
   flex-direction: column;
@@ -290,10 +368,11 @@ body[data-page="ads"] textarea {
   border: 1px solid var(--ad-border-strong);
   border-radius: 10px;
   padding: 9px 11px;
+  width: 100%;
   transition: border-color 140ms var(--ad-ease-out), box-shadow 140ms var(--ad-ease-out);
 }
-body[data-page="ads"] textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
-body[data-page="ads"] input[type="file"] { padding: 7px 9px; cursor: pointer; }
+body[data-page="ads"] textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+body[data-page="ads"] input[type="file"] { padding: 7px 9px; cursor: pointer; font-weight: 500; }
 body[data-page="ads"] input:focus,
 body[data-page="ads"] select:focus,
 body[data-page="ads"] textarea:focus {
@@ -302,6 +381,77 @@ body[data-page="ads"] textarea:focus {
   box-shadow: 0 0 0 3px var(--ad-accent-soft);
 }
 body[data-page="ads"] label.span-2 { grid-column: 1 / -1; }
+body[data-page="ads"] .settings-form .button { grid-column: 1 / -1; justify-self: start; }
+body[data-page="ads"] .mini-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+body[data-page="ads"] .ugc-form-status { margin-top: 10px; font-size: 0.85rem; color: var(--ad-muted); min-height: 1em; }
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.88rem; }
+body[data-page="ads"] .admin-table thead th {
+  text-align: left;
+  color: var(--ad-faint);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 12px 9px;
+  border-bottom: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .admin-table tbody td { padding: 11px 12px; border-bottom: 1px solid var(--ad-border); }
+body[data-page="ads"] .admin-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Setup checklist ───────────────────────────────────────────────────── */
+body[data-page="ads"] .ads-config-list { margin: 14px 0 0; display: flex; flex-direction: column; gap: 2px; }
+body[data-page="ads"] .ads-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  transition: background-color 140ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ads-config-row:hover { background: var(--ad-surface-2); }
+}
+body[data-page="ads"] .ads-config-row .status-pill { flex: none; min-width: 86px; justify-content: center; }
+body[data-page="ads"] .ads-config-row strong { font-weight: 600; font-size: 0.9rem; }
+body[data-page="ads"] .ads-config-row code {
+  margin-left: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--ad-faint);
+  background: var(--ad-neutral-bg);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+
+/* ── Campaign cards / action log ───────────────────────────────────────── */
+body[data-page="ads"] .ugc-admin-card {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 16px;
+  margin-bottom: 10px;
+}
+body[data-page="ads"] .ugc-admin-body { display: flex; flex-direction: column; gap: 6px; }
+body[data-page="ads"] .ugc-admin-card strong { font-size: 0.95rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ugc-admin-card small { color: var(--ad-muted); font-size: 0.82rem; }
+body[data-page="ads"] .ads-budget-edit { gap: 8px; }
+body[data-page="ads"] .ads-budget-label { flex-direction: row; align-items: center; gap: 8px; font-size: 0.78rem; }
+body[data-page="ads"] .ads-budget-label input { width: 120px; }
+
+body[data-page="ads"] .ads-action-log { display: flex; flex-direction: column; gap: 8px; }
+body[data-page="ads"] .ads-action-log li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 13px;
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: 11px;
+}
+body[data-page="ads"] .ads-action-log small { color: var(--ad-muted); font-size: 0.82rem; }
 
 /* ── Creative media upload + library ───────────────────────────────────── */
 body[data-page="ads"] .ad-media-preview { margin: 12px 0 0; }
@@ -333,7 +483,7 @@ body[data-page="ads"] .ad-creative-media {
   aspect-ratio: 4 / 3;
   background: var(--ad-neutral-bg);
 }
-body[data-page="ads"] .ad-creative-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body[data-page="ads"] .ad-creative-media img { width: 100%; height: 100%; object-fit: cover; }
 body[data-page="ads"] .ad-creative-media .status-pill { position: absolute; top: 8px; left: 8px; }
 body[data-page="ads"] .ad-creative-noimg {
   width: 100%; height: 100%;
@@ -342,88 +492,39 @@ body[data-page="ads"] .ad-creative-noimg {
 }
 body[data-page="ads"] .ad-creative-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 6px; }
 body[data-page="ads"] .ad-creative-body strong { font-size: 0.92rem; letter-spacing: -0.01em; }
-body[data-page="ads"] .ad-creative-body p { color: var(--ad-muted); font-size: 0.82rem; line-height: 1.5; margin: 0; }
+body[data-page="ads"] .ad-creative-body p { color: var(--ad-muted); font-size: 0.82rem; line-height: 1.5; }
 body[data-page="ads"] .ad-creative-body .mini-actions { margin-top: auto; }
-body[data-page="ads"] .settings-form .button { grid-column: 1 / -1; justify-self: start; }
-body[data-page="ads"] .mini-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 
-/* ── Table ─────────────────────────────────────────────────────────────── */
-body[data-page="ads"] .admin-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.88rem; }
-body[data-page="ads"] .admin-table thead th {
-  text-align: left;
-  color: var(--ad-faint);
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0 12px 9px;
-  border-bottom: 1px solid var(--ad-border);
-}
-body[data-page="ads"] .admin-table tbody td { padding: 11px 12px; border-bottom: 1px solid var(--ad-border); }
-body[data-page="ads"] .admin-table tbody tr:last-child td { border-bottom: none; }
-
-/* ── Setup checklist ───────────────────────────────────────────────────── */
-body[data-page="ads"] .ads-config-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-body[data-page="ads"] .ads-config-row {
+/* ── Toasts ────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .toast-region {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px;
-  border-radius: 11px;
-  transition: background-color 140ms var(--ad-ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  body[data-page="ads"] .ads-config-row:hover { background: var(--ad-surface-2); }
-}
-body[data-page="ads"] .ads-config-row .status-pill { flex: none; min-width: 86px; justify-content: center; }
-body[data-page="ads"] .ads-config-row strong { font-weight: 600; font-size: 0.9rem; }
-body[data-page="ads"] .ads-config-row code {
-  margin-left: auto;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 0.78rem;
-  color: var(--ad-faint);
-  background: var(--ad-neutral-bg);
-  padding: 3px 8px;
-  border-radius: 7px;
-}
-
-/* ── Campaign cards / action log / audience ────────────────────────────── */
-body[data-page="ads"] .ugc-admin-card {
-  background: var(--ad-surface-2);
-  border: 1px solid var(--ad-border);
-  border-radius: var(--ad-radius);
-  padding: 16px;
-  margin-bottom: 10px;
-  transition: transform 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  body[data-page="ads"] .ugc-admin-card:hover { transform: translateY(-1px); box-shadow: var(--ad-shadow-sm); }
-}
-body[data-page="ads"] .ugc-admin-card small { color: var(--ad-muted); font-size: 0.82rem; }
-body[data-page="ads"] .ads-budget-label { flex-direction: row; align-items: center; gap: 8px; font-size: 0.78rem; }
-body[data-page="ads"] .ads-budget-label input { width: 120px; }
-
-body[data-page="ads"] .ads-action-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-body[data-page="ads"] .ads-action-log li {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  flex-wrap: wrap;
-  padding: 11px 13px;
-  background: var(--ad-surface-2);
-  border: 1px solid var(--ad-border);
-  border-radius: 11px;
+  z-index: 60;
+  pointer-events: none;
 }
-body[data-page="ads"] .ads-action-log small { color: var(--ad-muted); font-size: 0.82rem; }
-body[data-page="ads"] .ads-copy-option { animation: ad-rise 320ms var(--ad-ease-out) both; }
-
-/* ── Entrance keyframe ─────────────────────────────────────────────────── */
-@keyframes ad-rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+body[data-page="ads"] .toast {
+  background: var(--ad-sidebar);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: var(--ad-shadow-lg);
+  max-width: 340px;
+  pointer-events: auto;
+  animation: ad-toast-in 260ms var(--ad-ease-out) both;
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────── */
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes ad-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ad-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ad-toast-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ── Responsive — stack the sidebar into a top bar ─────────────────────── */
 @media (max-width: 860px) {
   body[data-page="ads"] .admin-shell { grid-template-columns: 1fr; }
   body[data-page="ads"] .admin-sidebar {
@@ -432,20 +533,20 @@ body[data-page="ads"] .ads-copy-option { animation: ad-rise 320ms var(--ad-ease-
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 12px 14px;
   }
   body[data-page="ads"] .admin-tab-group { display: none; }
-  body[data-page="ads"] .admin-brand { padding: 0 8px 0 0; border: none; }
+  body[data-page="ads"] .admin-brand { padding: 0 10px 0 0; }
   body[data-page="ads"] .admin-tab,
   body[data-page="ads"] .admin-tab-link { width: auto; }
-  body[data-page="ads"] .admin-main { padding: 20px 16px 48px; }
+  body[data-page="ads"] [data-ads-nav-badge] { margin-left: 4px; }
+  body[data-page="ads"] .admin-main { padding: 22px 16px 56px; }
+  body[data-page="ads"] .toast-region { right: 12px; left: 12px; bottom: 12px; }
+  body[data-page="ads"] .toast { max-width: none; }
 }
 
-/* ── Reduced motion: keep meaning, drop movement ───────────────────────── */
+/* ── Reduced motion ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  body[data-page="ads"] .ops-panel,
-  body[data-page="ads"] .admin-login,
-  body[data-page="ads"] .ads-copy-option { animation: none; }
-  body[data-page="ads"] * { transition-duration: 0.01ms !important; }
+  body[data-page="ads"] * { animation: none !important; transition-duration: 0.01ms !important; }
 }
