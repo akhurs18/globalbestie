@@ -71,6 +71,53 @@ function paymentActionUpdates(action, order = {}) {
   return {};
 }
 
+// Server-authoritative stock movement. In-stock items leave stock when an
+// order reaches "delivered" and return if it's later reversed. Atomic via the
+// adjust_inventory RPC (no read-modify-write race) and idempotent via the
+// durable orders.stock_deducted flag, so a reload or a second operator can't
+// double-count. Writes a shared audit row so stock history isn't trapped in
+// one browser's localStorage. Best-effort: never throws into the caller, so a
+// stock hiccup never blocks the status change itself. Returns the intended
+// stock_deducted value, or null when no movement applies / it failed.
+async function syncOrderStock(orderId, existing, toStatus) {
+  const wasDeducted = Boolean(existing.stock_deducted);
+  const goingDelivered = toStatus === "delivered" && !wasDeducted;
+  const reversing = wasDeducted && toStatus === "cancelled";
+  if (!goingDelivered && !reversing) return null;
+  const sign = goingDelivered ? -1 : 1;
+  try {
+    const items = await supabase(
+      `/rest/v1/order_items?order_id=eq.${encodeURIComponent(orderId)}&stock_mode=eq.in_stock&select=product_id,quantity,title`
+    );
+    const moved = [];
+    for (const it of items || []) {
+      if (!it.product_id) continue;
+      const qty = Math.max(1, Number(it.quantity || 1));
+      const onHand = await supabase("/rest/v1/rpc/adjust_inventory", {
+        method: "POST",
+        body: JSON.stringify({ p_id: it.product_id, p_delta: sign * qty }),
+      });
+      moved.push({ product_id: it.product_id, title: it.title, delta: sign * qty, on_hand: onHand });
+    }
+    if (moved.length) {
+      await supabase("/rest/v1/admin_audit", {
+        method: "POST",
+        body: JSON.stringify({
+          actor: "system",
+          action: goingDelivered ? "stock.deduct" : "stock.restock",
+          entity_type: "order",
+          entity_id: orderId,
+          payload: { reason: goingDelivered ? "Sold — order delivered" : "Restocked — order reversed", items: moved },
+          created_at: new Date().toISOString(),
+        }),
+      }).catch(() => {});
+    }
+    return goingDelivered;
+  } catch {
+    return null; // never block the status change on a stock failure
+  }
+}
+
 export default async (req, context) => {
   if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
   if (req.method !== "PATCH") return json({ error: "Method not allowed" }, { status: 405 });
@@ -132,6 +179,21 @@ export default async (req, context) => {
       headers: { Prefer: "return=representation" },
       body: JSON.stringify(updates),
     });
+
+    // Server-authoritative, atomic, idempotent stock movement on delivery /
+    // reversal. Runs after the status change so the flag only flips once the
+    // units have actually moved. The portal no longer touches stock here.
+    if (payload.status) {
+      const newFlag = await syncOrderStock(id, existing, payload.status);
+      if (newFlag !== null && newFlag !== Boolean(existing.stock_deducted)) {
+        await supabase(`/rest/v1/orders?id=eq.${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify({ stock_deducted: newFlag, updated_at: new Date().toISOString() }),
+        }).catch(() => {});
+        if (order) order.stock_deducted = newFlag;
+      }
+    }
 
     // Audit row — best-effort, never throws. Captures who changed what so
     // the team can answer "who marked this delivered yesterday?". The

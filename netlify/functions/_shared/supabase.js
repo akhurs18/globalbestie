@@ -283,7 +283,7 @@ const PRODUCT_COLUMNS = new Set([
   "customer_price_pkr", "delivery_days_min", "delivery_days_max",
   "stock_mode", "inventory", "low_stock_threshold",
   "image_url", "gallery_urls", "variants", "authenticity_note",
-  "receipt_url", "supplier_cost_pkr", "product_status",
+  "receipt_url", "supplier_cost_pkr",
   "social_proof", "featured", "preorder_weeks", "status", "source_url",
   "marketing_badge", "variant_display_hint",
   "created_at", "updated_at",

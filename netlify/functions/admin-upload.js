@@ -8,6 +8,15 @@ function safeName(value = "asset") {
   return value.replace(/[^a-zA-Z0-9._-]/g, "-");
 }
 
+// Hard allowlist of types this endpoint will store in the PUBLIC store-assets
+// bucket. SVG and HTML are deliberately excluded: they can carry scripts and,
+// served back from a public URL, would execute in a visitor's browser
+// (stored XSS). Mirrors the guard already on uploadTransferProof().
+const ALLOWED_TYPES = new Set([
+  "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/avif",
+]);
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — product photography headroom
+
 export default async (req) => {
   if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
@@ -21,6 +30,13 @@ export default async (req) => {
     if (!match) return json({ error: "Invalid file payload." }, { status: 400 });
 
     const [, contentType, base64] = match;
+    if (!ALLOWED_TYPES.has(String(contentType).toLowerCase())) {
+      return json({ error: `Unsupported file type: ${contentType}. Upload a JPG, PNG, WebP, GIF, HEIC or AVIF image.` }, { status: 415 });
+    }
+    const byteLength = Math.floor(base64.replace(/=+$/, "").length * 3 / 4);
+    if (byteLength > MAX_BYTES) {
+      return json({ error: `File too large (${(byteLength / 1024 / 1024).toFixed(1)} MB). Max 8 MB.` }, { status: 413 });
+    }
     const folder = safeName(payload.folder || "uploads");
     const objectPath = `${folder}/${Date.now()}-${safeName(file.name || "asset")}`;
 

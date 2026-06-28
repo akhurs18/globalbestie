@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260609-refunds" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260611-ops3" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -41,12 +41,17 @@
             <button class="admin-tab" type="button" data-admin-tab="cashflow">Cashflow <span data-tab-badge="cashflow"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="ledger">Ledger <span data-tab-badge="ledger"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments <span data-tab-badge="shipments"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="inventory">Inventory <span data-tab-badge="inventory"></span></button>
 
             <!-- Secondary: catalog/discovery (touched weekly, not daily) -->
             <p class="admin-tab-group">Catalog</p>
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
-            <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="besties">Besties (UGC) <span data-tab-badge="besties"></span></button>
+
+            <!-- Growth: Meta ads automation lives on its OWN page — it never
+                 touches the storefront, so it's kept out of the ops portal. -->
+            <p class="admin-tab-group">Growth</p>
+            <a class="admin-tab admin-tab-link" href="/ads.html">Meta Ads ↗</a>
 
             <!-- Configuration: rarely opened, hold at the bottom -->
             <p class="admin-tab-group">Config</p>
@@ -527,6 +532,50 @@
                 <div class="shipment-grid" data-shipment-batches></div>
               </section>
 
+              <!-- Inventory board — the in-stock counterpart to Shipments.
+                   Shipments tracks preorder batches sourced from the USA;
+                   Inventory tracks the items already in Pakistan that ship in
+                   days. Stat header = business read (units, value, low/out);
+                   board = inline stock control. Stats + rows render from JS
+                   (renderInventory); the controls below are static so their
+                   focus/value survive a board re-render. -->
+              <section class="admin-panel" data-admin-panel="inventory">
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Stock on hand</p>
+                    <h1>Inventory — ready to ship now.</h1>
+                  </div>
+                  <div class="mini-actions">
+                    <button class="button ghost" type="button" data-action="export-inventory-csv">Export CSV</button>
+                    <button class="button secondary" type="button" data-admin-tab-jump="products">Add / edit products</button>
+                  </div>
+                </div>
+                <p class="inventory-lede" data-inventory-lede></p>
+                <div class="inventory-stats" data-inventory-stats></div>
+                <div class="inventory-toolbar">
+                  <input type="search" class="inventory-search" data-inventory-search placeholder="Search by product or brand" aria-label="Search inventory" />
+                  <div class="inventory-chips" role="group" aria-label="Stock filter">
+                    <button class="inventory-chip active" type="button" data-inventory-filter="all">All</button>
+                    <button class="inventory-chip" type="button" data-inventory-filter="attention">Needs attention</button>
+                    <button class="inventory-chip" type="button" data-inventory-filter="healthy">Healthy</button>
+                  </div>
+                  <label class="inventory-sort">Sort
+                    <select data-inventory-sort>
+                      <option value="attention">Needs attention first</option>
+                      <option value="stock-asc">Stock: low → high</option>
+                      <option value="stock-desc">Stock: high → low</option>
+                      <option value="value-desc">Stock value: high → low</option>
+                      <option value="name">Name A → Z</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="inventory-board" data-inventory-board></div>
+                <section class="inventory-log-section" aria-label="Recent stock activity">
+                  <h2 class="inventory-log-title">Recent stock activity</h2>
+                  <ul class="inventory-log" data-inventory-log></ul>
+                </section>
+              </section>
+
               <section class="admin-panel" data-admin-panel="products">
                 <div class="admin-heading">
                   <div>
@@ -541,6 +590,10 @@
                     <span>Select all</span>
                     <span class="bulk-count-chip" data-products-total>0</span>
                   </label>
+                  <button class="button secondary" type="button" data-action="bulk-publish-products" data-bulk-button="publish" disabled>Publish</button>
+                  <button class="button secondary" type="button" data-action="bulk-draft-products" data-bulk-button="draft" disabled>Draft</button>
+                  <button class="button secondary" type="button" data-action="bulk-feature-products" data-bulk-button="feature" disabled>Feature</button>
+                  <button class="button secondary" type="button" data-action="bulk-unfeature-products" data-bulk-button="unfeature" disabled>Unfeature</button>
                   <button class="button secondary" type="button" data-action="bulk-remove-products" data-bulk-button="remove" disabled>
                     Remove from site
                   </button>
@@ -628,7 +681,7 @@
                        the product later. Everything is editable after fill. -->
                   <div class="url-import span-2">
                     <label class="span-2">
-                      Paste retailer URL to autofill
+                      <span class="fast-path-label"><span class="fast-path-badge">Fastest</span> Paste a retailer URL — autofills title, brand, price &amp; images</span>
                       <div class="url-import-row">
                         <input data-product-url-import type="url" placeholder="https://www.coach.com/products/..." />
                         <button class="button secondary" type="button" data-action="import-from-url">Autofill</button>
@@ -638,7 +691,7 @@
                     <div class="autofill-health" data-product-url-import-health aria-live="polite"></div>
                   </div>
                   <div class="form-section-title span-2">Product identity</div>
-                  <label>Title<input name="title" required /></label>
+                  <label>Title <span class="req-mark">required</span><input name="title" required /></label>
                   <label>Brand<input name="brand" placeholder="Coach, Nike, Rare Beauty..." /></label>
                   <label>Category<select name="category"><option>handbags</option><option>shoes</option><option>makeup</option><option>fragrance</option><option>accessories</option></select></label>
                   <label>Card badge (optional, shows on shop card)<input name="marketing_badge" maxlength="22" placeholder="New drop · Trending · Restocked" /></label>
@@ -656,7 +709,7 @@
                        collapsed "Cost breakdown" section below for the rare
                        case the admin wants to override them. -->
                   <label class="span-2 customer-price-row">
-                    <span class="customer-price-label">Customer price PKR (final)</span>
+                    <span class="customer-price-label">Customer price PKR (final) <span class="req-mark">required</span></span>
                     <div class="customer-price-input-wrap">
                       <span class="customer-price-prefix">Rs</span>
                       <input name="customer_price_pkr" type="number" min="0" step="100" required data-customer-price />
@@ -703,35 +756,33 @@
                   <button class="button primary" type="submit">Save product</button>
                   <output data-price-preview></output>
                 </form>
+                <div class="padmin-toolbar">
+                  <input type="search" class="padmin-search" data-padmin-search placeholder="Search product or brand" aria-label="Search products" />
+                  <div class="padmin-chips" role="group" aria-label="Filter products">
+                    <button class="padmin-chip active" type="button" data-padmin-filter="all">All</button>
+                    <button class="padmin-chip" type="button" data-padmin-filter="active">Live</button>
+                    <button class="padmin-chip" type="button" data-padmin-filter="draft">Draft</button>
+                    <button class="padmin-chip" type="button" data-padmin-filter="featured">Featured</button>
+                    <button class="padmin-chip" type="button" data-padmin-filter="low">Low</button>
+                    <button class="padmin-chip" type="button" data-padmin-filter="out">Out</button>
+                  </div>
+                  <select class="padmin-select-control" data-padmin-mode aria-label="Filter by stock mode">
+                    <option value="all">All modes</option>
+                    <option value="preorder">Preorder</option>
+                    <option value="in_stock">In stock</option>
+                  </select>
+                  <select class="padmin-select-control" data-padmin-sort aria-label="Sort products">
+                    <option value="newest">Newest</option>
+                    <option value="name">Name A–Z</option>
+                    <option value="price-desc">Price high→low</option>
+                    <option value="price-asc">Price low→high</option>
+                    <option value="stock-asc">Stock low→high</option>
+                  </select>
+                  <span class="padmin-count" data-padmin-count></span>
+                </div>
                 <div class="product-grid admin-product-grid" data-admin-products></div>
               </section>
 
-              <section class="admin-panel" data-admin-panel="trends">
-                <div class="admin-heading">
-                  <div>
-                    <p class="kicker">Scraper approvals</p>
-                    <h1>Approve trending products before publishing.</h1>
-                  </div>
-                  <div class="mini-actions">
-                    <button class="button secondary" type="button" data-action="run-scraper">Upload 10 review products</button>
-                  </div>
-                </div>
-                <div class="bulk-bar" data-trends-bulk-bar>
-                  <label class="bulk-select-all">
-                    <input type="checkbox" data-action="select-all-trends" />
-                    <span>Select all</span>
-                    <span class="bulk-count-chip" data-trends-total>0</span>
-                  </label>
-                  <button class="button primary" type="button" data-action="bulk-approve-trends" data-bulk-button="approve" disabled>
-                    Save selected as drafts
-                  </button>
-                  <button class="button secondary" type="button" data-action="bulk-deny-trends" data-bulk-button="deny" disabled>
-                    Deny selected
-                  </button>
-                </div>
-                <div class="bulk-run-status" data-trends-run-status aria-live="polite"></div>
-                <div class="trend-grid" data-trend-candidates></div>
-              </section>
 
               <!-- Besties (UGC) — curate the customer photos + quotes that
                    render on the storefront "From real besties" rail. Add a
@@ -817,6 +868,7 @@
                   <label class="span-2">Shipment notice<textarea name="shipment_notice" rows="2"></textarea></label>
                   <label class="span-2">Balance reminder template<textarea name="balance_reminder_template" rows="3"></textarea></label>
                   <label>Support WhatsApp<input name="support_whatsapp" /></label>
+
                   <button class="button primary" type="submit">Save settings</button>
                 </form>
                 <section class="ops-panel operator-alerts-panel">
@@ -851,6 +903,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260609-refunds"></script>
+    <script type="module" src="./assets/app.js?v=20260625-spend1"></script>
   </body>
 </html>

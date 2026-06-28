@@ -1,4 +1,5 @@
 import { getOrders, getSettings, hasSupabase, json, makeOrderId, supabase, uploadTransferProof } from "./_shared/supabase.js";
+import { customerPricePkr } from "./_shared/pricing.js";
 import { canonPhone, isValidPkMobile, formatPkDisplay } from "./_shared/phone.js";
 import { sendWhatsappMessage, interpolate } from "./_shared/whatsapp.js";
 import { currentCustomer } from "./_shared/auth.js";
@@ -156,6 +157,10 @@ async function repriceItems(items) {
   }
   const byId = new Map(products.map((p) => [p.id, p]));
   const notes = [];
+  // Overselling guard — collected here, enforced by the POST handler. An
+  // in-stock line can't be ordered for more units than are on hand. Preorder
+  // items hold no stock, so they never trip this.
+  const stockIssues = [];
   if (sourcingItems.length) {
     notes.push(`${sourcingItems.length} sourcing request${sourcingItems.length === 1 ? "" : "s"} — team will confirm final price.`);
   }
@@ -176,15 +181,22 @@ async function repriceItems(items) {
     if (product.status && product.status !== "active") {
       notes.push(`Product ${item.title} is no longer active.`);
     }
-    const fx = Number(product.fx_rate || 282);
-    const margin = Number(product.markup_rate || 0.25);
-    const shipping = Number(product.shipping_pkr || 0);
-    const usd = Number(product.usa_price_usd || 0);
-    const directPkr = Number(product.customer_price_pkr || 0);
-    // In-stock items priced directly in PKR skip the USD/FX/markup math.
-    const canonical = directPkr > 0
-      ? Math.ceil(directPkr)
-      : Math.ceil(usd * fx * (1 + margin) + shipping);
+    // Overselling check for in-stock lines (preorder holds no stock).
+    if ((product.stock_mode || item.stock_mode) === "in_stock") {
+      const onHand = Math.max(0, Number(product.inventory || 0));
+      const want = Math.max(1, Number(item.quantity || 1));
+      if (want > onHand) {
+        stockIssues.push({
+          product_id: product.id,
+          title: product.title,
+          requested: want,
+          available: onHand,
+        });
+      }
+    }
+    // Server-authoritative price via the one shared pricing helper. In-stock
+    // items resolve to their direct PKR; preorder items derive from USD retail.
+    const canonical = customerPricePkr(product);
     const clientPrice = Number(item.unit_price_pkr || 0);
     // Allow ±1% drift to absorb rounding. Anything else, server price wins.
     const drift = clientPrice > 0 ? Math.abs(canonical - clientPrice) / canonical : 1;
@@ -201,7 +213,7 @@ async function repriceItems(items) {
       unit_price_pkr: canonical,
     };
   });
-  return { items: repriced, notes };
+  return { items: repriced, notes, stockIssues };
 }
 
 function splitPayment(items = [], total = 0) {
@@ -430,7 +442,23 @@ export default async (req) => {
       }
 
       // === Server-trusted pricing: re-price from product rows ===
-      const { items: pricedItems, notes: pricingNotes } = await repriceItems(payload.items);
+      const { items: pricedItems, notes: pricingNotes, stockIssues } = await repriceItems(payload.items);
+
+      // === Overselling guard: reject before the order ever lands ===
+      // An in-stock item can't be sold past the units on hand. The storefront
+      // also checks this client-side, but stale catalog data or two near-
+      // simultaneous orders can slip past that — the server is the backstop.
+      if (stockIssues && stockIssues.length) {
+        const lines = stockIssues
+          .map((s) => `${s.title}: ${s.available} left (you asked for ${s.requested})`)
+          .join("; ");
+        return json({
+          error: `Some items are no longer in stock — ${lines}. Adjust the quantity and try again.`,
+          code: "insufficient_stock",
+          stockIssues,
+        }, { status: 409 });
+      }
+
       const payment = splitPayment(pricedItems, payload.total_pkr);
 
       // === Fallback dedupe: same phone + same total within 60 s ===

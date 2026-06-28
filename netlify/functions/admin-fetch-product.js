@@ -10,6 +10,7 @@
 //   POST { urls: ["https://...", ...] }          → { results: [ { url, ...meta }, ... ] }
 
 import { downloadAndStoreImage, getSettings, hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
+import { suggestPricePkr } from "./_shared/pricing.js";
 
 function decodeEntities(s = "") {
   return s
@@ -256,11 +257,8 @@ const SHIPPING_DEFAULTS_PKR = {
 };
 
 function suggestedPkrPrice(usd, category, settings) {
-  const fx = Number(settings.fx_rate || 282);
-  const markup = Number(settings.markup_rate || 0.25);
   const shipping = SHIPPING_DEFAULTS_PKR[category] || 3500;
-  const retailPkr = Number(usd || 0) * fx;
-  return Math.ceil(retailPkr + retailPkr * markup + shipping);
+  return suggestPricePkr(usd, shipping, settings);
 }
 
 // Look up an existing product by source_url so the tray can flag

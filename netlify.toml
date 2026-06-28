@@ -50,9 +50,19 @@ for = "/portal.html"
 [headers.values]
   X-Robots-Tag = "noindex, nofollow"
 
+[[headers]]
+for = "/ads.html"
+[headers.values]
+  X-Robots-Tag = "noindex, nofollow"
+
 [[redirects]]
 from = "/portal"
 to = "/portal.html"
+status = 200
+
+[[redirects]]
+from = "/ads"
+to = "/ads.html"
 status = 200
 
 [[redirects]]

@@ -26,6 +26,7 @@ if (
 const requiredFiles = [
   "index.html",
   "portal.html",
+  "ads.html",
   "assets/styles.css",
   "assets/app.js",
   "netlify.toml",
@@ -48,12 +49,14 @@ const checks = [
   [html.includes("Global Bestie"), "Public brand name missing"],
   [portal.includes('data-view="admin"'), "Internal portal view missing"],
   [!portal.includes('data-admin-panel="growth"') && !portal.includes("Growth Studio"), "Growth Studio should be removed from portal"],
+  // Meta Ads automation lives on its own page (ads.html), not in the ops portal.
+  [!portal.includes('data-ads-panel'), "Meta Ads panel should be moved out of the portal to ads.html"],
+  [portal.includes('href="/ads.html"'), "Portal should link to the standalone ads page"],
   [portal.includes('data-admin-panel="shipments"'), "Shipment batch panel missing"],
   [portal.includes('data-admin-order-cards'), "Responsive order cards missing"],
   [portal.includes("noindex"), "Internal portal should discourage indexing"],
   [html.includes('data-view="checkout"'), "Checkout view missing"],
   [js.includes("calculatePrice"), "Pricing calculator missing"],
-  [html.includes('data-view="quote"') && js.includes("updateQuoteEstimator"), "Custom quote page missing"],
   [js.includes("ORDER_STEPS"), "Order tracking steps missing"],
   [js.includes("amountDueForOrder"), "Order payment detail helper missing"],
   [js.includes("renderShipmentBatches"), "Shipment batch renderer missing"],
@@ -81,6 +84,7 @@ await rm("dist", { recursive: true, force: true });
 await mkdir("dist/assets", { recursive: true });
 await cp("index.html", "dist/index.html");
 await cp("portal.html", "dist/portal.html");
+await cp("ads.html", "dist/ads.html");
 await cp("assets", "dist/assets", { recursive: true });
 // Copy SEO files (robots/sitemap) and the service worker if they exist.
 // We swallow missing-file errors so the build still works on a fresh

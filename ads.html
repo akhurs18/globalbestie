@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Global Bestie Meta Ads automation — separate from the operations portal." />
+    <title>Global Bestie Ads | Meta Automation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260611-ops3" />
+  </head>
+  <body data-page="ads">
+    <a class="skip-link" href="#main">Skip to ads</a>
+
+    <main id="main">
+      <section class="view active" data-view="admin">
+        <div class="admin-shell">
+          <aside class="admin-sidebar">
+            <div class="brand admin-brand">
+              <span class="brand-mark"><img src="/assets/logo.png" alt="Global Bestie logo" width="44" height="44" loading="eager" decoding="async" onerror="this.outerHTML='G'" /></span>
+              <span><strong>Global Bestie</strong><small>Growth · Ads</small></span>
+            </div>
+            <!-- This page is deliberately separate from the operations portal:
+                 ads run on Meta and never touch the storefront, so they don't
+                 belong in the order/inventory workflow. -->
+            <a class="admin-tab admin-tab-link" href="/portal.html">← Back to portal</a>
+            <p class="admin-tab-group">Growth</p>
+            <span class="admin-tab active" aria-current="page">Meta Ads</span>
+          </aside>
+
+          <div class="admin-main">
+            <form class="admin-login" data-admin-login>
+              <p class="kicker">Team access</p>
+              <h1>Enter portal secret.</h1>
+              <p class="portal-login-note">Same key as the operations portal. For local preview, enter any temporary key.</p>
+              <label>Portal key<input name="secret" type="password" placeholder="Team portal key" /></label>
+              <button class="button primary" type="submit">Unlock ads</button>
+            </form>
+
+            <div class="admin-content hidden" data-admin-content>
+              <!-- Meta Ads — the four-phase ads bot surface. Reporting is
+                   read-only and auto-refreshes from /api/admin/ads-report.
+                   Creatives are drafted then queued; campaigns are BUILT
+                   paused and only go live when an operator clicks Launch. -->
+              <section class="admin-panel active" data-ads-panel>
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Growth · Meta automation</p>
+                    <h1>Meta Ads bot.</h1>
+                    <p class="portal-login-note">Reporting and the optimizer run 24/7 in the cloud. New campaigns are built paused — nothing spends until you click <strong>Launch</strong>.</p>
+                  </div>
+                  <div class="mini-actions">
+                    <span class="status-pill" data-ads-status>Checking…</span>
+                    <button class="button secondary" type="button" data-action="ads-refresh">Refresh</button>
+                  </div>
+                </div>
+
+                <!-- Phase 1: performance dashboard (read-only) -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Performance · last 7 days</h2>
+                    <span class="status-pill in_stock" data-ads-window>—</span>
+                  </div>
+                  <div class="today-stats-grid" data-ads-kpis>
+                    <p class="portal-login-note">Loading insights…</p>
+                  </div>
+                  <table class="admin-table" data-sortable data-table-id="ads-campaigns">
+                    <thead>
+                      <tr>
+                        <th>Campaign</th><th>Spend</th><th>Purchases</th>
+                        <th>Revenue</th><th>ROAS</th><th>CPA</th>
+                      </tr>
+                    </thead>
+                    <tbody data-ads-campaign-rows>
+                      <tr><td colspan="6" class="portal-login-note">No campaign data yet.</td></tr>
+                    </tbody>
+                  </table>
+                </section>
+
+                <!-- Audience intelligence: data-driven targeting recommendation
+                     from /api/admin/ads-audience. New campaigns are built with
+                     this targeting automatically (unless overridden). -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Audience intelligence</h2>
+                    <button class="button secondary" type="button" data-action="ads-audience-refresh">Refresh audience data</button>
+                  </div>
+                  <p class="broadcast-helper">New campaigns target who actually converts (age · gender · region), computed from your Meta performance. Refreshes weekly.</p>
+                  <div data-ads-audience>
+                    <p class="portal-login-note">Loading audience recommendation…</p>
+                  </div>
+                </section>
+
+                <!-- Phase 2 + 3: draft a creative, then build a paused campaign -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Create a campaign</h2>
+                    <span class="status-pill preorder">Builds paused · data-targeted</span>
+                  </div>
+                  <form class="ugc-add-form" data-ads-create-form>
+                    <div class="ugc-form-grid">
+                      <label>Product
+                        <select name="product_id" data-ads-product required>
+                          <option value="">Select a product…</option>
+                        </select>
+                      </label>
+                      <label>Daily budget (PKR)
+                        <input name="daily_budget_pkr" type="number" min="100" step="100" placeholder="1500" required />
+                      </label>
+                    </div>
+                    <div class="mini-actions">
+                      <button class="button secondary" type="button" data-action="ads-draft-copy">Draft ad copy</button>
+                    </div>
+                    <div data-ads-copy-options></div>
+                    <div class="ugc-form-status" data-ads-create-status aria-live="polite"></div>
+                  </form>
+                </section>
+
+                <!-- Phase 3: approval queue — built campaigns awaiting launch -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Approval queue</h2>
+                    <span class="status-pill" data-ads-queue-count>0 waiting</span>
+                  </div>
+                  <div data-ads-campaign-queue>
+                    <p class="portal-login-note">No campaigns built yet.</p>
+                  </div>
+                </section>
+
+                <!-- Phase 4: optimizer action log + dry-run preview -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Optimizer activity</h2>
+                    <button class="button secondary" type="button" data-action="ads-optimize-preview">Preview (dry-run)</button>
+                  </div>
+                  <p class="broadcast-helper">Autopilot is controlled in the guardrails below. With it off, the optimizer only logs what it would do.</p>
+                  <div data-ads-actions>
+                    <p class="portal-login-note">No optimizer activity yet.</p>
+                  </div>
+                </section>
+
+                <!-- Ads guardrails — cap what the Meta optimizer can do. Lives
+                     here (not in the store Settings) because it's ads-only
+                     config and never affects the storefront. -->
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Guardrails</h2>
+                    <span class="status-pill preorder">Caps the optimizer</span>
+                  </div>
+                  <p class="broadcast-helper">Autopilot off = the optimizer logs what it <em>would</em> do but never spends.</p>
+                  <form class="settings-form" data-ads-settings-form>
+                    <label>Optimizer autopilot
+                      <select name="ads_autopilot">
+                        <option value="false">Off — log only (dry-run)</option>
+                        <option value="true">On — let the bot adjust spend</option>
+                      </select>
+                    </label>
+                    <label>Max daily budget per campaign (PKR)<input name="ads_max_daily_budget_pkr" type="number" min="0" step="100" placeholder="5000" /></label>
+                    <label>Scale step when winning (%)<input name="ads_scale_step_pct" type="number" min="0" step="5" placeholder="20" /></label>
+                    <label>Target ROAS to scale<input name="ads_target_roas" type="number" min="0" step="0.1" placeholder="2.0" /></label>
+                    <label>Max CPA before pausing (PKR)<input name="ads_max_cpa_pkr" type="number" min="0" step="100" placeholder="2500" /></label>
+                    <label>Learn-budget before pausing a dud (PKR)<input name="ads_learn_spend_pkr" type="number" min="0" step="100" placeholder="1500" /></label>
+                    <button class="button primary" type="submit">Save guardrails</button>
+                  </form>
+                </section>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="./assets/app.js?v=20260625-spend1"></script>
+  </body>
+</html>
