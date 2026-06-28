@@ -1554,14 +1554,20 @@ function productAdminFilters() {
   return state._productAdmin || (state._productAdmin = { search: "", mode: "all", status: "all", category: "all", sort: "newest" });
 }
 function productIsDraft(p) { return (p.status || p.product_status) === "draft"; }
+function productIsArchived(p) { return (p.status || p.product_status) === "archived"; }
 function filteredAdminProducts() {
   const f = productAdminFilters();
   let items = (state.products || []).slice();
+  // Archived products are "removed from site" — keep them out of the Live/Draft
+  // views so what's live vs draft is unambiguous. They stay reachable via the
+  // dedicated "Archived" filter chip.
+  if (f.status !== "archived") items = items.filter((p) => !productIsArchived(p));
   const q = (f.search || "").trim().toLowerCase();
   if (q) items = items.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q));
   if (f.mode !== "all") items = items.filter((p) => (p.stock_mode || "preorder") === f.mode);
   if (f.status === "active") items = items.filter((p) => !productIsDraft(p));
   else if (f.status === "draft") items = items.filter(productIsDraft);
+  else if (f.status === "archived") items = items.filter(productIsArchived);
   else if (f.status === "featured") items = items.filter((p) => p.featured);
   else if (f.status === "low") items = items.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) > 0 && Number(p.inventory || 0) <= Number(p.low_stock_threshold ?? 2));
   else if (f.status === "out") items = items.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0);
@@ -1578,6 +1584,7 @@ function filteredAdminProducts() {
 }
 function productAdminRowHTML(p) {
   const draft = productIsDraft(p);
+  const archived = productIsArchived(p);
   const inStock = p.stock_mode === "in_stock";
   const qty = Math.max(0, Number(p.inventory || 0));
   const low = inStock && qty > 0 && qty <= Number(p.low_stock_threshold ?? 2);
@@ -1603,7 +1610,7 @@ function productAdminRowHTML(p) {
           ${out ? `<span class="padmin-stock-flag out">out</span>` : low ? `<span class="padmin-stock-flag low">low</span>` : ""}
         ` : `<span class="padmin-na">preorder</span>`}
       </div>
-      <button class="padmin-toggle ${draft ? "" : "is-on"}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft}" title="${draft ? "Draft — click to publish" : "Live — click to move to draft"}">${draft ? "Draft" : "Live"}</button>
+      <button class="padmin-toggle ${archived ? "is-archived" : draft ? "" : "is-on"}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${archived ? "Archived — click to restore as draft" : draft ? "Draft — click to publish" : "Live — click to move to draft"}">${archived ? "Archived" : draft ? "Draft" : "Live"}</button>
       <button class="padmin-star ${p.featured ? "is-on" : ""}" type="button" data-action="toggle-product-featured" data-product-id="${attr(p.id)}" aria-pressed="${!!p.featured}" aria-label="${p.featured ? "Unfeature" : "Feature"} ${attr(p.title)}" title="${p.featured ? "Featured on homepage" : "Feature on homepage"}">${p.featured ? "★" : "☆"}</button>
       <div class="padmin-actions">
         <button class="button ghost padmin-edit" type="button" data-action="edit-product" data-product-id="${attr(p.id)}">Edit</button>
@@ -1617,7 +1624,11 @@ function renderAdminProductsTable() {
   if (!grid) return;
   const f = productAdminFilters();
   const items = filteredAdminProducts();
-  const total = (state.products || []).length;
+  // Count against the relevant universe: archived view counts archived; every
+  // other view counts the live+draft catalog (archived are removed-from-site).
+  const total = f.status === "archived"
+    ? (state.products || []).filter(productIsArchived).length
+    : (state.products || []).filter((p) => !productIsArchived(p)).length;
   qsa("[data-padmin-filter]").forEach((c) => c.classList.toggle("active", c.dataset.padminFilter === f.status));
   const countChip = qs("[data-padmin-count]");
   if (countChip) countChip.textContent = `${items.length}/${total}`;
@@ -7290,26 +7301,115 @@ async function loadAdsAdmin() {
   populateAdsProductSelect();
   // Pull all surfaces in parallel; tolerate any one being unconfigured. The
   // audience read is cheap/cached (no Meta call) — only the refresh recomputes.
-  const [report, queue, actions, audience] = await Promise.all([
+  const emptyConfig = { keys: {}, publisher_platforms: "instagram" };
+  const [report, queue, actions, audience, config, creatives] = await Promise.all([
     apiFetch(`/api/admin/ads-report?days=7`, {}, { configured: false, totals: {}, campaigns: [] }),
     apiFetch(`/api/admin/ads-create`, {}, { configured: false, campaigns: [] }),
     apiFetch(`/api/admin/ads-optimize?preview=1`, {}, { configured: false, actions: [], dry_run: true }).catch(() => ({ actions: [] })),
     apiFetch(`/api/admin/ads-audience?cached=1`, {}, { configured: false, reco: null }).catch(() => ({ reco: null })),
+    apiFetch(`/api/admin/ads-config`, {}, emptyConfig).catch(() => emptyConfig),
+    apiFetch(`/api/admin/ads-creative`, {}, { creatives: [] }).catch(() => ({ creatives: [] })),
   ]);
   state._adsReport = report;
   state._adsQueue = queue.campaigns || [];
   state._adsActions = actions.actions || [];
   state._adsAudience = audience.reco || null;
+  state._adsConfig = config;
+  state._adsCreatives = creatives.creatives || [];
 
   if (statusPill) {
     const live = report.configured && queue.configured;
     statusPill.textContent = live ? "Connected" : "Not configured";
     statusPill.className = `status-pill ${live ? "in_stock" : "soldout"}`;
   }
+  renderAdsConfig(state._adsConfig);
   renderAdsDashboard(report);
   renderAdsQueue(state._adsQueue);
   renderAdsActions(state._adsActions);
   renderAdsAudience(state._adsAudience);
+  renderAdsCreatives(state._adsCreatives);
+}
+
+// Creative library (uploaded media + copy) and the campaign-builder dropdown
+// that picks from it.
+function renderAdsCreatives(creatives) {
+  const list = creatives || [];
+  const ready = list.filter((c) => c.status === "ready" || c.status === "draft");
+  // Library cards
+  const host = qs("[data-ads-creative-library]");
+  const countPill = qs("[data-ads-creative-count]");
+  if (countPill) countPill.textContent = `${ready.length} ready`;
+  const navBadge = qs('[data-ads-nav-badge="creatives"]');
+  if (navBadge) navBadge.textContent = ready.length ? String(ready.length) : "";
+  if (host) {
+    host.innerHTML = list.length
+      ? list.map((c) => {
+          const used = c.status === "in_use";
+          const img = c.image_url
+            ? `<img src="${safeUrl(imageUrl(c.image_url), "")}" alt="${attr(c.headline)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ad-creative-noimg',textContent:'No image'}));" />`
+            : `<div class="ad-creative-noimg">No image</div>`;
+          return `
+          <article class="ad-creative-card">
+            <div class="ad-creative-media">${img}<span class="status-pill ${used ? "in_stock" : "preorder"}">${esc(c.status)}</span></div>
+            <div class="ad-creative-body">
+              <strong>${esc(c.headline)}</strong>
+              <p>${esc((c.primary_text || "").slice(0, 120))}${(c.primary_text || "").length > 120 ? "…" : ""}</p>
+              <div class="mini-actions">
+                ${c.status !== "archived" ? `<button class="button secondary" type="button" data-action="ads-archive-creative" data-creative-id="${attr(c.id)}">Archive</button>` : ""}
+              </div>
+            </div>
+          </article>`;
+        }).join("")
+      : `<p class="portal-login-note">No creatives yet — upload your first above.</p>`;
+  }
+  // Campaign-builder dropdown
+  const select = qs("[data-ads-campaign-creative]");
+  if (select) {
+    const current = select.value;
+    select.innerHTML = `<option value="">Select a ready creative…</option>` +
+      ready.map((c) => `<option value="${attr(c.id)}">${esc(c.headline)}</option>`).join("");
+    if (current) select.value = current;
+  }
+}
+
+// Setup checklist — shows which META_* env vars Netlify has detected. Values
+// are never sent to the browser, only presence booleans.
+function renderAdsConfig(config) {
+  const host = qs("[data-ads-config]");
+  const pill = qs("[data-ads-config-status]");
+  if (!host) return;
+  const keys = (config && config.keys) || {};
+  // [env var, label, required?]
+  const rows = [
+    ["META_SYSTEM_USER_TOKEN", "System user token", true],
+    ["META_AD_ACCOUNT_ID", "Ad account ID", true],
+    ["META_PAGE_ID", "Facebook Page ID", true],
+    ["META_INSTAGRAM_ACTOR_ID", "Instagram account ID", true],
+    ["META_PIXEL_ID", "Pixel ID", false],
+  ];
+  const missingRequired = rows.filter(([k, , req]) => req && !keys[k]).length;
+  if (pill) {
+    pill.textContent = missingRequired === 0 ? "Ready" : `${missingRequired} missing`;
+    pill.className = `status-pill ${missingRequired === 0 ? "in_stock" : "soldout"}`;
+  }
+  const navBadge = qs('[data-ads-nav-badge="setup"]');
+  if (navBadge) navBadge.textContent = missingRequired > 0 ? String(missingRequired) : "";
+  host.innerHTML = `
+    <ul class="ads-config-list">
+      ${rows.map(([k, label, req]) => {
+        const ok = !!keys[k];
+        return `<li class="ads-config-row">
+          <span class="status-pill ${ok ? "in_stock" : (req ? "soldout" : "preorder")}">${ok ? "✓ detected" : (req ? "missing" : "optional")}</span>
+          <strong>${esc(label)}</strong>
+          <code>${esc(k)}</code>
+        </li>`;
+      }).join("")}
+    </ul>
+    <p class="portal-login-note">Placements: <strong>${esc(config?.publisher_platforms || "instagram")}</strong>${
+      missingRequired === 0
+        ? " · all required keys detected — ads can run."
+        : " · add the missing required keys in Netlify, then redeploy."
+    }</p>`;
 }
 
 // Show the data-driven targeting recommendation new campaigns will use.
@@ -7391,16 +7491,13 @@ function renderAdsDashboard(report) {
 function renderAdsQueue(campaigns) {
   const host = qs("[data-ads-campaign-queue]");
   const count = qs("[data-ads-queue-count]");
-  const badge = qs('[data-tab-badge="ads"]');
+  const navBadge = qs('[data-ads-nav-badge="campaigns"]');
   if (!host) return;
   const waiting = campaigns.filter((c) => c.approval_state === "built");
   if (count) count.textContent = `${waiting.length} waiting`;
-  if (badge) {
-    badge.textContent = waiting.length ? String(waiting.length) : "";
-    badge.classList.toggle("has-count", waiting.length > 0);
-  }
+  if (navBadge) navBadge.textContent = waiting.length ? String(waiting.length) : "";
   if (!campaigns.length) {
-    host.innerHTML = `<p class="portal-login-note">No campaigns built yet. Draft ad copy above and build one — it stays paused until you launch it.</p>`;
+    host.innerHTML = `<p class="portal-login-note">No campaigns built yet. Upload a creative, then build one from the Campaigns tab — it stays paused until you launch it.</p>`;
     return;
   }
   const stateClass = (s) => s === "launched" ? "in_stock" : s === "rejected" ? "soldout" : s === "paused" ? "preorder" : "preorder";
@@ -7452,72 +7549,99 @@ function renderAdsActions(actions) {
     </li>`).join("")}</ul>`;
 }
 
-// Draft ad copy for the selected product and render the angle options. Picking
-// one saves it as a creative and builds a paused campaign in one step.
-async function adsDraftCopy() {
-  const form = qs("[data-ads-create-form]");
-  const statusEl = qs("[data-ads-create-status]");
-  const optionsEl = qs("[data-ads-copy-options]");
-  const productId = form?.elements.product_id?.value;
-  if (!productId) { if (statusEl) statusEl.textContent = "Pick a product first."; return; }
-  if (statusEl) statusEl.textContent = "Drafting copy…";
+// Upload the operator's chosen image, then save it as a creative (image + copy)
+// into the library. No external AI — the team supplies the media and the words.
+async function adsUploadMedia() {
+  const form = qs("[data-ads-creative-form]");
+  const statusEl = qs("[data-ads-creative-status]");
+  if (!form) return;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const file = qs("[data-ad-media-file]")?.files?.[0];
+  if (!data.headline?.trim() || !data.primary_text?.trim()) {
+    if (statusEl) statusEl.textContent = "Headline and primary text are required."; return;
+  }
+  // Destination: a linked product deep-links to its page; otherwise the typed URL.
+  const destination = data.product_id
+    ? `/product/${data.product_id}`
+    : (data.destination_url || "").trim();
+  if (!destination) { if (statusEl) statusEl.textContent = "Pick a product or enter a destination URL."; return; }
+
+  const restore = withSubmitState(form, "Uploading…");
   try {
-    const data = await apiFetch("/api/admin/ads-creative", {
-      method: "POST", body: JSON.stringify({ action: "generate", product_id: productId }),
-    });
-    state._adsDraft = { product_id: productId, image_url: data.image_url, destination_url: data.destination_url };
-    if (statusEl) statusEl.textContent = "";
-    if (optionsEl) {
-      optionsEl.innerHTML = (data.options || []).map((o, i) => `
-        <article class="ugc-admin-card ads-copy-option">
-          <div class="ugc-admin-body">
-            <strong>${esc(o.headline)}</strong>
-            <p>${esc(o.primary_text)}</p>
-            <small>${esc(o.description || "")}</small>
-            <div class="mini-actions">
-              <button class="button primary" type="button" data-action="ads-build" data-ads-option="${i}">Use &amp; build (paused)</button>
-            </div>
-          </div>
-        </article>`).join("");
-      state._adsDraftOptions = data.options || [];
+    let imageUrlValue = "";
+    if (file) {
+      if (statusEl) statusEl.textContent = "Uploading image…";
+      const compressed = await compressImageFile(file);
+      const uploaded = await apiFetch("/api/admin/upload", {
+        method: "POST",
+        body: JSON.stringify({ folder: "ad-creatives", file: await fileToPayload(compressed) }),
+      }, { publicUrl: URL.createObjectURL(file), configured: false });
+      imageUrlValue = uploaded.publicUrl || "";
     }
+    if (statusEl) statusEl.textContent = "Saving creative…";
+    await apiFetch("/api/admin/ads-creative", {
+      method: "POST",
+      body: JSON.stringify({ action: "add", creative: {
+        product_id: data.product_id || null,
+        headline: data.headline.trim(),
+        primary_text: data.primary_text.trim(),
+        cta_type: data.cta_type || "SHOP_NOW",
+        destination_url: destination,
+        image_url: imageUrlValue,
+        source: "manual",
+        status: "ready",
+      } }),
+    });
+    form.reset();
+    const prev = qs("[data-ad-media-preview]"); if (prev) { prev.hidden = true; prev.innerHTML = ""; }
+    if (statusEl) statusEl.textContent = "Saved to the library — pick it in Campaigns to build an ad.";
+    await loadAdsAdmin();
+    toast("Creative saved.");
   } catch (err) {
-    if (statusEl) statusEl.textContent = `Could not draft copy: ${err.message || err}`;
+    if (statusEl) statusEl.textContent = `Upload failed: ${err.message || err}`;
+  } finally {
+    restore();
   }
 }
 
-// Save the chosen creative, then build the paused campaign with the form budget.
-async function adsBuildFromOption(index) {
+// Build a paused campaign from a chosen library creative + daily budget.
+async function adsBuildCampaign() {
   const form = qs("[data-ads-create-form]");
   const statusEl = qs("[data-ads-create-status]");
-  const option = (state._adsDraftOptions || [])[index];
-  const draft = state._adsDraft;
-  if (!option || !draft) return;
-  const budget = Number(form?.elements.daily_budget_pkr?.value || 0);
+  if (!form) return;
+  const creativeRef = form.elements.creative_ref?.value;
+  const budget = Number(form.elements.daily_budget_pkr?.value || 0);
+  if (!creativeRef) { if (statusEl) statusEl.textContent = "Pick a creative."; return; }
   if (!budget) { if (statusEl) statusEl.textContent = "Enter a daily budget."; return; }
-  if (statusEl) statusEl.textContent = "Building paused campaign…";
+  const restore = withSubmitState(form, "Building…");
   try {
-    const saved = await apiFetch("/api/admin/ads-creative", {
-      method: "POST",
-      body: JSON.stringify({ action: "add", creative: {
-        product_id: draft.product_id, headline: option.headline, primary_text: option.primary_text,
-        description: option.description, destination_url: draft.destination_url,
-        image_url: draft.image_url, source: "ai_generated", status: "ready",
-      } }),
-    });
-    const creativeId = saved.creative?.id;
     const built = await apiFetch("/api/admin/ads-create", {
       method: "POST",
-      body: JSON.stringify({ action: "build", creative_ref: creativeId, daily_budget_pkr: budget, created_by: "operator" }),
+      body: JSON.stringify({ action: "build", creative_ref: creativeRef, daily_budget_pkr: budget, created_by: "operator" }),
     });
     if (statusEl) statusEl.textContent = built.clamped
-      ? "Built — budget was clamped to your guardrail ceiling."
-      : "Built (paused). Review it in the approval queue below, then launch.";
-    qs("[data-ads-copy-options]").innerHTML = "";
+      ? "Built — budget was clamped to your guardrail ceiling. Review it in the approval queue, then launch."
+      : "Built (paused). Review it in the approval queue, then launch.";
+    form.reset();
     await loadAdsAdmin();
     toast("Campaign built (paused).");
   } catch (err) {
     if (statusEl) statusEl.textContent = `Build failed: ${err.message || err}`;
+  } finally {
+    restore();
+  }
+}
+
+async function adsArchiveCreative(id) {
+  if (!id || !confirm("Archive this creative? It will no longer be selectable for new campaigns.")) return;
+  try {
+    await apiFetch("/api/admin/ads-creative", {
+      method: "POST", body: JSON.stringify({ action: "status", id, status: "archived" }),
+    });
+    toast("Creative archived.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not archive: ${err.message || err}`);
   }
 }
 
@@ -12870,8 +12994,7 @@ function wireEvents() {
     const trendId = target.dataset.trendId;
     // Meta Ads panel actions
     if (action === "ads-refresh") return void loadAdsAdmin();
-    if (action === "ads-draft-copy") return void adsDraftCopy();
-    if (action === "ads-build") return void adsBuildFromOption(Number(target.dataset.adsOption));
+    if (action === "ads-archive-creative") return void adsArchiveCreative(target.dataset.creativeId);
     if (action === "ads-launch") return void adsCampaignAction("launch", target.dataset.adsId);
     if (action === "ads-undo") return void adsCampaignAction("undo", target.dataset.adsId);
     if (action === "ads-resume") return void adsCampaignAction("resume", target.dataset.adsId);
@@ -14676,11 +14799,33 @@ function wireHeroGlow() {
 function initAdsPage() {
   wireEvents();
   qs("[data-ads-settings-form]")?.addEventListener("submit", saveAdsSettings);
+  qs("[data-ads-creative-form]")?.addEventListener("submit", (e) => { e.preventDefault(); adsUploadMedia(); });
+  qs("[data-ads-create-form]")?.addEventListener("submit", (e) => { e.preventDefault(); adsBuildCampaign(); });
+  qs("[data-ad-media-file]")?.addEventListener("change", previewAdMedia);
+  // Section nav — swap the visible panel so each part of the workflow has its
+  // own page-like view.
+  qsa("[data-ads-nav]").forEach((btn) =>
+    btn.addEventListener("click", () => switchAdsSection(btn.dataset.adsNav)));
   if (state.adminToken) {
     qs("[data-admin-login]")?.classList.add("hidden");
     qs("[data-admin-content]")?.classList.remove("hidden");
     loadAdsPageData();
   }
+}
+
+function switchAdsSection(id) {
+  qsa("[data-ads-nav]").forEach((b) => b.classList.toggle("active", b.dataset.adsNav === id));
+  qsa("[data-ads-section]").forEach((s) => s.classList.toggle("active", s.dataset.adsSection === id));
+}
+
+// Live thumbnail preview when the operator picks an image to upload.
+function previewAdMedia(event) {
+  const file = event.target.files?.[0];
+  const host = qs("[data-ad-media-preview]");
+  if (!host) return;
+  if (!file) { host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Selected media preview" />`;
 }
 
 // Fetch the catalog (products power the campaign picker; settings power the

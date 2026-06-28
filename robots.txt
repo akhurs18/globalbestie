@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Allow: /shop
 Allow: /preorder
-Allow: /quote
 Allow: /track
 Allow: /about
 Allow: /contact

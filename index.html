@@ -8,6 +8,40 @@
       content="Luxe import store for USA branded handbags, shoes, makeup, and preorder finds delivered to Pakistan."
     />
     <title>Global Bestie | USA Luxury Finds in Pakistan</title>
+    <link rel="canonical" href="https://globalbestiepk.com/" />
+    <meta name="theme-color" content="#fdfafb" />
+
+    <!-- Favicon / home-screen icon. Without these the browser 404s on
+         /favicon.ico and the tab shows a blank document icon. -->
+    <link rel="icon" href="/assets/logo.png" sizes="any" />
+    <link rel="apple-touch-icon" href="/assets/logo.png" />
+
+    <!-- Open Graph / Twitter — these drive the preview card that appears when
+         the link is shared on WhatsApp, Instagram bio links, Facebook, etc.
+         For an Instagram-driven store this is the brand's first impression in
+         a chat. Without them a shared link renders as a bare grey URL.
+         og:image is a 1200×630 crop of the hero editorial shot as a launch
+         default — swap in a branded share card (logo + tagline) when ready. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Global Bestie" />
+    <meta property="og:locale" content="en_PK" />
+    <meta property="og:url" content="https://globalbestiepk.com/" />
+    <meta property="og:title" content="Global Bestie | USA Luxury Finds in Pakistan" />
+    <meta
+      property="og:description"
+      content="USA branded handbags, shoes &amp; makeup sourced to Pakistan — clear PKR pricing, a 50% preorder advance, and live batch tracking to your door."
+    />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=85" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Global Bestie — luxury USA handbags sourced to Pakistan" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Global Bestie | USA Luxury Finds in Pakistan" />
+    <meta
+      name="twitter:description"
+      content="USA branded handbags, shoes &amp; makeup sourced to Pakistan — clear PKR pricing and live batch tracking."
+    />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1606522754091-a3bbf9ad4cb3?auto=format&amp;fit=crop&amp;w=1200&amp;h=630&amp;q=85" />
     <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,7 +53,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260524-no-confirm-copy" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260611-ops3" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -127,7 +161,6 @@
         <a href="/shop" data-route="shop">Shop</a>
         <a href="/this-week" data-route="this-week">This week</a>
         <a href="/batches" data-route="batches">Batches</a>
-        <a href="/quote" data-route="quote">Custom quote</a>
         <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
         <a href="/track" data-route="track">Track</a>
       </nav>
@@ -147,7 +180,6 @@
          thumb can reach navigation at the top. Hidden on desktop via CSS. -->
     <nav class="mobile-action-bar" aria-label="Mobile quick actions">
       <a href="/shop" data-route="shop">Shop</a>
-      <a href="/quote" data-route="quote">Quote</a>
       <a href="/track" data-route="track">Track</a>
       <a class="mobile-wa-tab" href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="16" height="16"><path d="M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0z"/></svg>
@@ -211,7 +243,7 @@
               />
               <figcaption>
                 <span>Shoes · Editorial</span>
-                <strong>Batch import</strong>
+                <strong>Heel edit</strong>
               </figcaption>
             </figure>
             <figure class="hero-card hero-card-small bottom">
@@ -310,7 +342,7 @@
             </ul>
             <div class="story-actions">
               <a class="button primary" href="/shop" data-route="shop">Shop curated drops</a>
-              <a class="button ghost" href="/quote" data-route="quote">Get a custom quote</a>
+              <a class="button ghost" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like a custom quote for a USA item — I'll share the link/photo and my city.">Message us for a custom find</a>
             </div>
           </div>
           <figure class="story-visual" aria-hidden="true">
@@ -427,7 +459,7 @@
               <div class="ugc-body">
                 <p>“My Coach Tabby arrived in Karachi in 26 days — packaging and dust bag exactly like the US store.”</p>
                 <small>Karachi · April 2026</small>
-                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+                <a class="ugc-cta" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I love a look from your Besties wall — can you help me order it?">Order this look →</a>
               </div>
             </article>
             <article class="ugc-card">
@@ -438,7 +470,7 @@
               <div class="ugc-body">
                 <p>“They quoted me in PKR, helped me pick the right option, and kept the delivery update clear the whole time.”</p>
                 <small>Lahore · March 2026</small>
-                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+                <a class="ugc-cta" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I love a look from your Besties wall — can you help me order it?">Order this look →</a>
               </div>
             </article>
             <article class="ugc-card">
@@ -449,7 +481,7 @@
               <div class="ugc-body">
                 <p>“Got my Rare Beauty haul before Eid. WhatsApp replies were quick and the team was patient with my shade questions.”</p>
                 <small>Islamabad · February 2026</small>
-                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+                <a class="ugc-cta" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I love a look from your Besties wall — can you help me order it?">Order this look →</a>
               </div>
             </article>
             <article class="ugc-card">
@@ -460,7 +492,7 @@
               <div class="ugc-body">
                 <p>“The handbag I'd been eyeing for months — final PKR price was less than half what local boutiques quoted me.”</p>
                 <small>Rawalpindi · Feb 2026</small>
-                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+                <a class="ugc-cta" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I love a look from your Besties wall — can you help me order it?">Order this look →</a>
               </div>
             </article>
             <article class="ugc-card">
@@ -471,7 +503,7 @@
               <div class="ugc-body">
                 <p>“Charlotte Tilbury pillow talk got to me before my next salon visit. Genuine packaging, fresh batch codes.”</p>
                 <small>Faisalabad · Jan 2026</small>
-                <a class="ugc-cta" href="/quote" data-route="quote">Order this look →</a>
+                <a class="ugc-cta" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I love a look from your Besties wall — can you help me order it?">Order this look →</a>
               </div>
             </article>
           </div>
@@ -506,9 +538,9 @@
           <div>
             <p class="kicker">Don't see what you want?</p>
             <h3>Source any USA product</h3>
-            <p>Paste a US retailer link — we'll quote a final PKR price for sourcing &amp; delivery to your door in ~4 weeks.</p>
+            <p>Share a US retailer link on WhatsApp — we'll quote a final PKR price for sourcing &amp; delivery to your door in ~4 weeks.</p>
           </div>
-          <button class="button primary" type="button" data-action="open-source-modal">Get an instant quote</button>
+          <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to source a USA product — here's the link/photo and my city:">Message us on WhatsApp</a>
         </div>
         <!-- Mobile filter trigger — pinned at the top of the shop grid so
              customers can adjust filters with a single tap. Slides up the
@@ -683,7 +715,7 @@
               <p data-handbook-a>Shoes are shipped without the original box by default to save weight and shipping cost. If you want the box, there is an additional charge of Rs 2,500 — you must request this at the time of ordering, not after.</p>
 
               <h4 data-handbook-q>Can I request a specific product?</h4>
-              <p data-handbook-a>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price. Use the <a href="/quote" data-route="quote">custom quote tool</a> for an instant estimate.</p>
+              <p data-handbook-a>Yes. Send the product link, size, shade, or screenshot through order notes or WhatsApp and the team will quote you a final PKR price, usually within the 15-minute reply window.</p>
             </div>
           </section>
 
@@ -1008,7 +1040,7 @@
                 <small class="thisweek-brand">Coach</small>
                 <strong>Tabby 26 · Oxblood</strong>
                 <span class="thisweek-price">Rs 89,400</span>
-                <a class="button primary" href="/quote?prefill=coach-tabby-26" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Coach Tabby 26 (Oxblood) for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
             <article class="thisweek-card">
@@ -1020,7 +1052,7 @@
                 <small class="thisweek-brand">Nike</small>
                 <strong>Air Force 1 · Triple white</strong>
                 <span class="thisweek-price">Rs 38,200</span>
-                <a class="button primary" href="/quote?prefill=af1-white" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Nike Air Force 1 (Triple White) for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
             <article class="thisweek-card">
@@ -1032,7 +1064,7 @@
                 <small class="thisweek-brand">Charlotte Tilbury</small>
                 <strong>Pillow Talk Lip Kit</strong>
                 <span class="thisweek-price">Rs 14,800</span>
-                <a class="button primary" href="/quote?prefill=ct-pillow-talk" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Charlotte Tilbury Pillow Talk Lip Kit for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
             <article class="thisweek-card">
@@ -1044,7 +1076,7 @@
                 <small class="thisweek-brand">Michael Kors</small>
                 <strong>Jet Set Tote · Small</strong>
                 <span class="thisweek-price">Rs 64,200</span>
-                <a class="button primary" href="/quote?prefill=mk-jetset" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Michael Kors Jet Set Tote (Small) for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
             <article class="thisweek-card">
@@ -1056,7 +1088,7 @@
                 <small class="thisweek-brand">Rare Beauty</small>
                 <strong>Soft Pinch Blush · Joy</strong>
                 <span class="thisweek-price">Rs 9,400</span>
-                <a class="button primary" href="/quote?prefill=rb-joy" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Rare Beauty Soft Pinch Blush (Joy) for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
             <article class="thisweek-card">
@@ -1068,7 +1100,7 @@
                 <small class="thisweek-brand">Sam Edelman</small>
                 <strong>Loraine loafers · Black</strong>
                 <span class="thisweek-price">Rs 26,800</span>
-                <a class="button primary" href="/quote?prefill=se-loraine" data-route="quote">Lock in for Batch #19</a>
+                <a class="button primary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like to lock in the Sam Edelman Loraine loafers (Black) for the next batch.">Lock in for Batch #19</a>
               </div>
             </article>
           </section>
@@ -1078,7 +1110,7 @@
               <p class="kicker">Don't see what you want?</p>
               <h3>Send us a USA link — we'll quote your final PKR price.</h3>
             </div>
-            <a class="button secondary" href="/quote" data-route="quote">Get a custom quote →</a>
+            <a class="button secondary" href="#" target="_blank" rel="noopener noreferrer" data-support-whatsapp data-wa-message="Hi Global Bestie, I'd like a custom quote — here's the USA link/photo and my city:">Message us for a quote →</a>
           </footer>
         </div>
       </section>
@@ -1199,53 +1231,6 @@
             </div>
             <a class="button primary" href="/shop" data-route="shop">Browse current drops</a>
           </footer>
-        </div>
-      </section>
-
-      <section class="view" id="view-quote" data-view="quote">
-        <div class="quote-estimator-shell">
-          <section class="quote-estimator-hero">
-            <p class="kicker">Quote Concierge</p>
-            <h1>Want something we don't carry? Paste the link.</h1>
-            <p>Drop any USA retailer link — Coach, Sephora, Nike, Nordstrom, anywhere. We'll quote the final PKR price for sourcing &amp; delivery to your doorstep in ~4 weeks.</p>
-            <div class="quote-proof-strip" aria-label="Quote notes">
-              <span>Final PKR</span>
-              <span>15-min reply</span>
-              <span>50% advance · balance on arrival</span>
-            </div>
-          </section>
-
-          <!-- PRIMARY PATH — paste a retailer URL, hit Quote it. Hits
-               /api/source-estimate which is IP-rate-limited and returns
-               either matched_product_id, a buffered PKR estimate, or
-               a WhatsApp fallback when the retailer blocks us. -->
-          <section class="quote-url-card" data-quote-url-card>
-            <label class="quote-url-label">
-              Paste a USA retailer link
-              <div class="quote-url-row">
-                <input type="url" data-quote-url placeholder="https://www.coach.com/products/..." inputmode="url" autocomplete="url" />
-                <button class="button primary" type="button" data-action="quote-from-url">Quote it for me</button>
-              </div>
-            </label>
-            <label class="quote-variant-label">
-              Variant / size / shade (optional)
-              <input type="text" data-quote-variant placeholder="e.g. Size 38 EU, shade Pillow Talk" maxlength="280" />
-            </label>
-            <div class="quote-url-result" data-quote-url-result aria-live="polite"></div>
-          </section>
-
-          <!-- SECONDARY PATH — same USD estimator as before, hidden behind
-               a disclosure. Customers without a link (e.g. browsing a US
-               store on their phone, or quoting something seen in person)
-               can still type the USD price in. Same backend math. -->
-          <!-- Manual USD estimator removed — the URL paste flow above is
-               the canonical entry point. If a customer doesn't have a
-               link they're funneled to WhatsApp via the "blocked"
-               branch's CTA in the result card. -->
-
-          <p class="quote-no-link-hint">
-            Don't have a link? <a href="https://wa.me/13362556023" target="_blank" rel="noopener noreferrer" data-support-whatsapp>Send us what you're looking for on WhatsApp</a> — we'll quote it within 15 minutes.
-          </p>
         </div>
       </section>
 
@@ -1464,7 +1449,6 @@
           <h3 class="footer-col-title">Orders</h3>
           <a href="/this-week" data-route="this-week">This week's sourcing</a>
           <a href="/batches" data-route="batches">Live batches</a>
-          <a href="/quote" data-route="quote">Custom quote</a>
           <a href="/preorder" data-route="preorder">Preorder &amp; FAQ</a>
           <a href="/track" data-route="track">Track your order</a>
           <a href="/returns" data-route="returns">Returns &amp; refunds</a>
@@ -1524,6 +1508,6 @@
       </div>
     </aside>
 
-    <script type="module" src="./assets/app.js?v=20260524-no-confirm-copy"></script>
+    <script type="module" src="./assets/app.js?v=20260611-ops3"></script>
   </body>
 </html>

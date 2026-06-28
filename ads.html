@@ -13,6 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./assets/styles.css?v=20260611-ops3" />
+    <link rel="stylesheet" href="./assets/ads.css?v=20260625-adstheme2" />
   </head>
   <body data-page="ads">
     <a class="skip-link" href="#main">Skip to ads</a>
@@ -25,12 +26,17 @@
               <span class="brand-mark"><img src="/assets/logo.png" alt="Global Bestie logo" width="44" height="44" loading="eager" decoding="async" onerror="this.outerHTML='G'" /></span>
               <span><strong>Global Bestie</strong><small>Growth · Ads</small></span>
             </div>
-            <!-- This page is deliberately separate from the operations portal:
-                 ads run on Meta and never touch the storefront, so they don't
-                 belong in the order/inventory workflow. -->
             <a class="admin-tab admin-tab-link" href="/portal.html">← Back to portal</a>
-            <p class="admin-tab-group">Growth</p>
-            <span class="admin-tab active" aria-current="page">Meta Ads</span>
+            <!-- Section nav — each button swaps the visible panel so the team
+                 can jump straight to the part they own. -->
+            <p class="admin-tab-group">Workspace</p>
+            <button class="admin-tab active" type="button" data-ads-nav="overview">Overview</button>
+            <button class="admin-tab" type="button" data-ads-nav="campaigns">Campaigns <span data-ads-nav-badge="campaigns"></span></button>
+            <button class="admin-tab" type="button" data-ads-nav="creatives">Creatives <span data-ads-nav-badge="creatives"></span></button>
+            <button class="admin-tab" type="button" data-ads-nav="audience">Audience</button>
+            <button class="admin-tab" type="button" data-ads-nav="optimizer">Optimizer</button>
+            <p class="admin-tab-group">Config</p>
+            <button class="admin-tab" type="button" data-ads-nav="setup">Setup <span data-ads-nav-badge="setup"></span></button>
           </aside>
 
           <div class="admin-main">
@@ -42,25 +48,21 @@
               <button class="button primary" type="submit">Unlock ads</button>
             </form>
 
-            <div class="admin-content hidden" data-admin-content>
-              <!-- Meta Ads — the four-phase ads bot surface. Reporting is
-                   read-only and auto-refreshes from /api/admin/ads-report.
-                   Creatives are drafted then queued; campaigns are BUILT
-                   paused and only go live when an operator clicks Launch. -->
-              <section class="admin-panel active" data-ads-panel>
-                <div class="admin-heading">
-                  <div>
-                    <p class="kicker">Growth · Meta automation</p>
-                    <h1>Meta Ads bot.</h1>
-                    <p class="portal-login-note">Reporting and the optimizer run 24/7 in the cloud. New campaigns are built paused — nothing spends until you click <strong>Launch</strong>.</p>
-                  </div>
-                  <div class="mini-actions">
-                    <span class="status-pill" data-ads-status>Checking…</span>
-                    <button class="button secondary" type="button" data-action="ads-refresh">Refresh</button>
-                  </div>
+            <div class="admin-content hidden" data-admin-content data-ads-panel>
+              <div class="admin-heading">
+                <div>
+                  <p class="kicker">Growth · Meta automation</p>
+                  <h1>Meta Ads.</h1>
+                  <p class="portal-login-note">Reporting and the optimizer run 24/7 in the cloud. Campaigns are built paused — nothing spends until you click <strong>Launch</strong>.</p>
                 </div>
+                <div class="mini-actions">
+                  <span class="status-pill" data-ads-status>Checking…</span>
+                  <button class="button secondary" type="button" data-action="ads-refresh">Refresh</button>
+                </div>
+              </div>
 
-                <!-- Phase 1: performance dashboard (read-only) -->
+              <!-- ── OVERVIEW ─────────────────────────────────────────────── -->
+              <section class="admin-panel active" data-ads-section="overview">
                 <section class="ops-panel">
                   <div class="panel-title-row">
                     <h2>Performance · last 7 days</h2>
@@ -69,22 +71,111 @@
                   <div class="today-stats-grid" data-ads-kpis>
                     <p class="portal-login-note">Loading insights…</p>
                   </div>
-                  <table class="admin-table" data-sortable data-table-id="ads-campaigns">
+                  <table class="admin-table" data-table-id="ads-campaigns">
                     <thead>
-                      <tr>
-                        <th>Campaign</th><th>Spend</th><th>Purchases</th>
-                        <th>Revenue</th><th>ROAS</th><th>CPA</th>
-                      </tr>
+                      <tr><th>Campaign</th><th>Spend</th><th>Purchases</th><th>Revenue</th><th>ROAS</th><th>CPA</th></tr>
                     </thead>
                     <tbody data-ads-campaign-rows>
                       <tr><td colspan="6" class="portal-login-note">No campaign data yet.</td></tr>
                     </tbody>
                   </table>
                 </section>
+              </section>
 
-                <!-- Audience intelligence: data-driven targeting recommendation
-                     from /api/admin/ads-audience. New campaigns are built with
-                     this targeting automatically (unless overridden). -->
+              <!-- ── CAMPAIGNS ────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="campaigns">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Create a campaign</h2>
+                    <span class="status-pill preorder">Builds paused · data-targeted</span>
+                  </div>
+                  <p class="broadcast-helper">Pick a ready creative (upload media in the <strong>Creatives</strong> tab), set a daily budget, and build. It targets who converts automatically and stays paused until you launch it.</p>
+                  <form class="ugc-add-form" data-ads-create-form>
+                    <div class="ugc-form-grid">
+                      <label>Creative
+                        <select name="creative_ref" data-ads-campaign-creative required>
+                          <option value="">Select a ready creative…</option>
+                        </select>
+                      </label>
+                      <label>Daily budget (PKR)
+                        <input name="daily_budget_pkr" type="number" min="100" step="100" placeholder="1500" required />
+                      </label>
+                    </div>
+                    <div class="mini-actions">
+                      <button class="button primary" type="submit">Build campaign (paused)</button>
+                    </div>
+                    <div class="ugc-form-status" data-ads-create-status aria-live="polite"></div>
+                  </form>
+                </section>
+
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Approval queue</h2>
+                    <span class="status-pill" data-ads-queue-count>0 waiting</span>
+                  </div>
+                  <div data-ads-campaign-queue>
+                    <p class="portal-login-note">No campaigns built yet.</p>
+                  </div>
+                </section>
+              </section>
+
+              <!-- ── CREATIVES (media upload + library) ───────────────────── -->
+              <section class="admin-panel" data-ads-section="creatives">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Upload a creative</h2>
+                    <span class="status-pill preorder">Your media</span>
+                  </div>
+                  <p class="broadcast-helper">Upload your own image and write the ad copy. Saved creatives appear in the library below and can be used to build campaigns. (Image: JPG/PNG/WebP, up to 8&nbsp;MB.)</p>
+                  <form class="ugc-add-form" data-ads-creative-form>
+                    <div class="ugc-form-grid">
+                      <label>Image
+                        <input type="file" accept="image/*" data-ad-media-file />
+                      </label>
+                      <label>Link to product (optional)
+                        <select name="product_id" data-ads-product>
+                          <option value="">— None / custom URL —</option>
+                        </select>
+                      </label>
+                      <label>Headline
+                        <input name="headline" placeholder="Coach Tabby — priced in PKR" required />
+                      </label>
+                      <label>Call to action
+                        <select name="cta_type">
+                          <option value="SHOP_NOW">Shop now</option>
+                          <option value="LEARN_MORE">Learn more</option>
+                          <option value="ORDER_NOW">Order now</option>
+                          <option value="MESSAGE_PAGE">Send message</option>
+                        </select>
+                      </label>
+                      <label class="span-2">Primary text
+                        <textarea name="primary_text" rows="3" placeholder="Authentic, sourced from the USA, final price in rupees…" required></textarea>
+                      </label>
+                      <label class="span-2">Destination URL (used when no product is linked)
+                        <input name="destination_url" placeholder="https://globalbestie.com/quote" />
+                      </label>
+                    </div>
+                    <div class="ad-media-preview" data-ad-media-preview hidden></div>
+                    <div class="mini-actions">
+                      <button class="button primary" type="submit">Upload &amp; save creative</button>
+                    </div>
+                    <div class="ugc-form-status" data-ads-creative-status aria-live="polite"></div>
+                  </form>
+                </section>
+
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Creative library</h2>
+                    <span class="status-pill" data-ads-creative-count>0 ready</span>
+                  </div>
+                  <div class="ad-creative-grid" data-ads-creative-library>
+                    <p class="portal-login-note">No creatives yet — upload your first above.</p>
+                  </div>
+                </section>
+              </section>
+
+              <!-- ── AUDIENCE ─────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="audience">
                 <section class="ops-panel">
                   <div class="panel-title-row">
                     <h2>Audience intelligence</h2>
@@ -95,44 +186,10 @@
                     <p class="portal-login-note">Loading audience recommendation…</p>
                   </div>
                 </section>
+              </section>
 
-                <!-- Phase 2 + 3: draft a creative, then build a paused campaign -->
-                <section class="ops-panel">
-                  <div class="panel-title-row">
-                    <h2>Create a campaign</h2>
-                    <span class="status-pill preorder">Builds paused · data-targeted</span>
-                  </div>
-                  <form class="ugc-add-form" data-ads-create-form>
-                    <div class="ugc-form-grid">
-                      <label>Product
-                        <select name="product_id" data-ads-product required>
-                          <option value="">Select a product…</option>
-                        </select>
-                      </label>
-                      <label>Daily budget (PKR)
-                        <input name="daily_budget_pkr" type="number" min="100" step="100" placeholder="1500" required />
-                      </label>
-                    </div>
-                    <div class="mini-actions">
-                      <button class="button secondary" type="button" data-action="ads-draft-copy">Draft ad copy</button>
-                    </div>
-                    <div data-ads-copy-options></div>
-                    <div class="ugc-form-status" data-ads-create-status aria-live="polite"></div>
-                  </form>
-                </section>
-
-                <!-- Phase 3: approval queue — built campaigns awaiting launch -->
-                <section class="ops-panel">
-                  <div class="panel-title-row">
-                    <h2>Approval queue</h2>
-                    <span class="status-pill" data-ads-queue-count>0 waiting</span>
-                  </div>
-                  <div data-ads-campaign-queue>
-                    <p class="portal-login-note">No campaigns built yet.</p>
-                  </div>
-                </section>
-
-                <!-- Phase 4: optimizer action log + dry-run preview -->
+              <!-- ── OPTIMIZER ────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="optimizer">
                 <section class="ops-panel">
                   <div class="panel-title-row">
                     <h2>Optimizer activity</h2>
@@ -144,9 +201,6 @@
                   </div>
                 </section>
 
-                <!-- Ads guardrails — cap what the Meta optimizer can do. Lives
-                     here (not in the store Settings) because it's ads-only
-                     config and never affects the storefront. -->
                 <section class="ops-panel">
                   <div class="panel-title-row">
                     <h2>Guardrails</h2>
@@ -169,6 +223,20 @@
                   </form>
                 </section>
               </section>
+
+              <!-- ── SETUP ────────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="setup">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Setup</h2>
+                    <span class="status-pill" data-ads-config-status>Checking…</span>
+                  </div>
+                  <p class="broadcast-helper">Add these in <strong>Netlify → Site configuration → Environment variables</strong>, then redeploy. Required keys must all be present before ads can run.</p>
+                  <div data-ads-config>
+                    <p class="portal-login-note">Loading configuration…</p>
+                  </div>
+                </section>
+              </section>
             </div>
           </div>
         </div>
@@ -176,6 +244,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260625-spend1"></script>
+    <script type="module" src="./assets/app.js?v=20260625-adssections1"></script>
   </body>
 </html>

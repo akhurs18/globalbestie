@@ -1,0 +1,451 @@
+/* Global Bestie — Ads workspace theme.
+ *
+ * Scoped entirely under body[data-page="ads"] so it restyles ONLY the ads
+ * page and never leaks into the portal or storefront. It layers on top of
+ * styles.css (which provides base primitives the shared JS renderers rely on)
+ * and overrides the look for a calm, professional growth dashboard:
+ * dark focused sidebar, light workspace, hairline cards, restrained accent.
+ *
+ * Motion follows Emil Kowalski's principles: transform/opacity only, custom
+ * ease-out curves, sub-300ms, scale-on-press, short staggered entrance, and
+ * full prefers-reduced-motion support. */
+
+body[data-page="ads"] {
+  /* ── Palette ─────────────────────────────────────────────────────────── */
+  --ad-bg: #f4f4f6;
+  --ad-surface: #ffffff;
+  --ad-surface-2: #fafafb;
+  --ad-border: rgba(20, 20, 31, 0.09);
+  --ad-border-strong: rgba(20, 20, 31, 0.14);
+  --ad-text: #15151c;
+  --ad-muted: #5d5d68;
+  --ad-faint: #92929c;
+  --ad-accent: #b23a63;          /* grown-up berry-rose, on-brand but calm */
+  --ad-accent-press: #97315323;
+  --ad-accent-soft: rgba(178, 58, 99, 0.10);
+  --ad-sidebar: #16161c;
+  --ad-sidebar-2: #1d1d25;
+
+  --ad-ok-bg: rgba(22, 163, 74, 0.11);
+  --ad-ok-fg: #15803d;
+  --ad-bad-bg: rgba(220, 38, 38, 0.10);
+  --ad-bad-fg: #c0392b;
+  --ad-warn-bg: rgba(202, 138, 4, 0.13);
+  --ad-warn-fg: #a16207;
+  --ad-neutral-bg: rgba(20, 20, 31, 0.06);
+
+  --ad-radius: 14px;
+  --ad-radius-lg: 18px;
+  --ad-shadow-sm: 0 1px 2px rgba(20, 20, 31, 0.04), 0 1px 3px rgba(20, 20, 31, 0.05);
+  --ad-shadow-md: 0 6px 20px -6px rgba(20, 20, 31, 0.12), 0 2px 6px rgba(20, 20, 31, 0.05);
+  --ad-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  background: var(--ad-bg);
+  color: var(--ad-text);
+  font-family: "Archivo", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Shell layout ───────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-shell {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--ad-bg);
+}
+
+/* ── Sidebar (dark, focused) ───────────────────────────────────────────── */
+body[data-page="ads"] .admin-sidebar {
+  background: var(--ad-sidebar);
+  background-image: linear-gradient(180deg, var(--ad-sidebar-2), var(--ad-sidebar));
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+body[data-page="ads"] .admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 8px 18px;
+  color: #fff;
+}
+body[data-page="ads"] .admin-brand .brand-mark img,
+body[data-page="ads"] .admin-brand .brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  object-fit: cover;
+}
+body[data-page="ads"] .admin-brand strong { display: block; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; color: #fff; font-family: "Archivo", system-ui, sans-serif; }
+body[data-page="ads"] .admin-brand small { display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+body[data-page="ads"] .admin-tab-group {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 16px 8px 6px;
+}
+body[data-page="ads"] .admin-tab,
+body[data-page="ads"] .admin-tab-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.74);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 9px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 160ms var(--ad-ease-out), color 160ms var(--ad-ease-out), transform 120ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .admin-tab:hover,
+  body[data-page="ads"] .admin-tab-link:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+}
+body[data-page="ads"] .admin-tab:active,
+body[data-page="ads"] .admin-tab-link:active { transform: scale(0.98); }
+body[data-page="ads"] .admin-tab.active {
+  background: var(--ad-accent);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px var(--ad-accent);
+}
+body[data-page="ads"] .admin-tab-link[href="/portal.html"] {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+/* ── Main workspace ────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-main {
+  padding: 30px clamp(18px, 4vw, 44px) 64px;
+  max-width: 1080px;
+  width: 100%;
+}
+
+/* ── Login card ────────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-login {
+  max-width: 420px;
+  margin: 8vh auto 0;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius-lg);
+  box-shadow: var(--ad-shadow-md);
+  padding: 32px 30px;
+  animation: ad-rise 420ms var(--ad-ease-out) both;
+}
+body[data-page="ads"] .admin-login h1 { font-size: 1.5rem; letter-spacing: -0.02em; margin: 6px 0 8px; }
+body[data-page="ads"] .admin-login label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--ad-muted); margin: 18px 0 0; }
+
+/* ── Page heading ──────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+body[data-page="ads"] .admin-heading h1 { font-size: 1.7rem; letter-spacing: -0.025em; margin: 4px 0 6px; }
+body[data-page="ads"] .kicker {
+  color: var(--ad-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+body[data-page="ads"] .portal-login-note,
+body[data-page="ads"] .broadcast-helper { color: var(--ad-muted); font-size: 0.88rem; line-height: 1.55; }
+
+/* ── Panels / cards ────────────────────────────────────────────────────── */
+body[data-page="ads"] .ops-panel {
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius-lg);
+  box-shadow: var(--ad-shadow-sm);
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+  animation: ad-rise 460ms var(--ad-ease-out) both;
+}
+/* Short staggered entrance — decorative, never blocks interaction. */
+body[data-page="ads"] .admin-content .ops-panel:nth-child(1) { animation-delay: 20ms; }
+body[data-page="ads"] .admin-content .ops-panel:nth-child(2) { animation-delay: 60ms; }
+body[data-page="ads"] .admin-content .ops-panel:nth-child(3) { animation-delay: 100ms; }
+body[data-page="ads"] .admin-content .ops-panel:nth-child(4) { animation-delay: 140ms; }
+body[data-page="ads"] .admin-content .ops-panel:nth-child(n+5) { animation-delay: 170ms; }
+
+body[data-page="ads"] .panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+body[data-page="ads"] .panel-title-row h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+
+/* ── KPI stat grid ─────────────────────────────────────────────────────── */
+body[data-page="ads"] .today-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 6px;
+}
+body[data-page="ads"] .today-stat {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 13px 14px;
+}
+body[data-page="ads"] .today-stat-label { display: block; color: var(--ad-faint); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+body[data-page="ads"] .today-stat strong { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+body[data-page="ads"] .today-stat.tone-good strong { color: var(--ad-ok-fg); }
+
+/* ── Status pills ──────────────────────────────────────────────────────── */
+body[data-page="ads"] .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: var(--ad-neutral-bg);
+  color: var(--ad-muted);
+  border: none;
+}
+body[data-page="ads"] .status-pill.in_stock { background: var(--ad-ok-bg); color: var(--ad-ok-fg); }
+body[data-page="ads"] .status-pill.soldout { background: var(--ad-bad-bg); color: var(--ad-bad-fg); }
+body[data-page="ads"] .status-pill.preorder { background: var(--ad-warn-bg); color: var(--ad-warn-fg); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+body[data-page="ads"] .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 140ms var(--ad-ease-out), background-color 160ms var(--ad-ease-out), border-color 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
+}
+body[data-page="ads"] .button:active { transform: scale(0.97); }
+body[data-page="ads"] .button.primary {
+  background: var(--ad-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(20, 20, 31, 0.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .button.primary:hover { background: #9c3055; box-shadow: var(--ad-shadow-md); }
+  body[data-page="ads"] .button.secondary:hover { background: var(--ad-surface-2); border-color: var(--ad-border-strong); }
+}
+body[data-page="ads"] .button.secondary {
+  background: var(--ad-surface);
+  color: var(--ad-text);
+  border-color: var(--ad-border-strong);
+}
+
+/* ── Forms ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .ugc-form-grid,
+body[data-page="ads"] .settings-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+body[data-page="ads"] .settings-form { align-items: end; }
+body[data-page="ads"] label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ad-muted);
+}
+body[data-page="ads"] input,
+body[data-page="ads"] select,
+body[data-page="ads"] textarea {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ad-text);
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border-strong);
+  border-radius: 10px;
+  padding: 9px 11px;
+  transition: border-color 140ms var(--ad-ease-out), box-shadow 140ms var(--ad-ease-out);
+}
+body[data-page="ads"] textarea { resize: vertical; min-height: 64px; line-height: 1.5; }
+body[data-page="ads"] input[type="file"] { padding: 7px 9px; cursor: pointer; }
+body[data-page="ads"] input:focus,
+body[data-page="ads"] select:focus,
+body[data-page="ads"] textarea:focus {
+  outline: none;
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px var(--ad-accent-soft);
+}
+body[data-page="ads"] label.span-2 { grid-column: 1 / -1; }
+
+/* ── Creative media upload + library ───────────────────────────────────── */
+body[data-page="ads"] .ad-media-preview { margin: 12px 0 0; }
+body[data-page="ads"] .ad-media-preview img {
+  max-height: 200px;
+  border-radius: var(--ad-radius);
+  border: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .ad-creative-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+body[data-page="ads"] .ad-creative-card {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ad-creative-card:hover { transform: translateY(-1px); box-shadow: var(--ad-shadow-sm); }
+}
+body[data-page="ads"] .ad-creative-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ad-neutral-bg);
+}
+body[data-page="ads"] .ad-creative-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body[data-page="ads"] .ad-creative-media .status-pill { position: absolute; top: 8px; left: 8px; }
+body[data-page="ads"] .ad-creative-noimg {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ad-faint); font-size: 0.82rem;
+}
+body[data-page="ads"] .ad-creative-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 6px; }
+body[data-page="ads"] .ad-creative-body strong { font-size: 0.92rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ad-creative-body p { color: var(--ad-muted); font-size: 0.82rem; line-height: 1.5; margin: 0; }
+body[data-page="ads"] .ad-creative-body .mini-actions { margin-top: auto; }
+body[data-page="ads"] .settings-form .button { grid-column: 1 / -1; justify-self: start; }
+body[data-page="ads"] .mini-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.88rem; }
+body[data-page="ads"] .admin-table thead th {
+  text-align: left;
+  color: var(--ad-faint);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 12px 9px;
+  border-bottom: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .admin-table tbody td { padding: 11px 12px; border-bottom: 1px solid var(--ad-border); }
+body[data-page="ads"] .admin-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Setup checklist ───────────────────────────────────────────────────── */
+body[data-page="ads"] .ads-config-list { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+body[data-page="ads"] .ads-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  transition: background-color 140ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ads-config-row:hover { background: var(--ad-surface-2); }
+}
+body[data-page="ads"] .ads-config-row .status-pill { flex: none; min-width: 86px; justify-content: center; }
+body[data-page="ads"] .ads-config-row strong { font-weight: 600; font-size: 0.9rem; }
+body[data-page="ads"] .ads-config-row code {
+  margin-left: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--ad-faint);
+  background: var(--ad-neutral-bg);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+
+/* ── Campaign cards / action log / audience ────────────────────────────── */
+body[data-page="ads"] .ugc-admin-card {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 16px;
+  margin-bottom: 10px;
+  transition: transform 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ugc-admin-card:hover { transform: translateY(-1px); box-shadow: var(--ad-shadow-sm); }
+}
+body[data-page="ads"] .ugc-admin-card small { color: var(--ad-muted); font-size: 0.82rem; }
+body[data-page="ads"] .ads-budget-label { flex-direction: row; align-items: center; gap: 8px; font-size: 0.78rem; }
+body[data-page="ads"] .ads-budget-label input { width: 120px; }
+
+body[data-page="ads"] .ads-action-log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+body[data-page="ads"] .ads-action-log li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 13px;
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: 11px;
+}
+body[data-page="ads"] .ads-action-log small { color: var(--ad-muted); font-size: 0.82rem; }
+body[data-page="ads"] .ads-copy-option { animation: ad-rise 320ms var(--ad-ease-out) both; }
+
+/* ── Entrance keyframe ─────────────────────────────────────────────────── */
+@keyframes ad-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  body[data-page="ads"] .admin-shell { grid-template-columns: 1fr; }
+  body[data-page="ads"] .admin-sidebar {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+  body[data-page="ads"] .admin-tab-group { display: none; }
+  body[data-page="ads"] .admin-brand { padding: 0 8px 0 0; border: none; }
+  body[data-page="ads"] .admin-tab,
+  body[data-page="ads"] .admin-tab-link { width: auto; }
+  body[data-page="ads"] .admin-main { padding: 20px 16px 48px; }
+}
+
+/* ── Reduced motion: keep meaning, drop movement ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="ads"] .ops-panel,
+  body[data-page="ads"] .admin-login,
+  body[data-page="ads"] .ads-copy-option { animation: none; }
+  body[data-page="ads"] * { transition-duration: 0.01ms !important; }
+}
