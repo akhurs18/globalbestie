@@ -14,7 +14,7 @@
     />
     <!-- Self-contained: the ads page loads ONLY ads.css so the portal theme
          (styles.css) can never leak serif headings / conflicting rules in. -->
-    <link rel="stylesheet" href="./assets/ads.css?v=20260625-adstheme5" />
+    <link rel="stylesheet" href="./assets/ads.css?v=20260625-adstheme6" />
   </head>
   <body data-page="ads">
     <a class="skip-link" href="#main">Skip to ads</a>
@@ -66,8 +66,16 @@
               <section class="admin-panel active" data-ads-section="overview">
                 <section class="ops-panel">
                   <div class="panel-title-row">
-                    <h2>Performance · last 7 days</h2>
-                    <span class="status-pill in_stock" data-ads-window>—</span>
+                    <h2>Performance</h2>
+                    <div class="ads-toolbar">
+                      <select class="ads-range" data-ads-range aria-label="Reporting window">
+                        <option value="7">Last 7 days</option>
+                        <option value="14">Last 14 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                      </select>
+                      <span class="status-pill in_stock" data-ads-window>—</span>
+                    </div>
                   </div>
                   <div class="today-stats-grid" data-ads-kpis>
                     <p class="portal-login-note">Loading insights…</p>
@@ -113,6 +121,12 @@
                   <div class="panel-title-row">
                     <h2>Approval queue</h2>
                     <span class="status-pill" data-ads-queue-count>0 waiting</span>
+                  </div>
+                  <div class="ads-chips" data-ads-queue-filters>
+                    <button class="ads-chip active" type="button" data-queue-filter="all">All</button>
+                    <button class="ads-chip" type="button" data-queue-filter="built">Awaiting</button>
+                    <button class="ads-chip" type="button" data-queue-filter="launched">Live</button>
+                    <button class="ads-chip" type="button" data-queue-filter="paused">Paused</button>
                   </div>
                   <div data-ads-campaign-queue>
                     <p class="portal-login-note">No campaigns built yet.</p>
@@ -169,6 +183,7 @@
                     <h2>Creative library</h2>
                     <span class="status-pill" data-ads-creative-count>0 ready</span>
                   </div>
+                  <input type="search" class="ads-search" data-ads-creative-search placeholder="Search creatives by headline or text…" aria-label="Search creatives" />
                   <div class="ad-creative-grid" data-ads-creative-library>
                     <p class="portal-login-note">No creatives yet — upload your first above.</p>
                   </div>
@@ -245,6 +260,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260625-adssections1"></script>
+    <script type="module" src="./assets/app.js?v=20260625-adsv2"></script>
   </body>
 </html>

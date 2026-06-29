@@ -104,7 +104,60 @@ async function buildDashboard(days) {
     }))
     .sort((a, b) => b.spend - a.spend);
 
-  return { window_days: days, totals, campaigns };
+  // Daily time-series (powers the sparklines). One point per day in the window.
+  const byDate = new Map();
+  for (const r of campaignRows) {
+    const d = byDate.get(r.date) || { date: r.date, spend: 0, purchase_value: 0, clicks: 0, impressions: 0 };
+    d.spend += Number(r.spend);
+    d.purchase_value += Number(r.purchase_value);
+    d.clicks += Number(r.clicks);
+    d.impressions += Number(r.impressions);
+    byDate.set(r.date, d);
+  }
+  const daily = [...byDate.values()]
+    .map((d) => ({ ...d, roas: d.spend > 0 ? Number((d.purchase_value / d.spend).toFixed(2)) : 0 }))
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+
+  const creativeStats = await buildCreativeStats(since);
+
+  return { window_days: days, totals, daily, campaigns, creativeStats };
+}
+
+// Per-creative performance: join ad-level snapshots back to the creative that
+// each campaign was built from (meta_ad_campaigns.creative_ref ↔ meta_ad_id).
+// Returns { creative_ref: {spend, purchases, purchase_value, roas, cpa, ctr} }.
+async function buildCreativeStats(since) {
+  try {
+    const camps = await supabase(
+      "/rest/v1/meta_ad_campaigns?meta_ad_id=not.is.null&creative_ref=not.is.null&select=creative_ref,meta_ad_id"
+    );
+    const adToCreative = new Map();
+    for (const c of camps || []) adToCreative.set(c.meta_ad_id, c.creative_ref);
+    if (!adToCreative.size) return {};
+    const adRows = await supabase(
+      `/rest/v1/meta_ad_snapshots?level=eq.ad&date=gte.${since}&select=entity_id,spend,impressions,clicks,purchases,purchase_value`
+    );
+    const byCreative = {};
+    for (const r of adRows || []) {
+      const ref = adToCreative.get(r.entity_id);
+      if (!ref) continue;
+      const s = byCreative[ref] || { spend: 0, impressions: 0, clicks: 0, purchases: 0, purchase_value: 0 };
+      s.spend += Number(r.spend);
+      s.impressions += Number(r.impressions);
+      s.clicks += Number(r.clicks);
+      s.purchases += Number(r.purchases);
+      s.purchase_value += Number(r.purchase_value);
+      byCreative[ref] = s;
+    }
+    for (const s of Object.values(byCreative)) {
+      s.roas = s.spend > 0 ? Number((s.purchase_value / s.spend).toFixed(2)) : 0;
+      s.cpa = s.purchases > 0 ? Number((s.spend / s.purchases).toFixed(0)) : 0;
+      s.ctr = s.impressions > 0 ? Number(((s.clicks / s.impressions) * 100).toFixed(2)) : 0;
+    }
+    return byCreative;
+  } catch {
+    return {}; // creative stats are a nice-to-have — never fail the dashboard
+  }
 }
 
 export default async (req) => {

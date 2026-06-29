@@ -7295,15 +7295,54 @@ function renderUgcAdmin() {
 // ads-optimize) and renders the dashboard, approval queue, and optimizer log.
 // The only money-moving control here is "Launch" — everything else is read-only
 // or builds paused objects.
+// Tiny inline SVG sparkline from a number series. transform/opacity-free,
+// hardware-cheap; used on the KPI cards to show the trend behind the total.
+function sparklineSvg(values, { w = 76, h = 22 } = {}) {
+  const nums = (values || []).map(Number).filter((v) => !Number.isNaN(v));
+  if (nums.length < 2) return "";
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  const range = max - min || 1;
+  const step = w / (nums.length - 1);
+  const pts = nums.map((v, i) => `${(i * step).toFixed(1)},${(h - ((v - min) / range) * (h - 3) - 1.5).toFixed(1)}`);
+  const up = nums[nums.length - 1] >= nums[0];
+  return `<svg class="ads-spark ${up ? "is-up" : "is-down"}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.join(" ")}" /></svg>`;
+}
+
+function adsSkeletonGrid(n) {
+  return `<div class="ads-skel-grid">${Array.from({ length: n }, () => `<div class="ads-skel ads-skel-card"></div>`).join("")}</div>`;
+}
+function adsSkeletonLines(n) {
+  return Array.from({ length: n }, () => `<div class="ads-skel ads-skel-line"></div>`).join("");
+}
+
+// Refetch just the performance report for a new window and repaint the
+// dashboard + creative stats (which are window-scoped).
+async function adsSetReportRange(days) {
+  state._adsReportDays = days;
+  const kpis = qs("[data-ads-kpis]");
+  const rows = qs("[data-ads-campaign-rows]");
+  if (kpis) kpis.innerHTML = adsSkeletonGrid(6);
+  if (rows) rows.innerHTML = `<tr><td colspan="6">${adsSkeletonLines(2)}</td></tr>`;
+  const report = await apiFetch(`/api/admin/ads-report?days=${days}`, {}, { configured: false, totals: {}, campaigns: [], daily: [] }).catch(() => ({ configured: false, totals: {}, campaigns: [], daily: [] }));
+  state._adsReport = report;
+  renderAdsDashboard(report);
+  if (state._adsCreatives) renderAdsCreatives(state._adsCreatives);
+}
+
 async function loadAdsAdmin() {
   const statusPill = qs("[data-ads-status]");
   if (statusPill) statusPill.textContent = "Loading…";
   populateAdsProductSelect();
+  // Paint skeletons so the surfaces don't flash empty/"Loading…" text.
+  const kpiHost = qs("[data-ads-kpis]"); if (kpiHost) kpiHost.innerHTML = adsSkeletonGrid(6);
+  const libHost = qs("[data-ads-creative-library]"); if (libHost) libHost.innerHTML = adsSkeletonGrid(4);
+  const days = state._adsReportDays || 7;
   // Pull all surfaces in parallel; tolerate any one being unconfigured. The
   // audience read is cheap/cached (no Meta call) — only the refresh recomputes.
   const emptyConfig = { keys: {}, publisher_platforms: "instagram" };
   const [report, queue, actions, audience, config, creatives] = await Promise.all([
-    apiFetch(`/api/admin/ads-report?days=7`, {}, { configured: false, totals: {}, campaigns: [] }),
+    apiFetch(`/api/admin/ads-report?days=${days}`, {}, { configured: false, totals: {}, campaigns: [], daily: [] }),
     apiFetch(`/api/admin/ads-create`, {}, { configured: false, campaigns: [] }),
     apiFetch(`/api/admin/ads-optimize?preview=1`, {}, { configured: false, actions: [], dry_run: true }).catch(() => ({ actions: [] })),
     apiFetch(`/api/admin/ads-audience?cached=1`, {}, { configured: false, reco: null }).catch(() => ({ reco: null })),
@@ -7330,37 +7369,59 @@ async function loadAdsAdmin() {
   renderAdsCreatives(state._adsCreatives);
 }
 
-// Creative library (uploaded media + copy) and the campaign-builder dropdown
-// that picks from it.
+const AD_CTA_LABELS = { SHOP_NOW: "Shop now", LEARN_MORE: "Learn more", ORDER_NOW: "Order now", MESSAGE_PAGE: "Send message" };
+
+// Creative library: each item renders as an Instagram-ad preview with its
+// live performance (joined from the report's creativeStats), plus the
+// campaign-builder dropdown. Honors the search box.
 function renderAdsCreatives(creatives) {
   const list = creatives || [];
   const ready = list.filter((c) => c.status === "ready" || c.status === "draft");
-  // Library cards
-  const host = qs("[data-ads-creative-library]");
   const countPill = qs("[data-ads-creative-count]");
   if (countPill) countPill.textContent = `${ready.length} ready`;
   const navBadge = qs('[data-ads-nav-badge="creatives"]');
   if (navBadge) navBadge.textContent = ready.length ? String(ready.length) : "";
+
+  const stats = state._adsReport?.creativeStats || {};
+  const term = (state._adsCreativeSearch || "").trim().toLowerCase();
+  const shown = term
+    ? list.filter((c) => `${c.headline} ${c.primary_text}`.toLowerCase().includes(term))
+    : list;
+
+  const host = qs("[data-ads-creative-library]");
   if (host) {
-    host.innerHTML = list.length
-      ? list.map((c) => {
+    host.innerHTML = shown.length
+      ? shown.map((c) => {
           const used = c.status === "in_use";
           const img = c.image_url
             ? `<img src="${safeUrl(imageUrl(c.image_url), "")}" alt="${attr(c.headline)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ad-creative-noimg',textContent:'No image'}));" />`
             : `<div class="ad-creative-noimg">No image</div>`;
+          const text = (c.primary_text || "");
+          const s = stats[c.id];
+          const perf = s ? `
+            <div class="ad-creative-stats">
+              <span title="Spend">${PKR.format(s.spend || 0)}</span>
+              <span class="${(s.roas || 0) >= 2 ? "good" : ""}" title="ROAS">${(s.roas || 0).toFixed(2)}× ROAS</span>
+              <span title="Purchases">${s.purchases || 0} sales</span>
+            </div>` : "";
           return `
           <article class="ad-creative-card">
-            <div class="ad-creative-media">${img}<span class="status-pill ${used ? "in_stock" : "preorder"}">${esc(c.status)}</span></div>
+            <div class="ig-preview">
+              <div class="ig-bar"><span class="ig-avatar">GB</span><div class="ig-id"><strong>globalbestie</strong><small>Sponsored</small></div></div>
+              <div class="ig-media">${img}</div>
+              <div class="ig-cta-row"><span class="ig-icons">♡  ◯  ➤</span><span class="ig-cta">${esc(AD_CTA_LABELS[c.cta_type] || "Shop now")} ›</span></div>
+              <div class="ig-caption"><strong>globalbestie</strong> ${esc(text.slice(0, 110))}${text.length > 110 ? "…" : ""}</div>
+            </div>
             <div class="ad-creative-body">
-              <strong>${esc(c.headline)}</strong>
-              <p>${esc((c.primary_text || "").slice(0, 120))}${(c.primary_text || "").length > 120 ? "…" : ""}</p>
+              <div class="ad-creative-head"><strong>${esc(c.headline)}</strong><span class="status-pill ${used ? "in_stock" : "preorder"}">${esc(c.status)}</span></div>
+              ${perf}
               <div class="mini-actions">
                 ${c.status !== "archived" ? `<button class="button secondary" type="button" data-action="ads-archive-creative" data-creative-id="${attr(c.id)}">Archive</button>` : ""}
               </div>
             </div>
           </article>`;
         }).join("")
-      : `<p class="portal-login-note">No creatives yet — upload your first above.</p>`;
+      : `<p class="portal-login-note">${list.length ? "No creatives match your search." : "No creatives yet — upload your first above."}</p>`;
   }
   // Campaign-builder dropdown
   const select = qs("[data-ads-campaign-creative]");
@@ -7427,15 +7488,32 @@ function renderAdsAudience(reco) {
   const tone = reco.confidence === "high" ? "in_stock" : "preorder";
   const b = reco.basis || {};
   const chip = (label, value) => `<div class="today-stat"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  // Breakdown table — shows the segment math behind the pick (the "why").
+  const breakdown = (title, segs) => {
+    if (!segs || !segs.length) return "";
+    return `
+      <div class="ads-breakdown">
+        <h3>${esc(title)}</h3>
+        <table class="ads-breakdown-table">
+          <thead><tr><th>Segment</th><th>CPA</th><th>Purchases</th></tr></thead>
+          <tbody>${segs.map((s) => `<tr><td>${esc(s.seg)}</td><td>${s.cpa ? PKR.format(s.cpa) : "—"}</td><td>${esc(s.purchases ?? 0)}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>`;
+  };
   host.innerHTML = `
     <div class="mini-actions" style="margin-bottom:8px">
       <span class="status-pill ${tone}">${esc(reco.confidence)} confidence</span>
-      <small class="portal-login-note">from ${esc(b.total_purchases ?? 0)} purchases · ${esc(reco.window_days || 30)}d</small>
+      <small class="portal-login-note">from ${esc(b.total_purchases ?? 0)} purchases · ${esc(reco.window_days || 30)}d window</small>
     </div>
     <div class="today-stats-grid">
       ${chip("Age", `${reco.age_min}–${reco.age_max}`)}
       ${chip("Gender", genders)}
       ${chip("Top regions", regions)}
+    </div>
+    <div class="ads-breakdowns">
+      ${breakdown("By age", b.top_ages)}
+      ${breakdown("By gender", b.top_genders)}
+      ${breakdown("By region", b.top_regions)}
     </div>`;
 }
 
@@ -7459,13 +7537,14 @@ function renderAdsDashboard(report) {
     if (!report.configured) {
       kpis.innerHTML = `<p class="portal-login-note">Meta isn't connected here yet. Add the META_* environment variables in Netlify, then refresh.</p>`;
     } else {
-      const card = (label, value, tone = "") =>
-        `<div class="today-stat ${tone}"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+      const daily = report.daily || [];
+      const card = (label, value, { tone = "", spark = null } = {}) =>
+        `<div class="today-stat ${tone}"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong>${spark || ""}</div>`;
       kpis.innerHTML = [
-        card("Spend", PKR.format(t.spend || 0)),
+        card("Spend", PKR.format(t.spend || 0), { spark: sparklineSvg(daily.map((d) => d.spend)) }),
         card("Purchases", String(t.purchases || 0)),
-        card("Revenue", PKR.format(t.purchase_value || 0)),
-        card("ROAS", `${(t.roas || 0).toFixed(2)}×`, (t.roas || 0) >= 2 ? "tone-good" : ""),
+        card("Revenue", PKR.format(t.purchase_value || 0), { spark: sparklineSvg(daily.map((d) => d.purchase_value)) }),
+        card("ROAS", `${(t.roas || 0).toFixed(2)}×`, { tone: (t.roas || 0) >= 2 ? "tone-good" : "", spark: sparklineSvg(daily.map((d) => d.roas)) }),
         card("CPA", t.cpa ? PKR.format(t.cpa) : "—"),
         card("CTR", `${(t.ctr || 0).toFixed(2)}%`),
       ].join("");
@@ -7500,8 +7579,15 @@ function renderAdsQueue(campaigns) {
     host.innerHTML = `<p class="portal-login-note">No campaigns built yet. Upload a creative, then build one from the Campaigns tab — it stays paused until you launch it.</p>`;
     return;
   }
+  // Filter chips (all / built / launched / paused).
+  const filter = state._adsQueueFilter || "all";
+  const filtered = filter === "all" ? campaigns : campaigns.filter((c) => c.approval_state === filter);
+  if (!filtered.length) {
+    host.innerHTML = `<p class="portal-login-note">No ${esc(filter)} campaigns.</p>`;
+    return;
+  }
   const stateClass = (s) => s === "launched" ? "in_stock" : s === "rejected" ? "soldout" : s === "paused" ? "preorder" : "preorder";
-  host.innerHTML = campaigns.map((c) => {
+  host.innerHTML = filtered.map((c) => {
     const built = c.approval_state === "built";
     const launched = c.approval_state === "launched";
     const paused = c.approval_state === "paused";
@@ -14806,6 +14892,22 @@ function initAdsPage() {
   // own page-like view.
   qsa("[data-ads-nav]").forEach((btn) =>
     btn.addEventListener("click", () => switchAdsSection(btn.dataset.adsNav)));
+  // Reporting window — refetch the report for the chosen range.
+  qs("[data-ads-range]")?.addEventListener("change", (e) => adsSetReportRange(Number(e.target.value) || 7));
+  // Creative search — debounced client-side filter.
+  let _adsSearchTimer;
+  qs("[data-ads-creative-search]")?.addEventListener("input", (e) => {
+    clearTimeout(_adsSearchTimer);
+    const v = e.target.value;
+    _adsSearchTimer = setTimeout(() => { state._adsCreativeSearch = v; renderAdsCreatives(state._adsCreatives); }, 160);
+  });
+  // Approval-queue filter chips.
+  qsa("[data-ads-queue-filters] [data-queue-filter]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      state._adsQueueFilter = chip.dataset.queueFilter;
+      qsa("[data-ads-queue-filters] [data-queue-filter]").forEach((c) => c.classList.toggle("active", c === chip));
+      renderAdsQueue(state._adsQueue);
+    }));
   if (state.adminToken) {
     qs("[data-admin-login]")?.classList.add("hidden");
     qs("[data-admin-content]")?.classList.remove("hidden");

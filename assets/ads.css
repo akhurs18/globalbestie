@@ -519,7 +519,79 @@ body[data-page="ads"] .toast {
   animation: ad-toast-in 260ms var(--ad-ease-out) both;
 }
 
+/* ── Toolbar / date-range / chips / search ─────────────────────────────── */
+body[data-page="ads"] .ads-toolbar { display: flex; align-items: center; gap: 10px; }
+body[data-page="ads"] .ads-range { width: auto; padding: 7px 10px; font-size: 0.82rem; font-weight: 600; }
+body[data-page="ads"] .ads-search { margin: 0 0 12px; }
+body[data-page="ads"] .ads-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+body[data-page="ads"] .ads-chip {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ad-muted);
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: 999px;
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: background-color 140ms var(--ad-ease-out), color 140ms var(--ad-ease-out), border-color 140ms var(--ad-ease-out), transform 120ms var(--ad-ease-out);
+}
+body[data-page="ads"] .ads-chip:active { transform: scale(0.96); }
+body[data-page="ads"] .ads-chip.active { background: var(--ad-accent); color: #fff; border-color: var(--ad-accent); }
+
+/* ── Sparklines (on KPI cards) ─────────────────────────────────────────── */
+body[data-page="ads"] .ads-spark { display: block; width: 100%; height: 22px; margin-top: 8px; }
+body[data-page="ads"] .ads-spark polyline { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+body[data-page="ads"] .ads-spark.is-up polyline { stroke: var(--ad-ok-fg); }
+body[data-page="ads"] .ads-spark.is-down polyline { stroke: var(--ad-bad-fg); }
+
+/* ── Skeletons ─────────────────────────────────────────────────────────── */
+body[data-page="ads"] .ads-skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+body[data-page="ads"] .ads-skel {
+  border-radius: var(--ad-radius);
+  background: linear-gradient(90deg, var(--ad-neutral-bg) 25%, rgba(20,20,31,0.03) 37%, var(--ad-neutral-bg) 63%);
+  background-size: 400% 100%;
+  animation: ad-shimmer 1.4s ease-in-out infinite;
+}
+body[data-page="ads"] .ads-skel-card { height: 66px; }
+body[data-page="ads"] .ads-skel-line { height: 14px; margin: 8px 0; }
+
+/* ── Audience breakdown tables ─────────────────────────────────────────── */
+body[data-page="ads"] .ads-breakdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 16px; }
+body[data-page="ads"] .ads-breakdown h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ad-faint); margin-bottom: 6px; }
+body[data-page="ads"] .ads-breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+body[data-page="ads"] .ads-breakdown-table th { text-align: left; color: var(--ad-faint); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 8px 6px; }
+body[data-page="ads"] .ads-breakdown-table td { padding: 6px 8px; border-top: 1px solid var(--ad-border); }
+body[data-page="ads"] .ads-breakdown-table td:first-child { text-transform: capitalize; }
+
+/* ── Instagram-ad preview (creative cards) ─────────────────────────────── */
+body[data-page="ads"] .ig-preview { background: var(--ad-surface); }
+body[data-page="ads"] .ig-bar { display: flex; align-items: center; gap: 8px; padding: 9px 10px; }
+body[data-page="ads"] .ig-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--ad-accent), #e08aa6);
+  color: #fff; font-size: 0.62rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+body[data-page="ads"] .ig-id strong { font-size: 0.78rem; display: block; line-height: 1.1; }
+body[data-page="ads"] .ig-id small { font-size: 0.66rem; color: var(--ad-faint); }
+body[data-page="ads"] .ig-media { aspect-ratio: 1 / 1; background: var(--ad-neutral-bg); }
+body[data-page="ads"] .ig-media img { width: 100%; height: 100%; object-fit: cover; }
+body[data-page="ads"] .ig-cta-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 4px; }
+body[data-page="ads"] .ig-icons { color: var(--ad-text); font-size: 0.95rem; letter-spacing: 1px; }
+body[data-page="ads"] .ig-cta { color: var(--ad-accent); font-size: 0.74rem; font-weight: 700; }
+body[data-page="ads"] .ig-caption { padding: 2px 10px 10px; font-size: 0.76rem; color: var(--ad-muted); line-height: 1.45; }
+body[data-page="ads"] .ig-caption strong { color: var(--ad-text); }
+body[data-page="ads"] .ad-creative-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+body[data-page="ads"] .ad-creative-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+body[data-page="ads"] .ad-creative-stats span {
+  font-size: 0.72rem; font-weight: 600; color: var(--ad-muted);
+  background: var(--ad-neutral-bg); border-radius: 7px; padding: 3px 8px;
+}
+body[data-page="ads"] .ad-creative-stats span.good { background: var(--ad-ok-bg); color: var(--ad-ok-fg); }
+
 /* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes ad-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @keyframes ad-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes ad-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ad-toast-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
