@@ -1600,18 +1600,22 @@ function productAdminRowHTML(p) {
         <div class="padmin-thumb">${img}</div>
         <div class="padmin-id"><strong>${esc(p.title)}</strong><small>${esc(p.brand || "—")}${p.category ? " · " + esc(p.category) : ""}</small></div>
       </div>
-      <span class="status-pill ${attr(p.stock_mode || "preorder")}">${inStock ? "In stock" : "Preorder"}</span>
-      <label class="padmin-price"><span aria-hidden="true">Rs</span><input type="number" min="0" step="100" value="${price}" data-prod-price="${attr(p.id)}" aria-label="Customer price for ${attr(p.title)}" /></label>
-      <div class="padmin-stock" data-product-stock-cell>
-        ${inStock ? `
-          <button class="inv-step" type="button" data-action="inv-dec" data-product-id="${attr(p.id)}" aria-label="Decrease stock"${qty <= 0 ? " disabled" : ""}>−</button>
-          <input class="inv-qty" type="number" min="0" inputmode="numeric" value="${qty}" data-inv-input="${attr(p.id)}" aria-label="Stock for ${attr(p.title)}" />
-          <button class="inv-step" type="button" data-action="inv-inc" data-product-id="${attr(p.id)}" aria-label="Increase stock">+</button>
-          ${out ? `<span class="padmin-stock-flag out">out</span>` : low ? `<span class="padmin-stock-flag low">low</span>` : ""}
-        ` : `<span class="padmin-na">preorder</span>`}
+      <div class="padmin-meta">
+        <span class="status-pill ${attr(p.stock_mode || "preorder")}">${inStock ? "In stock" : "Preorder"}</span>
+        <label class="padmin-price"><span aria-hidden="true">Rs</span><input type="number" min="0" step="100" value="${price}" data-prod-price="${attr(p.id)}" aria-label="Customer price for ${attr(p.title)}" /></label>
       </div>
-      <button class="padmin-toggle ${archived ? "is-archived" : draft ? "" : "is-on"}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${archived ? "Archived — click to restore as draft" : draft ? "Draft — click to publish" : "Live — click to move to draft"}">${archived ? "Archived" : draft ? "Draft" : "Live"}</button>
-      <button class="padmin-star ${p.featured ? "is-on" : ""}" type="button" data-action="toggle-product-featured" data-product-id="${attr(p.id)}" aria-pressed="${!!p.featured}" aria-label="${p.featured ? "Unfeature" : "Feature"} ${attr(p.title)}" title="${p.featured ? "Featured on homepage" : "Feature on homepage"}">${p.featured ? "★" : "☆"}</button>
+      <div class="padmin-controls">
+        <div class="padmin-stock" data-product-stock-cell>
+          ${inStock ? `
+            <button class="inv-step" type="button" data-action="inv-dec" data-product-id="${attr(p.id)}" aria-label="Decrease stock"${qty <= 0 ? " disabled" : ""}>−</button>
+            <input class="inv-qty" type="number" min="0" inputmode="numeric" value="${qty}" data-inv-input="${attr(p.id)}" aria-label="Stock for ${attr(p.title)}" />
+            <button class="inv-step" type="button" data-action="inv-inc" data-product-id="${attr(p.id)}" aria-label="Increase stock">+</button>
+            ${out ? `<span class="padmin-stock-flag out">out</span>` : low ? `<span class="padmin-stock-flag low">low</span>` : ""}
+          ` : ""}
+        </div>
+        <button class="padmin-toggle ${archived ? "is-archived" : draft ? "" : "is-on"}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${archived ? "Archived — click to restore as draft" : draft ? "Draft — click to publish" : "Live — click to move to draft"}">${archived ? "Archived" : draft ? "Draft" : "Live"}</button>
+        <button class="padmin-star ${p.featured ? "is-on" : ""}" type="button" data-action="toggle-product-featured" data-product-id="${attr(p.id)}" aria-pressed="${!!p.featured}" aria-label="${p.featured ? "Unfeature" : "Feature"} ${attr(p.title)}" title="${p.featured ? "Featured on homepage" : "Feature on homepage"}">${p.featured ? "★" : "☆"}</button>
+      </div>
       <div class="padmin-actions">
         <button class="button ghost padmin-edit" type="button" data-action="edit-product" data-product-id="${attr(p.id)}">Edit</button>
         <button class="padmin-remove" type="button" data-action="remove-one-product" data-product-id="${attr(p.id)}" aria-label="Remove ${attr(p.title)} from site" title="Remove from site">✕</button>

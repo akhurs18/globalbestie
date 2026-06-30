@@ -4148,25 +4148,40 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 
 .admin-product-grid { display: flex; flex-direction: column; gap: 7px; }
 .padmin-head,
+/* Two-row product card: identity + price on top, stock/status controls and
+   actions beneath. Consistent at every width (the portal content sits below
+   the old 8-column grid's breakpoint almost always, so one clean layout). */
 .padmin-row {
   display: grid;
-  grid-template-columns: 30px minmax(150px, 1.7fr) 92px 118px 134px 78px 48px 108px;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "select product meta"
+    "controls controls actions";
   align-items: center;
-  gap: 10px;
-}
-.padmin-head {
-  padding: 0 14px 2px;
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.padmin-row {
-  padding: 10px 14px;
+  gap: 12px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
+.padmin-select { grid-area: select; }
+.padmin-product { grid-area: product; }
+.padmin-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.padmin-controls {
+  grid-area: controls;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+.padmin-actions { grid-area: actions; }
+.padmin-head { display: none; }
 .padmin-row.is-draft { background: var(--surface-2); }
 .padmin-row.selected { border-color: var(--pink-2); box-shadow: 0 0 0 2px var(--pink-glow); }
 .padmin-select { display: inline-flex; }
@@ -4252,16 +4267,18 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 .padmin-empty strong { display: block; font-size: 1.05rem; margin-bottom: 6px; }
 .padmin-empty p { margin: 0 auto; max-width: 460px; color: var(--muted); font-size: 0.9rem; }
 
-@media (max-width: 1200px) {
-  .padmin-head { display: none; }
+/* Stack the two card rows on phones so nothing is cramped. */
+@media (max-width: 540px) {
   .padmin-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 14px;
+    grid-template-columns: 24px minmax(0, 1fr);
+    grid-template-areas:
+      "select product"
+      "meta   meta"
+      "controls controls"
+      "actions actions";
   }
-  .padmin-product { flex: 1 1 55%; min-width: 0; }
-  .padmin-actions { margin-left: auto; }
+  .padmin-meta { justify-content: flex-start; }
+  .padmin-actions { border-top: none; padding-top: 0; }
 }
 
 /* Upload-form cues — required-field tags + the URL-autofill fast path. */
