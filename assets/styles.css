@@ -12091,6 +12091,13 @@ body:not([data-page="portal"]) .quote-estimator-hero p:not(.kicker) {
   }
 }
 
+/* Restructured product editor: advanced "More options" grid + field hints. */
+.product-advanced-grid { grid-template-columns: repeat(2, 1fr); }
+.product-advanced-grid .span-2 { grid-column: 1 / -1; }
+@media (max-width: 720px) { .product-advanced-grid { grid-template-columns: 1fr; } }
+.field-hint { font-weight: 400; color: var(--muted); font-size: 0.76rem; }
+.product-editor .product-photo-field input[type="file"] { cursor: pointer; }
+
 /* ═══════════════════════════════════════════════════════════════════════
    DASHBOARD ENHANCEMENTS — Wave 1 + 2 + 3
    ═══════════════════════════════════════════════════════════════════════ */
