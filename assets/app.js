@@ -6898,7 +6898,7 @@ function inventoryDeliveryLabel(p) {
   const hi = Number(p.delivery_days_max || 0);
   if (lo && hi) return lo === hi ? `Ships in ${lo} days` : `Ships in ${lo}–${hi} days`;
   if (hi) return `Ships in ${hi} days`;
-  return "Ships in days";
+  return "Ready to ship";
 }
 function inventoryIsLive(p) {
   return (p.status || p.product_status) !== "draft";
@@ -6927,22 +6927,32 @@ function inventoryStatsHTML() {
   }
   const profit = retail - cost;
   const margin = retail > 0 ? Math.round((profit / retail) * 100) : 0;
-  const tiles = [
-    { label: "In-stock SKUs", value: items.length },
-    { label: "Units on hand", value: units },
+  // Two tiers: the three money figures get prominent cards; the counts (which
+  // are just small whole numbers) sit in a compact chip row beneath — cleaner
+  // and balanced, vs. seven equal cards that orphaned on the last row.
+  const money = [
     { label: "Retail value", value: PKR.format(retail), sub: "if it all sells" },
     { label: "Capital in stock", value: PKR.format(cost), sub: "supplier cost" },
     { label: "Locked profit", value: PKR.format(profit), sub: `${margin}% margin`, tone: profit >= 0 ? "ok" : "warn" },
-    { label: "Low stock", value: low, tone: low > 0 ? "warn" : "" },
-    { label: "Out of stock", value: out, tone: out > 0 ? "bad" : "" },
   ];
-  return tiles.map((t) => `
-    <article class="metric-card inventory-stat${t.tone ? " tone-" + t.tone : ""}">
-      <span>${esc(t.label)}</span>
-      <strong>${t.value}</strong>
-      ${t.sub ? `<small>${esc(t.sub)}</small>` : ""}
-    </article>
-  `).join("");
+  const counts = [
+    { n: items.length, label: "in-stock SKUs" },
+    { n: units, label: "units on hand" },
+    { n: low, label: "low stock", tone: low > 0 ? "warn" : "" },
+    { n: out, label: "out of stock", tone: out > 0 ? "bad" : "" },
+  ];
+  return `
+    <div class="inv-stat-money">
+      ${money.map((t) => `
+        <article class="metric-card inventory-stat${t.tone ? " tone-" + t.tone : ""}">
+          <span>${esc(t.label)}</span>
+          <strong>${t.value}</strong>
+          <small>${esc(t.sub)}</small>
+        </article>`).join("")}
+    </div>
+    <div class="inv-stat-counts">
+      ${counts.map((c) => `<span class="inv-chip${c.tone ? " tone-" + c.tone : ""}"><strong>${c.n}</strong> ${esc(c.label)}</span>`).join("")}
+    </div>`;
 }
 function inventoryRowHTML(p) {
   const qty = Math.max(0, Number(p.inventory || 0));
