@@ -102,7 +102,7 @@ async function handleUndo(actionId) {
   return json({ ok: true, reverted: actionId });
 }
 
-export default async (req) => {
+export const adsOptimize = async (req) => {
   const url = new URL(req.url);
   const isScheduled =
     req.headers.get("x-netlify-functions-source") === "schedule" ||
@@ -189,7 +189,9 @@ export default async (req) => {
   }
 };
 
+export default adsOptimize;
+
+// HTTP endpoint only; the daily cron lives in ads-optimize-scheduled.js.
 export const config = {
   path: "/api/admin/ads-optimize",
-  schedule: "0 7 * * *",
 };

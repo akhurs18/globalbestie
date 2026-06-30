@@ -160,7 +160,7 @@ async function buildCreativeStats(since) {
   }
 }
 
-export default async (req) => {
+export const adsReport = async (req) => {
   const isScheduled =
     req.headers.get("x-netlify-functions-source") === "schedule" ||
     new URL(req.url).searchParams.get("scheduled") === "1";
@@ -198,7 +198,11 @@ export default async (req) => {
   }
 };
 
+export default adsReport;
+
+// HTTP endpoint only — a Netlify function cannot have BOTH a custom path and a
+// schedule. The daily cron lives in ads-report-scheduled.js, which imports
+// adsReport and invokes it with a scheduled request.
 export const config = {
   path: "/api/admin/ads-report",
-  schedule: "0 6 * * *",
 };

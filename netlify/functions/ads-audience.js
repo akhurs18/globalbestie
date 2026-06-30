@@ -57,7 +57,7 @@ function parseAgeRange(label) {
   return Number.isFinite(min) ? { min, max } : null;
 }
 
-export default async (req) => {
+export const adsAudience = async (req) => {
   const url = new URL(req.url);
   const isScheduled =
     req.headers.get("x-netlify-functions-source") === "schedule" ||
@@ -178,7 +178,9 @@ export default async (req) => {
   }
 };
 
+export default adsAudience;
+
+// HTTP endpoint only; the weekly cron lives in ads-audience-scheduled.js.
 export const config = {
   path: "/api/admin/ads-audience",
-  schedule: "0 8 * * 1",
 };
