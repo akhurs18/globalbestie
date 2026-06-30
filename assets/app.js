@@ -6897,11 +6897,9 @@ function inventoryHealth(p) {
   if (qty <= inventoryLowThreshold(p)) return "low";
   return "healthy";
 }
-function inventoryDeliveryLabel(p) {
-  const lo = Number(p.delivery_days_min || 0);
-  const hi = Number(p.delivery_days_max || 0);
-  if (lo && hi) return lo === hi ? `Ships in ${lo} days` : `Ships in ${lo}–${hi} days`;
-  if (hi) return `Ships in ${hi} days`;
+function inventoryDeliveryLabel() {
+  // In-stock items are already in Pakistan — no per-product ship dates
+  // (preorder timing is set by the shipment batch, not the product).
   return "Ready to ship";
 }
 function inventoryIsLive(p) {
@@ -8098,8 +8096,6 @@ function fillProductForm(product = {}) {
     shipping_pkr: "",
     fx_rate: state.settings.fx_rate,
     customer_price_pkr: "",
-    delivery_days_min: "",
-    delivery_days_max: "",
     stock_mode: "preorder",
     inventory: 0,
     low_stock_threshold: 2,
@@ -10869,15 +10865,13 @@ async function saveProduct(event) {
   product.shipping_pkr = Number(product.shipping_pkr || 0);
   product.fx_rate = Number(product.fx_rate || state.settings.fx_rate || 282);
 
+  // Delivery timing is governed by the shipment batch, not per product — no
+  // per-product "days to ship". Just set the stock mode + preorder weeks.
   if (pricingMode === "in_stock") {
     product.stock_mode = "in_stock";
-    product.delivery_days_min = Number(product.delivery_days_min || 3);
-    product.delivery_days_max = Number(product.delivery_days_max || 5);
     product.preorder_weeks = 0;
   } else {
     product.stock_mode = "preorder";
-    product.delivery_days_min = 0;
-    product.delivery_days_max = 0;
     product.preorder_weeks = Number(state.settings.preorder_weeks || 4);
   }
   product.inventory = Number(product.inventory || 0);
