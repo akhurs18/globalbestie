@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260628-prod3" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260628-prod5" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -598,6 +598,8 @@
                     Remove from site
                   </button>
                 </div>
+                <details class="padmin-editor" data-padmin-editor>
+                  <summary class="padmin-editor-summary"><span class="padmin-editor-plus" aria-hidden="true">＋</span> Add or edit a product</summary>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
 
@@ -671,30 +673,36 @@
                   <button class="button primary" type="submit">Save product</button>
                   <output data-price-preview></output>
                 </form>
+                </details>
+
                 <div class="padmin-toolbar">
-                  <input type="search" class="padmin-search" data-padmin-search placeholder="Search product or brand" aria-label="Search products" />
-                  <div class="padmin-chips" role="group" aria-label="Filter products">
-                    <button class="padmin-chip active" type="button" data-padmin-filter="all">All</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="active">Live</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="draft">Draft</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="featured">Featured</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="low">Low</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="out">Out</button>
-                    <button class="padmin-chip" type="button" data-padmin-filter="archived">Archived</button>
+                  <div class="padmin-toolbar-row">
+                    <input type="search" class="padmin-search" data-padmin-search placeholder="Search product or brand" aria-label="Search products" />
+                    <select class="padmin-select-control" data-padmin-mode aria-label="Filter by stock mode">
+                      <option value="all">All modes</option>
+                      <option value="preorder">Preorder</option>
+                      <option value="in_stock">In stock</option>
+                    </select>
+                    <select class="padmin-select-control" data-padmin-sort aria-label="Sort products">
+                      <option value="newest">Newest</option>
+                      <option value="name">Name A–Z</option>
+                      <option value="price-desc">Price high→low</option>
+                      <option value="price-asc">Price low→high</option>
+                      <option value="stock-asc">Stock low→high</option>
+                    </select>
                   </div>
-                  <select class="padmin-select-control" data-padmin-mode aria-label="Filter by stock mode">
-                    <option value="all">All modes</option>
-                    <option value="preorder">Preorder</option>
-                    <option value="in_stock">In stock</option>
-                  </select>
-                  <select class="padmin-select-control" data-padmin-sort aria-label="Sort products">
-                    <option value="newest">Newest</option>
-                    <option value="name">Name A–Z</option>
-                    <option value="price-desc">Price high→low</option>
-                    <option value="price-asc">Price low→high</option>
-                    <option value="stock-asc">Stock low→high</option>
-                  </select>
-                  <span class="padmin-count" data-padmin-count></span>
+                  <div class="padmin-chips-row">
+                    <div class="padmin-chips" role="group" aria-label="Filter products">
+                      <button class="padmin-chip active" type="button" data-padmin-filter="all">All <span class="padmin-chip-count" data-chip-count="all"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="active">Live <span class="padmin-chip-count" data-chip-count="active"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="draft">Draft <span class="padmin-chip-count" data-chip-count="draft"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="featured">Featured <span class="padmin-chip-count" data-chip-count="featured"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="low">Low <span class="padmin-chip-count" data-chip-count="low"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="out">Out <span class="padmin-chip-count" data-chip-count="out"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="archived">Archived <span class="padmin-chip-count" data-chip-count="archived"></span></button>
+                    </div>
+                    <span class="padmin-count" data-padmin-count></span>
+                  </div>
                 </div>
                 <div class="product-grid admin-product-grid" data-admin-products></div>
               </section>
@@ -819,6 +827,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260628-prodgrid2"></script>
+    <script type="module" src="./assets/app.js?v=20260628-prodmgmt1"></script>
   </body>
 </html>

@@ -4104,11 +4104,41 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
    widths so the portal @ tablet/mobile render-check stays clean. */
 .padmin-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
   margin: 4px 0 14px;
 }
+.padmin-toolbar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.padmin-toolbar-row .padmin-search { flex: 1 1 240px; min-width: 180px; }
+/* Keep the selects inline (a global `select{width:100%}` otherwise stacks them). */
+.padmin-toolbar-row .padmin-select-control { flex: 0 0 auto; width: auto; min-width: 148px; }
+.padmin-chips-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+
+/* Collapsible add/edit editor — list-first: the catalog leads, the form opens on demand. */
+.padmin-editor { margin-bottom: 14px; }
+.padmin-editor > summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.92rem;
+  transition: background 160ms var(--ease-out-strong), border-color 160ms var(--ease-out-strong);
+}
+.padmin-editor > summary::-webkit-details-marker { display: none; }
+.padmin-editor[open] > summary { margin-bottom: 14px; background: var(--surface); border-style: solid; }
+.padmin-editor-plus { font-size: 1.2rem; line-height: 1; color: var(--pink-2); }
+@media (hover: hover) and (pointer: fine) { .padmin-editor > summary:hover { border-color: var(--pink-2); background: var(--surface); } }
+
+.padmin-chip-count { font-weight: 700; opacity: 0.6; margin-left: 2px; font-variant-numeric: tabular-nums; }
+.padmin-chip-count:empty { display: none; }
+.padmin-chip.active .padmin-chip-count { opacity: 0.85; }
 .padmin-search {
   flex: 1 1 200px;
   min-width: 0;
@@ -4182,8 +4212,17 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 }
 .padmin-actions { grid-area: actions; }
 .padmin-head { display: none; }
-.padmin-row.is-draft { background: var(--surface-2); }
-.padmin-row.selected { border-color: var(--pink-2); box-shadow: 0 0 0 2px var(--pink-glow); }
+/* Publish state at a glance: colored left edge. Draft is dimmed + grey,
+   archived is faded + red, live is a confident green. */
+.padmin-row { border-left-width: 3px; }
+.padmin-row.is-live { border-left-color: var(--success); }
+.padmin-row.is-draft { border-left-color: var(--line-strong); background: var(--surface-2); }
+.padmin-row.is-draft .padmin-thumb,
+.padmin-row.is-draft .padmin-id strong { opacity: 0.6; }
+.padmin-row.is-archived { border-left-color: #c4453f; opacity: 0.72; }
+/* Selection keeps its ring but no longer recolors the border, so the status
+   edge stays visible even when selected. */
+.padmin-row.selected { box-shadow: 0 0 0 2px var(--pink-glow); }
 .padmin-select { display: inline-flex; }
 .padmin-product { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .padmin-thumb { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 8px; overflow: hidden; background: var(--surface-2); }
@@ -4210,13 +4249,17 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 .padmin-stock-flag { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; padding: 2px 5px; border-radius: 5px; }
 .padmin-stock-flag.low { color: var(--amber); background: rgba(211, 154, 53, 0.14); }
 .padmin-stock-flag.out { color: #c4453f; background: rgba(196, 69, 63, 0.12); }
+/* Publish control — the clear, primary way to see and change live/draft state. */
 .padmin-toggle {
-  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--line-strong);
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 140ms var(--ease-out-strong),
@@ -4225,8 +4268,25 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
               transform 110ms var(--ease-out-strong);
 }
 .padmin-toggle:active { transform: scale(0.95); }
-.padmin-toggle.is-on { color: var(--success); border-color: var(--success-border); background: var(--success-bg); }
-.padmin-toggle.is-archived { color: var(--muted); opacity: 0.65; }
+.padmin-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.padmin-toggle.is-live { color: var(--success); border-color: var(--success-border); background: var(--success-bg); }
+.padmin-toggle.is-draft { color: var(--ink-soft); border-color: var(--line-strong); background: var(--surface); }
+.padmin-toggle.is-archived { color: #c4453f; border-color: rgba(196, 69, 63, 0.32); background: rgba(196, 69, 63, 0.08); }
+
+/* Stock mode — demoted to quiet metadata (it's how it sells, not its status). */
+.padmin-mode {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
 .padmin-star {
   width: 32px;
   height: 32px;

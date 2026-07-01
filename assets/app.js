@@ -1593,18 +1593,26 @@ function productAdminRowHTML(p) {
   const img = p.image_url
     ? `<img src="${safeUrl(imageUrl(p.image_url, { width: 96 }), "")}" alt="${attr(p.title)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'padmin-noimg',textContent:'—'}));" />`
     : `<div class="padmin-noimg">—</div>`;
+  // Publish state is the primary signal — a colored left edge + a clear toggle.
+  const statusClass = archived ? "is-archived" : draft ? "is-draft" : "is-live";
+  const statusLabel = archived ? "Archived" : draft ? "Draft" : "Live";
+  const statusTitle = archived
+    ? "Archived (removed from site) — click to restore as draft"
+    : draft ? "Draft (hidden from customers) — click to publish"
+    : "Live on the storefront — click to unpublish";
   return `
-    <article class="padmin-row${draft ? " is-draft" : ""}${selectedProducts.has(p.id) ? " selected" : ""}" data-product-row="${attr(p.id)}">
+    <article class="padmin-row ${statusClass}${selectedProducts.has(p.id) ? " selected" : ""}" data-product-row="${attr(p.id)}">
       <label class="padmin-select"><input type="checkbox" class="card-checkbox" data-product-select="${attr(p.id)}" ${selectedProducts.has(p.id) ? "checked" : ""} aria-label="Select ${attr(p.title)}" /></label>
       <div class="padmin-product">
         <div class="padmin-thumb">${img}</div>
         <div class="padmin-id"><strong>${esc(p.title)}</strong><small>${esc(p.brand || "—")}${p.category ? " · " + esc(p.category) : ""}</small></div>
       </div>
       <div class="padmin-meta">
-        <span class="status-pill ${attr(p.stock_mode || "preorder")}">${inStock ? "In stock" : "Preorder"}</span>
+        <span class="padmin-mode ${inStock ? "is-instock" : "is-preorder"}">${inStock ? "In stock" : "Preorder"}</span>
         <label class="padmin-price"><span aria-hidden="true">Rs</span><input type="number" min="0" step="100" value="${price}" data-prod-price="${attr(p.id)}" aria-label="Customer price for ${attr(p.title)}" /></label>
       </div>
       <div class="padmin-controls">
+        <button class="padmin-toggle ${statusClass}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${statusTitle}"><span class="padmin-dot" aria-hidden="true"></span>${statusLabel}</button>
         <div class="padmin-stock" data-product-stock-cell>
           ${inStock ? `
             <button class="inv-step" type="button" data-action="inv-dec" data-product-id="${attr(p.id)}" aria-label="Decrease stock"${qty <= 0 ? " disabled" : ""}>−</button>
@@ -1613,7 +1621,6 @@ function productAdminRowHTML(p) {
             ${out ? `<span class="padmin-stock-flag out">out</span>` : low ? `<span class="padmin-stock-flag low">low</span>` : ""}
           ` : ""}
         </div>
-        <button class="padmin-toggle ${archived ? "is-archived" : draft ? "" : "is-on"}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${archived ? "Archived — click to restore as draft" : draft ? "Draft — click to publish" : "Live — click to move to draft"}">${archived ? "Archived" : draft ? "Draft" : "Live"}</button>
         <button class="padmin-star ${p.featured ? "is-on" : ""}" type="button" data-action="toggle-product-featured" data-product-id="${attr(p.id)}" aria-pressed="${!!p.featured}" aria-label="${p.featured ? "Unfeature" : "Feature"} ${attr(p.title)}" title="${p.featured ? "Featured on homepage" : "Feature on homepage"}">${p.featured ? "★" : "☆"}</button>
       </div>
       <div class="padmin-actions">
@@ -1636,6 +1643,21 @@ function renderAdminProductsTable() {
   qsa("[data-padmin-filter]").forEach((c) => c.classList.toggle("active", c.dataset.padminFilter === f.status));
   const countChip = qs("[data-padmin-count]");
   if (countChip) countChip.textContent = `${items.length}/${total}`;
+  // Per-filter counts on the chips — live/draft/etc. visible at a glance.
+  const universe = (state.products || []).filter((p) => !productIsArchived(p));
+  const chipCounts = {
+    all: universe.length,
+    active: universe.filter((p) => !productIsDraft(p)).length,
+    draft: universe.filter(productIsDraft).length,
+    featured: universe.filter((p) => p.featured).length,
+    low: universe.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) > 0 && Number(p.inventory || 0) <= Number(p.low_stock_threshold ?? 2)).length,
+    out: universe.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0).length,
+    archived: (state.products || []).filter(productIsArchived).length,
+  };
+  qsa("[data-chip-count]").forEach((el) => {
+    const n = chipCounts[el.dataset.chipCount] ?? 0;
+    el.textContent = n ? String(n) : "";
+  });
   const sortSel = qs("[data-padmin-sort]");
   if (sortSel && sortSel.value !== f.sort) sortSel.value = f.sort;
   if (!total) {
@@ -8082,6 +8104,14 @@ function applyPricingModeVisibility(form, mode) {
   });
 }
 
+// The editor is collapsed by default (list-first) — reveal it and scroll to it
+// when the operator clicks New product or Edit.
+function openProductEditor() {
+  const details = qs("[data-padmin-editor]");
+  if (details) details.open = true;
+  qs("[data-product-editor]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function fillProductForm(product = {}) {
   const form = qs("[data-product-editor]");
   if (!form) return;
@@ -13329,11 +13359,12 @@ function wireEvents() {
     }
     if (action === "view-order") return showOrderDetails(orderId);
     if (action === "refresh-admin") return refreshAdmin();
-    if (action === "new-product") return fillProductForm();
+    if (action === "new-product") { fillProductForm(); openProductEditor(); return; }
     if (action === "edit-product") {
       fillProductForm(state.products.find((item) => item.id === productId));
       closeModal();
       qs("[data-admin-tab=\"products\"]")?.click();
+      openProductEditor();
       return;
     }
     if (action === "save-order-status") return saveOrderStatus(orderId);
