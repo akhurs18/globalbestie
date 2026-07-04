@@ -106,7 +106,9 @@ const sampleSettings = {
   markup_rate: 0.25,
   fx_rate: 282,
   preorder_weeks: 4,
-  next_shipment_date: "2026-06-02",
+  // Demo date is computed (~3 weeks out) so local previews never show a
+  // stale past-date banner. Production reads store_settings instead.
+  next_shipment_date: new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10),
   shipment_notice: "Next USA batch is being consolidated. Dates can shift slightly based on brand dispatch and customs clearance.",
   // Customer-visible announcement ribbon. `batch_doorstep_window` is the
   // human label ("May 25-27") and `batch_doorstep_until` is the last day
@@ -259,8 +261,10 @@ const sampleProducts = [
     markup_rate: 0.25,
     stock_mode: "preorder",
     inventory: 0,
-    image_url: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=84",
-    gallery_urls: ["https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=84"],
+    // Neutral (unbranded) perfume bottle — the previous Unsplash photo was
+    // a Chanel N°5 bottle, which mislabeled the Valentino demo card.
+    image_url: "https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=84",
+    gallery_urls: ["https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=84"],
     source_url: "https://www.valentino-beauty.com/",
     variants: "Donna Born in Roma 50ml / 100ml quoted by availability.",
     authenticity_note: "Fragrance preorders are packed with extra box protection.",
@@ -608,6 +612,7 @@ const state = {
   leads: [...sampleLeads],
   calendar: [...sampleCalendar],
   shipmentBatches: [...sampleShipmentBatches],
+  inventoryLog: loadJSON("gb_inventory_log", []),
   customers: [],
   waTemplates: [],
   marketingMessages: [],
@@ -976,7 +981,12 @@ function nextShipmentLabel() {
   const iso = settings.next_shipment_date;
   if (iso) {
     const dt = new Date(`${iso}T12:00:00`);
-    if (!Number.isNaN(dt.getTime())) {
+    // A past date means the setting went stale (that batch already moved) —
+    // fall back to the generic line instead of advertising old timing.
+    // Mirrors the eta_date >= today filter in nextBatchArrivalLabel().
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!Number.isNaN(dt.getTime()) && dt >= today) {
       const month = dt.toLocaleDateString("en-PK", { month: "long" });
       const day = dt.getDate();
       const period = day <= 10 ? "early" : day <= 20 ? "mid" : "late";
@@ -1139,13 +1149,15 @@ function variantLabel(product) {
 }
 
 function variantPlaceholder(product) {
+  // Keep these short — the cart drawer's variant input is ~12 characters
+  // wide, and clipped placeholders read as typos ("e.g. Blus").
   return {
-    shoes: "e.g. US 7.5 / EU 38",
-    makeup: "e.g. Pillow Talk Medium",
+    shoes: "e.g. US 7.5",
+    makeup: "e.g. shade",
     fragrance: "e.g. 50ml",
-    handbags: "e.g. Blush pink",
+    handbags: "e.g. Blush",
     accessories: "e.g. Gold",
-  }[product?.category] || "Tell us your preference";
+  }[product?.category] || "Your preference";
 }
 
 function variantHint(product) {
@@ -1253,7 +1265,7 @@ function productCard(product, options = {}) {
         ${productImageMarkup}
         <div class="product-badges">
           <span class="status-pill ${attr(product.stock_mode)}">${esc(stockLabel)}</span>
-          ${product.stock_mode === "in_stock" && Number(product.inventory || 0) > 0 && Number(product.inventory || 0) <= Number(product.low_stock_threshold ?? 2) ? `<span class="low-stock-chip">${Number(product.inventory)} left</span>` : ""}
+          ${product.stock_mode === "in_stock" && Number(product.inventory || 0) > 0 && Number(product.inventory || 0) <= Number(product.low_stock_threshold ?? 2) ? `<span class="low-stock-chip">Only ${Number(product.inventory)} left</span>` : ""}
           ${isNew && !isPortal ? `<span class="new-arrival-badge">New</span>` : ""}
           ${product.marketing_badge ? `<span class="marketing-badge">${esc(product.marketing_badge)}</span>` : ""}
         </div>
@@ -1270,10 +1282,10 @@ function productCard(product, options = {}) {
           <span class="price">${PKR.format(parts.total)}</span>
         </div>
         ${!isPortal && product.stock_mode === "preorder" ? `
-          <div class="product-payment-chips" aria-label="Preorder payment split">
-            <span><small>Advance</small>${PKR.format(advanceDue)}</span>
-            <span><small>Balance on arrival</small>${PKR.format(balanceDue)}</span>
-          </div>
+          <p class="product-payment-line" aria-label="Preorder payment split">
+            <span class="pay-advance">${PKR.format(advanceDue)} advance</span>
+            <span class="pay-rest">· 50% balance on arrival</span>
+          </p>
         ` : ""}
         ${isPortal ? `<p class="product-description-line">${esc(product.description || "")}</p>` : ""}
         <div class="product-meta ${isPortal ? "" : "public-listing"}" aria-label="${isPortal ? "Internal pricing details" : "Product details"}">
@@ -1538,18 +1550,239 @@ function renderProducts() {
   setHTML("[data-shop-products]", visibleProducts.length
     ? visibleProducts.map((product) => productCard(product)).join("")
     : productEmptyState());
-  const adminGrid = qs("[data-admin-products]");
-  if (adminGrid) {
-    adminGrid.innerHTML = state.products.map((product) => `
-      <div class="admin-product-wrap${selectedProducts.has(product.id) ? " selected" : ""}">
-        <label class="card-select-wrap">
-          <input type="checkbox" class="card-checkbox" data-product-select="${attr(product.id)}" ${selectedProducts.has(product.id) ? "checked" : ""} />
-        </label>
-        ${productCard(product, { admin: true })}
+  if (qs("[data-admin-products]")) renderAdminProductsTable();
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// PRODUCTS MANAGEMENT TABLE — the team's "manage listings" surface.
+// A scannable table with inline price / stock / status / featured controls so
+// common edits don't need the click→modal→form→scroll round-trip. Search /
+// filter / sort live in static portal.html controls; bulk publish/draft/feature
+// act on the shared selectedProducts set. Stock steppers reuse the inventory
+// path (setInventory) so changes log + persist + stay in sync with the board.
+// ════════════════════════════════════════════════════════════════════════
+function productAdminFilters() {
+  return state._productAdmin || (state._productAdmin = { search: "", mode: "all", status: "all", category: "all", sort: "newest" });
+}
+function productIsDraft(p) { return (p.status || p.product_status) === "draft"; }
+function productIsArchived(p) { return (p.status || p.product_status) === "archived"; }
+function filteredAdminProducts() {
+  const f = productAdminFilters();
+  let items = (state.products || []).slice();
+  // Archived products are "removed from site" — keep them out of the Live/Draft
+  // views so what's live vs draft is unambiguous. They stay reachable via the
+  // dedicated "Archived" filter chip.
+  if (f.status !== "archived") items = items.filter((p) => !productIsArchived(p));
+  const q = (f.search || "").trim().toLowerCase();
+  if (q) items = items.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q));
+  if (f.mode !== "all") items = items.filter((p) => (p.stock_mode || "preorder") === f.mode);
+  if (f.status === "active") items = items.filter((p) => !productIsDraft(p));
+  else if (f.status === "draft") items = items.filter(productIsDraft);
+  else if (f.status === "archived") items = items.filter(productIsArchived);
+  else if (f.status === "featured") items = items.filter((p) => p.featured);
+  else if (f.status === "low") items = items.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) > 0 && Number(p.inventory || 0) <= Number(p.low_stock_threshold ?? 2));
+  else if (f.status === "out") items = items.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0);
+  if (f.category !== "all") items = items.filter((p) => (p.category || "") === f.category);
+  const sorters = {
+    newest: (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0),
+    name: (a, b) => String(a.title).localeCompare(String(b.title)),
+    "price-desc": (a, b) => calculatePrice(b) - calculatePrice(a),
+    "price-asc": (a, b) => calculatePrice(a) - calculatePrice(b),
+    "stock-asc": (a, b) => Number(a.inventory || 0) - Number(b.inventory || 0),
+  };
+  items.sort(sorters[f.sort] || sorters.newest);
+  return items;
+}
+function productAdminRowHTML(p) {
+  const draft = productIsDraft(p);
+  const archived = productIsArchived(p);
+  const inStock = p.stock_mode === "in_stock";
+  const qty = Math.max(0, Number(p.inventory || 0));
+  const low = inStock && qty > 0 && qty <= Number(p.low_stock_threshold ?? 2);
+  const out = inStock && qty <= 0;
+  const price = calculatePrice(p);
+  const img = p.image_url
+    ? `<img src="${safeUrl(imageUrl(p.image_url, { width: 96 }), "")}" alt="${attr(p.title)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'padmin-noimg',textContent:'—'}));" />`
+    : `<div class="padmin-noimg">—</div>`;
+  // Publish state is the primary signal — a colored left edge + a clear toggle.
+  const statusClass = archived ? "is-archived" : draft ? "is-draft" : "is-live";
+  const statusLabel = archived ? "Archived" : draft ? "Draft" : "Live";
+  const statusTitle = archived
+    ? "Archived (removed from site) — click to restore as draft"
+    : draft ? "Draft (hidden from customers) — click to publish"
+    : "Live on the storefront — click to unpublish";
+  return `
+    <article class="padmin-row ${statusClass}${selectedProducts.has(p.id) ? " selected" : ""}" data-product-row="${attr(p.id)}">
+      <label class="padmin-select"><input type="checkbox" class="card-checkbox" data-product-select="${attr(p.id)}" ${selectedProducts.has(p.id) ? "checked" : ""} aria-label="Select ${attr(p.title)}" /></label>
+      <div class="padmin-product">
+        <div class="padmin-thumb">${img}</div>
+        <div class="padmin-id"><strong>${esc(p.title)}</strong><small>${esc(p.brand || "—")}${p.category ? " · " + esc(p.category) : ""}</small></div>
       </div>
-    `).join("");
-    updateProductBulkBar();
+      <div class="padmin-meta">
+        <span class="padmin-mode ${inStock ? "is-instock" : "is-preorder"}">${inStock ? "In stock" : "Preorder"}</span>
+        <label class="padmin-price"><span aria-hidden="true">Rs</span><input type="number" min="0" step="100" value="${price}" data-prod-price="${attr(p.id)}" aria-label="Customer price for ${attr(p.title)}" /></label>
+      </div>
+      <div class="padmin-controls">
+        <button class="padmin-toggle ${statusClass}" type="button" data-action="toggle-product-status" data-product-id="${attr(p.id)}" aria-pressed="${!draft && !archived}" title="${statusTitle}"><span class="padmin-dot" aria-hidden="true"></span>${statusLabel}</button>
+        <div class="padmin-stock" data-product-stock-cell>
+          ${inStock ? `
+            <button class="inv-step" type="button" data-action="inv-dec" data-product-id="${attr(p.id)}" aria-label="Decrease stock"${qty <= 0 ? " disabled" : ""}>−</button>
+            <input class="inv-qty" type="number" min="0" inputmode="numeric" value="${qty}" data-inv-input="${attr(p.id)}" aria-label="Stock for ${attr(p.title)}" />
+            <button class="inv-step" type="button" data-action="inv-inc" data-product-id="${attr(p.id)}" aria-label="Increase stock">+</button>
+            ${out ? `<span class="padmin-stock-flag out">out</span>` : low ? `<span class="padmin-stock-flag low">low</span>` : ""}
+          ` : ""}
+        </div>
+        <button class="padmin-star ${p.featured ? "is-on" : ""}" type="button" data-action="toggle-product-featured" data-product-id="${attr(p.id)}" aria-pressed="${!!p.featured}" aria-label="${p.featured ? "Unfeature" : "Feature"} ${attr(p.title)}" title="${p.featured ? "Featured on homepage" : "Feature on homepage"}">${p.featured ? "★" : "☆"}</button>
+      </div>
+      <div class="padmin-actions">
+        <button class="button ghost padmin-edit" type="button" data-action="edit-product" data-product-id="${attr(p.id)}">Edit</button>
+        <button class="padmin-remove" type="button" data-action="remove-one-product" data-product-id="${attr(p.id)}" aria-label="Remove ${attr(p.title)} from site" title="Remove from site">✕</button>
+      </div>
+    </article>
+  `;
+}
+function renderAdminProductsTable() {
+  const grid = qs("[data-admin-products]");
+  if (!grid) return;
+  const f = productAdminFilters();
+  const items = filteredAdminProducts();
+  // Count against the relevant universe: archived view counts archived; every
+  // other view counts the live+draft catalog (archived are removed-from-site).
+  const total = f.status === "archived"
+    ? (state.products || []).filter(productIsArchived).length
+    : (state.products || []).filter((p) => !productIsArchived(p)).length;
+  qsa("[data-padmin-filter]").forEach((c) => c.classList.toggle("active", c.dataset.padminFilter === f.status));
+  const countChip = qs("[data-padmin-count]");
+  if (countChip) countChip.textContent = `${items.length}/${total}`;
+  // Per-filter counts on the chips — live/draft/etc. visible at a glance.
+  const universe = (state.products || []).filter((p) => !productIsArchived(p));
+  const chipCounts = {
+    all: universe.length,
+    active: universe.filter((p) => !productIsDraft(p)).length,
+    draft: universe.filter(productIsDraft).length,
+    featured: universe.filter((p) => p.featured).length,
+    low: universe.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) > 0 && Number(p.inventory || 0) <= Number(p.low_stock_threshold ?? 2)).length,
+    out: universe.filter((p) => p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0).length,
+    archived: (state.products || []).filter(productIsArchived).length,
+  };
+  qsa("[data-chip-count]").forEach((el) => {
+    const n = chipCounts[el.dataset.chipCount] ?? 0;
+    el.textContent = n ? String(n) : "";
+  });
+  const sortSel = qs("[data-padmin-sort]");
+  if (sortSel && sortSel.value !== f.sort) sortSel.value = f.sort;
+  if (!total) {
+    grid.innerHTML = `<div class="padmin-empty"><strong>No products yet.</strong><p>Use “Suggest 10 products”, paste a retailer URL, or import a JSON batch above to add your first listings.</p></div>`;
+  } else if (!items.length) {
+    grid.innerHTML = `<div class="padmin-empty"><strong>Nothing matches.</strong><p>Try a different search or filter.</p></div>`;
+  } else {
+    grid.innerHTML = `
+      <div class="padmin-head" aria-hidden="true">
+        <span></span><span>Product</span><span>Mode</span><span>Price</span><span>Stock</span><span>Status</span><span>Feat.</span><span></span>
+      </div>
+      ${items.map(productAdminRowHTML).join("")}
+    `;
   }
+  updateProductBulkBar();
+}
+// Repaint a single product row's stock flag after a stepper change (the row
+// lives in the Products table; the Inventory board repaints separately).
+function paintProductRow(productId) {
+  const p = state.products.find((x) => x.id === productId);
+  const row = qs(`[data-product-row="${productId}"]`);
+  if (!p || !row) return;
+  const qty = Math.max(0, Number(p.inventory || 0));
+  const low = p.stock_mode === "in_stock" && qty > 0 && qty <= Number(p.low_stock_threshold ?? 2);
+  const out = p.stock_mode === "in_stock" && qty <= 0;
+  const dec = row.querySelector('[data-action="inv-dec"]');
+  if (dec) dec.disabled = qty <= 0;
+  const cell = row.querySelector("[data-product-stock-cell]");
+  const oldFlag = cell?.querySelector(".padmin-stock-flag");
+  if (oldFlag) oldFlag.remove();
+  if (cell && (low || out)) {
+    const flag = document.createElement("span");
+    flag.className = `padmin-stock-flag ${out ? "out" : "low"}`;
+    flag.textContent = out ? "out" : "low";
+    cell.appendChild(flag);
+  }
+}
+const _productSaveTimers = {};
+function persistProductSoon(productId, immediate) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  const run = async () => {
+    try {
+      const saved = await apiFetch("/api/catalog", { method: "POST", body: JSON.stringify(product) }, { product });
+      const idx = state.products.findIndex((p) => p.id === productId);
+      if (idx >= 0 && saved.product) state.products[idx] = { ...saved.product };
+    } catch { toast("Couldn't save the product. Check the portal key and retry."); }
+  };
+  clearTimeout(_productSaveTimers[productId]);
+  if (immediate) run();
+  else _productSaveTimers[productId] = setTimeout(run, 600);
+}
+function toggleProductFeatured(productId) {
+  const p = state.products.find((x) => x.id === productId);
+  if (!p) return;
+  p.featured = !p.featured;
+  persistProductSoon(productId, true);
+  renderProducts();
+  toast(p.featured ? `${p.title} is now featured on the homepage.` : `${p.title} removed from featured.`);
+}
+function setProductPublishStatus(productId, status) {
+  const p = state.products.find((x) => x.id === productId);
+  if (!p) return;
+  if (status === "active" && p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0) {
+    toast("Add stock before publishing an in-stock product."); return;
+  }
+  p.status = status; p.product_status = status;
+  persistProductSoon(productId, true);
+  renderProducts();
+  toast(status === "active" ? `${p.title} is now live.` : `${p.title} moved to draft.`);
+}
+function toggleProductStatus(productId) {
+  const p = state.products.find((x) => x.id === productId);
+  if (p) setProductPublishStatus(productId, productIsDraft(p) ? "active" : "draft");
+}
+function setProductPrice(productId, value) {
+  const p = state.products.find((x) => x.id === productId);
+  if (!p) return;
+  p.customer_price_pkr = Math.max(0, Math.round(Number(value) || 0));
+  persistProductSoon(productId, false);
+}
+async function removeOneProduct(productId) {
+  const p = state.products.find((x) => x.id === productId);
+  if (!p) return;
+  if (!window.confirm(`Remove “${p.title}” from the site? This can't be undone here.`)) return;
+  await apiFetch("/api/catalog", { method: "DELETE", body: JSON.stringify({ ids: [productId] }) }, { removed: 1 });
+  state.products = state.products.filter((x) => x.id !== productId);
+  selectedProducts.delete(productId);
+  renderProducts();
+  toast(`${p.title} removed from site.`);
+}
+function bulkSetProductStatus(status) {
+  if (!selectedProducts.size) return;
+  const ids = [...selectedProducts];
+  let n = 0;
+  ids.forEach((id) => {
+    const p = state.products.find((x) => x.id === id);
+    if (!p) return;
+    if (status === "active" && p.stock_mode === "in_stock" && Number(p.inventory || 0) <= 0) return;
+    p.status = status; p.product_status = status; n++;
+    persistProductSoon(id, true);
+  });
+  renderProducts();
+  toast(`${n} product${n === 1 ? "" : "s"} ${status === "active" ? "published" : "moved to draft"}.`);
+}
+function bulkSetFeatured(featured) {
+  if (!selectedProducts.size) return;
+  const ids = [...selectedProducts];
+  ids.forEach((id) => {
+    const p = state.products.find((x) => x.id === id);
+    if (p) { p.featured = featured; persistProductSoon(id, true); }
+  });
+  renderProducts();
+  toast(`${ids.length} product${ids.length === 1 ? "" : "s"} ${featured ? "featured" : "unfeatured"}.`);
 }
 
 function cartLines() {
@@ -1595,11 +1828,16 @@ function renderCart() {
       : isCustomQuote
         ? `Custom quote · Qty ${line.quantity}`
         : `${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}${line.variant ? ` · ${esc(line.variant)}` : ""}`;
+    // Shoes / makeup / fragrance can't be dispatched without a size/shade, so
+    // the field is flagged required right in the drawer (matches the checkout
+    // guard) — no more discovering it only when "Place order" stalls.
+    const variantRequired = ["shoes", "makeup", "fragrance"].includes(line.product.category);
+    const variantFilled = Boolean(line.variant && line.variant.trim());
     const variantBlock = (isSourcing || isCustomQuote)
       ? (line.variant ? `<small>Variant: ${esc(line.variant)}</small>` : "")
-      : `<label class="cart-variant-edit">
-          <span>${esc(variantLabel(line.product))}</span>
-          <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}" />
+      : `<label class="cart-variant-edit${variantRequired && !variantFilled ? " is-required" : ""}">
+          <span>${esc(variantLabel(line.product))}${variantRequired ? `<em class="cart-variant-req">${variantFilled ? "✓" : "Required"}</em>` : ""}</span>
+          <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}"${variantRequired ? ' aria-required="true"' : ""} />
         </label>`;
     const sourceLine = isSourcing && line.product.source_url
       ? `<small><a href="${safeUrl(line.product.source_url)}" target="_blank" rel="noopener noreferrer">View source link →</a></small>`
@@ -1611,10 +1849,17 @@ function renderCart() {
     // red Remove zone sits behind the line; the foreground .cart-line
     // translates left via JS gesture (see wireCartLineSwipe in setCartDrawerOpen).
     // The Remove button inside .mini-actions still works on desktop.
+    // Product thumbnail — shown in both the cart drawer and the checkout
+    // order summary (this markup feeds both). Sourcing requests often have
+    // no image; they get a small placeholder tile instead.
+    const thumbBlock = line.product.image_url
+      ? `<img class="cart-line-thumb" src="${safeUrl(imageUrlThumb(line.product.image_url), "")}" alt="" loading="lazy" decoding="async" />`
+      : `<span class="cart-line-thumb cart-line-thumb-empty" aria-hidden="true">✦</span>`;
     return `
     <div class="cart-swipe-shell" data-swipe-line data-product-id="${attr(line.product_id)}">
       <button class="cart-swipe-remove" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}" tabindex="-1">Remove</button>
       <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
+        ${thumbBlock}
         <div>
           <strong>
             ${esc(line.product.title)}
@@ -1662,6 +1907,14 @@ function renderCart() {
 function setCartDrawerOpen(open) {
   const drawer = qs("[data-cart-drawer]");
   if (!drawer) return;
+  // `just-opened` scopes the line-item stagger animation to the open
+  // moment only — without it, every renderCart() (qty taps, variant
+  // edits) would replay the cascade on the re-inserted rows.
+  const wasOpen = drawer.classList.contains("open");
+  if (open && !wasOpen) {
+    drawer.classList.add("just-opened");
+    setTimeout(() => drawer.classList.remove("just-opened"), 750);
+  }
   drawer.classList.toggle("open", open);
   drawer.setAttribute("aria-hidden", open ? "false" : "true");
   // Backdrop sibling — toggled together with the drawer so the page dims
@@ -1896,10 +2149,25 @@ function wireDrawerGestures(drawer) {
 }
 
 function renderSupportLinks() {
-  const href = supportWhatsAppHref("Hi Global Bestie, I need help with my order.");
+  const fallback = supportWhatsAppHref("Hi Global Bestie, I need help with my order.");
   qsa("[data-support-whatsapp]").forEach((link) => {
-    link.href = href;
+    // Optional per-link context (e.g. the former custom-quote / "order this
+    // look" CTAs reroute here with their own prefilled message).
+    const msg = link.getAttribute("data-wa-message");
+    link.href = msg ? supportWhatsAppHref(msg) : fallback;
   });
+}
+
+// True when the store's bank settings are still the all-zeros placeholders.
+// Money must never be requested against these, so both the console warning
+// and the customer-facing safety banner below key off this.
+function bankDetailsArePlaceholder(settings) {
+  return (
+    settings.account_number === sampleSettings.account_number ||
+    settings.iban === sampleSettings.iban ||
+    /^0+$/.test(String(settings.account_number || "").replace(/\D/g, "").replace(/^0+/, "")) ||
+    /^PK0+/.test(String(settings.iban || ""))
+  );
 }
 
 function renderBankDetails() {
@@ -1911,18 +2179,36 @@ function renderBankDetails() {
   // Sanity-warn (dev tools only) if the production settings are still
   // shipping the all-zeros placeholders from sampleSettings — those are
   // not real and customers can't transfer to them.
-  if (
-    settings.account_number === sampleSettings.account_number ||
-    settings.iban === sampleSettings.iban ||
-    /^0+$/.test(String(settings.account_number || "").replace(/\D/g, "").replace(/^0+/, "")) ||
-    /^PK0+/.test(String(settings.iban || ""))
-  ) {
+  const isPlaceholder = bankDetailsArePlaceholder(settings);
+  if (!renderBankDetails._placeholderWarned && isPlaceholder) {
+    // Warn once per session — renderBankDetails runs on every re-render, so an
+    // un-guarded warn floods the console (~48× on a single page load) and
+    // buries it. A single line is enough of a go-live reminder.
+    renderBankDetails._placeholderWarned = true;
     // eslint-disable-next-line no-console
     console.warn(
       "[Global Bestie] Bank account/IBAN is still a placeholder. " +
       "Update the `settings` row in Supabase before going live."
     );
   }
+  // Customer-facing safety net: if the bank row is still the placeholder,
+  // do NOT show a fake account number a customer could wire money to.
+  // Instead ask them to grab live details over WhatsApp. Better a slower
+  // handoff than a payment sent to 0210-0000-000000.
+  if (isPlaceholder) {
+    const waHref = supportWhatsAppHref(
+      "Hi Global Bestie, I'd like to place an order — can you share your current bank transfer details?",
+    );
+    setHTML("[data-bank-details]", `
+      <div class="bank-details-pending">
+        <strong>Bank details confirmed on WhatsApp</strong>
+        <p>To keep your payment safe, we share live transfer details directly on WhatsApp before you send the advance.</p>
+        <a class="button primary" href="${waHref}" target="_blank" rel="noopener noreferrer">Get transfer details on WhatsApp</a>
+      </div>
+    `);
+    return;
+  }
+
   const copyChip = (val, label) => val
     ? `<button class="copy-chip" type="button" data-action="copy-text" data-copy="${attr(val)}" data-copy-label="${attr(label)}" aria-label="Copy ${attr(label)}"><span>Copy</span></button>`
     : "";
@@ -1945,9 +2231,23 @@ function renderTracking(order) {
   }
   const currentIndex = ORDER_STEPS.findIndex(([status]) => status === order.status);
   const payment = orderPaymentSummary(order);
+  // Animated USA → Pakistan journey band: a plane travels the route in
+  // proportion to the order's stage. Decorative (aria-hidden) — the real
+  // status semantics live in the tracking-progress list right below it.
+  const journeyPct = currentIndex > 0
+    ? Math.round((currentIndex / (ORDER_STEPS.length - 1)) * 100)
+    : 4;
+  const journeyHTML = order.status === "cancelled" ? "" : `
+    <div class="journey-band" aria-hidden="true" style="--journey: ${journeyPct}%">
+      <span class="journey-node">🇺🇸 USA</span>
+      <div class="journey-route"><span class="journey-plane">✈</span></div>
+      <span class="journey-node">Pakistan 🇵🇰</span>
+    </div>
+  `;
   // Horizontal progress bar of the 6 stages — easier to scan than the vertical
   // list and matches the policy timeline customers already see on /preorder.
   const progressHTML = `
+    ${journeyHTML}
     <div class="tracking-progress" role="list" aria-label="Order progress">
       ${ORDER_STEPS.map(([status, label], index) => {
         const cls = index < currentIndex ? "done" : index === currentIndex ? "done current" : "";
@@ -2178,6 +2478,35 @@ function truncateProductDescription(raw, maxLen = 220) {
   return { full: trimmed, short: cut.replace(/[,;:.\s]+$/, "") + "…", truncated: true };
 }
 
+// Shared-element morph: the tapped card image visually grows into the PDP
+// modal's gallery image via the View Transitions API. Both elements get the
+// same view-transition-name for the duration of the transition, then the
+// card's tag is cleared (duplicate names abort future transitions).
+// No-ops (plain open) when the API is missing or the user prefers
+// reduced motion.
+function openModalWithProductMorph(html, productId) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const cardImg = qs(`.product-media[data-product-id="${CSS.escape(productId)}"] img`);
+  if (!document.startViewTransition || reduceMotion || !cardImg) {
+    openModal(html);
+    return;
+  }
+  cardImg.style.viewTransitionName = "product-hero";
+  const transition = document.startViewTransition(() => {
+    cardImg.style.viewTransitionName = "";
+    openModal(html);
+    const modalImg = qs(".detail-modal .gallery-main");
+    if (modalImg) modalImg.style.viewTransitionName = "product-hero";
+  });
+  // If a transition is already mid-flight the browser aborts this one and
+  // rejects `.finished` with InvalidStateError. The DOM swap still ran, so
+  // just swallow the rejection (it was polluting the console on fast taps).
+  transition.finished.catch(() => {}).finally(() => {
+    const modalImg = qs(".detail-modal .gallery-main");
+    if (modalImg) modalImg.style.viewTransitionName = "";
+  });
+}
+
 function showProductDetails(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
@@ -2214,6 +2543,14 @@ function showProductDetails(productId) {
   const deliveryCopy = product.stock_mode === "preorder"
     ? `${nextShipmentLabel()}. ${shipmentNotice()}`
     : `In stock in Pakistan. Dispatched once your payment is matched.`;
+  // In-stock speed + urgency cues for the PDP (the fast-delivery edge).
+  const dMinPdp = Number(product.delivery_days_min || 0);
+  const dMaxPdp = Number(product.delivery_days_max || 0);
+  const inStockDeliveryLabel = dMinPdp && dMaxPdp
+    ? `Delivered in ${dMinPdp}–${dMaxPdp} days`
+    : (dMaxPdp ? `Delivered in ${dMaxPdp} days` : "Delivered in 3–5 days");
+  const pdpStockQty = Number(product.inventory || 0);
+  const pdpLowStock = product.stock_mode === "in_stock" && pdpStockQty > 0 && pdpStockQty <= Number(product.low_stock_threshold ?? 2);
   const publicDetails = `
     <div><dt>Availability</dt><dd>${product.stock_mode === "preorder" ? "Preorder, sourced through the next USA batch" : `${Number(product.inventory || 0)} in stock, ready after payment match`}</dd></div>
     <div><dt>Variants</dt><dd>${esc(product.variants || "Confirm size, shade, or color in checkout notes.")}</dd></div>
@@ -2238,7 +2575,7 @@ function showProductDetails(productId) {
   // final all-inclusive PKR figure only. Admin/portal still gets the full
   // breakdown via the admin meta panel above.
   const priceBreakdown = "";
-  openModal(`
+  openModalWithProductMorph(`
     <div class="modal-grid product-detail-modal">
       <div class="product-gallery">
         <div class="gallery-main-wrap" data-zoom>
@@ -2264,6 +2601,14 @@ function showProductDetails(productId) {
           <span class="price-large">${PKR.format(parts.total)}</span>
           <span class="status-pill ${attr(product.stock_mode)}">${product.stock_mode === "preorder" ? "Preorder" : "In stock"}</span>
         </div>
+        ${!isPortal && product.stock_mode === "in_stock" && pdpStockQty > 0 ? `
+          <div class="instock-speed-strip">
+            <span class="instock-speed-badge">⚡ ${esc(inStockDeliveryLabel)}</span>
+            ${pdpLowStock
+              ? `<span class="instock-low-badge">Only ${pdpStockQty} left</span>`
+              : `<span class="instock-ready-badge">In stock · ready to ship</span>`}
+          </div>
+        ` : ""}
         ${isPortal ? "" : priceBreakdown}
         ${(() => {
           // Public PDP: lean description with a "Read more" toggle so
@@ -2284,8 +2629,20 @@ function showProductDetails(productId) {
         <div class="payment-ledger product-ledger">
           <article><span>${product.stock_mode === "preorder" ? "50% advance due" : "Full payment due"}</span><strong>${PKR.format(advanceDue)}</strong></article>
           ${balanceDue > 0 ? `<article><span>Balance on arrival</span><strong>${PKR.format(balanceDue)}</strong></article>` : ""}
-          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextBatchArrivalLabel()) : "Local dispatch"}</strong></article>
+          <article><span>Shipment</span><strong>${product.stock_mode === "preorder" ? esc(nextBatchArrivalLabel()) : esc(inStockDeliveryLabel)}</strong></article>
         </div>
+        ${!isPortal && product.stock_mode === "preorder" ? `
+          <div class="preorder-explainer" aria-label="How preorder works">
+            <p class="preorder-explainer-head">How your preorder works</p>
+            <ol class="preorder-steps">
+              <li><span class="pe-num">1</span><span class="pe-label">Order + pay ${PKR.format(advanceDue)} advance</span></li>
+              <li><span class="pe-num">2</span><span class="pe-label">We source it in the USA</span></li>
+              <li><span class="pe-num">3</span><span class="pe-label">Batch arrives in Pakistan</span></li>
+              <li><span class="pe-num">4</span><span class="pe-label">Pay ${PKR.format(balanceDue)} balance · doorstep delivery</span></li>
+            </ol>
+            <p class="preorder-explainer-note">The balance is due <strong>only</strong> once your parcel reaches Pakistan, before dispatch. Typically ~4 weeks — we keep you updated on WhatsApp the whole way.</p>
+          </div>
+        ` : ""}
         ${isPortal ? `<dl class="detail-list">${portalDetails}</dl>` : ""}
         ${isPortal ? "" : `
           <aside class="variant-callout" aria-label="Variants and customization">
@@ -2307,7 +2664,7 @@ function showProductDetails(productId) {
       </div>
       ${!isPortal ? renderRecentlyViewedStrip(product.id) : ""}
     </div>
-  `);
+  `, productId);
 }
 
 function showOrderDetails(orderId) {
@@ -2618,7 +2975,6 @@ function renderAdmin({ skipOrdersSurfaces = false } = {}) {
     ["Approve orders", pending, "Confirm availability, final PKR price, and shipment batch before customers pay.", "orders"],
     ["Collect balances", balanceDue, "Pakistan-arrived preorders should not dispatch locally until balance proof is confirmed.", "orders"],
     ["Human DM handoffs", handoffs, "Variant, complaint, payment, delay, and unclear-intent messages need a person.", "customers"],
-    ["Trend approvals", trendApprovals, "Review scraped candidates before anything publishes to the storefront.", "trends"],
   ].map(([label, value, body, tab]) => `
     <button class="today-card" type="button" data-admin-tab-jump="${tab}">
       <strong>${value}</strong>
@@ -2628,6 +2984,7 @@ function renderAdmin({ skipOrdersSurfaces = false } = {}) {
   `).join(""));
 
   renderAdminTabBadges({ pending, balanceDue, handoffs, trendApprovals, lowStock, activeBatch });
+  updateInventoryBadge();
 
   setHTML("[data-admin-action-orders]", orders
     .filter((order) => ["pending_review", "accepted", "sourcing"].includes(order.status))
@@ -3741,6 +4098,9 @@ function renderOverviewExtras() {
       const threshold = Number(p.low_stock_threshold ?? 2);
       return Number(p.inventory || 0) <= threshold;
     })
+    // Surface the most urgent first: a LIVE product at 0 units is a broken
+    // listing (customers can't buy it) — show those above merely-low ones.
+    .sort((a, b) => Number(a.inventory || 0) - Number(b.inventory || 0))
     .slice(0, 6);
   const totalAttention = attentionRows.length + lowStock.length;
   const attentionCountEl = qs("[data-attention-count]");
@@ -3789,16 +4149,21 @@ function renderOverviewExtras() {
       <span class="attention-label">${esc(sla.label)}</span>
     </button>
   `).join("");
-  const stockRows = lowStock.map((p) => `
-    <button class="attention-row tone-warn" type="button" data-action="jump-tab" data-action-filter="products">
-      <span class="attention-tone">⛁</span>
+  const stockRows = lowStock.map((p) => {
+    // A live in-stock product at 0 units is "out of stock" — more urgent than
+    // "low", and now a hard block (the server rejects orders for it). Flag it
+    // distinctly and jump to the Inventory board where stock is managed.
+    const out = Number(p.inventory || 0) <= 0;
+    return `
+    <button class="attention-row tone-${out ? "danger" : "warn"}" type="button" data-action="jump-tab" data-action-filter="inventory">
+      <span class="attention-tone">${out ? "●" : "⛁"}</span>
       <div>
-        <strong>${esc(p.title)} — low stock</strong>
+        <strong>${esc(p.title)} — ${out ? "out of stock" : "low stock"}</strong>
         <small>${esc(p.brand || "")} · ${esc(p.category || "")}</small>
       </div>
-      <span class="attention-label">${Number(p.inventory || 0)} left</span>
-    </button>
-  `).join("");
+      <span class="attention-label">${out ? "0 left · live" : `${Number(p.inventory || 0)} left`}</span>
+    </button>`;
+  }).join("");
   setHTML(
     "[data-attention-queue]",
     totalAttention > 0
@@ -5658,11 +6023,10 @@ async function saveSourcing(orderId, itemKey, costStr, dateStr) {
 
 function renderAdminTabBadges({ pending, balanceDue, handoffs, trendApprovals, lowStock, activeBatch }) {
   const values = {
-    overview: pending + balanceDue + handoffs + trendApprovals,
+    overview: pending + balanceDue + handoffs,
     orders: pending + balanceDue,
     shipments: activeBatch ? 1 : 0,
     products: lowStock,
-    trends: trendApprovals,
     settings: readinessIssues().length,
   };
   Object.entries(values).forEach(([key, value]) => {
@@ -5942,13 +6306,44 @@ function renderLaunchChecklist() {
     ["Shipment batch created", !issues.includes("Create first shipment batch")],
     ["Supabase + Netlify env set", true],
   ];
-  target.innerHTML = checks.map(([label, ok]) => `
+  // Which admin tab each unfinished item should jump to when clicked.
+  const targetPanel = {
+    "Bank details replaced": "settings",
+    "Support WhatsApp connected": "settings",
+    "Next shipment ETA visible": "settings",
+    "Active catalog published": "products",
+    "Shipment batch created": "shipments",
+  };
+  target.innerHTML = checks.map(([label, ok]) => {
+    const panel = targetPanel[label];
+    // Finished rows are static; unfinished rows become a button that
+    // deep-links to the exact tab that fixes them.
+    if (ok || !panel) {
+      return `
     <div class="checklist-row ${ok ? "done" : "todo"}">
       <span aria-hidden="true">${ok ? "✓" : "!"}</span>
       <strong>${label}</strong>
       <small>${ok ? "Ready" : "Needs attention"}</small>
-    </div>
-  `).join("");
+    </div>`;
+    }
+    return `
+    <button class="checklist-row todo is-actionable" type="button" data-action="goto-admin-panel" data-panel="${attr(panel)}">
+      <span aria-hidden="true">!</span>
+      <strong>${label}</strong>
+      <small>Fix now →</small>
+    </button>`;
+  }).join("");
+}
+
+// Jump to an admin tab (from the readiness checklist deep-links).
+function goToAdminPanel(panel) {
+  const tab = qs(`[data-admin-tab="${panel}"]`);
+  if (tab) {
+    tab.click();
+    tab.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } else {
+    qs(`[data-admin-panel="${panel}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 // Kanban board view — 6 columns (one per status). Cards are virtualized
@@ -6375,6 +6770,7 @@ function orderRowHTML(order) {
         ${orderActivityTooltip(order)}
       </td>
       <td class="cell-status">
+        ${(() => { const m = timelineMeta(order.status); return `<span class="order-status-pill tone-${m.tone}"><span class="order-status-glyph" aria-hidden="true">${m.glyph}</span>${esc(m.label)}</span>`; })()}
         <div class="status-control" data-stop-row>
           ${advanceControl}
           <select data-order-status="${attr(order.id)}" aria-label="Set stage for ${attr(order.id)}">
@@ -6385,7 +6781,14 @@ function orderRowHTML(order) {
         ${nextActionLine}
         <small class="order-risk">${esc(orderCompletionRisk(order))}</small>
       </td>
-      <td>${PKR.format(payment.total)}<br /><small>Due ${PKR.format(due)} · Advance ${PKR.format(payment.advanceDue)} · Balance ${PKR.format(payment.balanceDue)}</small></td>
+      <td class="cell-amount">
+        <div class="amount-total">${PKR.format(payment.total)}</div>
+        <dl class="amount-breakdown">
+          <div${due > 0 ? ' class="is-due"' : ""}><dt>Due now</dt><dd>${PKR.format(due)}</dd></div>
+          <div><dt>Advance</dt><dd>${PKR.format(payment.advanceDue)}</dd></div>
+          <div><dt>Balance</dt><dd>${PKR.format(payment.balanceDue)}</dd></div>
+        </dl>
+      </td>
       <td>
         <select data-order-payment="${attr(order.id)}" data-stop-row>
           ${PAYMENT_STATES.map(([status, label]) => `<option value="${status}" ${activePaymentStatusForOrder(order) === status ? "selected" : ""}>${label}</option>`).join("")}
@@ -6607,6 +7010,9 @@ function renderShipmentBatches() {
           <div class="shipment-card-actions">
             <strong>${formatDate(batch.eta_date) || "ETA pending"}</strong>
             ${dispatchable > 0 ? `<button class="button secondary" type="button" data-action="dispatch-batch" data-batch-id="${attr(batch.id)}" title="${dispatchable} ready to dispatch">Dispatch ${dispatchable}</button>` : ""}
+            <button class="shipment-delete" type="button" data-action="delete-batch" data-batch-id="${attr(batch.id)}" aria-label="Delete batch ${attr(batch.name)}" title="Delete batch">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+            </button>
           </div>
         </div>
         <p>${esc(batch.note || "No batch note added.")}</p>
@@ -6626,6 +7032,347 @@ function renderShipmentBatches() {
       </article>
     `;
   }).join(""));
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// INVENTORY BOARD — in-stock stock-on-hand operations.
+// The in-stock sibling to Shipments (preorder batches): surfaces what's
+// physically in Pakistan and ready to ship in days, the capital tied up in it,
+// and what's running low or out. Inline steppers commit optimistically and
+// persist on a short debounce (holding +/- doesn't fire a request per click).
+// Stock changes do TARGETED DOM updates — never a full board rebuild — so the
+// focused stepper survives rapid clicks (same reasoning as the order-row patch
+// path: re-swapping innerHTML would drop keyboard/mouse focus mid-edit).
+// ════════════════════════════════════════════════════════════════════════
+function inStockProducts() {
+  return (state.products || []).filter((p) => p.stock_mode === "in_stock");
+}
+function inventoryLowThreshold(p) {
+  return Number(p.low_stock_threshold ?? 2);
+}
+// "out" | "low" | "healthy" for an in-stock product.
+function inventoryHealth(p) {
+  const qty = Number(p.inventory || 0);
+  if (qty <= 0) return "out";
+  if (qty <= inventoryLowThreshold(p)) return "low";
+  return "healthy";
+}
+function inventoryDeliveryLabel() {
+  // In-stock items are already in Pakistan — no per-product ship dates
+  // (preorder timing is set by the shipment batch, not the product).
+  return "Ready to ship";
+}
+function inventoryIsLive(p) {
+  return (p.status || p.product_status) !== "draft";
+}
+function inventoryAttentionCount() {
+  return inStockProducts().filter((p) => inventoryIsLive(p) && inventoryHealth(p) !== "healthy").length;
+}
+function updateInventoryBadge() {
+  const badge = qs('[data-tab-badge="inventory"]');
+  if (!badge) return;
+  const n = inventoryAttentionCount();
+  badge.textContent = n > 0 ? String(n) : "";
+  badge.classList.toggle("has-count", n > 0);
+}
+function inventoryStatsHTML() {
+  const items = inStockProducts().filter(inventoryIsLive);
+  let units = 0, retail = 0, cost = 0, low = 0, out = 0;
+  for (const p of items) {
+    const qty = Math.max(0, Number(p.inventory || 0));
+    units += qty;
+    retail += qty * calculatePrice(p);
+    cost += qty * Number(p.supplier_cost_pkr || 0);
+    const h = inventoryHealth(p);
+    if (h === "out") out += 1;
+    else if (h === "low") low += 1;
+  }
+  const profit = retail - cost;
+  const margin = retail > 0 ? Math.round((profit / retail) * 100) : 0;
+  // Two tiers: the three money figures get prominent cards; the counts (which
+  // are just small whole numbers) sit in a compact chip row beneath — cleaner
+  // and balanced, vs. seven equal cards that orphaned on the last row.
+  const money = [
+    { label: "Retail value", value: PKR.format(retail), sub: "if it all sells" },
+    { label: "Capital in stock", value: PKR.format(cost), sub: "supplier cost" },
+    { label: "Locked profit", value: PKR.format(profit), sub: `${margin}% margin`, tone: profit >= 0 ? "ok" : "warn" },
+  ];
+  const counts = [
+    { n: items.length, label: "in-stock SKUs" },
+    { n: units, label: "units on hand" },
+    { n: low, label: "low stock", tone: low > 0 ? "warn" : "" },
+    { n: out, label: "out of stock", tone: out > 0 ? "bad" : "" },
+  ];
+  return `
+    <div class="inv-stat-money">
+      ${money.map((t) => `
+        <article class="metric-card inventory-stat${t.tone ? " tone-" + t.tone : ""}">
+          <span>${esc(t.label)}</span>
+          <strong>${t.value}</strong>
+          <small>${esc(t.sub)}</small>
+        </article>`).join("")}
+    </div>
+    <div class="inv-stat-counts">
+      ${counts.map((c) => `<span class="inv-chip${c.tone ? " tone-" + c.tone : ""}"><strong>${c.n}</strong> ${esc(c.label)}</span>`).join("")}
+    </div>`;
+}
+function inventoryRowHTML(p) {
+  const qty = Math.max(0, Number(p.inventory || 0));
+  const health = inventoryHealth(p);
+  const price = calculatePrice(p);
+  const statusClass = health === "out" ? "soldout" : health === "low" ? "preorder" : "in_stock";
+  const statusLabel = health === "out" ? "Out of stock" : health === "low" ? `Low · ${qty} left` : "In stock";
+  const img = p.image_url
+    ? `<img src="${safeUrl(imageUrl(p.image_url), "")}" alt="${attr(p.title)}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'inv-noimg',textContent:'No image'}));" />`
+    : `<div class="inv-noimg">No image</div>`;
+  return `
+    <article class="inventory-row inv-${health}${inventoryIsLive(p) ? "" : " inv-draft"}" data-inventory-row="${attr(p.id)}">
+      <div class="inv-product">
+        <div class="inv-thumb">${img}</div>
+        <div class="inv-id">
+          <strong>${esc(p.title)}</strong>
+          <small>${esc(p.brand || "—")}${p.category ? " · " + esc(p.category) : ""}${inventoryIsLive(p) ? "" : " · draft"}</small>
+        </div>
+      </div>
+      <span class="status-pill ${statusClass}" data-inv-status>${esc(statusLabel)}</span>
+      <span class="inv-ship">${esc(inventoryDeliveryLabel(p))}</span>
+      <div class="inv-stepper" role="group" aria-label="Adjust stock for ${attr(p.title)}">
+        <button class="inv-step" type="button" data-action="inv-dec" data-product-id="${attr(p.id)}" aria-label="Decrease stock for ${attr(p.title)}"${qty <= 0 ? " disabled" : ""}>−</button>
+        <input class="inv-qty" type="number" min="0" inputmode="numeric" value="${qty}" data-inv-input="${attr(p.id)}" aria-label="Stock count for ${attr(p.title)}" />
+        <button class="inv-step" type="button" data-action="inv-inc" data-product-id="${attr(p.id)}" aria-label="Increase stock for ${attr(p.title)}">+</button>
+      </div>
+      <span class="inv-money inv-cost">${PKR.format(Number(p.supplier_cost_pkr || 0))}<small>cost</small></span>
+      <span class="inv-money inv-price">${PKR.format(price)}<small>retail</small></span>
+      <span class="inv-money inv-value" data-inv-value>${PKR.format(qty * price)}<small>in stock</small></span>
+    </article>
+  `;
+}
+function inventoryBoardHTML() {
+  const s = state._inventory || (state._inventory = { search: "", filter: "all", sort: "attention" });
+  if (!inStockProducts().length) {
+    return `<div class="inventory-empty"><strong>No in-stock items yet.</strong><p>Add products with stock mode “In stock” in the Products tab (or switch a preorder SKU to in-stock). Anything already in Pakistan shows here, ready to ship in days.</p></div>`;
+  }
+  let items = inStockProducts();
+  const q = (s.search || "").trim().toLowerCase();
+  if (q) items = items.filter((p) => `${p.title} ${p.brand} ${p.category}`.toLowerCase().includes(q));
+  if (s.filter === "attention") items = items.filter((p) => inventoryHealth(p) !== "healthy");
+  else if (s.filter === "healthy") items = items.filter((p) => inventoryHealth(p) === "healthy");
+  const rank = { out: 0, low: 1, healthy: 2 };
+  const sorters = {
+    attention: (a, b) => rank[inventoryHealth(a)] - rank[inventoryHealth(b)] || Number(a.inventory || 0) - Number(b.inventory || 0),
+    "stock-asc": (a, b) => Number(a.inventory || 0) - Number(b.inventory || 0),
+    "stock-desc": (a, b) => Number(b.inventory || 0) - Number(a.inventory || 0),
+    "value-desc": (a, b) => (Number(b.inventory || 0) * calculatePrice(b)) - (Number(a.inventory || 0) * calculatePrice(a)),
+    name: (a, b) => String(a.title).localeCompare(String(b.title)),
+  };
+  items = items.slice().sort(sorters[s.sort] || sorters.attention);
+  if (!items.length) {
+    return `<div class="inventory-empty"><strong>Nothing matches.</strong><p>Try a different search term or filter.</p></div>`;
+  }
+  return `
+    <div class="inventory-board-head" aria-hidden="true">
+      <span>Product</span><span>Status</span><span>Delivery</span><span>Stock</span><span>Cost</span><span>Retail</span><span>Value</span>
+    </div>
+    ${items.map(inventoryRowHTML).join("")}
+  `;
+}
+function updateInventoryLede() {
+  const lede = qs("[data-inventory-lede]");
+  if (!lede) return;
+  const items = inStockProducts().filter(inventoryIsLive);
+  const readyUnits = items.reduce((n, p) => n + Math.max(0, Number(p.inventory || 0)), 0);
+  lede.textContent = items.length
+    ? `${readyUnits} unit${readyUnits === 1 ? "" : "s"} across ${items.length} SKU${items.length === 1 ? "" : "s"} ready to leave within days — no USA wait.`
+    : "Items already in Pakistan show here, ready to ship in days.";
+}
+function renderInventory() {
+  if (!has("[data-inventory-board]")) return;
+  state._inventory = state._inventory || { search: "", filter: "all", sort: "attention" };
+  updateInventoryLede();
+  setHTML("[data-inventory-stats]", inventoryStatsHTML());
+  setHTML("[data-inventory-board]", inventoryBoardHTML());
+  qsa("[data-inventory-filter]").forEach((c) => c.classList.toggle("active", c.dataset.inventoryFilter === state._inventory.filter));
+  const sortSel = qs("[data-inventory-sort]");
+  if (sortSel && sortSel.value !== state._inventory.sort) sortSel.value = state._inventory.sort;
+  updateInventoryBadge();
+  renderInventoryLog();
+}
+// Targeted repaint after a stock change — updates only the affected row's
+// status pill / value / stepper state plus the stats header, leaving the
+// focused stepper in the DOM so holding +/- keeps working.
+function paintInventoryRow(productId) {
+  const p = state.products.find((x) => x.id === productId);
+  const row = qs(`[data-inventory-row="${productId}"]`);
+  if (!p || !row) return;
+  const qty = Math.max(0, Number(p.inventory || 0));
+  const health = inventoryHealth(p);
+  row.className = `inventory-row inv-${health}${inventoryIsLive(p) ? "" : " inv-draft"}`;
+  const status = row.querySelector("[data-inv-status]");
+  if (status) {
+    status.className = `status-pill ${health === "out" ? "soldout" : health === "low" ? "preorder" : "in_stock"}`;
+    status.textContent = health === "out" ? "Out of stock" : health === "low" ? `Low · ${qty} left` : "In stock";
+  }
+  const valueCell = row.querySelector("[data-inv-value]");
+  if (valueCell) valueCell.innerHTML = `${PKR.format(qty * calculatePrice(p))}<small>in stock</small>`;
+  const dec = row.querySelector('[data-action="inv-dec"]');
+  if (dec) dec.disabled = qty <= 0;
+  setHTML("[data-inventory-stats]", inventoryStatsHTML());
+  updateInventoryLede();
+  updateInventoryBadge();
+}
+// Stock saves are debounced (650ms) so holding +/- fires one request, not ten.
+// Manual edits log their NET delta on settle; order-driven changes log
+// immediately with their own reason (see adjustOrderStock).
+const _inventorySaveTimers = {};
+const _inventoryBaseline = {};
+function scheduleStockSave(productId, logReason) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  if (logReason && _inventoryBaseline[productId] === undefined) {
+    _inventoryBaseline[productId] = Number(product._savedInventory ?? product.inventory ?? 0);
+  }
+  clearTimeout(_inventorySaveTimers[productId]);
+  _inventorySaveTimers[productId] = setTimeout(() => persistStockNow(productId, logReason), 650);
+}
+async function persistStockNow(productId, logReason) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  const after = Number(product.inventory || 0);
+  if (logReason && _inventoryBaseline[productId] !== undefined) {
+    const before = _inventoryBaseline[productId];
+    delete _inventoryBaseline[productId];
+    if (after !== before) logInventoryChange({ product, before, after, reason: logReason });
+  }
+  product._savedInventory = after;
+  const row = qs(`[data-inventory-row="${productId}"]`);
+  try {
+    const saved = await apiFetch("/api/catalog", { method: "POST", body: JSON.stringify(product) }, { product });
+    const idx = state.products.findIndex((p) => p.id === productId);
+    // Keep the live inventory value (a slow echo can't clobber a newer edit).
+    if (idx >= 0 && saved.product) state.products[idx] = { ...saved.product, inventory: product.inventory, _savedInventory: product.inventory };
+    if (row) { row.classList.add("inv-saved"); setTimeout(() => row.classList.remove("inv-saved"), 1100); }
+  } catch {
+    toast("Couldn't save stock. Check the portal key and try again.");
+  }
+}
+function setInventory(productId, nextQty) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  const qty = Math.max(0, Math.round(Number(nextQty) || 0));
+  product.inventory = qty;
+  // The same stepper can live in both the Inventory board and the Products
+  // table, so sync every matching input and repaint both rows.
+  qsa(`[data-inv-input="${productId}"]`).forEach((input) => { if (Number(input.value) !== qty) input.value = qty; });
+  paintInventoryRow(productId);
+  paintProductRow(productId);
+  scheduleStockSave(productId, "Manual adjustment");
+}
+function adjustInventory(productId, delta) {
+  const product = state.products.find((p) => p.id === productId);
+  if (!product) return;
+  setInventory(productId, Math.max(0, Number(product.inventory || 0) + delta));
+}
+
+// ── Order ↔ inventory sync (optimistic UI only) ─────────────────────────────
+// The SERVER is now authoritative for stock: admin-orders.js atomically
+// decrements via the adjust_inventory RPC when an order crosses "delivered" and
+// restocks on reversal, made idempotent by the durable orders.stock_deducted
+// flag. Here we ONLY mirror that change in memory so the board feels instant —
+// we deliberately never persist (that would double-count with the server) and
+// guard with a client-only flag so a re-render can't reapply it. On the next
+// catalog load the server's value lands and everything reconciles.
+function adjustOrderStock(order, sign) {
+  for (const item of order.items || []) {
+    if (item.stock_mode !== "in_stock") continue;
+    const product = state.products.find((p) => p.id === item.product_id);
+    if (!product) continue;
+    const qty = Math.max(1, Number(item.quantity || 1));
+    const before = Math.max(0, Number(product.inventory || 0));
+    const after = Math.max(0, before + sign * qty);
+    if (after === before) continue;
+    product.inventory = after;
+    product._savedInventory = after; // keep the board's saved baseline aligned
+    paintInventoryRow(product.id);
+    paintProductRow(product.id);
+  }
+}
+function applyOrderStockEffects(order, toStatus) {
+  if (!order) return;
+  const goingDelivered = toStatus === "delivered" && !order._uiStockApplied;
+  const leavingApplied = order._uiStockApplied && toStatus !== "delivered";
+  if (goingDelivered) {
+    adjustOrderStock(order, -1);
+    order._uiStockApplied = true;
+  } else if (leavingApplied) {
+    adjustOrderStock(order, +1);
+    order._uiStockApplied = false;
+  }
+}
+
+// ── Stock change log ────────────────────────────────────────────────────────
+// In-memory + localStorage; surfaced as "Recent stock activity" on the board.
+function logInventoryChange({ product, before, after, reason, orderId }) {
+  const delta = Number(after) - Number(before);
+  if (!delta) return;
+  state.inventoryLog = state.inventoryLog || [];
+  state.inventoryLog.unshift({
+    ts: new Date().toISOString(),
+    product_id: product.id,
+    title: product.title,
+    before: Number(before),
+    after: Number(after),
+    delta,
+    reason,
+    order_id: orderId || null,
+  });
+  state.inventoryLog = state.inventoryLog.slice(0, 80);
+  try { localStorage.setItem("gb_inventory_log", JSON.stringify(state.inventoryLog)); } catch {}
+  renderInventoryLog();
+}
+function renderInventoryLog() {
+  if (!has("[data-inventory-log]")) return;
+  const log = state.inventoryLog || [];
+  if (!log.length) {
+    setHTML("[data-inventory-log]", `<li class="inventory-log-empty">No stock changes yet — manual adjustments and order deliveries will appear here.</li>`);
+    return;
+  }
+  setHTML("[data-inventory-log]", log.slice(0, 12).map((e) => {
+    const up = e.delta > 0;
+    const t = new Date(e.ts);
+    const time = isNaN(t.getTime()) ? "" : t.toLocaleString("en-PK", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return `
+      <li class="inventory-log-row">
+        <span class="inv-log-delta ${up ? "up" : "down"}">${up ? "+" : ""}${e.delta}</span>
+        <span class="inv-log-main"><strong>${esc(e.title)}</strong><small>${esc(e.reason)}${e.order_id ? " · " + esc(e.order_id) : ""}</small></span>
+        <span class="inv-log-meta">${esc(e.before)}&nbsp;→&nbsp;${esc(e.after)}<small>${esc(time)}</small></span>
+      </li>`;
+  }).join(""));
+}
+
+// ── CSV export ──────────────────────────────────────────────────────────────
+function exportInventoryCsv() {
+  const items = inStockProducts();
+  if (!items.length) { toast("No in-stock items to export."); return; }
+  const headers = ["Product", "Brand", "Category", "Status", "Stock", "Low at", "Delivery days", "Unit cost PKR", "Retail PKR", "Stock value PKR"];
+  const cell = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const body = items.map((p) => {
+    const qty = Math.max(0, Number(p.inventory || 0));
+    const price = calculatePrice(p);
+    const health = inventoryHealth(p);
+    const days = (Number(p.delivery_days_min) && Number(p.delivery_days_max)) ? `${p.delivery_days_min}-${p.delivery_days_max}` : "";
+    return [p.title, p.brand || "", p.category || "", health === "out" ? "Out of stock" : health === "low" ? "Low" : "In stock", qty, inventoryLowThreshold(p), days, Number(p.supplier_cost_pkr || 0), price, qty * price].map(cell).join(",");
+  });
+  const csv = [headers.join(","), ...body].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `global-bestie-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast(`Exported ${items.length} in-stock items to CSV.`);
 }
 
 function renderTrends() {
@@ -6713,6 +7460,782 @@ function renderUgcAdmin() {
         </div>
       </article>`;
   }).join("");
+}
+
+// ── Meta Ads bot panel ─────────────────────────────────────────────────────
+// Reads the four cloud functions (ads-report / ads-creative / ads-create /
+// ads-optimize) and renders the dashboard, approval queue, and optimizer log.
+// The only money-moving control here is "Launch" — everything else is read-only
+// or builds paused objects.
+// Tiny inline SVG sparkline from a number series. transform/opacity-free,
+// hardware-cheap; used on the KPI cards to show the trend behind the total.
+function sparklineSvg(values, { w = 76, h = 22 } = {}) {
+  const nums = (values || []).map(Number).filter((v) => !Number.isNaN(v));
+  if (nums.length < 2) return "";
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  const range = max - min || 1;
+  const step = w / (nums.length - 1);
+  const pts = nums.map((v, i) => `${(i * step).toFixed(1)},${(h - ((v - min) / range) * (h - 3) - 1.5).toFixed(1)}`);
+  const up = nums[nums.length - 1] >= nums[0];
+  return `<svg class="ads-spark ${up ? "is-up" : "is-down"}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts.join(" ")}" /></svg>`;
+}
+
+function adsSkeletonGrid(n) {
+  return `<div class="ads-skel-grid">${Array.from({ length: n }, () => `<div class="ads-skel ads-skel-card"></div>`).join("")}</div>`;
+}
+function adsSkeletonLines(n) {
+  return Array.from({ length: n }, () => `<div class="ads-skel ads-skel-line"></div>`).join("");
+}
+
+// Fetch the performance report WITHOUT swallowing real errors. A 502 from
+// the function carries the actual Meta/Supabase failure message ("Invalid
+// OAuth access token", "relation meta_ad_snapshots does not exist", …) —
+// exactly what the operator needs when Setup shows all keys detected but
+// the pill still won't connect. Local-preview 404s (HTML error pages) and
+// network failures stay silent, matching the old fallback behavior.
+async function fetchAdsReport(days) {
+  state._adsReportError = null;
+  try {
+    return await apiFetch(`/api/admin/ads-report?days=${days}`);
+  } catch (err) {
+    const raw = String(err?.message || err || "");
+    let msg = raw;
+    try { msg = JSON.parse(raw).error || raw; } catch { /* not JSON */ }
+    const looksLikeRealError = msg && !/failed to fetch|networkerror|load failed|<!doctype|<html/i.test(msg);
+    state._adsReportError = looksLikeRealError ? msg.slice(0, 400) : null;
+    return { configured: false, totals: {}, campaigns: [], daily: [] };
+  }
+}
+
+// Refetch just the performance report for a new window and repaint the
+// dashboard + creative stats (which are window-scoped).
+async function adsSetReportRange(days) {
+  state._adsReportDays = days;
+  const kpis = qs("[data-ads-kpis]");
+  const rows = qs("[data-ads-campaign-rows]");
+  if (kpis) kpis.innerHTML = adsSkeletonGrid(6);
+  if (rows) rows.innerHTML = `<tr><td colspan="7">${adsSkeletonLines(2)}</td></tr>`;
+  const report = await fetchAdsReport(days);
+  state._adsReport = report;
+  renderAdsDashboard(report);
+  if (state._adsCreatives) renderAdsCreatives(state._adsCreatives);
+}
+
+async function loadAdsAdmin() {
+  const statusPill = qs("[data-ads-status]");
+  if (statusPill) statusPill.textContent = "Loading…";
+  populateAdsProductSelect();
+  // Paint skeletons so the surfaces don't flash empty/"Loading…" text.
+  const kpiHost = qs("[data-ads-kpis]"); if (kpiHost) kpiHost.innerHTML = adsSkeletonGrid(6);
+  const libHost = qs("[data-ads-creative-library]"); if (libHost) libHost.innerHTML = adsSkeletonGrid(4);
+  const days = state._adsReportDays || 7;
+  // Pull all surfaces in parallel; tolerate any one being unconfigured. The
+  // audience read is cheap/cached (no Meta call) — only the refresh recomputes.
+  const emptyConfig = { keys: {}, publisher_platforms: "instagram" };
+  const [report, queue, actions, audience, config, creatives] = await Promise.all([
+    fetchAdsReport(days),
+    apiFetch(`/api/admin/ads-create`, {}, { configured: false, campaigns: [] }),
+    apiFetch(`/api/admin/ads-optimize?preview=1`, {}, { configured: false, actions: [], dry_run: true }).catch(() => ({ actions: [] })),
+    apiFetch(`/api/admin/ads-audience?cached=1`, {}, { configured: false, reco: null }).catch(() => ({ reco: null })),
+    apiFetch(`/api/admin/ads-config`, {}, emptyConfig).catch(() => emptyConfig),
+    apiFetch(`/api/admin/ads-creative`, {}, { creatives: [] }).catch(() => ({ creatives: [] })),
+  ]);
+  state._adsReport = report;
+  state._adsQueue = queue.campaigns || [];
+  state._adsExternal = queue.external || [];
+  state._adsExternalError = queue.external_error || null;
+  state._adsActions = actions.actions || [];
+  state._adsAudience = audience.reco || null;
+  state._adsConfig = config;
+  state._adsCreatives = creatives.creatives || [];
+
+  // campaign_id → live delivery status, for the dashboard table's Status
+  // column (report rows come from snapshots, which carry no status).
+  state._adsStatusByCampaign = {};
+  for (const c of [...state._adsQueue, ...state._adsExternal]) {
+    if (c.meta_campaign_id) {
+      state._adsStatusByCampaign[c.meta_campaign_id] =
+        c.effective_status || (c.approval_state === "launched" ? "ACTIVE" : "PAUSED");
+    }
+  }
+
+  if (statusPill) {
+    const live = report.configured && queue.configured;
+    // Three states: connected · keys present but the API call fails
+    // (surface it — the fix is on Meta/Supabase, not Netlify env) · keys
+    // genuinely missing.
+    statusPill.textContent = live ? "Connected" : state._adsReportError ? "Connection error" : "Not configured";
+    statusPill.className = `status-pill ${live ? "in_stock" : "soldout"}`;
+  }
+  renderAdsConfig(state._adsConfig);
+  renderAdsDashboard(report);
+  renderAdsQueue(state._adsQueue, state._adsExternal);
+  renderAdsActions(state._adsActions);
+  renderAdsAudience(state._adsAudience);
+  renderAdsCreatives(state._adsCreatives);
+}
+
+const AD_CTA_LABELS = { SHOP_NOW: "Shop now", LEARN_MORE: "Learn more", ORDER_NOW: "Order now", MESSAGE_PAGE: "Send message" };
+
+// Creative library: each item renders as an Instagram-ad preview with its
+// live performance (joined from the report's creativeStats), plus the
+// campaign-builder dropdown. Honors the search box.
+function renderAdsCreatives(creatives) {
+  const list = creatives || [];
+  const ready = list.filter((c) => c.status === "ready" || c.status === "draft");
+  const countPill = qs("[data-ads-creative-count]");
+  if (countPill) countPill.textContent = `${ready.length} ready`;
+  const navBadge = qs('[data-ads-nav-badge="creatives"]');
+  if (navBadge) navBadge.textContent = ready.length ? String(ready.length) : "";
+
+  const stats = state._adsReport?.creativeStats || {};
+  const term = (state._adsCreativeSearch || "").trim().toLowerCase();
+  const shown = term
+    ? list.filter((c) => `${c.headline} ${c.primary_text}`.toLowerCase().includes(term))
+    : list;
+
+  const host = qs("[data-ads-creative-library]");
+  if (host) {
+    host.innerHTML = shown.length
+      ? shown.map((c) => {
+          const used = c.status === "in_use";
+          const img = c.image_url
+            ? `<img src="${safeUrl(imageUrl(c.image_url), "")}" alt="${attr(c.headline)}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ad-creative-noimg',textContent:'No image'}));" />`
+            : `<div class="ad-creative-noimg">No image</div>`;
+          const text = (c.primary_text || "");
+          const s = stats[c.id];
+          const perf = s ? `
+            <div class="ad-creative-stats">
+              <span title="Spend">${PKR.format(s.spend || 0)}</span>
+              <span class="${(s.roas || 0) >= 2 ? "good" : ""}" title="ROAS">${(s.roas || 0).toFixed(2)}× ROAS</span>
+              <span title="Purchases">${s.purchases || 0} sales</span>
+            </div>` : "";
+          return `
+          <article class="ad-creative-card">
+            <div class="ig-preview">
+              <div class="ig-bar"><span class="ig-avatar">GB</span><div class="ig-id"><strong>globalbestie</strong><small>Sponsored</small></div></div>
+              <div class="ig-media">${img}</div>
+              <div class="ig-cta-row"><span class="ig-icons">♡  ◯  ➤</span><span class="ig-cta">${esc(AD_CTA_LABELS[c.cta_type] || "Shop now")} ›</span></div>
+              <div class="ig-caption"><strong>globalbestie</strong> ${esc(text.slice(0, 110))}${text.length > 110 ? "…" : ""}</div>
+            </div>
+            <div class="ad-creative-body">
+              <div class="ad-creative-head"><strong>${esc(c.headline)}</strong><span class="status-pill ${used ? "in_stock" : "preorder"}">${esc(c.status)}</span></div>
+              ${perf}
+              <div class="mini-actions">
+                ${c.status !== "archived" ? `<button class="button secondary" type="button" data-action="ads-archive-creative" data-creative-id="${attr(c.id)}">Archive</button>` : ""}
+              </div>
+            </div>
+          </article>`;
+        }).join("")
+      : (list.length
+        ? `<p class="portal-login-note">No creatives match your search.</p>`
+        : `<div class="ads-empty">
+             <span class="ads-empty-glyph" aria-hidden="true">🖼️</span>
+             <strong>No creatives yet</strong>
+             <p>Upload an image and ad copy in the form above. Saved creatives appear here and can be dropped into a campaign.</p>
+           </div>`);
+  }
+  // Campaign-builder dropdown
+  const select = qs("[data-ads-campaign-creative]");
+  if (select) {
+    const current = select.value;
+    select.innerHTML = `<option value="">Select a ready creative…</option>` +
+      ready.map((c) => `<option value="${attr(c.id)}">${esc(c.headline)}</option>`).join("");
+    if (current) select.value = current;
+  }
+}
+
+// Setup checklist — shows which META_* env vars Netlify has detected. Values
+// are never sent to the browser, only presence booleans.
+function renderAdsConfig(config) {
+  const host = qs("[data-ads-config]");
+  const pill = qs("[data-ads-config-status]");
+  if (!host) return;
+  const keys = (config && config.keys) || {};
+  // [env var, label, required?]
+  // Required set mirrors hasMetaAds() in _shared/meta-ads.js — the backend
+  // runs on exactly three keys. IG actor + pixel improve placements/tracking
+  // but must not make Setup claim ads can't run.
+  const rows = [
+    ["META_SYSTEM_USER_TOKEN", "System user token", true],
+    ["META_AD_ACCOUNT_ID", "Ad account ID", true],
+    ["META_PAGE_ID", "Facebook Page ID", true],
+    ["META_INSTAGRAM_ACTOR_ID", "Instagram account ID — needed to launch IG ads, not for reporting", false],
+    ["META_PIXEL_ID", "Pixel ID (purchase tracking / ROAS)", false],
+  ];
+  const missingRequired = rows.filter(([k, , req]) => req && !keys[k]).length;
+  if (pill) {
+    pill.textContent = missingRequired === 0 ? "Ready" : `${missingRequired} missing`;
+    pill.className = `status-pill ${missingRequired === 0 ? "in_stock" : "soldout"}`;
+  }
+  const navBadge = qs('[data-ads-nav-badge="setup"]');
+  if (navBadge) navBadge.textContent = missingRequired > 0 ? String(missingRequired) : "";
+  host.innerHTML = `
+    <ul class="ads-config-list">
+      ${rows.map(([k, label, req]) => {
+        const ok = !!keys[k];
+        return `<li class="ads-config-row">
+          <span class="status-pill ${ok ? "in_stock" : (req ? "soldout" : "preorder")}">${ok ? "✓ detected" : (req ? "missing" : "optional")}</span>
+          <strong>${esc(label)}</strong>
+          <code>${esc(k)}</code>
+        </li>`;
+      }).join("")}
+    </ul>
+    <p class="portal-login-note">Placements: <strong>${esc(config?.publisher_platforms || "instagram")}</strong>${
+      missingRequired === 0
+        ? " · all required keys detected — ads can run."
+        : " · add the missing required keys in Netlify, then redeploy."
+    }</p>`;
+}
+
+// Show the data-driven targeting recommendation new campaigns will use.
+function renderAdsAudience(reco) {
+  const host = qs("[data-ads-audience]");
+  if (!host) return;
+  if (!reco || reco.confidence === "none") {
+    host.innerHTML = `<p class="portal-login-note">No audience recommendation yet — new campaigns use a broad Pakistan / 18–45 default. Once campaigns have run and converted, hit “Refresh audience data” to learn who buys.</p>`;
+    return;
+  }
+  const genders = (reco.genders || []).length
+    ? (reco.genders[0] === 2 ? "Women" : "Men")
+    : "All genders";
+  const regions = (reco.region_labels || []).length ? reco.region_labels.join(", ") : "Pakistan (broad)";
+  const tone = reco.confidence === "high" ? "in_stock" : "preorder";
+  const b = reco.basis || {};
+  const chip = (label, value) => `<div class="today-stat"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong></div>`;
+  // Breakdown table — shows the segment math behind the pick (the "why").
+  const breakdown = (title, segs) => {
+    if (!segs || !segs.length) return "";
+    return `
+      <div class="ads-breakdown">
+        <h3>${esc(title)}</h3>
+        <table class="ads-breakdown-table">
+          <thead><tr><th>Segment</th><th>CPA</th><th>Purchases</th></tr></thead>
+          <tbody>${segs.map((s) => `<tr><td>${esc(s.seg)}</td><td>${s.cpa ? PKR.format(s.cpa) : "—"}</td><td>${esc(s.purchases ?? 0)}</td></tr>`).join("")}</tbody>
+        </table>
+      </div>`;
+  };
+  host.innerHTML = `
+    <div class="mini-actions" style="margin-bottom:8px">
+      <span class="status-pill ${tone}">${esc(reco.confidence)} confidence</span>
+      <small class="portal-login-note">from ${esc(b.total_purchases ?? 0)} purchases · ${esc(reco.window_days || 30)}d window</small>
+    </div>
+    <div class="today-stats-grid">
+      ${chip("Age", `${reco.age_min}–${reco.age_max}`)}
+      ${chip("Gender", genders)}
+      ${chip("Top regions", regions)}
+    </div>
+    <div class="ads-breakdowns">
+      ${breakdown("By age", b.top_ages)}
+      ${breakdown("By gender", b.top_genders)}
+      ${breakdown("By region", b.top_regions)}
+    </div>`;
+}
+
+function populateAdsProductSelect() {
+  const select = qs("[data-ads-product]");
+  if (!select || select.dataset.filled === "1") return;
+  const products = (state.products || []).filter((p) => p.status !== "archived");
+  select.insertAdjacentHTML("beforeend", products
+    .map((p) => `<option value="${attr(p.id)}">${esc(p.title)}</option>`).join(""));
+  if (products.length) select.dataset.filled = "1";
+}
+
+// Spend-vs-revenue trend chart for the dashboard, built from the report's
+// daily series (which previously only fed the tiny KPI sparklines). Pure
+// inline SVG — no chart library. Colors come from ads.css classes.
+function adsTrendChartSvg(daily) {
+  const days = (daily || []).filter((d) => d && d.date);
+  if (days.length < 2) return "";
+  const w = 660, h = 190, padL = 10, padR = 10, padT = 16, padB = 24;
+  const iw = w - padL - padR, ih = h - padT - padB;
+  const spend = days.map((d) => Number(d.spend || 0));
+  const rev = days.map((d) => Number(d.purchase_value || 0));
+  const max = Math.max(...spend, ...rev, 1);
+  const x = (i) => padL + (i / (days.length - 1)) * iw;
+  const y = (v) => padT + ih - (v / max) * ih;
+  const line = (arr) => arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = (arr) =>
+    `${x(0).toFixed(1)},${(padT + ih).toFixed(1)} ${line(arr)} ${x(arr.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
+  const fmtDay = (iso) => {
+    const d = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-PK", { month: "short", day: "numeric" });
+  };
+  return `
+    <svg class="ads-trend-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Daily spend versus revenue">
+      <line class="ads-chart-grid" x1="${padL}" y1="${padT}" x2="${w - padR}" y2="${padT}" />
+      <line class="ads-chart-grid" x1="${padL}" y1="${(padT + ih / 2).toFixed(1)}" x2="${w - padR}" y2="${(padT + ih / 2).toFixed(1)}" />
+      <line class="ads-chart-grid" x1="${padL}" y1="${padT + ih}" x2="${w - padR}" y2="${padT + ih}" />
+      <polygon class="ads-chart-rev-fill" points="${area(rev)}" />
+      <polyline class="ads-chart-rev" points="${line(rev)}" />
+      <polyline class="ads-chart-spend" points="${line(spend)}" />
+      <text class="ads-chart-label" x="${padL}" y="${padT - 5}">${esc(PKR.format(max))}</text>
+      <text class="ads-chart-label" x="${padL}" y="${h - 7}">${esc(fmtDay(days[0].date))}</text>
+      <text class="ads-chart-label" x="${w - padR}" y="${h - 7}" text-anchor="end">${esc(fmtDay(days[days.length - 1].date))}</text>
+    </svg>`;
+}
+
+// Best / worst creative call-outs — joins the report's per-creative stats
+// back to the library for the headline + thumbnail.
+function renderAdsCallouts(report) {
+  const host = qs("[data-ads-creative-callouts]");
+  if (!host) return;
+  const stats = (report && report.creativeStats) || {};
+  const creatives = state._adsCreatives || [];
+  const entries = Object.entries(stats)
+    .map(([ref, s]) => ({ ref, ...s, creative: creatives.find((c) => c.id === ref) || null }))
+    .filter((e) => (e.spend || 0) > 0);
+  if (!report?.configured || !entries.length) { host.hidden = true; host.innerHTML = ""; return; }
+  const best = [...entries].sort((a, b) => (b.roas || 0) - (a.roas || 0))[0];
+  // "Worst" only counts creatives with enough spend to judge (≥ Rs 500), and
+  // never the same creative as the winner.
+  const judged = entries.filter((e) => (e.spend || 0) >= 500 && e.ref !== best.ref);
+  const worst = judged.length ? [...judged].sort((a, b) => (a.roas || 0) - (b.roas || 0))[0] : null;
+  const card = (label, e, tone) => `
+    <article class="ads-callout ${tone}">
+      <span class="ads-callout-label">${esc(label)}</span>
+      <div class="ads-callout-body">
+        ${e.creative?.image_url ? `<img src="${safeUrl(imageUrlThumb(e.creative.image_url), "")}" alt="" loading="lazy" />` : `<div class="ads-callout-noimg">Ad</div>`}
+        <div>
+          <strong>${esc(e.creative?.headline || e.ref)}</strong>
+          <small>${PKR.format(e.spend || 0)} spent · ${(e.roas || 0).toFixed(2)}× ROAS · ${e.purchases || 0} sales</small>
+        </div>
+      </div>
+    </article>`;
+  host.hidden = false;
+  host.innerHTML = card("Top creative", best, "is-good") + (worst ? card("Needs attention", worst, "is-bad") : "");
+}
+
+function renderAdsDashboard(report) {
+  const kpis = qs("[data-ads-kpis]");
+  const rows = qs("[data-ads-campaign-rows]");
+  const windowPill = qs("[data-ads-window]");
+  const chartHost = qs("[data-ads-chart]");
+  const t = report.totals || {};
+  if (windowPill) windowPill.textContent = report.configured ? `${report.window_days || 7}d` : "offline";
+
+  if (kpis) {
+    if (!report.configured && state._adsReportError) {
+      // Keys are present but the report call failed — show the REAL error
+      // from Meta/Supabase plus the usual suspects, so this is fixable
+      // without opening devtools.
+      kpis.innerHTML = `
+        <div class="ads-unconfigured">
+          <p><strong>Keys detected, but the connection is failing.</strong></p>
+          <p><code>${esc(state._adsReportError)}</code></p>
+          <p>Common causes: the system-user token is missing <code>ads_management</code>/<code>ads_read</code> permissions; the ad account wasn't assigned to the system user (Business settings → System users → Add assets); <code>META_AD_ACCOUNT_ID</code> includes the <code>act_</code> prefix or has a typo; or the ads tables migration (<code>supabase/migrations/2026-06-25-meta-ads.sql</code>) hasn't been run in Supabase.</p>
+          <div class="mini-actions">
+            <button class="button primary" type="button" data-action="ads-refresh">Retry</button>
+          </div>
+        </div>`;
+    } else if (!report.configured) {
+      // Self-diagnosing empty state: name the exact missing keys (from the
+      // Setup probe already in state) instead of a generic "add META_*" line.
+      const keys = state._adsConfig?.keys || {};
+      const required = [
+        ["META_SYSTEM_USER_TOKEN", "System user token"],
+        ["META_AD_ACCOUNT_ID", "Ad account ID"],
+        ["META_PAGE_ID", "Facebook Page ID"],
+      ];
+      const missing = required.filter(([k]) => !keys[k]);
+      const supabaseIssue = report.reason === "supabase_not_configured";
+      const detail = supabaseIssue
+        ? "Supabase isn't connected — SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are needed to store report snapshots."
+        : missing.length
+          ? `Missing required key${missing.length > 1 ? "s" : ""}: ${missing.map(([k]) => `<code>${esc(k)}</code>`).join(" · ")}`
+          : "All keys detected — if this persists, redeploy the site so Netlify functions pick up the new environment variables.";
+      kpis.innerHTML = `
+        <div class="ads-unconfigured">
+          <p><strong>Meta isn't connected yet.</strong></p>
+          <p>${detail}</p>
+          <div class="mini-actions">
+            <button class="button primary" type="button" data-action="ads-goto-setup">Open Setup checklist</button>
+          </div>
+        </div>`;
+    } else {
+      const daily = report.daily || [];
+      const card = (label, value, { tone = "", spark = null, sub = "" } = {}) =>
+        `<div class="today-stat ${tone}"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong>${sub ? `<small class="today-stat-sub">${sub}</small>` : ""}${spark || ""}</div>`;
+      // Yesterday vs window average — is today's trajectory normal?
+      const last = daily.length ? daily[daily.length - 1] : null;
+      const avgSpend = daily.length ? daily.reduce((s, d) => s + Number(d.spend || 0), 0) / daily.length : 0;
+      const spendDelta = last && avgSpend > 0 ? ((Number(last.spend || 0) - avgSpend) / avgSpend) * 100 : null;
+      const deltaSub = spendDelta === null ? "" :
+        `<span class="${spendDelta >= 0 ? "delta-up" : "delta-down"}">${spendDelta >= 0 ? "+" : ""}${spendDelta.toFixed(0)}% vs ${daily.length}d avg</span>`;
+      kpis.innerHTML = [
+        card("Spend", PKR.format(t.spend || 0), { spark: sparklineSvg(daily.map((d) => d.spend)) }),
+        card("Purchases", String(t.purchases || 0)),
+        card("Revenue", PKR.format(t.purchase_value || 0), { spark: sparklineSvg(daily.map((d) => d.purchase_value)) }),
+        card("ROAS", `${(t.roas || 0).toFixed(2)}×`, { tone: (t.roas || 0) >= 2 ? "tone-good" : "", spark: sparklineSvg(daily.map((d) => d.roas)) }),
+        card("CPA", t.cpa ? PKR.format(t.cpa) : "—"),
+        card("CTR", `${(t.ctr || 0).toFixed(2)}%`),
+        last ? card("Yesterday spend", PKR.format(last.spend || 0), { sub: deltaSub }) : "",
+        last ? card("Yesterday ROAS", `${(last.roas || 0).toFixed(2)}×`, { tone: (last.roas || 0) >= 2 ? "tone-good" : "" }) : "",
+      ].filter(Boolean).join("");
+    }
+  }
+
+  if (chartHost) {
+    const svg = report.configured ? adsTrendChartSvg(report.daily || []) : "";
+    chartHost.hidden = !svg;
+    chartHost.innerHTML = svg
+      ? `<div class="ads-chart-legend"><span class="lg-rev">Revenue</span><span class="lg-spend">Spend</span></div>${svg}`
+      : "";
+  }
+
+  renderAdsCallouts(report);
+
+  if (rows) {
+    const campaigns = report.campaigns || [];
+    // Live delivery status joined from the campaign sync (bot-built + Ads
+    // Manager) — snapshot rows alone carry no status.
+    const statusMap = state._adsStatusByCampaign || {};
+    const statusCell = (id) => {
+      const s = statusMap[id];
+      if (!s) return `<td>—</td>`;
+      const live = s === "ACTIVE";
+      const label = live ? "Live" : s === "PAUSED" ? "Paused" : s;
+      return `<td><span class="status-pill ${live ? "in_stock" : "preorder"}">${esc(label)}</span></td>`;
+    };
+    rows.innerHTML = campaigns.length
+      ? campaigns.map((c) => `
+        <tr>
+          <td>${esc(c.name || c.campaign_id)}</td>
+          ${statusCell(c.campaign_id)}
+          <td>${PKR.format(c.spend || 0)}</td>
+          <td>${c.purchases || 0}</td>
+          <td>${PKR.format(c.purchase_value || 0)}</td>
+          <td>${(c.roas || 0).toFixed(2)}×</td>
+          <td>${c.cpa ? PKR.format(c.cpa) : "—"}</td>
+        </tr>`).join("")
+      : `<tr><td colspan="7" class="portal-login-note">No campaign spend in this window yet.</td></tr>`;
+  }
+}
+
+function renderAdsQueue(campaigns, external = []) {
+  const host = qs("[data-ads-campaign-queue]");
+  const count = qs("[data-ads-queue-count]");
+  const navBadge = qs('[data-ads-nav-badge="campaigns"]');
+  if (!host) return;
+  const waiting = campaigns.filter((c) => c.approval_state === "built");
+  if (count) count.textContent = `${waiting.length} waiting`;
+  if (navBadge) navBadge.textContent = waiting.length ? String(waiting.length) : "";
+  // Ads Manager campaigns render alongside bot-built ones so this page
+  // oversees the whole account. A sync hiccup shows as a note, never an
+  // empty board (the local queue is still valid).
+  const syncNote = state._adsExternalError
+    ? `<p class="portal-login-note">⚠︎ Couldn't sync Ads Manager campaigns: ${esc(state._adsExternalError)}</p>`
+    : "";
+  if (!campaigns.length && !external.length) {
+    host.innerHTML = syncNote || `<div class="ads-empty">
+        <span class="ads-empty-glyph" aria-hidden="true">🚀</span>
+        <strong>No campaigns yet</strong>
+        <p>Build a paused campaign from a ready creative above — nothing spends until you launch it. Campaigns you create in Meta Ads Manager also show up here once Meta is connected.</p>
+      </div>`;
+    return;
+  }
+  // Filter chips (all / built / launched / paused) — external campaigns map
+  // ACTIVE→launched / else→paused, so the chips cover them too.
+  const filter = state._adsQueueFilter || "all";
+  const merged = [...campaigns, ...external];
+  const filtered = filter === "all" ? merged : merged.filter((c) => c.approval_state === filter);
+  if (!filtered.length) {
+    host.innerHTML = `${syncNote}<p class="portal-login-note">No ${esc(filter)} campaigns.</p>`;
+    return;
+  }
+  const stateClass = (s) => s === "launched" ? "in_stock" : s === "rejected" ? "soldout" : s === "paused" ? "preorder" : "preorder";
+
+  // Card for a campaign created directly in Meta Ads Manager — no local row,
+  // so status/budget actions go straight to the Meta campaign id.
+  const externalCard = (c) => {
+    const active = c.effective_status === "ACTIVE";
+    const statusLabel = active ? "Live" : c.effective_status === "PAUSED" ? "Paused" : (c.effective_status || "Unknown");
+    const canEditBudget = c.budget_level !== "mixed";
+    const dataAttrs = `data-meta-id="${attr(c.meta_campaign_id)}" data-adset-id="${attr(c.meta_adset_id || "")}" data-budget-level="${attr(c.budget_level)}" data-name="${attr(c.name)}"`;
+    const budgetEditor = canEditBudget ? `
+      <div class="ads-budget-edit mini-actions">
+        <label class="ads-budget-label">Daily budget (PKR)
+          <input type="number" min="100" step="100" value="${Number(c.daily_budget_pkr || 0)}" data-ads-ext-budget-input="${attr(c.meta_campaign_id)}" />
+        </label>
+        <button class="button secondary" type="button" data-action="ads-ext-budget" ${dataAttrs}>Update budget</button>
+      </div>` : `<small class="ads-ext-note">Budget is set per ad set (${Number(c.adset_count || 0)} ad sets) — edit it in Ads Manager.</small>`;
+    return `
+      <article class="ugc-admin-card ads-external-card">
+        <div class="ugc-admin-body">
+          <div class="panel-title-row">
+            <strong>${esc(c.name)}</strong>
+            <span class="mini-actions">
+              <span class="ads-source-badge">Ads Manager</span>
+              <span class="status-pill ${active ? "in_stock" : "preorder"}">${esc(statusLabel)}</span>
+            </span>
+          </div>
+          <small>${c.daily_budget_pkr ? `${PKR.format(c.daily_budget_pkr)}/day · ` : ""}${esc(c.objective || "")}</small>
+          ${budgetEditor}
+          <div class="mini-actions">
+            ${active
+              ? `<button class="button secondary" type="button" data-action="ads-ext-status" data-next="PAUSED" ${dataAttrs}>Pause spend</button>`
+              : `<button class="button primary" type="button" data-action="ads-ext-status" data-next="ACTIVE" ${dataAttrs}>Resume spend</button>`}
+          </div>
+        </div>
+      </article>`;
+  };
+
+  host.innerHTML = syncNote + filtered.map((c) => {
+    if (c.source === "ads_manager") return externalCard(c);
+    const built = c.approval_state === "built";
+    const launched = c.approval_state === "launched";
+    const paused = c.approval_state === "paused";
+    // Live or paused campaigns get an inline daily-budget editor so spend is
+    // managed straight from the UI (clamped to the guardrail server-side).
+    const budgetEditor = (launched || paused) ? `
+      <div class="ads-budget-edit mini-actions">
+        <label class="ads-budget-label">Daily budget (PKR)
+          <input type="number" min="100" step="100" value="${Number(c.daily_budget_pkr || 0)}" data-ads-budget-input="${attr(c.id)}" />
+        </label>
+        <button class="button secondary" type="button" data-action="ads-set-budget" data-ads-id="${attr(c.id)}">Update budget</button>
+      </div>` : "";
+    return `
+      <article class="ugc-admin-card">
+        <div class="ugc-admin-body">
+          <div class="panel-title-row">
+            <strong>${esc(c.name)}</strong>
+            <span class="mini-actions">
+              <span class="ads-source-badge is-local">Built here</span>
+              <span class="status-pill ${stateClass(c.approval_state)}">${esc(c.approval_state)}</span>
+            </span>
+          </div>
+          <small>${PKR.format(c.daily_budget_pkr || 0)}/day · ${esc(c.objective || "OUTCOME_SALES")}${c.notes ? ` · ${esc(c.notes)}` : ""}</small>
+          ${budgetEditor}
+          <div class="mini-actions">
+            ${built ? `<button class="button primary" type="button" data-action="ads-launch" data-ads-id="${attr(c.id)}">Approve &amp; launch</button>` : ""}
+            ${built ? `<button class="button secondary" type="button" data-action="ads-reject" data-ads-id="${attr(c.id)}">Reject</button>` : ""}
+            ${launched ? `<button class="button secondary" type="button" data-action="ads-undo" data-ads-id="${attr(c.id)}">Pause spend</button>` : ""}
+            ${paused ? `<button class="button primary" type="button" data-action="ads-resume" data-ads-id="${attr(c.id)}">Resume spend</button>` : ""}
+          </div>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function renderAdsActions(actions) {
+  const host = qs("[data-ads-actions]");
+  if (!host) return;
+  if (!actions.length) {
+    host.innerHTML = `<p class="portal-login-note">No optimizer activity yet. It runs daily and logs here.</p>`;
+    return;
+  }
+  host.innerHTML = `<ul class="ads-action-log">${actions.map((a) => `
+    <li>
+      <span class="status-pill ${a.action === "pause" ? "soldout" : "in_stock"}">${esc(a.action)}</span>
+      <strong>${esc(a.entity_name || a.entity_id)}</strong>
+      <small>${esc(a.reason || "")}${a.dry_run ? " · dry-run" : ""}</small>
+    </li>`).join("")}</ul>`;
+}
+
+// Upload the operator's chosen image, then save it as a creative (image + copy)
+// into the library. No external AI — the team supplies the media and the words.
+async function adsUploadMedia() {
+  const form = qs("[data-ads-creative-form]");
+  const statusEl = qs("[data-ads-creative-status]");
+  if (!form) return;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const file = qs("[data-ad-media-file]")?.files?.[0];
+  if (!data.headline?.trim() || !data.primary_text?.trim()) {
+    if (statusEl) statusEl.textContent = "Headline and primary text are required."; return;
+  }
+  // Destination: a linked product deep-links to its page; otherwise the typed URL.
+  const destination = data.product_id
+    ? `/product/${data.product_id}`
+    : (data.destination_url || "").trim();
+  if (!destination) { if (statusEl) statusEl.textContent = "Pick a product or enter a destination URL."; return; }
+
+  const restore = withSubmitState(form, "Uploading…");
+  try {
+    let imageUrlValue = "";
+    if (file) {
+      if (statusEl) statusEl.textContent = "Uploading image…";
+      const compressed = await compressImageFile(file);
+      const uploaded = await apiFetch("/api/admin/upload", {
+        method: "POST",
+        body: JSON.stringify({ folder: "ad-creatives", file: await fileToPayload(compressed) }),
+      }, { publicUrl: URL.createObjectURL(file), configured: false });
+      imageUrlValue = uploaded.publicUrl || "";
+    }
+    if (statusEl) statusEl.textContent = "Saving creative…";
+    await apiFetch("/api/admin/ads-creative", {
+      method: "POST",
+      body: JSON.stringify({ action: "add", creative: {
+        product_id: data.product_id || null,
+        headline: data.headline.trim(),
+        primary_text: data.primary_text.trim(),
+        cta_type: data.cta_type || "SHOP_NOW",
+        destination_url: destination,
+        image_url: imageUrlValue,
+        source: "manual",
+        status: "ready",
+      } }),
+    });
+    form.reset();
+    const prev = qs("[data-ad-media-preview]"); if (prev) { prev.hidden = true; prev.innerHTML = ""; }
+    if (statusEl) statusEl.textContent = "Saved to the library — pick it in Campaigns to build an ad.";
+    await loadAdsAdmin();
+    toast("Creative saved.");
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Upload failed: ${err.message || err}`;
+  } finally {
+    restore();
+  }
+}
+
+// Build a paused campaign from a chosen library creative + daily budget.
+async function adsBuildCampaign() {
+  const form = qs("[data-ads-create-form]");
+  const statusEl = qs("[data-ads-create-status]");
+  if (!form) return;
+  const creativeRef = form.elements.creative_ref?.value;
+  const budget = Number(form.elements.daily_budget_pkr?.value || 0);
+  if (!creativeRef) { if (statusEl) statusEl.textContent = "Pick a creative."; return; }
+  if (!budget) { if (statusEl) statusEl.textContent = "Enter a daily budget."; return; }
+  const restore = withSubmitState(form, "Building…");
+  try {
+    const built = await apiFetch("/api/admin/ads-create", {
+      method: "POST",
+      body: JSON.stringify({ action: "build", creative_ref: creativeRef, daily_budget_pkr: budget, created_by: "operator" }),
+    });
+    if (statusEl) statusEl.textContent = built.clamped
+      ? "Built — budget was clamped to your guardrail ceiling. Review it in the approval queue, then launch."
+      : "Built (paused). Review it in the approval queue, then launch.";
+    form.reset();
+    await loadAdsAdmin();
+    toast("Campaign built (paused).");
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Build failed: ${err.message || err}`;
+  } finally {
+    restore();
+  }
+}
+
+async function adsArchiveCreative(id) {
+  if (!id || !confirm("Archive this creative? It will no longer be selectable for new campaigns.")) return;
+  try {
+    await apiFetch("/api/admin/ads-creative", {
+      method: "POST", body: JSON.stringify({ action: "status", id, status: "archived" }),
+    });
+    toast("Creative archived.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not archive: ${err.message || err}`);
+  }
+}
+
+async function adsCampaignAction(action, id) {
+  const confirms = {
+    launch: "Launch this campaign live? It will start spending.",
+    resume: "Resume spend on this campaign?",
+  };
+  if (confirms[action] && !confirm(confirms[action])) return;
+  const labels = { launch: "Campaign launched.", undo: "Spend paused.", resume: "Spend resumed.", reject: "Campaign rejected." };
+  try {
+    await apiFetch("/api/admin/ads-create", {
+      method: "POST", body: JSON.stringify({ action, id, approved_by: "operator" }),
+    });
+    toast(labels[action] || "Campaign updated.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not ${action}: ${err.message || err}`);
+  }
+}
+
+// Pause/resume a campaign that lives only in Meta Ads Manager (no local
+// mirror row) — posts meta_status with the raw Meta campaign id.
+async function adsExternalStatus(ds) {
+  const next = ds.next === "ACTIVE" ? "ACTIVE" : "PAUSED";
+  if (next === "ACTIVE" && !confirm("Resume spend on this Ads Manager campaign?")) return;
+  try {
+    await apiFetch("/api/admin/ads-create", {
+      method: "POST",
+      body: JSON.stringify({ action: "meta_status", meta_campaign_id: ds.metaId, status: next, name: ds.name || "" }),
+    });
+    toast(next === "ACTIVE" ? "Spend resumed." : "Spend paused.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not update: ${err.message || err}`);
+  }
+}
+
+// Edit the daily budget of an Ads Manager campaign (campaign-level for CBO,
+// its single ad set otherwise). Server clamps to the guardrail ceiling.
+async function adsExternalBudget(ds) {
+  const input = qs(`[data-ads-ext-budget-input="${CSS.escape(ds.metaId || "")}"]`);
+  const value = Number(input?.value || 0);
+  if (!(value > 0)) { toast("Enter a daily budget above 0."); return; }
+  try {
+    const res = await apiFetch("/api/admin/ads-create", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "meta_budget",
+        meta_campaign_id: ds.metaId,
+        meta_adset_id: ds.adsetId || "",
+        budget_level: ds.budgetLevel,
+        daily_budget_pkr: value,
+        name: ds.name || "",
+      }),
+    });
+    toast(res.clamped ? "Budget set (capped at your guardrail ceiling)." : "Daily budget updated.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not update budget: ${err.message || err}`);
+  }
+}
+
+// Change a campaign's daily budget from the UI. Reads the inline input, posts
+// set_budget (server clamps to the guardrail), then refreshes the queue.
+async function adsSetBudget(id) {
+  const input = qs(`[data-ads-budget-input="${id}"]`);
+  const value = Number(input?.value || 0);
+  if (!(value > 0)) { toast("Enter a daily budget above 0."); return; }
+  try {
+    const res = await apiFetch("/api/admin/ads-create", {
+      method: "POST", body: JSON.stringify({ action: "set_budget", id, daily_budget_pkr: value }),
+    });
+    toast(res.clamped ? "Budget set (capped at your guardrail ceiling)." : "Daily budget updated.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not update budget: ${err.message || err}`);
+  }
+}
+
+// Recompute the audience recommendation from Meta (the cron does this weekly;
+// this is the on-demand button). Slower than the cached read — it hits Meta.
+async function adsAudienceRefresh() {
+  const host = qs("[data-ads-audience]");
+  if (host) host.innerHTML = `<p class="portal-login-note">Analyzing audience performance…</p>`;
+  try {
+    const res = await apiFetch("/api/admin/ads-audience", {}, { reco: null });
+    if (res.configured === false) {
+      if (host) host.innerHTML = `<p class="portal-login-note">Meta isn't connected here yet — add the META_* env vars to compute audience data.</p>`;
+      return;
+    }
+    state._adsAudience = res.reco || null;
+    renderAdsAudience(state._adsAudience);
+    toast("Audience recommendation refreshed.");
+  } catch (err) {
+    toast(`Audience refresh failed: ${err.message || err}`);
+    renderAdsAudience(state._adsAudience);
+  }
+}
+
+async function adsOptimizePreview() {
+  toast("Running optimizer dry-run…");
+  try {
+    const res = await apiFetch("/api/admin/ads-optimize", {}, { actions: [], dry_run: true });
+    state._adsActions = res.actions || [];
+    renderAdsActions(state._adsActions);
+    toast(`Optimizer evaluated ${res.evaluated || 0} ads, ${res.acted || 0} action(s)${res.dry_run ? " (dry-run)" : ""}.`);
+  } catch (err) {
+    toast(`Optimizer preview failed: ${err.message || err}`);
+  }
 }
 
 async function saveUgcPost(payload) {
@@ -6987,6 +8510,14 @@ function applyPricingModeVisibility(form, mode) {
   });
 }
 
+// The editor is collapsed by default (list-first) — reveal it and scroll to it
+// when the operator clicks New product or Edit.
+function openProductEditor() {
+  const details = qs("[data-padmin-editor]");
+  if (details) details.open = true;
+  qs("[data-product-editor]")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function fillProductForm(product = {}) {
   const form = qs("[data-product-editor]");
   if (!form) return;
@@ -7001,8 +8532,6 @@ function fillProductForm(product = {}) {
     shipping_pkr: "",
     fx_rate: state.settings.fx_rate,
     customer_price_pkr: "",
-    delivery_days_min: "",
-    delivery_days_max: "",
     stock_mode: "preorder",
     inventory: 0,
     low_stock_threshold: 2,
@@ -7023,6 +8552,8 @@ function fillProductForm(product = {}) {
     ...defaults,
     ...product,
     pricing_mode: inferredMode,
+    // The publish select is named product_status but `status` is canonical now.
+    product_status: product.status || product.product_status || "active",
     gallery_urls: Array.isArray(product.gallery_urls) ? product.gallery_urls.join("\n") : product.gallery_urls || "",
   };
   Object.entries(prepared).forEach(([key, value]) => {
@@ -7490,44 +9021,76 @@ async function setRoute() {
   const fallbackView = document.body.dataset.page === "portal" ? "admin" : "home";
   const safeView = qs(`[data-view="${viewName}"]`) ? viewName : fallbackView;
 
-  const curtain = qs("#page-curtain");
   const isFirstLoad = _firstLoad;
+  _firstLoad = false;
 
-  if (!isFirstLoad && curtain) {
+  // Everything that actually swaps the visible route — shared by the three
+  // transition strategies below so they can't drift.
+  const applyRoute = () => {
+    qsa(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === safeView));
+    document.body.dataset.activeView = safeView;
+
+    // Per-route title + meta description for SEO.
+    const meta = ROUTE_META[safeView];
+    if (meta) {
+      document.title = meta.title;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", meta.description);
+    }
+
+    // Mark the active nav link.
+    qsa("[data-route]").forEach((link) => {
+      link.toggleAttribute("data-current", link.dataset.route === safeView);
+    });
+
+    if (safeView === "shop") {
+      syncShopFiltersFromRoute(params);
+      renderProducts();
+    }
+    // Live-data surfaces — fetch on entry. Each renderer no-ops gracefully and
+    // leaves the static fallback markup in place if the fetch fails.
+    if (safeView === "batches") renderBatchesPage();
+    if (safeView === "this-week") renderThisWeek();
+    setCartDrawerOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Strategy 1 — reduced motion or first paint: swap instantly, no waits.
+  if (isFirstLoad || reduceMotion) {
+    applyRoute();
+    _transitioning = false;
+    return;
+  }
+
+  // Strategy 2 — View Transitions API: a fast crossfade + rise (~350ms)
+  // instead of the ~900ms curtain sweep. The browser snapshots old/new
+  // states; the animation itself lives in CSS (::view-transition-*).
+  if (document.startViewTransition) {
+    const vt = document.startViewTransition(applyRoute);
+    // `.ready` rejects with InvalidStateError when a transition is already
+    // running (fast route changes). We only await `.finished`, so swallow
+    // `.ready` separately or it surfaces as an unhandled rejection.
+    vt.ready?.catch(() => {});
+    try {
+      await vt.finished;
+    } catch {
+      // Transition was skipped or interrupted — the DOM swap still ran.
+    }
+    _transitioning = false;
+    return;
+  }
+
+  // Strategy 3 — curtain-sweep fallback for browsers without the API.
+  const curtain = qs("#page-curtain");
+  if (curtain) {
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(0%)";
     await new Promise((r) => setTimeout(r, 440));
   }
-  _firstLoad = false;
-
-  qsa(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === safeView));
-  document.body.dataset.activeView = safeView;
-
-  // Per-route title + meta description for SEO.
-  const meta = ROUTE_META[safeView];
-  if (meta) {
-    document.title = meta.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute("content", meta.description);
-  }
-
-  // Mark the active nav link.
-  qsa("[data-route]").forEach((link) => {
-    link.toggleAttribute("data-current", link.dataset.route === safeView);
-  });
-
-  if (safeView === "shop") {
-    syncShopFiltersFromRoute(params);
-    renderProducts();
-  }
-  // Live-data surfaces — fetch on entry. Each renderer no-ops gracefully and
-  // leaves the static fallback markup in place if the fetch fails.
-  if (safeView === "batches") renderBatchesPage();
-  if (safeView === "this-week") renderThisWeek();
-  setCartDrawerOpen(false);
-  window.scrollTo({ top: 0 });
-
-  if (!isFirstLoad && curtain) {
+  applyRoute();
+  if (curtain) {
     await new Promise((r) => setTimeout(r, 16));
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(101%)";
@@ -7537,6 +9100,68 @@ async function setRoute() {
   }
 
   _transitioning = false;
+}
+
+// ── Add-to-bag micro-interaction ──────────────────────────────────────
+// A small ghost of the product image arcs from the card (or PDP modal)
+// into the bag icon, then the count badge spring-pulses. Pure feedback —
+// cart state is already saved before any of this runs, so a dropped
+// animation can never lose an add. Skipped for reduced-motion users.
+
+function visibleBagButton() {
+  // Note: offsetParent is null for fixed-position ancestors (the mobile
+  // bottom bar), so visibility is judged by rendered box size instead.
+  return qsa('[data-action="open-cart"]').find((el) => {
+    const rect = el.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    return typeof el.checkVisibility !== "function" || el.checkVisibility();
+  }) || null;
+}
+
+function pulseBagBadge() {
+  qsa("[data-cart-count]").forEach((badge) => {
+    badge.classList.remove("bag-badge-pulse");
+    void badge.offsetWidth; // restart the animation on rapid re-adds
+    badge.classList.add("bag-badge-pulse");
+  });
+}
+
+// Returns the flight duration (ms) so the caller can sequence the drawer
+// open to land right after the ghost does; 0 means no animation ran.
+function flyToBag(productId) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  // Prefer the PDP modal image when it's open; else the first VISIBLE card
+  // image for this product — the same product can render in several views
+  // (home showcase + shop grid) and only the active view has a box.
+  const img = [
+    qs(".detail-modal .gallery-main"),
+    ...qsa(`.product-media[data-product-id="${CSS.escape(productId)}"] img`),
+  ].find((el) => el && el.getBoundingClientRect().width > 0);
+  const target = visibleBagButton();
+  if (!img || !target || typeof img.animate !== "function") return 0;
+  const from = img.getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  if (!from.width || !to.width) return 0;
+  const size = 56;
+  const ghost = document.createElement("img");
+  ghost.src = img.currentSrc || img.src;
+  ghost.alt = "";
+  ghost.className = "fly-to-bag-ghost";
+  ghost.style.left = `${from.left + from.width / 2 - size / 2}px`;
+  ghost.style.top = `${from.top + from.height / 2 - size / 2}px`;
+  document.body.appendChild(ghost);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const flight = 520;
+  const anim = ghost.animate([
+    { transform: "translate(0, 0) scale(1)", opacity: 0.95 },
+    { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 56}px) scale(0.65)`, opacity: 0.9, offset: 0.6 },
+    { transform: `translate(${dx}px, ${dy}px) scale(0.18)`, opacity: 0.35 },
+  ], { duration: flight, easing: "cubic-bezier(0.5, -0.1, 0.3, 1)" });
+  const cleanup = () => { ghost.remove(); pulseBagBadge(); };
+  anim.onfinish = cleanup;
+  anim.oncancel = cleanup;
+  return flight;
 }
 
 function addToCart(productId, options = {}) {
@@ -7568,10 +9193,19 @@ function addToCart(productId, options = {}) {
     toast(`${product.title} added. Opening checkout.`);
     navigateTo("checkout");
   } else if (isFreshAdd) {
-    setCartDrawerOpen(true);
+    // Ghost flies to the bag first; the drawer slides open as it lands.
+    const flight = flyToBag(productId);
+    if (flight) {
+      setTimeout(() => setCartDrawerOpen(true), flight - 80);
+    } else {
+      setCartDrawerOpen(true);
+    }
     toast(`${product.title} added to bag.`);
+  } else {
+    // Quiet increments (in-card stepper): no drawer pop or toast spam —
+    // just a badge pulse so the running count registers peripherally.
+    pulseBagBadge();
   }
-  // Quiet increments stay silent — the visible qty changing is feedback enough.
 }
 
 // Decrements a product line in the cart. Hitting "−" at qty 1 removes the
@@ -7693,6 +9327,17 @@ async function handleCheckout(event) {
   if (missingVariant) {
     toast(`Please add a ${variantLabel(missingVariant.product)} for ${missingVariant.product.title}.`);
     setCartDrawerOpen(true);
+    // Point the customer straight at the field that's blocking checkout —
+    // a toast alone is easy to miss with the drawer sliding in over it.
+    setTimeout(() => {
+      const input = qs(`[data-cart-variant][data-product-id="${CSS.escape(missingVariant.product_id)}"]`);
+      if (input) {
+        input.classList.add("field-error");
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+        input.focus();
+        input.addEventListener("input", () => input.classList.remove("field-error"), { once: true });
+      }
+    }, 320); // wait for the drawer's slide-in to finish before scrolling
     return;
   }
 
@@ -9668,6 +11313,11 @@ function handleAdminLogin(event) {
   localStorage.setItem("mm_admin_token", state.adminToken);
   qs("[data-admin-login]")?.classList.add("hidden");
   qs("[data-admin-content]")?.classList.remove("hidden");
+  if (document.body.dataset.page === "ads") {
+    toast("Meta Ads unlocked.");
+    loadAdsPageData();
+    return;
+  }
   toast("Internal portal unlocked.");
   refreshAdmin();
 }
@@ -9730,7 +11380,19 @@ async function saveProduct(event) {
     toast("Product title is required.");
     return;
   }
-  product.id = product.id || product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  // Distinguish a brand-new product from an edit BEFORE we derive an id, so we
+  // can both preserve `featured` on edits and avoid slug-collisions on creates.
+  const isNewProduct = !product.id;
+  const existingProduct = isNewProduct ? null : state.products.find((p) => p.id === product.id);
+  if (isNewProduct) {
+    const baseId = product.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "product";
+    // Guard against two products slugging to the same id (which would silently
+    // overwrite the first). Append a short suffix until the id is unique.
+    let candidate = baseId;
+    let n = 2;
+    while (state.products.some((p) => p.id === candidate)) candidate = `${baseId}-${n++}`;
+    product.id = candidate;
+  }
   const pricingMode = product.pricing_mode || "preorder";
   delete product.pricing_mode;
 
@@ -9753,15 +11415,13 @@ async function saveProduct(event) {
   product.shipping_pkr = Number(product.shipping_pkr || 0);
   product.fx_rate = Number(product.fx_rate || state.settings.fx_rate || 282);
 
+  // Delivery timing is governed by the shipment batch, not per product — no
+  // per-product "days to ship". Just set the stock mode + preorder weeks.
   if (pricingMode === "in_stock") {
     product.stock_mode = "in_stock";
-    product.delivery_days_min = Number(product.delivery_days_min || 3);
-    product.delivery_days_max = Number(product.delivery_days_max || 5);
     product.preorder_weeks = 0;
   } else {
     product.stock_mode = "preorder";
-    product.delivery_days_min = 0;
-    product.delivery_days_max = 0;
     product.preorder_weeks = Number(state.settings.preorder_weeks || 4);
   }
   product.inventory = Number(product.inventory || 0);
@@ -9776,8 +11436,14 @@ async function saveProduct(event) {
   product.gallery_urls = String(product.gallery_urls || "").split(/\n|,/).map((url) => url.trim()).filter(Boolean);
   product.image_url = String(product.image_url || "").trim();
   product.markup_rate = state.settings.markup_rate;
-  product.featured = state.products.length < 3;
+  // Preserve an existing product's featured flag (the star toggle owns it) —
+  // only auto-feature the first few brand-new products as a convenience. The
+  // old code recomputed this on every save, silently un-featuring edits.
+  product.featured = isNewProduct ? state.products.length < 3 : Boolean(existingProduct?.featured);
+  // `status` is the single source of truth; the editor's publish select is
+  // still named product_status, so map it across and drop the legacy key.
   product.status = product.product_status || "active";
+  delete product.product_status;
   const restore = withSubmitState(form, "Saving product…");
   try {
     const saved = await apiFetch("/api/catalog", { method: "POST", body: JSON.stringify(product) }, { product });
@@ -10780,6 +12446,7 @@ async function saveSettings(event) {
   settings.preorder_weeks = Number(settings.preorder_weeks);
   settings.response_sla_minutes = Number(settings.response_sla_minutes || 15);
   settings.monthly_revenue_target = Number(settings.monthly_revenue_target || 0);
+  // (Ads guardrails moved to the standalone ads.html — saved there, not here.)
   const restore = withSubmitState(form, "Saving settings…");
   try {
     const saved = await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(settings) }, { settings });
@@ -10896,6 +12563,8 @@ async function commitOrderStage(orderId, status, paymentStatus, { undoLabel } = 
     }, { order });
     const index = state.orders.findIndex((o) => o.id === orderId);
     if (index >= 0 && result.order) state.orders[index] = { ...state.orders[index], ...result.order };
+    // In-stock items leave/return to stock as the order crosses "delivered".
+    applyOrderStockEffects(state.orders.find((o) => o.id === orderId) || order, status);
     if (listView) {
       patchOrderRow(state.orders[index] || order);
       renderAdmin({ skipOrdersSurfaces: true });
@@ -11104,6 +12773,9 @@ async function submitCancelOrder(orderId) {
     }, { order });
     const idx = state.orders.findIndex((o) => o.id === orderId);
     if (idx >= 0 && result.order) state.orders[idx] = { ...state.orders[idx], ...result.order };
+    // Return any already-deducted in-stock units (no-op unless the order had
+    // reached "delivered" and decremented stock).
+    applyOrderStockEffects(state.orders.find((o) => o.id === orderId) || order, "cancelled");
     renderAll();
     syncOpenOrderDrawer(orderId);
     showUndoToast(`${orderId} cancelled${refundDue > 0 ? ` · ${PKR.format(refundDue)} refund logged` : ""}`, () => {
@@ -11294,6 +12966,94 @@ async function createShipmentBatch(event) {
   } finally {
     restore();
   }
+}
+
+// Delete a shipment batch. Destructive + rare, so it's gated by a confirm that
+// spells out the assigned-order count, and backed by a 10s Undo toast — the
+// same revertible pattern as the Kanban stage moves. Orders are NEVER deleted:
+// the batch link lives only in batch.order_ids, so removing the batch unassigns
+// them. We reset their ETA copy so it doesn't reference a batch that's gone.
+async function deleteShipmentBatch(batchId) {
+  const index = state.shipmentBatches.findIndex((b) => b.id === batchId);
+  if (index < 0) return;
+  const batch = state.shipmentBatches[index];
+  const assigned = state.orders.filter((order) => (batch.order_ids || []).includes(order.id));
+  const orderLine = assigned.length
+    ? `\n\n${assigned.length} assigned order${assigned.length === 1 ? "" : "s"} will be unassigned (the order${assigned.length === 1 ? "" : "s"} stay — only the batch link is removed).`
+    : "";
+  if (!window.confirm(`Delete shipment batch “${batch.name}”?${orderLine}`)) return;
+
+  // Snapshot everything needed to fully restore on Undo: the batch object, its
+  // position in the list, and each affected order's ETA / next-action / events.
+  const snapshot = {
+    batch: JSON.parse(JSON.stringify(batch)),
+    index,
+    orders: assigned.map((o) => ({
+      id: o.id,
+      eta: o.eta,
+      next_action: o.next_action,
+      events: (o.events || []).slice(),
+    })),
+  };
+
+  // Optimistic removal + unassign.
+  state.shipmentBatches.splice(index, 1);
+  assigned.forEach((order) => {
+    order.eta = "Shipment ETA to be reconfirmed";
+    order.next_action = "Reassign to a shipment batch.";
+    order.events = [
+      ...(order.events || []),
+      { status: order.status, note: `Removed from shipment batch ${batch.name} (batch deleted).`, created_at: new Date().toISOString() },
+    ];
+  });
+
+  // If the deleted batch was driving the storefront ETA, fall back to the next
+  // open batch so the public notice doesn't point at a batch that's gone.
+  const nextOpen = state.shipmentBatches.find((b) => ["collecting", "sourcing", "shipped", "arriving"].includes(b.status));
+  if (nextOpen && state.settings) {
+    state.settings.next_shipment_date = nextOpen.eta_date;
+    if (nextOpen.note) state.settings.shipment_notice = nextOpen.note;
+  }
+
+  renderAll();
+
+  try {
+    await apiFetch("/api/admin/shipments", {
+      method: "DELETE",
+      body: JSON.stringify({ id: batchId }),
+    }, { ok: true });
+  } catch {
+    // API failure — roll the optimistic delete back so the UI doesn't diverge
+    // from the server, and tell the user it didn't stick.
+    restoreShipmentBatch(snapshot, { silent: true });
+    toast("Couldn't delete batch. Check the portal key and try again.");
+    return;
+  }
+
+  showUndoToast(`Deleted ${batch.name}`, () => restoreShipmentBatch(snapshot));
+}
+
+function restoreShipmentBatch(snapshot, { silent = false } = {}) {
+  if (!snapshot) return;
+  // Re-insert at the original position (clamped — the list may have changed).
+  if (!state.shipmentBatches.some((b) => b.id === snapshot.batch.id)) {
+    const at = Math.min(snapshot.index, state.shipmentBatches.length);
+    state.shipmentBatches.splice(at, 0, snapshot.batch);
+  }
+  // Restore each affected order's ETA / next-action / events to pre-delete.
+  snapshot.orders.forEach((s) => {
+    const order = state.orders.find((o) => o.id === s.id);
+    if (order) {
+      order.eta = s.eta;
+      order.next_action = s.next_action;
+      order.events = s.events;
+    }
+  });
+  renderAll();
+  // Re-persist (upsert) so an Undo after a successful delete also restores it
+  // server-side. No-op fallback when Supabase isn't wired locally.
+  apiFetch("/api/admin/shipments", { method: "POST", body: JSON.stringify(snapshot.batch) }, { shipmentBatch: snapshot.batch });
+  if (!silent) toast(`Restored ${snapshot.batch.name}`);
 }
 
 async function runScraper() {
@@ -11876,6 +13636,19 @@ function wireEvents() {
     const productId = target.dataset.productId;
     const orderId = target.dataset.orderId;
     const trendId = target.dataset.trendId;
+    // Meta Ads panel actions
+    if (action === "ads-refresh") return void loadAdsAdmin();
+    if (action === "ads-archive-creative") return void adsArchiveCreative(target.dataset.creativeId);
+    if (action === "ads-launch") return void adsCampaignAction("launch", target.dataset.adsId);
+    if (action === "ads-undo") return void adsCampaignAction("undo", target.dataset.adsId);
+    if (action === "ads-resume") return void adsCampaignAction("resume", target.dataset.adsId);
+    if (action === "ads-reject") return void adsCampaignAction("reject", target.dataset.adsId);
+    if (action === "ads-set-budget") return void adsSetBudget(target.dataset.adsId);
+    if (action === "ads-ext-status") return void adsExternalStatus(target.dataset);
+    if (action === "ads-ext-budget") return void adsExternalBudget(target.dataset);
+    if (action === "ads-goto-setup") { qs('[data-ads-nav="setup"]')?.click(); return; }
+    if (action === "ads-optimize-preview") return void adsOptimizePreview();
+    if (action === "ads-audience-refresh") return void adsAudienceRefresh();
     if (action === "close-modal") return closeModal();
     if (action === "toggle-wa-card") {
       const bubble = qs("[data-wa-bubble]");
@@ -11963,6 +13736,11 @@ function wireEvents() {
     }
     // Reset the PKR price input back to the URL-autofill suggestion that's
     // stashed in dataset.suggested. Lets the admin try an edit and roll back.
+    if (action === "goto-admin-panel") {
+      event.preventDefault();
+      goToAdminPanel(target.dataset.panel);
+      return;
+    }
     if (action === "reset-customer-price") {
       event.preventDefault();
       const input = qs("[data-customer-price]");
@@ -12109,11 +13887,12 @@ function wireEvents() {
     }
     if (action === "view-order") return showOrderDetails(orderId);
     if (action === "refresh-admin") return refreshAdmin();
-    if (action === "new-product") return fillProductForm();
+    if (action === "new-product") { fillProductForm(); openProductEditor(); return; }
     if (action === "edit-product") {
       fillProductForm(state.products.find((item) => item.id === productId));
       closeModal();
       qs("[data-admin-tab=\"products\"]")?.click();
+      openProductEditor();
       return;
     }
     if (action === "save-order-status") return saveOrderStatus(orderId);
@@ -12296,6 +14075,19 @@ function wireEvents() {
       openDispatchModal({ batchId });
       return;
     }
+    if (action === "delete-batch") {
+      return deleteShipmentBatch(target.dataset.batchId);
+    }
+    if (action === "inv-inc") return adjustInventory(target.dataset.productId, 1);
+    if (action === "inv-dec") return adjustInventory(target.dataset.productId, -1);
+    if (action === "export-inventory-csv") return exportInventoryCsv();
+    if (action === "toggle-product-status") return toggleProductStatus(target.dataset.productId);
+    if (action === "toggle-product-featured") return toggleProductFeatured(target.dataset.productId);
+    if (action === "remove-one-product") return removeOneProduct(target.dataset.productId);
+    if (action === "bulk-publish-products") return bulkSetProductStatus("active");
+    if (action === "bulk-draft-products") return bulkSetProductStatus("draft");
+    if (action === "bulk-feature-products") return bulkSetFeatured(true);
+    if (action === "bulk-unfeature-products") return bulkSetFeatured(false);
     if (action === "segment-save-submit") {
       saveCurrentSegment();
       return;
@@ -12786,7 +14578,63 @@ function wireEvents() {
       // Lazy-load the Besties (UGC) feed the first time its tab is opened,
       // and refresh it on subsequent opens so approvals stay current.
       if (tab.dataset.adminTab === "besties") loadUgcAdmin();
+      // Render the inventory board on open (full render; later stock edits do
+      // targeted DOM updates instead, to preserve stepper focus).
+      if (tab.dataset.adminTab === "inventory") renderInventory();
     });
+  });
+
+  // Inventory board controls — search / filter chips / sort. These live in
+  // static HTML (outside the board container) so re-rendering the rows never
+  // drops their focus or value. The +/- steppers and the typed quantity input
+  // are handled by the global delegated handlers further down.
+  let _invSearchTimer;
+  qs("[data-inventory-search]")?.addEventListener("input", (e) => {
+    clearTimeout(_invSearchTimer);
+    const value = e.target.value;
+    _invSearchTimer = setTimeout(() => {
+      state._inventory = state._inventory || { search: "", filter: "all", sort: "attention" };
+      state._inventory.search = value;
+      renderInventory();
+    }, 160);
+  });
+  qsa("[data-inventory-filter]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      state._inventory = state._inventory || { search: "", filter: "all", sort: "attention" };
+      state._inventory.filter = chip.dataset.inventoryFilter;
+      renderInventory();
+    });
+  });
+  qs("[data-inventory-sort]")?.addEventListener("change", (e) => {
+    state._inventory = state._inventory || { search: "", filter: "all", sort: "attention" };
+    state._inventory.sort = e.target.value;
+    renderInventory();
+  });
+  // Typed quantity commits on change (blur / Enter), not per keystroke. The
+  // board container is static, so this delegated listener survives re-renders.
+  qs("[data-inventory-board]")?.addEventListener("change", (e) => {
+    const input = e.target.closest("[data-inv-input]");
+    if (input) setInventory(input.dataset.invInput, input.value);
+  });
+
+  // Products management table — search / filter chips / mode / sort (static
+  // controls) + delegated commit for the inline price and stock inputs.
+  let _padminSearchTimer;
+  qs("[data-padmin-search]")?.addEventListener("input", (e) => {
+    clearTimeout(_padminSearchTimer);
+    const value = e.target.value;
+    _padminSearchTimer = setTimeout(() => { productAdminFilters().search = value; renderAdminProductsTable(); }, 160);
+  });
+  qsa("[data-padmin-filter]").forEach((chip) => {
+    chip.addEventListener("click", () => { productAdminFilters().status = chip.dataset.padminFilter; renderAdminProductsTable(); });
+  });
+  qs("[data-padmin-mode]")?.addEventListener("change", (e) => { productAdminFilters().mode = e.target.value; renderAdminProductsTable(); });
+  qs("[data-padmin-sort]")?.addEventListener("change", (e) => { productAdminFilters().sort = e.target.value; renderAdminProductsTable(); });
+  qs("[data-admin-products]")?.addEventListener("change", (e) => {
+    const price = e.target.closest("[data-prod-price]");
+    if (price) { setProductPrice(price.dataset.prodPrice, price.value); return; }
+    const stock = e.target.closest("[data-inv-input]");
+    if (stock) setInventory(stock.dataset.invInput, stock.value);
   });
 
   qs("[data-ugc-form]")?.addEventListener("submit", handleUgcSubmit);
@@ -13597,7 +15445,110 @@ function wireHeroGlow() {
   });
 }
 
+// Standalone Meta Ads page (ads.html). Deliberately isolated from the
+// storefront/portal boot — it only needs the catalog (for the product picker
+// + guardrails) and the ads surfaces. wireEvents() is null-safe, so it binds
+// just the global delegated click handler + whatever ads controls exist.
+function initAdsPage() {
+  wireEvents();
+  qs("[data-ads-settings-form]")?.addEventListener("submit", saveAdsSettings);
+  qs("[data-ads-creative-form]")?.addEventListener("submit", (e) => { e.preventDefault(); adsUploadMedia(); });
+  qs("[data-ads-create-form]")?.addEventListener("submit", (e) => { e.preventDefault(); adsBuildCampaign(); });
+  qs("[data-ad-media-file]")?.addEventListener("change", previewAdMedia);
+  // Section nav — swap the visible panel so each part of the workflow has its
+  // own page-like view.
+  qsa("[data-ads-nav]").forEach((btn) =>
+    btn.addEventListener("click", () => switchAdsSection(btn.dataset.adsNav)));
+  // Reporting window — refetch the report for the chosen range.
+  qs("[data-ads-range]")?.addEventListener("change", (e) => adsSetReportRange(Number(e.target.value) || 7));
+  // Creative search — debounced client-side filter.
+  let _adsSearchTimer;
+  qs("[data-ads-creative-search]")?.addEventListener("input", (e) => {
+    clearTimeout(_adsSearchTimer);
+    const v = e.target.value;
+    _adsSearchTimer = setTimeout(() => { state._adsCreativeSearch = v; renderAdsCreatives(state._adsCreatives); }, 160);
+  });
+  // Approval-queue filter chips.
+  qsa("[data-ads-queue-filters] [data-queue-filter]").forEach((chip) =>
+    chip.addEventListener("click", () => {
+      state._adsQueueFilter = chip.dataset.queueFilter;
+      qsa("[data-ads-queue-filters] [data-queue-filter]").forEach((c) => c.classList.toggle("active", c === chip));
+      renderAdsQueue(state._adsQueue);
+    }));
+  if (state.adminToken) {
+    qs("[data-admin-login]")?.classList.add("hidden");
+    qs("[data-admin-content]")?.classList.remove("hidden");
+    loadAdsPageData();
+  }
+}
+
+function switchAdsSection(id) {
+  qsa("[data-ads-nav]").forEach((b) => b.classList.toggle("active", b.dataset.adsNav === id));
+  qsa("[data-ads-section]").forEach((s) => s.classList.toggle("active", s.dataset.adsSection === id));
+}
+
+// Live thumbnail preview when the operator picks an image to upload.
+function previewAdMedia(event) {
+  const file = event.target.files?.[0];
+  const host = qs("[data-ad-media-preview]");
+  if (!host) return;
+  if (!file) { host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Selected media preview" />`;
+}
+
+// Fetch the catalog (products power the campaign picker; settings power the
+// guardrails), then paint the ads surfaces. Shares /api/catalog with everyone.
+async function loadAdsPageData() {
+  const catalog = await apiFetch("/api/catalog", {}, { products: sampleProducts, settings: sampleSettings });
+  state.products = catalog.products?.length ? catalog.products : sampleProducts;
+  state.settings = { ...sampleSettings, ...(catalog.settings || {}) };
+  populateAdsProductSelect();
+  fillAdsSettingsForm();
+  loadAdsAdmin();
+}
+
+// Prefill the guardrails form from store_settings (ads_* fields only).
+function fillAdsSettingsForm() {
+  const form = qs("[data-ads-settings-form]");
+  if (!form) return;
+  ["ads_autopilot", "ads_max_daily_budget_pkr", "ads_scale_step_pct", "ads_target_roas", "ads_max_cpa_pkr", "ads_learn_spend_pkr"]
+    .forEach((k) => {
+      if (!form.elements[k]) return;
+      const v = state.settings?.[k];
+      form.elements[k].value = k === "ads_autopilot" ? String(Boolean(v)) : (v ?? "");
+    });
+}
+
+// Save just the ads guardrails — a focused POST so it can't clobber the
+// site-affecting store settings (which live in the portal, not here).
+async function saveAdsSettings(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const raw = Object.fromEntries(new FormData(form).entries());
+  const settings = {
+    ads_autopilot: raw.ads_autopilot === "true",
+    ads_max_daily_budget_pkr: Number(raw.ads_max_daily_budget_pkr || 0),
+    ads_scale_step_pct: Number(raw.ads_scale_step_pct || 0),
+    ads_target_roas: Number(raw.ads_target_roas || 0),
+    ads_max_cpa_pkr: Number(raw.ads_max_cpa_pkr || 0),
+    ads_learn_spend_pkr: Number(raw.ads_learn_spend_pkr || 0),
+  };
+  const restore = withSubmitState(form, "Saving guardrails…");
+  try {
+    const saved = await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(settings) }, { settings });
+    state.settings = { ...state.settings, ...(saved.settings || settings) };
+    toast("Guardrails saved.");
+  } catch {
+    toast("Couldn't save guardrails. Check the portal key and try again.");
+  } finally {
+    restore();
+  }
+}
+
 function init() {
+  // Ads automation lives on its own page — give it an isolated boot.
+  if (document.body.dataset.page === "ads") { initAdsPage(); return; }
   wireEvents();
   fillProductForm();
   if (state.adminToken) {
@@ -13685,6 +15636,11 @@ function openLoginModal(prefilledPhone = "") {
       <p class="kicker">Sign in</p>
       <h2>One-tap login via WhatsApp</h2>
       <p class="confirmation-sub">Enter your phone number and we'll send a 6-digit code to your WhatsApp. No password needed.</p>
+      <ul class="auth-benefits">
+        <li><span aria-hidden="true">📦</span> Track every order in one place</li>
+        <li><span aria-hidden="true">⚡</span> Faster checkout — details saved for next time</li>
+        <li><span aria-hidden="true">🔁</span> Reorder past finds in a tap</li>
+      </ul>
       <label class="auth-label">
         <span>Phone (Pakistani mobile)</span>
         <input type="tel" data-otp-phone value="${attr(prefilledPhone)}" placeholder="0300 1234567" autocomplete="tel" autofocus />

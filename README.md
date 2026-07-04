@@ -6,7 +6,7 @@ Luxury ecommerce site for a Pakistan-based Instagram store selling USA branded p
 
 - Premium black and pink storefront focused on women’s handbags, shoes, and makeup.
 - Product pricing formula: USA retail in USD, FX rate, 25% markup, and shipping in PKR.
-- Checkout with direct bank deposit instructions, approval-first order requests, 50% preorder advance after acceptance, and remaining balance tracking.
+- Checkout with direct bank deposit instructions, a 50% preorder advance paid at checkout, and remaining balance tracking.
 - Optional transfer confirmation upload.
 - Customer order tracking page.
 - Separate internal portal for products, orders, settings, and trend approvals.
@@ -129,7 +129,7 @@ REMOTION_RENDER_WEBHOOK_URL
 - Replace demo bank details before launch.
 - Replace demo product images with approved product or editorial images.
 - Connect a domain and test checkout uploads on a Netlify deploy.
-- Preorder orders are approved by the team first, then collect 50% advance. The remaining balance is collected once the shipment reaches Pakistan, before local dispatch.
+- Preorder orders pay the 50% advance at checkout; the team verifies the transfer before sourcing. The remaining balance is collected once the shipment reaches Pakistan, before local dispatch.
 - Use official retailer APIs or affiliate feeds for high-volume trend ingestion where possible.
 - The daily marketing workflow can fetch up to 200 product candidates into Supabase, enrich descriptions/assets, hand them to Remotion manually, then publish only after admin approval.
 - Each daily run exports files in `dist/marketing-batches/`: full batch JSON, product listing JSON, CSV for team review, and a Remotion manifest with image URLs, captions, pricing, advance/balance amounts, and scene notes.

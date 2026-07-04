@@ -345,7 +345,7 @@ async function scrapeSources(targetCount = 10, batchId = "") {
 }
 
 export default async (req) => {
-  if (req.method === "POST" && !requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (req.method === "POST" && !(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const payload = req.method === "POST" ? await req.json().catch(() => ({})) : {};

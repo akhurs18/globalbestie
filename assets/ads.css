@@ -1,0 +1,750 @@
+/* Global Bestie — Ads workspace theme (self-contained).
+ *
+ * This stylesheet is the ONLY one the ads page loads. It deliberately does not
+ * depend on styles.css (the portal/storefront theme) so the portal's design
+ * passes can never leak serif headings or conflicting .ops-panel/.admin-* rules
+ * into this page again. Everything the ad page renders — including the markup
+ * produced by the shared JS renderers (ops-panel, status-pill, today-stat,
+ * ugc-admin-card, admin-table, ads-* …) — is styled here.
+ *
+ * Motion follows Emil Kowalski's principles: transform/opacity only, custom
+ * ease-out curves, sub-300ms, scale-on-press, short staggered entrance, full
+ * prefers-reduced-motion support. Everything is scoped under body[data-page="ads"]
+ * as defence-in-depth. */
+
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"],
+body[data-page="ads"] * ,
+body[data-page="ads"] *::before,
+body[data-page="ads"] *::after { box-sizing: border-box; }
+body[data-page="ads"] { margin: 0; }
+body[data-page="ads"] h1,
+body[data-page="ads"] h2,
+body[data-page="ads"] h3,
+body[data-page="ads"] p,
+body[data-page="ads"] ul,
+body[data-page="ads"] figure { margin: 0; }
+body[data-page="ads"] ul { list-style: none; padding: 0; }
+body[data-page="ads"] img { max-width: 100%; display: block; }
+
+body[data-page="ads"] {
+  /* ── Palette ─────────────────────────────────────────────────────────── */
+  --ad-bg: #f4f4f6;
+  --ad-surface: #ffffff;
+  --ad-surface-2: #fafafb;
+  --ad-border: rgba(20, 20, 31, 0.09);
+  --ad-border-strong: rgba(20, 20, 31, 0.14);
+  --ad-text: #15151c;
+  --ad-muted: #5d5d68;
+  --ad-faint: #92929c;
+  --ad-accent: #b23a63;
+  --ad-accent-hover: #9c3055;
+  --ad-accent-soft: rgba(178, 58, 99, 0.10);
+  --ad-sidebar: #16161c;
+  --ad-sidebar-2: #1d1d25;
+
+  --ad-ok-bg: rgba(22, 163, 74, 0.11);
+  --ad-ok-fg: #15803d;
+  --ad-bad-bg: rgba(220, 38, 38, 0.10);
+  --ad-bad-fg: #c0392b;
+  --ad-warn-bg: rgba(202, 138, 4, 0.13);
+  --ad-warn-fg: #a16207;
+  --ad-neutral-bg: rgba(20, 20, 31, 0.06);
+
+  --ad-radius: 14px;
+  --ad-radius-lg: 18px;
+  --ad-shadow-sm: 0 1px 2px rgba(20, 20, 31, 0.04), 0 1px 3px rgba(20, 20, 31, 0.05);
+  --ad-shadow-md: 0 6px 20px -6px rgba(20, 20, 31, 0.12), 0 2px 6px rgba(20, 20, 31, 0.05);
+  --ad-shadow-lg: 0 18px 48px -12px rgba(20, 20, 31, 0.22);
+  --ad-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  background: var(--ad-bg);
+  color: var(--ad-text);
+  font-family: "Archivo", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings are sans (Archivo) here — never the storefront serif. */
+body[data-page="ads"] h1,
+body[data-page="ads"] h2,
+body[data-page="ads"] h3 {
+  font-family: "Archivo", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ad-text);
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+body[data-page="ads"] .hidden { display: none !important; }
+body[data-page="ads"] .skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ad-accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 10px 0;
+  z-index: 50;
+}
+body[data-page="ads"] .skip-link:focus { left: 0; }
+body[data-page="ads"] .view { display: block; }
+
+/* ── Shell layout ──────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-shell {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ── Sidebar (dark, focused) ───────────────────────────────────────────── */
+body[data-page="ads"] .admin-sidebar {
+  background: linear-gradient(180deg, var(--ad-sidebar-2), var(--ad-sidebar));
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 22px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+body[data-page="ads"] .admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 4px 8px 18px;
+  color: #fff;
+}
+body[data-page="ads"] .brand-mark img,
+body[data-page="ads"] .brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  object-fit: cover;
+}
+body[data-page="ads"] .admin-brand strong { display: block; font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em; }
+body[data-page="ads"] .admin-brand small { display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+body[data-page="ads"] .admin-tab-group {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: 16px 8px 6px;
+}
+body[data-page="ads"] .admin-tab,
+body[data-page="ads"] .admin-tab-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.74);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 9px 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 160ms var(--ad-ease-out), color 160ms var(--ad-ease-out), transform 120ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .admin-tab:hover,
+  body[data-page="ads"] .admin-tab-link:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+}
+body[data-page="ads"] .admin-tab:active,
+body[data-page="ads"] .admin-tab-link:active { transform: scale(0.98); }
+body[data-page="ads"] .admin-tab:focus-visible,
+body[data-page="ads"] .admin-tab-link:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+body[data-page="ads"] .admin-tab.active {
+  background: var(--ad-accent);
+  color: #fff;
+  box-shadow: 0 6px 16px -6px var(--ad-accent);
+}
+body[data-page="ads"] .admin-tab-link[href="/portal.html"] {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+/* Nav count badges */
+body[data-page="ads"] [data-ads-nav-badge] {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+body[data-page="ads"] [data-ads-nav-badge]:empty { display: none; }
+body[data-page="ads"] .admin-tab.active [data-ads-nav-badge] { background: rgba(255, 255, 255, 0.28); }
+
+/* ── Main workspace ────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-main {
+  padding: 30px clamp(18px, 4vw, 44px) 64px;
+  max-width: 1080px;
+  width: 100%;
+}
+
+/* ── Login card ────────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-login {
+  max-width: 420px;
+  margin: 8vh auto 0;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius-lg);
+  box-shadow: var(--ad-shadow-md);
+  padding: 32px 30px;
+  animation: ad-rise 420ms var(--ad-ease-out) both;
+}
+body[data-page="ads"] .admin-login h1 { font-size: 1.5rem; margin: 6px 0 8px; }
+body[data-page="ads"] .admin-login label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--ad-muted); margin: 18px 0 0; }
+body[data-page="ads"] .admin-login input { margin-top: 8px; width: 100%; }
+body[data-page="ads"] .admin-login .button { margin-top: 18px; }
+
+/* ── Page heading ──────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+body[data-page="ads"] .admin-heading h1 { font-size: 1.7rem; margin: 4px 0 6px; }
+body[data-page="ads"] .kicker {
+  color: var(--ad-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  font-style: normal;
+}
+body[data-page="ads"] .portal-login-note,
+body[data-page="ads"] .broadcast-helper { color: var(--ad-muted); font-size: 0.88rem; line-height: 1.55; }
+
+/* Friendly empty states for Campaigns / Creatives instead of a bare line. */
+body[data-page="ads"] .ads-empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 36px 24px;
+  border: 1px dashed var(--ad-line, rgba(20, 20, 31, 0.14));
+  border-radius: 14px;
+  background: var(--ad-surface-2);
+}
+body[data-page="ads"] .ads-empty-glyph { font-size: 1.8rem; line-height: 1; }
+body[data-page="ads"] .ads-empty strong { font-size: 1rem; }
+body[data-page="ads"] .ads-empty p {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--ad-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+body[data-page="ads"] .broadcast-helper code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.82em;
+  background: var(--ad-neutral-bg);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+/* ── Section show/hide (sidebar nav drives these) ──────────────────────── */
+body[data-page="ads"] .admin-panel { display: none; }
+body[data-page="ads"] .admin-panel.active { display: block; animation: ad-fade 220ms var(--ad-ease-out) both; }
+
+/* ── Panels / cards ────────────────────────────────────────────────────── */
+body[data-page="ads"] .ops-panel {
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius-lg);
+  box-shadow: var(--ad-shadow-sm);
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+}
+body[data-page="ads"] .panel-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+body[data-page="ads"] .panel-title-row h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ad-text);
+  margin: 0;
+}
+
+/* ── KPI stat grid ─────────────────────────────────────────────────────── */
+body[data-page="ads"] .today-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 6px;
+}
+body[data-page="ads"] .today-stat {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 13px 14px;
+}
+body[data-page="ads"] .today-stat-label { display: block; color: var(--ad-faint); font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+body[data-page="ads"] .today-stat strong { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+body[data-page="ads"] .today-stat.tone-good strong { color: var(--ad-ok-fg); }
+
+/* ── Status pills ──────────────────────────────────────────────────────── */
+body[data-page="ads"] .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  background: var(--ad-neutral-bg);
+  color: var(--ad-muted);
+  border: none;
+}
+body[data-page="ads"] .status-pill.in_stock { background: var(--ad-ok-bg); color: var(--ad-ok-fg); }
+body[data-page="ads"] .status-pill.soldout { background: var(--ad-bad-bg); color: var(--ad-bad-fg); }
+body[data-page="ads"] .status-pill.preorder { background: var(--ad-warn-bg); color: var(--ad-warn-fg); }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+body[data-page="ads"] .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 140ms var(--ad-ease-out), background-color 160ms var(--ad-ease-out), border-color 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
+}
+body[data-page="ads"] .button:active { transform: scale(0.97); }
+body[data-page="ads"] .button:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+body[data-page="ads"] .button:disabled { opacity: 0.6; cursor: progress; }
+body[data-page="ads"] .button.primary {
+  background: var(--ad-accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(20, 20, 31, 0.12);
+}
+body[data-page="ads"] .button.secondary {
+  background: var(--ad-surface);
+  color: var(--ad-text);
+  border-color: var(--ad-border-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .button.primary:hover { background: var(--ad-accent-hover); box-shadow: var(--ad-shadow-md); }
+  body[data-page="ads"] .button.secondary:hover { background: var(--ad-surface-2); border-color: var(--ad-border-strong); }
+}
+
+/* ── Forms ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .ugc-form-grid,
+body[data-page="ads"] .settings-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+body[data-page="ads"] .settings-form { align-items: end; }
+body[data-page="ads"] .ugc-add-form { display: block; }
+body[data-page="ads"] label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ad-muted);
+}
+body[data-page="ads"] input,
+body[data-page="ads"] select,
+body[data-page="ads"] textarea {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ad-text);
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border-strong);
+  border-radius: 10px;
+  padding: 9px 11px;
+  width: 100%;
+  transition: border-color 140ms var(--ad-ease-out), box-shadow 140ms var(--ad-ease-out);
+}
+body[data-page="ads"] textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+body[data-page="ads"] input[type="file"] { padding: 7px 9px; cursor: pointer; font-weight: 500; }
+body[data-page="ads"] input:focus,
+body[data-page="ads"] select:focus,
+body[data-page="ads"] textarea:focus {
+  outline: none;
+  border-color: var(--ad-accent);
+  box-shadow: 0 0 0 3px var(--ad-accent-soft);
+}
+body[data-page="ads"] label.span-2 { grid-column: 1 / -1; }
+body[data-page="ads"] .settings-form .button { grid-column: 1 / -1; justify-self: start; }
+body[data-page="ads"] .mini-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+body[data-page="ads"] .ugc-form-status { margin-top: 10px; font-size: 0.85rem; color: var(--ad-muted); min-height: 1em; }
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .admin-table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.88rem; }
+body[data-page="ads"] .admin-table thead th {
+  text-align: left;
+  color: var(--ad-faint);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 12px 9px;
+  border-bottom: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .admin-table tbody td { padding: 11px 12px; border-bottom: 1px solid var(--ad-border); }
+body[data-page="ads"] .admin-table tbody tr:last-child td { border-bottom: none; }
+
+/* ── Setup checklist ───────────────────────────────────────────────────── */
+body[data-page="ads"] .ads-config-list { margin: 14px 0 0; display: flex; flex-direction: column; gap: 2px; }
+body[data-page="ads"] .ads-config-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  transition: background-color 140ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ads-config-row:hover { background: var(--ad-surface-2); }
+}
+body[data-page="ads"] .ads-config-row .status-pill { flex: none; min-width: 86px; justify-content: center; }
+body[data-page="ads"] .ads-config-row strong { font-weight: 600; font-size: 0.9rem; }
+body[data-page="ads"] .ads-config-row code {
+  margin-left: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--ad-faint);
+  background: var(--ad-neutral-bg);
+  padding: 3px 8px;
+  border-radius: 7px;
+}
+
+/* ── Campaign cards / action log ───────────────────────────────────────── */
+body[data-page="ads"] .ugc-admin-card {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  padding: 16px;
+  margin-bottom: 10px;
+}
+body[data-page="ads"] .ugc-admin-body { display: flex; flex-direction: column; gap: 6px; }
+body[data-page="ads"] .ugc-admin-card strong { font-size: 0.95rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ugc-admin-card small { color: var(--ad-muted); font-size: 0.82rem; }
+body[data-page="ads"] .ads-budget-edit { gap: 8px; }
+body[data-page="ads"] .ads-budget-label { flex-direction: row; align-items: center; gap: 8px; font-size: 0.78rem; }
+body[data-page="ads"] .ads-budget-label input { width: 120px; }
+
+body[data-page="ads"] .ads-action-log { display: flex; flex-direction: column; gap: 8px; }
+body[data-page="ads"] .ads-action-log li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 13px;
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: 11px;
+}
+body[data-page="ads"] .ads-action-log small { color: var(--ad-muted); font-size: 0.82rem; }
+
+/* ── Creative media upload + library ───────────────────────────────────── */
+body[data-page="ads"] .ad-media-preview { margin: 12px 0 0; }
+body[data-page="ads"] .ad-media-preview img {
+  max-height: 200px;
+  border-radius: var(--ad-radius);
+  border: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .ad-creative-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+body[data-page="ads"] .ad-creative-card {
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 160ms var(--ad-ease-out), box-shadow 160ms var(--ad-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  body[data-page="ads"] .ad-creative-card:hover { transform: translateY(-1px); box-shadow: var(--ad-shadow-sm); }
+}
+body[data-page="ads"] .ad-creative-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--ad-neutral-bg);
+}
+body[data-page="ads"] .ad-creative-media img { width: 100%; height: 100%; object-fit: cover; }
+body[data-page="ads"] .ad-creative-media .status-pill { position: absolute; top: 8px; left: 8px; }
+body[data-page="ads"] .ad-creative-noimg {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ad-faint); font-size: 0.82rem;
+}
+body[data-page="ads"] .ad-creative-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 6px; }
+body[data-page="ads"] .ad-creative-body strong { font-size: 0.92rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ad-creative-body p { color: var(--ad-muted); font-size: 0.82rem; line-height: 1.5; }
+body[data-page="ads"] .ad-creative-body .mini-actions { margin-top: auto; }
+
+/* ── Toasts ────────────────────────────────────────────────────────────── */
+body[data-page="ads"] .toast-region {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 60;
+  pointer-events: none;
+}
+body[data-page="ads"] .toast {
+  background: var(--ad-sidebar);
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: var(--ad-shadow-lg);
+  max-width: 340px;
+  pointer-events: auto;
+  animation: ad-toast-in 260ms var(--ad-ease-out) both;
+}
+
+/* ── Toolbar / date-range / chips / search ─────────────────────────────── */
+body[data-page="ads"] .ads-toolbar { display: flex; align-items: center; gap: 10px; }
+body[data-page="ads"] .ads-range { width: auto; padding: 7px 10px; font-size: 0.82rem; font-weight: 600; }
+body[data-page="ads"] .ads-search { margin: 0 0 12px; }
+body[data-page="ads"] .ads-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+body[data-page="ads"] .ads-chip {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ad-muted);
+  background: var(--ad-surface-2);
+  border: 1px solid var(--ad-border);
+  border-radius: 999px;
+  padding: 6px 13px;
+  cursor: pointer;
+  transition: background-color 140ms var(--ad-ease-out), color 140ms var(--ad-ease-out), border-color 140ms var(--ad-ease-out), transform 120ms var(--ad-ease-out);
+}
+body[data-page="ads"] .ads-chip:active { transform: scale(0.96); }
+body[data-page="ads"] .ads-chip.active { background: var(--ad-accent); color: #fff; border-color: var(--ad-accent); }
+
+/* ── Sparklines (on KPI cards) ─────────────────────────────────────────── */
+body[data-page="ads"] .ads-spark { display: block; width: 100%; height: 22px; margin-top: 8px; }
+body[data-page="ads"] .ads-spark polyline { fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+body[data-page="ads"] .ads-spark.is-up polyline { stroke: var(--ad-ok-fg); }
+body[data-page="ads"] .ads-spark.is-down polyline { stroke: var(--ad-bad-fg); }
+
+/* ── Skeletons ─────────────────────────────────────────────────────────── */
+body[data-page="ads"] .ads-skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+body[data-page="ads"] .ads-skel {
+  border-radius: var(--ad-radius);
+  background: linear-gradient(90deg, var(--ad-neutral-bg) 25%, rgba(20,20,31,0.03) 37%, var(--ad-neutral-bg) 63%);
+  background-size: 400% 100%;
+  animation: ad-shimmer 1.4s ease-in-out infinite;
+}
+body[data-page="ads"] .ads-skel-card { height: 66px; }
+body[data-page="ads"] .ads-skel-line { height: 14px; margin: 8px 0; }
+
+/* ── Audience breakdown tables ─────────────────────────────────────────── */
+body[data-page="ads"] .ads-breakdowns { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 16px; }
+body[data-page="ads"] .ads-breakdown h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ad-faint); margin-bottom: 6px; }
+body[data-page="ads"] .ads-breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+body[data-page="ads"] .ads-breakdown-table th { text-align: left; color: var(--ad-faint); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0 8px 6px; }
+body[data-page="ads"] .ads-breakdown-table td { padding: 6px 8px; border-top: 1px solid var(--ad-border); }
+body[data-page="ads"] .ads-breakdown-table td:first-child { text-transform: capitalize; }
+
+/* ── Instagram-ad preview (creative cards) ─────────────────────────────── */
+body[data-page="ads"] .ig-preview { background: var(--ad-surface); }
+body[data-page="ads"] .ig-bar { display: flex; align-items: center; gap: 8px; padding: 9px 10px; }
+body[data-page="ads"] .ig-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--ad-accent), #e08aa6);
+  color: #fff; font-size: 0.62rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+body[data-page="ads"] .ig-id strong { font-size: 0.78rem; display: block; line-height: 1.1; }
+body[data-page="ads"] .ig-id small { font-size: 0.66rem; color: var(--ad-faint); }
+body[data-page="ads"] .ig-media { aspect-ratio: 1 / 1; background: var(--ad-neutral-bg); }
+body[data-page="ads"] .ig-media img { width: 100%; height: 100%; object-fit: cover; }
+body[data-page="ads"] .ig-cta-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 4px; }
+body[data-page="ads"] .ig-icons { color: var(--ad-text); font-size: 0.95rem; letter-spacing: 1px; }
+body[data-page="ads"] .ig-cta { color: var(--ad-accent); font-size: 0.74rem; font-weight: 700; }
+body[data-page="ads"] .ig-caption { padding: 2px 10px 10px; font-size: 0.76rem; color: var(--ad-muted); line-height: 1.45; }
+body[data-page="ads"] .ig-caption strong { color: var(--ad-text); }
+body[data-page="ads"] .ad-creative-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+body[data-page="ads"] .ad-creative-stats { display: flex; flex-wrap: wrap; gap: 6px; }
+body[data-page="ads"] .ad-creative-stats span {
+  font-size: 0.72rem; font-weight: 600; color: var(--ad-muted);
+  background: var(--ad-neutral-bg); border-radius: 7px; padding: 3px 8px;
+}
+body[data-page="ads"] .ad-creative-stats span.good { background: var(--ad-ok-bg); color: var(--ad-ok-fg); }
+
+/* ── Keyframes ─────────────────────────────────────────────────────────── */
+@keyframes ad-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes ad-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ad-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ad-toast-in { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ── Responsive — stack the sidebar into a top bar ─────────────────────── */
+@media (max-width: 860px) {
+  /* auto 1fr: the top bar is content-height; main fills the rest. Without the
+     explicit row sizing the grid stretches the sidebar track to 100vh, which
+     turned the dark bar into a tall slab. */
+  body[data-page="ads"] .admin-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  body[data-page="ads"] .admin-sidebar { align-self: start; }
+  /* Collapse the sidebar into a slim, single-row, horizontally-scrollable top
+     bar — NOT a tall wrapping slab. Sticky so it stays as you scroll. */
+  body[data-page="ads"] .admin-sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  body[data-page="ads"] .admin-sidebar::-webkit-scrollbar { display: none; }
+  body[data-page="ads"] .admin-tab-group { display: none; }
+  body[data-page="ads"] .admin-brand {
+    padding: 0 6px 0 2px;
+    flex: 0 0 auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    margin-right: 4px;
+  }
+  body[data-page="ads"] .admin-brand small { display: none; }   /* compact on mobile */
+  body[data-page="ads"] .brand-mark img,
+  body[data-page="ads"] .brand-mark { width: 30px; height: 30px; }
+  body[data-page="ads"] .admin-tab,
+  body[data-page="ads"] .admin-tab-link {
+    width: auto;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 11px;
+  }
+  body[data-page="ads"] .admin-tab-link[href="/portal.html"] { margin-bottom: 0; }
+  body[data-page="ads"] [data-ads-nav-badge] { margin-left: 4px; }
+  body[data-page="ads"] .admin-main { padding: 22px 16px 56px; }
+  body[data-page="ads"] .toast-region { right: 12px; left: 12px; bottom: 12px; }
+  body[data-page="ads"] .toast { max-width: none; }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body[data-page="ads"] * { animation: none !important; transition-duration: 0.01ms !important; }
+}
+
+/* ── Dashboard v2: trend chart, callouts, oversight badges ─────────────── */
+
+/* Spend-vs-revenue trend chart (SVG from adsTrendChartSvg). */
+body[data-page="ads"] .ads-chart-wrap {
+  margin: 14px 0 4px;
+  padding: 14px 14px 8px;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  box-shadow: var(--ad-shadow-sm);
+}
+body[data-page="ads"] .ads-trend-chart { display: block; width: 100%; height: auto; }
+body[data-page="ads"] .ads-chart-grid { stroke: var(--ad-border); stroke-width: 1; }
+body[data-page="ads"] .ads-chart-rev { fill: none; stroke: var(--ad-ok-fg); stroke-width: 2; stroke-linejoin: round; }
+body[data-page="ads"] .ads-chart-rev-fill { fill: rgba(22, 163, 74, 0.08); }
+body[data-page="ads"] .ads-chart-spend { fill: none; stroke: var(--ad-accent); stroke-width: 2; stroke-dasharray: none; stroke-linejoin: round; }
+body[data-page="ads"] .ads-chart-label { fill: var(--ad-faint); font-size: 11px; font-weight: 600; }
+body[data-page="ads"] .ads-chart-legend { display: flex; gap: 14px; margin-bottom: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ad-muted); }
+body[data-page="ads"] .ads-chart-legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+body[data-page="ads"] .ads-chart-legend .lg-rev::before { background: var(--ad-ok-fg); }
+body[data-page="ads"] .ads-chart-legend .lg-spend::before { background: var(--ad-accent); }
+
+/* Best / worst creative call-outs. */
+body[data-page="ads"] .ads-callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 4px; }
+body[data-page="ads"] .ads-callout {
+  padding: 12px;
+  border-radius: var(--ad-radius);
+  border: 1px solid var(--ad-border);
+  background: var(--ad-surface);
+  box-shadow: var(--ad-shadow-sm);
+}
+body[data-page="ads"] .ads-callout.is-good { border-left: 3px solid var(--ad-ok-fg); }
+body[data-page="ads"] .ads-callout.is-bad { border-left: 3px solid var(--ad-warn-fg); }
+body[data-page="ads"] .ads-callout-label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ad-faint); margin-bottom: 8px; }
+body[data-page="ads"] .ads-callout-body { display: flex; gap: 10px; align-items: center; }
+body[data-page="ads"] .ads-callout-body img,
+body[data-page="ads"] .ads-callout-noimg { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 1px solid var(--ad-border); flex: 0 0 48px; }
+body[data-page="ads"] .ads-callout-noimg { display: grid; place-items: center; background: var(--ad-neutral-bg); color: var(--ad-faint); font-size: 0.72rem; font-weight: 700; }
+body[data-page="ads"] .ads-callout-body strong { display: block; font-size: 0.9rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ads-callout-body small { color: var(--ad-muted); font-size: 0.78rem; }
+
+/* Yesterday-vs-average delta in KPI cards. */
+body[data-page="ads"] .today-stat-sub { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--ad-muted); }
+body[data-page="ads"] .today-stat-sub .delta-up { color: var(--ad-ok-fg); font-weight: 600; }
+body[data-page="ads"] .today-stat-sub .delta-down { color: var(--ad-warn-fg); font-weight: 600; }
+
+/* Source badges on campaign cards (Built here vs Ads Manager). */
+body[data-page="ads"] .ads-source-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--ad-neutral-bg);
+  color: var(--ad-muted);
+  border: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .ads-source-badge.is-local { background: var(--ad-accent-soft); color: var(--ad-accent); border-color: transparent; }
+body[data-page="ads"] .ads-external-card { border-left: 3px solid var(--ad-border-strong); }
+body[data-page="ads"] .ads-ext-note { display: block; margin: 6px 0; color: var(--ad-faint); font-size: 0.78rem; }
+
+/* Self-diagnosing unconfigured state on the dashboard. */
+body[data-page="ads"] .ads-unconfigured {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border: 1px dashed var(--ad-border-strong);
+  border-radius: var(--ad-radius);
+  background: var(--ad-surface-2);
+}
+body[data-page="ads"] .ads-unconfigured p { margin-bottom: 8px; color: var(--ad-muted); }
+body[data-page="ads"] .ads-unconfigured p:first-child { color: var(--ad-text); }
+body[data-page="ads"] .ads-unconfigured code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--ad-neutral-bg);
+  font-size: 0.8rem;
+}

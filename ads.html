@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content="Global Bestie Meta Ads automation — separate from the operations portal." />
+    <title>Global Bestie Ads | Meta Automation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Self-contained: the ads page loads ONLY ads.css so the portal theme
+         (styles.css) can never leak serif headings / conflicting rules in. -->
+    <link rel="stylesheet" href="./assets/ads.css?v=20260703-adsoversight2" />
+  </head>
+  <body data-page="ads">
+    <a class="skip-link" href="#main">Skip to ads</a>
+
+    <main id="main">
+      <section class="view active" data-view="admin">
+        <div class="admin-shell">
+          <aside class="admin-sidebar">
+            <div class="brand admin-brand">
+              <span class="brand-mark"><img src="/assets/logo.png" alt="Global Bestie logo" width="44" height="44" loading="eager" decoding="async" onerror="this.outerHTML='G'" /></span>
+              <span><strong>Global Bestie</strong><small>Growth · Ads</small></span>
+            </div>
+            <a class="admin-tab admin-tab-link" href="/portal.html">← Back to portal</a>
+            <!-- Section nav — each button swaps the visible panel so the team
+                 can jump straight to the part they own. -->
+            <p class="admin-tab-group">Workspace</p>
+            <button class="admin-tab active" type="button" data-ads-nav="overview">Dashboard</button>
+            <button class="admin-tab" type="button" data-ads-nav="campaigns">Campaigns <span data-ads-nav-badge="campaigns"></span></button>
+            <button class="admin-tab" type="button" data-ads-nav="creatives">Creatives <span data-ads-nav-badge="creatives"></span></button>
+            <button class="admin-tab" type="button" data-ads-nav="audience">Audience</button>
+            <button class="admin-tab" type="button" data-ads-nav="optimizer">Optimizer</button>
+            <p class="admin-tab-group">Config</p>
+            <button class="admin-tab" type="button" data-ads-nav="setup">Setup <span data-ads-nav-badge="setup"></span></button>
+          </aside>
+
+          <div class="admin-main">
+            <form class="admin-login" data-admin-login>
+              <p class="kicker">Team access</p>
+              <h1>Enter portal secret.</h1>
+              <p class="portal-login-note">Same key as the operations portal. For local preview, enter any temporary key.</p>
+              <label>Portal key<input name="secret" type="password" placeholder="Team portal key" /></label>
+              <button class="button primary" type="submit">Unlock ads</button>
+            </form>
+
+            <div class="admin-content hidden" data-admin-content data-ads-panel>
+              <div class="admin-heading">
+                <div>
+                  <p class="kicker">Growth · Meta automation</p>
+                  <h1>Meta Ads.</h1>
+                  <p class="portal-login-note">Reporting and the optimizer run 24/7 in the cloud. Campaigns are built paused — nothing spends until you click <strong>Launch</strong>.</p>
+                </div>
+                <div class="mini-actions">
+                  <span class="status-pill" data-ads-status>Checking…</span>
+                  <button class="button secondary" type="button" data-action="ads-refresh">Refresh</button>
+                </div>
+              </div>
+
+              <!-- ── OVERVIEW ─────────────────────────────────────────────── -->
+              <section class="admin-panel active" data-ads-section="overview">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Performance</h2>
+                    <div class="ads-toolbar">
+                      <select class="ads-range" data-ads-range aria-label="Reporting window">
+                        <option value="7">Last 7 days</option>
+                        <option value="14">Last 14 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                      </select>
+                      <span class="status-pill in_stock" data-ads-window>—</span>
+                    </div>
+                  </div>
+                  <div class="today-stats-grid" data-ads-kpis>
+                    <p class="portal-login-note">Loading insights…</p>
+                  </div>
+                  <div class="ads-chart-wrap" data-ads-chart hidden></div>
+                  <div class="ads-callouts" data-ads-creative-callouts hidden></div>
+                  <table class="admin-table" data-table-id="ads-campaigns">
+                    <thead>
+                      <tr><th>Campaign</th><th>Status</th><th>Spend</th><th>Purchases</th><th>Revenue</th><th>ROAS</th><th>CPA</th></tr>
+                    </thead>
+                    <tbody data-ads-campaign-rows>
+                      <tr><td colspan="7" class="portal-login-note">No campaign data yet.</td></tr>
+                    </tbody>
+                  </table>
+                </section>
+              </section>
+
+              <!-- ── CAMPAIGNS ────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="campaigns">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Create a campaign</h2>
+                    <span class="status-pill preorder">Builds paused · data-targeted</span>
+                  </div>
+                  <p class="broadcast-helper">Pick a ready creative (upload media in the <strong>Creatives</strong> tab), set a daily budget, and build. It targets who converts automatically and stays paused until you launch it.</p>
+                  <form class="ugc-add-form" data-ads-create-form>
+                    <div class="ugc-form-grid">
+                      <label>Creative
+                        <select name="creative_ref" data-ads-campaign-creative required>
+                          <option value="">Select a ready creative…</option>
+                        </select>
+                      </label>
+                      <label>Daily budget (PKR)
+                        <input name="daily_budget_pkr" type="number" min="100" step="100" placeholder="1500" required />
+                      </label>
+                    </div>
+                    <div class="mini-actions">
+                      <button class="button primary" type="submit">Build campaign (paused)</button>
+                    </div>
+                    <div class="ugc-form-status" data-ads-create-status aria-live="polite"></div>
+                  </form>
+                </section>
+
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>All campaigns</h2>
+                    <span class="status-pill" data-ads-queue-count>0 waiting</span>
+                  </div>
+                  <p class="broadcast-helper">Campaigns built here <em>and</em> campaigns created directly in Meta Ads Manager — pause, resume, and adjust budgets from one board.</p>
+                  <div class="ads-chips" data-ads-queue-filters>
+                    <button class="ads-chip active" type="button" data-queue-filter="all">All</button>
+                    <button class="ads-chip" type="button" data-queue-filter="built">Awaiting</button>
+                    <button class="ads-chip" type="button" data-queue-filter="launched">Live</button>
+                    <button class="ads-chip" type="button" data-queue-filter="paused">Paused</button>
+                  </div>
+                  <div data-ads-campaign-queue>
+                    <p class="portal-login-note">No campaigns built yet.</p>
+                  </div>
+                </section>
+              </section>
+
+              <!-- ── CREATIVES (media upload + library) ───────────────────── -->
+              <section class="admin-panel" data-ads-section="creatives">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Upload a creative</h2>
+                    <span class="status-pill preorder">Your media</span>
+                  </div>
+                  <p class="broadcast-helper">Upload your own image and write the ad copy. Saved creatives appear in the library below and can be used to build campaigns. (Image: JPG/PNG/WebP, up to 8&nbsp;MB.)</p>
+                  <form class="ugc-add-form" data-ads-creative-form>
+                    <div class="ugc-form-grid">
+                      <label>Image
+                        <input type="file" accept="image/*" data-ad-media-file />
+                      </label>
+                      <label>Link to product (optional)
+                        <select name="product_id" data-ads-product>
+                          <option value="">— None / custom URL —</option>
+                        </select>
+                      </label>
+                      <label>Headline
+                        <input name="headline" placeholder="Coach Tabby — priced in PKR" required />
+                      </label>
+                      <label>Call to action
+                        <select name="cta_type">
+                          <option value="SHOP_NOW">Shop now</option>
+                          <option value="LEARN_MORE">Learn more</option>
+                          <option value="ORDER_NOW">Order now</option>
+                          <option value="MESSAGE_PAGE">Send message</option>
+                        </select>
+                      </label>
+                      <label class="span-2">Primary text
+                        <textarea name="primary_text" rows="3" placeholder="Authentic, sourced from the USA, final price in rupees…" required></textarea>
+                      </label>
+                      <label class="span-2">Destination URL (used when no product is linked)
+                        <input name="destination_url" placeholder="https://globalbestie.com/quote" />
+                      </label>
+                    </div>
+                    <div class="ad-media-preview" data-ad-media-preview hidden></div>
+                    <div class="mini-actions">
+                      <button class="button primary" type="submit">Upload &amp; save creative</button>
+                    </div>
+                    <div class="ugc-form-status" data-ads-creative-status aria-live="polite"></div>
+                  </form>
+                </section>
+
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Creative library</h2>
+                    <span class="status-pill" data-ads-creative-count>0 ready</span>
+                  </div>
+                  <input type="search" class="ads-search" data-ads-creative-search placeholder="Search creatives by headline or text…" aria-label="Search creatives" />
+                  <div class="ad-creative-grid" data-ads-creative-library>
+                    <p class="portal-login-note">No creatives yet — upload your first above.</p>
+                  </div>
+                </section>
+              </section>
+
+              <!-- ── AUDIENCE ─────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="audience">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Audience intelligence</h2>
+                    <button class="button secondary" type="button" data-action="ads-audience-refresh">Refresh audience data</button>
+                  </div>
+                  <p class="broadcast-helper">New campaigns target who actually converts (age · gender · region), computed from your Meta performance. Refreshes weekly.</p>
+                  <div data-ads-audience>
+                    <p class="portal-login-note">Loading audience recommendation…</p>
+                  </div>
+                </section>
+              </section>
+
+              <!-- ── OPTIMIZER ────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="optimizer">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Optimizer activity</h2>
+                    <button class="button secondary" type="button" data-action="ads-optimize-preview">Preview (dry-run)</button>
+                  </div>
+                  <p class="broadcast-helper">Autopilot is controlled in the guardrails below. With it off, the optimizer only logs what it would do.</p>
+                  <div data-ads-actions>
+                    <p class="portal-login-note">No optimizer activity yet.</p>
+                  </div>
+                </section>
+
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Guardrails</h2>
+                    <span class="status-pill preorder">Caps the optimizer</span>
+                  </div>
+                  <p class="broadcast-helper">Autopilot off = the optimizer logs what it <em>would</em> do but never spends.</p>
+                  <form class="settings-form" data-ads-settings-form>
+                    <label>Optimizer autopilot
+                      <select name="ads_autopilot">
+                        <option value="false">Off — log only (dry-run)</option>
+                        <option value="true">On — let the bot adjust spend</option>
+                      </select>
+                    </label>
+                    <label>Max daily budget per campaign (PKR)<input name="ads_max_daily_budget_pkr" type="number" min="0" step="100" placeholder="5000" /></label>
+                    <label>Scale step when winning (%)<input name="ads_scale_step_pct" type="number" min="0" step="5" placeholder="20" /></label>
+                    <label>Target ROAS to scale<input name="ads_target_roas" type="number" min="0" step="0.1" placeholder="2.0" /></label>
+                    <label>Max CPA before pausing (PKR)<input name="ads_max_cpa_pkr" type="number" min="0" step="100" placeholder="2500" /></label>
+                    <label>Learn-budget before pausing a dud (PKR)<input name="ads_learn_spend_pkr" type="number" min="0" step="100" placeholder="1500" /></label>
+                    <button class="button primary" type="submit">Save guardrails</button>
+                  </form>
+                </section>
+              </section>
+
+              <!-- ── SETUP ────────────────────────────────────────────────── -->
+              <section class="admin-panel" data-ads-section="setup">
+                <section class="ops-panel">
+                  <div class="panel-title-row">
+                    <h2>Setup</h2>
+                    <span class="status-pill" data-ads-config-status>Checking…</span>
+                  </div>
+                  <p class="broadcast-helper">Add these in <strong>Netlify → Site configuration → Environment variables</strong>, then redeploy. Required keys must all be present before ads can run.</p>
+                  <div data-ads-config>
+                    <p class="portal-login-note">Loading configuration…</p>
+                  </div>
+                </section>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
+    <script type="module" src="./assets/app.js?v=20260703-adsoversight2"></script>
+  </body>
+</html>

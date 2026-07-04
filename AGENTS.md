@@ -15,10 +15,9 @@ Run a luxury USA-to-Pakistan import store with transparent pricing, reliable pre
 - Every product must be tagged as either `preorder` or `in_stock`.
 - Preorder products should show the current shipment batch ETA when available. The normal estimate is around 4 weeks, but customer copy must explain that batch timing can vary.
 - Orders start as `pending_review`; the internal team must accept before sourcing.
-- Customer checkout creates an order request first. The team must confirm product availability, final PKR price, and shipment batch before payment is accepted.
-- After admin acceptance, preorder orders require a 50% advance. The remaining 50% is collected after the shipment arrives in Pakistan and before local dispatch.
-- In-stock orders require full payment after admin acceptance and before dispatch.
-- Bank-transfer proof is optional during checkout for already-quoted customers, but uploaded proof is still only treated as pending review until the team confirms it.
+- Customer checkout collects payment upfront: preorder orders pay the 50% advance at checkout, in-stock orders pay in full at checkout. The team then verifies the transfer and accepts the order before sourcing or dispatch.
+- The remaining 50% preorder balance is collected after the shipment arrives in Pakistan and before local dispatch.
+- Checkout requires a transfer reference; the proof screenshot upload is optional and speeds up matching. Uploaded proof is still only treated as pending review until the team confirms it.
 - Never expose `SUPABASE_SERVICE_ROLE_KEY` in browser code.
 - Any internal portal mutation must go through Netlify Functions and require `ADMIN_SHARED_SECRET`.
 - Marketing channel actions should stay internal until Instagram and WhatsApp credentials are connected and reviewed.
@@ -30,9 +29,9 @@ Run a luxury USA-to-Pakistan import store with transparent pricing, reliable pre
 
 1. Customer shops products and sees preorder vs in-stock status.
 2. Customer sees the final PKR listing price, preorder/in-stock status, and shipment-batch guidance.
-3. Checkout shows estimated order value, payment due after approval, and any later preorder balance.
-4. Checkout displays bank deposit details from `store_settings` with approval-first language.
-5. Customer submits address, contact details, order notes, and optional transfer confirmation.
+3. Checkout shows the order value, the 50% advance (or full in-stock payment) due now, and any later preorder balance.
+4. Checkout displays bank deposit details from `store_settings` so the customer can transfer immediately.
+5. Customer submits address, contact details, order notes, the transfer reference, and an optional proof screenshot.
 6. Order is saved with `status = pending_review`.
 7. Customer tracks by order number or phone.
 

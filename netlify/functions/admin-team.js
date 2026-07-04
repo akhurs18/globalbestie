@@ -7,7 +7,7 @@ import { canonPhone, isValidPkMobile } from "./_shared/phone.js";
 const VALID_ROLES = ["owner", "team", "support", "marketing"];
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   if (!hasSupabase()) return json({ members: [], configured: false });
 
   try {

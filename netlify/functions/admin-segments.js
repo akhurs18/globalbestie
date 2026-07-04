@@ -15,7 +15,7 @@ function sanitizeFilters(raw) {
 }
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   if (!hasSupabase()) return json({ segments: [], configured: false });
 
   try {

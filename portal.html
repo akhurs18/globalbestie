@@ -16,7 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./assets/styles.css?v=20260609-refunds" />
+    <link rel="stylesheet" href="./assets/styles.css?v=20260703-adsoversight2" />
   </head>
   <body data-page="portal">
     <a class="skip-link" href="#main">Skip to portal</a>
@@ -41,12 +41,17 @@
             <button class="admin-tab" type="button" data-admin-tab="cashflow">Cashflow <span data-tab-badge="cashflow"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="ledger">Ledger <span data-tab-badge="ledger"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="shipments">Shipments <span data-tab-badge="shipments"></span></button>
+            <button class="admin-tab" type="button" data-admin-tab="inventory">Inventory <span data-tab-badge="inventory"></span></button>
 
             <!-- Secondary: catalog/discovery (touched weekly, not daily) -->
             <p class="admin-tab-group">Catalog</p>
             <button class="admin-tab" type="button" data-admin-tab="products">Products <span data-tab-badge="products"></span></button>
-            <button class="admin-tab" type="button" data-admin-tab="trends">Trend approvals <span data-tab-badge="trends"></span></button>
             <button class="admin-tab" type="button" data-admin-tab="besties">Besties (UGC) <span data-tab-badge="besties"></span></button>
+
+            <!-- Growth: Meta ads automation lives on its OWN page — it never
+                 touches the storefront, so it's kept out of the ops portal. -->
+            <p class="admin-tab-group">Growth</p>
+            <a class="admin-tab admin-tab-link" href="/ads.html">Meta Ads ↗</a>
 
             <!-- Configuration: rarely opened, hold at the bottom -->
             <p class="admin-tab-group">Config</p>
@@ -527,6 +532,50 @@
                 <div class="shipment-grid" data-shipment-batches></div>
               </section>
 
+              <!-- Inventory board — the in-stock counterpart to Shipments.
+                   Shipments tracks preorder batches sourced from the USA;
+                   Inventory tracks the items already in Pakistan that ship in
+                   days. Stat header = business read (units, value, low/out);
+                   board = inline stock control. Stats + rows render from JS
+                   (renderInventory); the controls below are static so their
+                   focus/value survive a board re-render. -->
+              <section class="admin-panel" data-admin-panel="inventory">
+                <div class="admin-heading">
+                  <div>
+                    <p class="kicker">Stock on hand</p>
+                    <h1>Inventory — ready to ship now.</h1>
+                  </div>
+                  <div class="mini-actions">
+                    <button class="button ghost" type="button" data-action="export-inventory-csv">Export CSV</button>
+                    <button class="button secondary" type="button" data-admin-tab-jump="products">Add / edit products</button>
+                  </div>
+                </div>
+                <p class="inventory-lede" data-inventory-lede></p>
+                <div class="inventory-stats" data-inventory-stats></div>
+                <div class="inventory-toolbar">
+                  <input type="search" class="inventory-search" data-inventory-search placeholder="Search by product or brand" aria-label="Search inventory" />
+                  <div class="inventory-chips" role="group" aria-label="Stock filter">
+                    <button class="inventory-chip active" type="button" data-inventory-filter="all">All</button>
+                    <button class="inventory-chip" type="button" data-inventory-filter="attention">Needs attention</button>
+                    <button class="inventory-chip" type="button" data-inventory-filter="healthy">Healthy</button>
+                  </div>
+                  <label class="inventory-sort">Sort
+                    <select data-inventory-sort>
+                      <option value="attention">Needs attention first</option>
+                      <option value="stock-asc">Stock: low → high</option>
+                      <option value="stock-desc">Stock: high → low</option>
+                      <option value="value-desc">Stock value: high → low</option>
+                      <option value="name">Name A → Z</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="inventory-board" data-inventory-board></div>
+                <section class="inventory-log-section" aria-label="Recent stock activity">
+                  <h2 class="inventory-log-title">Recent stock activity</h2>
+                  <ul class="inventory-log" data-inventory-log></ul>
+                </section>
+              </section>
+
               <section class="admin-panel" data-admin-panel="products">
                 <div class="admin-heading">
                   <div>
@@ -541,94 +590,25 @@
                     <span>Select all</span>
                     <span class="bulk-count-chip" data-products-total>0</span>
                   </label>
+                  <button class="button secondary" type="button" data-action="bulk-publish-products" data-bulk-button="publish" disabled>Publish</button>
+                  <button class="button secondary" type="button" data-action="bulk-draft-products" data-bulk-button="draft" disabled>Draft</button>
+                  <button class="button secondary" type="button" data-action="bulk-feature-products" data-bulk-button="feature" disabled>Feature</button>
+                  <button class="button secondary" type="button" data-action="bulk-unfeature-products" data-bulk-button="unfeature" disabled>Unfeature</button>
                   <button class="button secondary" type="button" data-action="bulk-remove-products" data-bulk-button="remove" disabled>
                     Remove from site
                   </button>
                 </div>
-                <div class="import-bar">
-                  <div>
-                    <strong>Import marketing batch</strong>
-                    <span>Use the generated product JSON after your team replaces placeholder images and reviews copy.</span>
-                  </div>
-                  <label class="file-button">
-                    Import JSON
-                    <input type="file" data-product-import accept="application/json,.json" />
-                  </label>
-                </div>
-
-                <!-- ═══ SOURCING TRAY ═══════════════════════════════════════
-                  Bulk URL importer. Paste up to 50 retailer links, hit
-                  "Fetch all". Each row shows title + USD + suggested PKR
-                  + dedupe status. Select rows + Save selected for one-
-                  shot bulk publish. -->
-                <!-- ═══ SUGGEST 10 ═══════════════════════════════════════════
-                  One-click bulk uploader. Hit "Suggest 10 products" — the
-                  daily-marketing-agent's curated seed pool (rotated by
-                  category) delivers 10 fully-formed candidates: title,
-                  brand, category, USD, suggested PKR, description, +
-                  a 5-image gallery per product. Admin reviews inline,
-                  tweaks anything, picks the hero image, then saves the
-                  selected as drafts or active in one go.
-
-                  URL paste lives below as a smaller fallback for the rare
-                  case the admin wants to spec a specific retailer link. -->
-                <section class="sourcing-tray suggest-ten" data-sourcing-tray>
-                  <div class="sourcing-tray-head">
-                    <div>
-                      <strong>Suggest 10 products</strong>
-                      <span>Curated picks across handbags, shoes, makeup, fragrance, and accessories — each with brand, suggested PKR price, description, and a 5-image gallery ready to review.</span>
-                    </div>
-                    <div class="sourcing-tray-actions">
-                      <button class="button primary" type="button" data-action="suggest-ten">✦ Suggest 10 products</button>
-                      <button class="button ghost" type="button" data-action="sourcing-clear" hidden data-suggest-clear-btn>Discard queue</button>
-                    </div>
-                  </div>
-                  <div class="sourcing-tray-status" data-sourcing-status></div>
-                  <div class="sourcing-queue suggest-grid" data-sourcing-queue hidden></div>
-                  <div class="sourcing-tray-footer" data-sourcing-footer hidden>
-                    <label class="sourcing-select-all">
-                      <input type="checkbox" data-sourcing-select-all checked />
-                      Select all
-                    </label>
-                    <span class="sourcing-selected-count" data-sourcing-selected>10 selected</span>
-                    <label class="sourcing-publish-state">
-                      Save as:
-                      <select data-sourcing-publish>
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                      </select>
-                    </label>
-                    <button class="button primary" type="button" data-action="sourcing-save">Save selected</button>
-                    <button class="button ghost" type="button" data-action="sourcing-discard">Discard queue</button>
-                  </div>
-
-                  <!-- Secondary path — manual URL paste for the rare case
-                       admin wants a specific retailer link. Collapsed by
-                       default; opens to reveal the textarea. -->
-                  <details class="suggest-url-fallback">
-                    <summary>
-                      <span>Have a specific product link? Paste it instead</span>
-                      <span class="suggest-fallback-chev" aria-hidden="true">+</span>
-                    </summary>
-                    <label class="sourcing-tray-input">
-                      <span class="sr-only">Retailer URLs</span>
-                      <textarea data-sourcing-urls rows="3" placeholder="https://www.coach.com/products/...&#10;https://www.sephora.com/product/..."></textarea>
-                    </label>
-                    <div class="suggest-url-actions">
-                      <button class="button secondary" type="button" data-action="sourcing-fetch">Fetch URL(s)</button>
-                    </div>
-                  </details>
-                </section>
+                <details class="padmin-editor" data-padmin-editor>
+                  <summary class="padmin-editor-summary"><span class="padmin-editor-plus" aria-hidden="true">＋</span> Add or edit a product</summary>
                 <form class="product-editor" data-product-editor>
                   <input type="hidden" name="id" />
-                  <!-- Paste a retailer URL (Coach / Sephora / Nordstrom / etc.)
-                       and the form auto-fills title, brand, category, price,
-                       description, and images. Images are re-hosted in our
-                       own Supabase bucket so retailer link rot can't break
-                       the product later. Everything is editable after fill. -->
+
+                  <!-- Fastest path: paste a retailer link and the form autofills
+                       title, brand, price, and images (re-hosted in our bucket).
+                       Everything stays editable after. -->
                   <div class="url-import span-2">
                     <label class="span-2">
-                      Paste retailer URL to autofill
+                      <span class="fast-path-label"><span class="fast-path-badge">Fastest</span> Paste a retailer link — we autofill title, brand, price &amp; images</span>
                       <div class="url-import-row">
                         <input data-product-url-import type="url" placeholder="https://www.coach.com/products/..." />
                         <button class="button secondary" type="button" data-action="import-from-url">Autofill</button>
@@ -637,101 +617,96 @@
                     <small data-product-url-import-status></small>
                     <div class="autofill-health" data-product-url-import-health aria-live="polite"></div>
                   </div>
-                  <div class="form-section-title span-2">Product identity</div>
-                  <label>Title<input name="title" required /></label>
+
+                  <!-- Photo first — what the team has in hand. -->
+                  <div class="form-section-title span-2">Photo</div>
+                  <label class="span-2 product-photo-field">Upload product image<input name="image_file" type="file" accept="image/*" data-product-image-upload /></label>
+                  <div class="image-preview-wrap span-2"><img data-image-preview alt="Image preview" /></div>
+
+                  <!-- The essentials — the only fields most uploads need. -->
+                  <div class="form-section-title span-2">Details</div>
+                  <label>Title <span class="req-mark">required</span><input name="title" required /></label>
                   <label>Brand<input name="brand" placeholder="Coach, Nike, Rare Beauty..." /></label>
                   <label>Category<select name="category"><option>handbags</option><option>shoes</option><option>makeup</option><option>fragrance</option><option>accessories</option></select></label>
-                  <label>Card badge (optional, shows on shop card)<input name="marketing_badge" maxlength="22" placeholder="New drop · Trending · Restocked" /></label>
-                  <div class="form-section-title span-2">Pricing and stock rules</div>
-                  <label class="span-2">Pricing mode<select name="pricing_mode" data-pricing-mode>
-                    <option value="preorder">Preorder (USA-sourced, 50/50 payment, 4-6 week delivery)</option>
-                    <option value="in_stock">In stock in Pakistan (full payment, 3-5 day delivery)</option>
+                  <label>Availability<select name="pricing_mode" data-pricing-mode>
+                    <option value="preorder">Preorder — USA-sourced, 4–6 weeks</option>
+                    <option value="in_stock">In stock — ships in 3–5 days</option>
                   </select></label>
 
-                  <!-- PKR-FIRST PRICING.
-                       The admin only ever types the final customer PKR
-                       price — pre-filled from URL autofill via the server's
-                       suggested_customer_price_pkr (USD × FX × markup +
-                       shipping band). USD + FX + shipping live in the
-                       collapsed "Cost breakdown" section below for the rare
-                       case the admin wants to override them. -->
                   <label class="span-2 customer-price-row">
-                    <span class="customer-price-label">Customer price PKR (final)</span>
+                    <span class="customer-price-label">Customer price PKR (final) <span class="req-mark">required</span></span>
                     <div class="customer-price-input-wrap">
                       <span class="customer-price-prefix">Rs</span>
-                      <input name="customer_price_pkr" type="number" min="0" step="100" required data-customer-price />
-                      <button class="button ghost customer-price-reset" type="button" data-action="reset-customer-price" title="Reset to URL autofill suggestion">↺</button>
+                      <input name="customer_price_pkr" type="number" min="0" step="1" required data-customer-price />
+                      <button class="button ghost customer-price-reset" type="button" data-action="reset-customer-price" title="Reset to autofill suggestion">↺</button>
                     </div>
-                    <small class="customer-price-hint" data-customer-price-hint>Autofills when you paste a retailer URL above. Editable.</small>
+                    <small class="customer-price-hint" data-customer-price-hint>Autofills when you paste a retailer link above. Editable.</small>
                   </label>
 
-                  <label data-pricing-field="in_stock">Delivery days min<input name="delivery_days_min" type="number" min="1" step="1" placeholder="3" /></label>
-                  <label data-pricing-field="in_stock">Delivery days max<input name="delivery_days_max" type="number" min="1" step="1" placeholder="5" /></label>
+                  <label>Inventory <small class="field-hint">units in stock</small><input name="inventory" type="number" min="0" step="1" value="0" /></label>
+                  <label>Publish<select name="product_status"><option value="active">Active (live on site)</option><option value="draft">Draft (hidden)</option><option value="archived">Archived</option></select></label>
+                  <label class="span-2">Description<textarea name="description" rows="3" placeholder="Short, customer-facing description."></textarea></label>
 
-                  <!-- COST BREAKDOWN — optional, collapsed by default.
-                       Admin rarely needs to touch these; the URL autofill
-                       fills them in too so the customer_price_pkr math
-                       stays sane on the back end. Open this to override
-                       USD / FX / shipping for a specific product. -->
-                  <details class="cost-breakdown span-2" data-pricing-field="preorder">
+                  <!-- Everything else, collapsed. Most uploads never open this. -->
+                  <details class="cost-breakdown product-advanced span-2">
                     <summary>
-                      <span>Cost breakdown <small>(USD, FX, shipping — usually leave as-is)</small></span>
+                      <span>More options <small>(pricing breakdown, gallery, variants, proof — optional)</small></span>
                       <span class="cost-breakdown-chev" aria-hidden="true">+</span>
                     </summary>
-                    <div class="cost-breakdown-grid">
-                      <label>USA retail USD<input name="usa_price_usd" type="number" min="0" step="0.01" placeholder="Auto-filled from URL" /></label>
+                    <div class="cost-breakdown-grid product-advanced-grid">
+                      <label>Card badge<input name="marketing_badge" maxlength="22" placeholder="New drop · Trending · Restocked" /></label>
+                      <label>Low-stock alert at<input name="low_stock_threshold" type="number" min="0" step="1" placeholder="2" /></label>
+                      <label>USA retail USD<input name="usa_price_usd" type="number" min="0" step="0.01" placeholder="Auto-filled from link" /></label>
                       <label>Shipping PKR<input name="shipping_pkr" type="number" min="0" step="100" placeholder="Category default" /></label>
                       <label>FX rate<input name="fx_rate" type="number" min="1" step="0.01" placeholder="Store default" /></label>
+                      <label>Supplier cost PKR<input name="supplier_cost_pkr" type="number" min="0" step="100" /></label>
+                      <label class="span-2">Image URL <small class="field-hint">use instead of uploading a file</small><input name="image_url" /></label>
+                      <label>Source URL<input name="source_url" placeholder="Official retailer or product link" /></label>
+                      <label>Receipt URL<input name="receipt_url" placeholder="Internal receipt/proof link" /></label>
+                      <label class="span-2">Gallery URLs<textarea name="gallery_urls" rows="2" placeholder="One image URL per line"></textarea></label>
+                      <label class="span-2">Variants / size / shade<textarea name="variants" rows="2" placeholder="Sizes, shades, colors, backup choices"></textarea></label>
+                      <label class="span-2">Authenticity / receipt note<textarea name="authenticity_note" rows="2" placeholder="Official source, receipt, packaging, box notes"></textarea></label>
+                      <label class="span-2">Trust line <small class="field-hint">shows on the product page</small><input name="social_proof" placeholder="Frequently requested through Instagram DMs" /></label>
                     </div>
                   </details>
-                  <label>Status<select name="stock_mode"><option value="preorder">Preorder</option><option value="in_stock">In stock</option></select></label>
-                  <label>Inventory<input name="inventory" type="number" min="0" step="1" required /></label>
-                  <label>Low-stock alert at<input name="low_stock_threshold" type="number" min="0" step="1" placeholder="2" /></label>
-                  <label>Publish status<select name="product_status"><option value="active">Active</option><option value="draft">Draft</option><option value="archived">Archived</option></select></label>
-                  <label>Supplier cost PKR<input name="supplier_cost_pkr" type="number" min="0" step="100" /></label>
-                  <div class="form-section-title span-2">Media and source proof</div>
-                  <label>Image URL<input name="image_url" /></label>
-                  <label>Upload image<input name="image_file" type="file" accept="image/*" data-product-image-upload /></label>
-                  <div class="image-preview-wrap"><img data-image-preview alt="Image preview" /></div>
-                  <label>Source URL<input name="source_url" placeholder="Official retailer or product link" /></label>
-                  <label class="span-2">Gallery URLs<textarea name="gallery_urls" rows="2" placeholder="One image URL per line"></textarea></label>
-                  <label class="span-2">Variants / size / shade<textarea name="variants" rows="2" placeholder="Sizes, shades, colors, backup choices"></textarea></label>
-                  <label class="span-2">Authenticity / receipt note<textarea name="authenticity_note" rows="2" placeholder="Official source, receipt, packaging, box notes"></textarea></label>
-                  <label>Receipt URL<input name="receipt_url" placeholder="Internal receipt/proof link" /></label>
-                  <label>Trust line (optional, shows on detail page)<input name="social_proof" placeholder="Frequently requested through Instagram DMs" /></label>
-                  <label class="span-2">Description<textarea name="description" rows="3"></textarea></label>
+
                   <button class="button primary" type="submit">Save product</button>
                   <output data-price-preview></output>
                 </form>
+                </details>
+
+                <div class="padmin-toolbar">
+                  <div class="padmin-toolbar-row">
+                    <input type="search" class="padmin-search" data-padmin-search placeholder="Search product or brand" aria-label="Search products" />
+                    <select class="padmin-select-control" data-padmin-mode aria-label="Filter by stock mode">
+                      <option value="all">All modes</option>
+                      <option value="preorder">Preorder</option>
+                      <option value="in_stock">In stock</option>
+                    </select>
+                    <select class="padmin-select-control" data-padmin-sort aria-label="Sort products">
+                      <option value="newest">Newest</option>
+                      <option value="name">Name A–Z</option>
+                      <option value="price-desc">Price high→low</option>
+                      <option value="price-asc">Price low→high</option>
+                      <option value="stock-asc">Stock low→high</option>
+                    </select>
+                  </div>
+                  <div class="padmin-chips-row">
+                    <div class="padmin-chips" role="group" aria-label="Filter products">
+                      <button class="padmin-chip active" type="button" data-padmin-filter="all">All <span class="padmin-chip-count" data-chip-count="all"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="active">Live <span class="padmin-chip-count" data-chip-count="active"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="draft">Draft <span class="padmin-chip-count" data-chip-count="draft"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="featured">Featured <span class="padmin-chip-count" data-chip-count="featured"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="low">Low <span class="padmin-chip-count" data-chip-count="low"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="out">Out <span class="padmin-chip-count" data-chip-count="out"></span></button>
+                      <button class="padmin-chip" type="button" data-padmin-filter="archived">Archived <span class="padmin-chip-count" data-chip-count="archived"></span></button>
+                    </div>
+                    <span class="padmin-count" data-padmin-count></span>
+                  </div>
+                </div>
                 <div class="product-grid admin-product-grid" data-admin-products></div>
               </section>
 
-              <section class="admin-panel" data-admin-panel="trends">
-                <div class="admin-heading">
-                  <div>
-                    <p class="kicker">Scraper approvals</p>
-                    <h1>Approve trending products before publishing.</h1>
-                  </div>
-                  <div class="mini-actions">
-                    <button class="button secondary" type="button" data-action="run-scraper">Upload 10 review products</button>
-                  </div>
-                </div>
-                <div class="bulk-bar" data-trends-bulk-bar>
-                  <label class="bulk-select-all">
-                    <input type="checkbox" data-action="select-all-trends" />
-                    <span>Select all</span>
-                    <span class="bulk-count-chip" data-trends-total>0</span>
-                  </label>
-                  <button class="button primary" type="button" data-action="bulk-approve-trends" data-bulk-button="approve" disabled>
-                    Save selected as drafts
-                  </button>
-                  <button class="button secondary" type="button" data-action="bulk-deny-trends" data-bulk-button="deny" disabled>
-                    Deny selected
-                  </button>
-                </div>
-                <div class="bulk-run-status" data-trends-run-status aria-live="polite"></div>
-                <div class="trend-grid" data-trend-candidates></div>
-              </section>
 
               <!-- Besties (UGC) — curate the customer photos + quotes that
                    render on the storefront "From real besties" rail. Add a
@@ -817,6 +792,7 @@
                   <label class="span-2">Shipment notice<textarea name="shipment_notice" rows="2"></textarea></label>
                   <label class="span-2">Balance reminder template<textarea name="balance_reminder_template" rows="3"></textarea></label>
                   <label>Support WhatsApp<input name="support_whatsapp" /></label>
+
                   <button class="button primary" type="submit">Save settings</button>
                 </form>
                 <section class="ops-panel operator-alerts-panel">
@@ -851,6 +827,6 @@
     </main>
 
     <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
-    <script type="module" src="./assets/app.js?v=20260609-refunds"></script>
+    <script type="module" src="./assets/app.js?v=20260703-adsoversight2"></script>
   </body>
 </html>

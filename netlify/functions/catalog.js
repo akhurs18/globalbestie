@@ -1,14 +1,5 @@
 import { getProducts, getSettings, hasSupabase, json, requireAdmin, supabase, upsertProduct } from "./_shared/supabase.js";
-
-function customerPrice(product, settings) {
-  // In-stock items priced directly in PKR — no FX or USD math.
-  const direct = Number(product.customer_price_pkr || 0);
-  if (direct > 0) return Math.ceil(direct);
-  const fx = Number(product.fx_rate || settings.fx_rate || 282);
-  const markup = Number(product.markup_rate ?? settings.markup_rate ?? 0.25);
-  const retailPkr = Number(product.usa_price_usd || 0) * fx;
-  return Math.ceil(retailPkr + retailPkr * markup + Number(product.shipping_pkr || 0));
-}
+import { customerPricePkr } from "./_shared/pricing.js";
 
 function publicProduct(product, settings) {
   return {
@@ -17,7 +8,7 @@ function publicProduct(product, settings) {
     brand: product.brand,
     category: product.category,
     description: product.description,
-    customer_price_pkr: customerPrice(product, settings),
+    customer_price_pkr: customerPricePkr(product, settings),
     // Public response intentionally omits usa_price_usd / fx_rate /
     // markup_rate / shipping_pkr. The customer sees the final all-inclusive
     // PKR figure only — never our cost-construction inputs.
@@ -44,7 +35,7 @@ export default async (req) => {
   try {
     if (req.method === "GET") {
       const [products, settings] = await Promise.all([getProducts(), getSettings()]);
-      const isAdmin = requireAdmin(req);
+      const isAdmin = await requireAdmin(req);
       const publicSettings = {
         preorder_weeks: settings.preorder_weeks,
         next_shipment_date: settings.next_shipment_date,
@@ -70,7 +61,7 @@ export default async (req) => {
     }
 
     if (req.method === "POST") {
-      if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+      if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
       const body = await req.json();
 
       // Single-product path (legacy + form save). Returns { product, configured }.
@@ -114,7 +105,7 @@ export default async (req) => {
     }
 
     if (req.method === "DELETE") {
-      if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+      if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
       const { ids } = await req.json();
       if (!Array.isArray(ids) || !ids.length) return json({ error: "ids array required" }, { status: 400 });
       if (!hasSupabase()) return json({ removed: ids.length, configured: false });

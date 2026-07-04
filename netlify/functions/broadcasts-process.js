@@ -144,7 +144,7 @@ export default async (req) => {
   try {
     const isScheduled = req.headers.get("x-netlify-functions-source") === "schedule" ||
       (req.headers.get("user-agent") || "").includes("Netlify");
-    if (!isScheduled && !requireAdmin(req)) {
+    if (!isScheduled && !(await requireAdmin(req))) {
       return json({ error: "Unauthorized" }, { status: 401 });
     }
     if (!hasSupabase()) return json({ ok: false, reason: "no_supabase" });

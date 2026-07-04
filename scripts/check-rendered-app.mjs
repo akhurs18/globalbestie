@@ -271,7 +271,19 @@ async function run() {
   const base = `http://127.0.0.1:${port}`;
   console.log(`[render-check] dist/ served at ${base}`);
 
-  const browser = await chromium.launch();
+  let browser;
+  try {
+    browser = await chromium.launch();
+  } catch (err) {
+    // The Chromium *binary* failed to install/launch (Netlify downloads it cold
+    // every build, so a transient network flake can break this). This is an
+    // optional safety net, not a correctness gate — it must never block a
+    // deploy over an external browser-download issue. Skip loudly with --allow-skip.
+    const skipFlag = argv.includes("--allow-skip");
+    console.error(`[render-check] Chromium launch failed: ${err?.message || err}. ` +
+      (skipFlag ? "Skipping the render check (--allow-skip)." : "Pass --allow-skip to skip when the browser is unavailable."));
+    exit(skipFlag ? 0 : 1);
+  }
   let totalFails = 0;
   const results = [];
 
