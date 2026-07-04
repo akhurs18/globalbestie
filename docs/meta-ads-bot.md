@@ -70,21 +70,21 @@ Run daily over the last 3 days of ad-level snapshots:
 Every action is written to `meta_ad_actions` with the before/after value and is
 reversible via `GET /api/admin/ads-optimize?undo=<action_id>`.
 
-## Creative generation (Phase 2)
+## Creative library (Phase 2)
 
-`ads-creative.js` `generate` drafts three ad-copy angles from a product row
-using deterministic templates — no external AI call, so it runs anywhere 24/7.
-To swap in live AI generation later, replace the body of `draftCopy()` with a
-Claude API call (see `claude-api` reference); the queue contract is unchanged.
+Creatives are operator-supplied: the team uploads media and writes copy in the
+ads page's Creatives tab. (The old template-based `generate` action was
+removed 2026-07 — the store runs on human-made creative only.)
 
 ## Endpoints
 
 ```
 GET  /api/admin/ads-report[?days=7]              dashboard + refresh snapshots
 GET  /api/admin/ads-creative                     list creative queue
-POST /api/admin/ads-creative {action:'generate'|'add'|'status'}
-GET  /api/admin/ads-create                        list built/launched campaigns
-POST /api/admin/ads-create {action:'build'|'launch'|'undo'|'reject'}
+POST /api/admin/ads-creative {action:'add'|'status'}
+GET  /api/admin/ads-create                        local campaigns + Ads Manager sync (`external`)
+POST /api/admin/ads-create {action:'build'|'launch'|'undo'|'resume'|'reject'|'set_budget'}
+POST /api/admin/ads-create {action:'meta_status'|'meta_budget'}   control Ads-Manager campaigns
 GET  /api/admin/ads-optimize[?force=1|undo=ID]    run optimizer / revert action
 ```
 

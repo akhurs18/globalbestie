@@ -106,7 +106,9 @@ const sampleSettings = {
   markup_rate: 0.25,
   fx_rate: 282,
   preorder_weeks: 4,
-  next_shipment_date: "2026-06-02",
+  // Demo date is computed (~3 weeks out) so local previews never show a
+  // stale past-date banner. Production reads store_settings instead.
+  next_shipment_date: new Date(Date.now() + 21 * 864e5).toISOString().slice(0, 10),
   shipment_notice: "Next USA batch is being consolidated. Dates can shift slightly based on brand dispatch and customs clearance.",
   // Customer-visible announcement ribbon. `batch_doorstep_window` is the
   // human label ("May 25-27") and `batch_doorstep_until` is the last day
@@ -259,8 +261,10 @@ const sampleProducts = [
     markup_rate: 0.25,
     stock_mode: "preorder",
     inventory: 0,
-    image_url: "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=84",
-    gallery_urls: ["https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=900&q=84"],
+    // Neutral (unbranded) perfume bottle — the previous Unsplash photo was
+    // a Chanel N°5 bottle, which mislabeled the Valentino demo card.
+    image_url: "https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=84",
+    gallery_urls: ["https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=900&q=84"],
     source_url: "https://www.valentino-beauty.com/",
     variants: "Donna Born in Roma 50ml / 100ml quoted by availability.",
     authenticity_note: "Fragrance preorders are packed with extra box protection.",
@@ -977,7 +981,12 @@ function nextShipmentLabel() {
   const iso = settings.next_shipment_date;
   if (iso) {
     const dt = new Date(`${iso}T12:00:00`);
-    if (!Number.isNaN(dt.getTime())) {
+    // A past date means the setting went stale (that batch already moved) —
+    // fall back to the generic line instead of advertising old timing.
+    // Mirrors the eta_date >= today filter in nextBatchArrivalLabel().
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!Number.isNaN(dt.getTime()) && dt >= today) {
       const month = dt.toLocaleDateString("en-PK", { month: "long" });
       const day = dt.getDate();
       const period = day <= 10 ? "early" : day <= 20 ? "mid" : "late";
@@ -1140,13 +1149,15 @@ function variantLabel(product) {
 }
 
 function variantPlaceholder(product) {
+  // Keep these short — the cart drawer's variant input is ~12 characters
+  // wide, and clipped placeholders read as typos ("e.g. Blus").
   return {
-    shoes: "e.g. US 7.5 / EU 38",
-    makeup: "e.g. Pillow Talk Medium",
+    shoes: "e.g. US 7.5",
+    makeup: "e.g. shade",
     fragrance: "e.g. 50ml",
-    handbags: "e.g. Blush pink",
+    handbags: "e.g. Blush",
     accessories: "e.g. Gold",
-  }[product?.category] || "Tell us your preference";
+  }[product?.category] || "Your preference";
 }
 
 function variantHint(product) {
@@ -1833,10 +1844,17 @@ function renderCart() {
     // red Remove zone sits behind the line; the foreground .cart-line
     // translates left via JS gesture (see wireCartLineSwipe in setCartDrawerOpen).
     // The Remove button inside .mini-actions still works on desktop.
+    // Product thumbnail — shown in both the cart drawer and the checkout
+    // order summary (this markup feeds both). Sourcing requests often have
+    // no image; they get a small placeholder tile instead.
+    const thumbBlock = line.product.image_url
+      ? `<img class="cart-line-thumb" src="${safeUrl(imageUrlThumb(line.product.image_url), "")}" alt="" loading="lazy" decoding="async" />`
+      : `<span class="cart-line-thumb cart-line-thumb-empty" aria-hidden="true">✦</span>`;
     return `
     <div class="cart-swipe-shell" data-swipe-line data-product-id="${attr(line.product_id)}">
       <button class="cart-swipe-remove" type="button" data-action="remove-cart" data-product-id="${attr(line.product_id)}" aria-label="Remove ${attr(line.product.title)}" tabindex="-1">Remove</button>
       <div class="order-line cart-line" data-kind="${attr(line.kind || "product")}">
+        ${thumbBlock}
         <div>
           <strong>
             ${esc(line.product.title)}
@@ -1884,6 +1902,14 @@ function renderCart() {
 function setCartDrawerOpen(open) {
   const drawer = qs("[data-cart-drawer]");
   if (!drawer) return;
+  // `just-opened` scopes the line-item stagger animation to the open
+  // moment only — without it, every renderCart() (qty taps, variant
+  // edits) would replay the cascade on the re-inserted rows.
+  const wasOpen = drawer.classList.contains("open");
+  if (open && !wasOpen) {
+    drawer.classList.add("just-opened");
+    setTimeout(() => drawer.classList.remove("just-opened"), 750);
+  }
   drawer.classList.toggle("open", open);
   drawer.setAttribute("aria-hidden", open ? "false" : "true");
   // Backdrop sibling — toggled together with the drawer so the page dims
@@ -2175,9 +2201,23 @@ function renderTracking(order) {
   }
   const currentIndex = ORDER_STEPS.findIndex(([status]) => status === order.status);
   const payment = orderPaymentSummary(order);
+  // Animated USA → Pakistan journey band: a plane travels the route in
+  // proportion to the order's stage. Decorative (aria-hidden) — the real
+  // status semantics live in the tracking-progress list right below it.
+  const journeyPct = currentIndex > 0
+    ? Math.round((currentIndex / (ORDER_STEPS.length - 1)) * 100)
+    : 4;
+  const journeyHTML = order.status === "cancelled" ? "" : `
+    <div class="journey-band" aria-hidden="true" style="--journey: ${journeyPct}%">
+      <span class="journey-node">🇺🇸 USA</span>
+      <div class="journey-route"><span class="journey-plane">✈</span></div>
+      <span class="journey-node">Pakistan 🇵🇰</span>
+    </div>
+  `;
   // Horizontal progress bar of the 6 stages — easier to scan than the vertical
   // list and matches the policy timeline customers already see on /preorder.
   const progressHTML = `
+    ${journeyHTML}
     <div class="tracking-progress" role="list" aria-label="Order progress">
       ${ORDER_STEPS.map(([status, label], index) => {
         const cls = index < currentIndex ? "done" : index === currentIndex ? "done current" : "";
@@ -2408,6 +2448,32 @@ function truncateProductDescription(raw, maxLen = 220) {
   return { full: trimmed, short: cut.replace(/[,;:.\s]+$/, "") + "…", truncated: true };
 }
 
+// Shared-element morph: the tapped card image visually grows into the PDP
+// modal's gallery image via the View Transitions API. Both elements get the
+// same view-transition-name for the duration of the transition, then the
+// card's tag is cleared (duplicate names abort future transitions).
+// No-ops (plain open) when the API is missing or the user prefers
+// reduced motion.
+function openModalWithProductMorph(html, productId) {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const cardImg = qs(`.product-media[data-product-id="${CSS.escape(productId)}"] img`);
+  if (!document.startViewTransition || reduceMotion || !cardImg) {
+    openModal(html);
+    return;
+  }
+  cardImg.style.viewTransitionName = "product-hero";
+  const transition = document.startViewTransition(() => {
+    cardImg.style.viewTransitionName = "";
+    openModal(html);
+    const modalImg = qs(".detail-modal .gallery-main");
+    if (modalImg) modalImg.style.viewTransitionName = "product-hero";
+  });
+  transition.finished.finally(() => {
+    const modalImg = qs(".detail-modal .gallery-main");
+    if (modalImg) modalImg.style.viewTransitionName = "";
+  });
+}
+
 function showProductDetails(productId) {
   const product = state.products.find((item) => item.id === productId);
   if (!product) return;
@@ -2476,7 +2542,7 @@ function showProductDetails(productId) {
   // final all-inclusive PKR figure only. Admin/portal still gets the full
   // breakdown via the admin meta panel above.
   const priceBreakdown = "";
-  openModal(`
+  openModalWithProductMorph(`
     <div class="modal-grid product-detail-modal">
       <div class="product-gallery">
         <div class="gallery-main-wrap" data-zoom>
@@ -2565,7 +2631,7 @@ function showProductDetails(productId) {
       </div>
       ${!isPortal ? renderRecentlyViewedStrip(product.id) : ""}
     </div>
-  `);
+  `, productId);
 }
 
 function showOrderDetails(orderId) {
@@ -7385,10 +7451,22 @@ async function loadAdsAdmin() {
   ]);
   state._adsReport = report;
   state._adsQueue = queue.campaigns || [];
+  state._adsExternal = queue.external || [];
+  state._adsExternalError = queue.external_error || null;
   state._adsActions = actions.actions || [];
   state._adsAudience = audience.reco || null;
   state._adsConfig = config;
   state._adsCreatives = creatives.creatives || [];
+
+  // campaign_id → live delivery status, for the dashboard table's Status
+  // column (report rows come from snapshots, which carry no status).
+  state._adsStatusByCampaign = {};
+  for (const c of [...state._adsQueue, ...state._adsExternal]) {
+    if (c.meta_campaign_id) {
+      state._adsStatusByCampaign[c.meta_campaign_id] =
+        c.effective_status || (c.approval_state === "launched" ? "ACTIVE" : "PAUSED");
+    }
+  }
 
   if (statusPill) {
     const live = report.configured && queue.configured;
@@ -7397,7 +7475,7 @@ async function loadAdsAdmin() {
   }
   renderAdsConfig(state._adsConfig);
   renderAdsDashboard(report);
-  renderAdsQueue(state._adsQueue);
+  renderAdsQueue(state._adsQueue, state._adsExternal);
   renderAdsActions(state._adsActions);
   renderAdsAudience(state._adsAudience);
   renderAdsCreatives(state._adsCreatives);
@@ -7475,12 +7553,15 @@ function renderAdsConfig(config) {
   if (!host) return;
   const keys = (config && config.keys) || {};
   // [env var, label, required?]
+  // Required set mirrors hasMetaAds() in _shared/meta-ads.js — the backend
+  // runs on exactly three keys. IG actor + pixel improve placements/tracking
+  // but must not make Setup claim ads can't run.
   const rows = [
     ["META_SYSTEM_USER_TOKEN", "System user token", true],
     ["META_AD_ACCOUNT_ID", "Ad account ID", true],
     ["META_PAGE_ID", "Facebook Page ID", true],
-    ["META_INSTAGRAM_ACTOR_ID", "Instagram account ID", true],
-    ["META_PIXEL_ID", "Pixel ID", false],
+    ["META_INSTAGRAM_ACTOR_ID", "Instagram account ID — needed to launch IG ads, not for reporting", false],
+    ["META_PIXEL_ID", "Pixel ID (purchase tracking / ROAS)", false],
   ];
   const missingRequired = rows.filter(([k, , req]) => req && !keys[k]).length;
   if (pill) {
@@ -7560,20 +7641,114 @@ function populateAdsProductSelect() {
   if (products.length) select.dataset.filled = "1";
 }
 
+// Spend-vs-revenue trend chart for the dashboard, built from the report's
+// daily series (which previously only fed the tiny KPI sparklines). Pure
+// inline SVG — no chart library. Colors come from ads.css classes.
+function adsTrendChartSvg(daily) {
+  const days = (daily || []).filter((d) => d && d.date);
+  if (days.length < 2) return "";
+  const w = 660, h = 190, padL = 10, padR = 10, padT = 16, padB = 24;
+  const iw = w - padL - padR, ih = h - padT - padB;
+  const spend = days.map((d) => Number(d.spend || 0));
+  const rev = days.map((d) => Number(d.purchase_value || 0));
+  const max = Math.max(...spend, ...rev, 1);
+  const x = (i) => padL + (i / (days.length - 1)) * iw;
+  const y = (v) => padT + ih - (v / max) * ih;
+  const line = (arr) => arr.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = (arr) =>
+    `${x(0).toFixed(1)},${(padT + ih).toFixed(1)} ${line(arr)} ${x(arr.length - 1).toFixed(1)},${(padT + ih).toFixed(1)}`;
+  const fmtDay = (iso) => {
+    const d = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("en-PK", { month: "short", day: "numeric" });
+  };
+  return `
+    <svg class="ads-trend-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" role="img" aria-label="Daily spend versus revenue">
+      <line class="ads-chart-grid" x1="${padL}" y1="${padT}" x2="${w - padR}" y2="${padT}" />
+      <line class="ads-chart-grid" x1="${padL}" y1="${(padT + ih / 2).toFixed(1)}" x2="${w - padR}" y2="${(padT + ih / 2).toFixed(1)}" />
+      <line class="ads-chart-grid" x1="${padL}" y1="${padT + ih}" x2="${w - padR}" y2="${padT + ih}" />
+      <polygon class="ads-chart-rev-fill" points="${area(rev)}" />
+      <polyline class="ads-chart-rev" points="${line(rev)}" />
+      <polyline class="ads-chart-spend" points="${line(spend)}" />
+      <text class="ads-chart-label" x="${padL}" y="${padT - 5}">${esc(PKR.format(max))}</text>
+      <text class="ads-chart-label" x="${padL}" y="${h - 7}">${esc(fmtDay(days[0].date))}</text>
+      <text class="ads-chart-label" x="${w - padR}" y="${h - 7}" text-anchor="end">${esc(fmtDay(days[days.length - 1].date))}</text>
+    </svg>`;
+}
+
+// Best / worst creative call-outs — joins the report's per-creative stats
+// back to the library for the headline + thumbnail.
+function renderAdsCallouts(report) {
+  const host = qs("[data-ads-creative-callouts]");
+  if (!host) return;
+  const stats = (report && report.creativeStats) || {};
+  const creatives = state._adsCreatives || [];
+  const entries = Object.entries(stats)
+    .map(([ref, s]) => ({ ref, ...s, creative: creatives.find((c) => c.id === ref) || null }))
+    .filter((e) => (e.spend || 0) > 0);
+  if (!report?.configured || !entries.length) { host.hidden = true; host.innerHTML = ""; return; }
+  const best = [...entries].sort((a, b) => (b.roas || 0) - (a.roas || 0))[0];
+  // "Worst" only counts creatives with enough spend to judge (≥ Rs 500), and
+  // never the same creative as the winner.
+  const judged = entries.filter((e) => (e.spend || 0) >= 500 && e.ref !== best.ref);
+  const worst = judged.length ? [...judged].sort((a, b) => (a.roas || 0) - (b.roas || 0))[0] : null;
+  const card = (label, e, tone) => `
+    <article class="ads-callout ${tone}">
+      <span class="ads-callout-label">${esc(label)}</span>
+      <div class="ads-callout-body">
+        ${e.creative?.image_url ? `<img src="${safeUrl(imageUrlThumb(e.creative.image_url), "")}" alt="" loading="lazy" />` : `<div class="ads-callout-noimg">Ad</div>`}
+        <div>
+          <strong>${esc(e.creative?.headline || e.ref)}</strong>
+          <small>${PKR.format(e.spend || 0)} spent · ${(e.roas || 0).toFixed(2)}× ROAS · ${e.purchases || 0} sales</small>
+        </div>
+      </div>
+    </article>`;
+  host.hidden = false;
+  host.innerHTML = card("Top creative", best, "is-good") + (worst ? card("Needs attention", worst, "is-bad") : "");
+}
+
 function renderAdsDashboard(report) {
   const kpis = qs("[data-ads-kpis]");
   const rows = qs("[data-ads-campaign-rows]");
   const windowPill = qs("[data-ads-window]");
+  const chartHost = qs("[data-ads-chart]");
   const t = report.totals || {};
   if (windowPill) windowPill.textContent = report.configured ? `${report.window_days || 7}d` : "offline";
 
   if (kpis) {
     if (!report.configured) {
-      kpis.innerHTML = `<p class="portal-login-note">Meta isn't connected here yet. Add the META_* environment variables in Netlify, then refresh.</p>`;
+      // Self-diagnosing empty state: name the exact missing keys (from the
+      // Setup probe already in state) instead of a generic "add META_*" line.
+      const keys = state._adsConfig?.keys || {};
+      const required = [
+        ["META_SYSTEM_USER_TOKEN", "System user token"],
+        ["META_AD_ACCOUNT_ID", "Ad account ID"],
+        ["META_PAGE_ID", "Facebook Page ID"],
+      ];
+      const missing = required.filter(([k]) => !keys[k]);
+      const supabaseIssue = report.reason === "supabase_not_configured";
+      const detail = supabaseIssue
+        ? "Supabase isn't connected — SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are needed to store report snapshots."
+        : missing.length
+          ? `Missing required key${missing.length > 1 ? "s" : ""}: ${missing.map(([k]) => `<code>${esc(k)}</code>`).join(" · ")}`
+          : "All keys detected — if this persists, redeploy the site so Netlify functions pick up the new environment variables.";
+      kpis.innerHTML = `
+        <div class="ads-unconfigured">
+          <p><strong>Meta isn't connected yet.</strong></p>
+          <p>${detail}</p>
+          <div class="mini-actions">
+            <button class="button primary" type="button" data-action="ads-goto-setup">Open Setup checklist</button>
+          </div>
+        </div>`;
     } else {
       const daily = report.daily || [];
-      const card = (label, value, { tone = "", spark = null } = {}) =>
-        `<div class="today-stat ${tone}"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong>${spark || ""}</div>`;
+      const card = (label, value, { tone = "", spark = null, sub = "" } = {}) =>
+        `<div class="today-stat ${tone}"><span class="today-stat-label">${esc(label)}</span><strong>${esc(value)}</strong>${sub ? `<small class="today-stat-sub">${sub}</small>` : ""}${spark || ""}</div>`;
+      // Yesterday vs window average — is today's trajectory normal?
+      const last = daily.length ? daily[daily.length - 1] : null;
+      const avgSpend = daily.length ? daily.reduce((s, d) => s + Number(d.spend || 0), 0) / daily.length : 0;
+      const spendDelta = last && avgSpend > 0 ? ((Number(last.spend || 0) - avgSpend) / avgSpend) * 100 : null;
+      const deltaSub = spendDelta === null ? "" :
+        `<span class="${spendDelta >= 0 ? "delta-up" : "delta-down"}">${spendDelta >= 0 ? "+" : ""}${spendDelta.toFixed(0)}% vs ${daily.length}d avg</span>`;
       kpis.innerHTML = [
         card("Spend", PKR.format(t.spend || 0), { spark: sparklineSvg(daily.map((d) => d.spend)) }),
         card("Purchases", String(t.purchases || 0)),
@@ -7581,27 +7756,50 @@ function renderAdsDashboard(report) {
         card("ROAS", `${(t.roas || 0).toFixed(2)}×`, { tone: (t.roas || 0) >= 2 ? "tone-good" : "", spark: sparklineSvg(daily.map((d) => d.roas)) }),
         card("CPA", t.cpa ? PKR.format(t.cpa) : "—"),
         card("CTR", `${(t.ctr || 0).toFixed(2)}%`),
-      ].join("");
+        last ? card("Yesterday spend", PKR.format(last.spend || 0), { sub: deltaSub }) : "",
+        last ? card("Yesterday ROAS", `${(last.roas || 0).toFixed(2)}×`, { tone: (last.roas || 0) >= 2 ? "tone-good" : "" }) : "",
+      ].filter(Boolean).join("");
     }
   }
 
+  if (chartHost) {
+    const svg = report.configured ? adsTrendChartSvg(report.daily || []) : "";
+    chartHost.hidden = !svg;
+    chartHost.innerHTML = svg
+      ? `<div class="ads-chart-legend"><span class="lg-rev">Revenue</span><span class="lg-spend">Spend</span></div>${svg}`
+      : "";
+  }
+
+  renderAdsCallouts(report);
+
   if (rows) {
     const campaigns = report.campaigns || [];
+    // Live delivery status joined from the campaign sync (bot-built + Ads
+    // Manager) — snapshot rows alone carry no status.
+    const statusMap = state._adsStatusByCampaign || {};
+    const statusCell = (id) => {
+      const s = statusMap[id];
+      if (!s) return `<td>—</td>`;
+      const live = s === "ACTIVE";
+      const label = live ? "Live" : s === "PAUSED" ? "Paused" : s;
+      return `<td><span class="status-pill ${live ? "in_stock" : "preorder"}">${esc(label)}</span></td>`;
+    };
     rows.innerHTML = campaigns.length
       ? campaigns.map((c) => `
         <tr>
           <td>${esc(c.name || c.campaign_id)}</td>
+          ${statusCell(c.campaign_id)}
           <td>${PKR.format(c.spend || 0)}</td>
           <td>${c.purchases || 0}</td>
           <td>${PKR.format(c.purchase_value || 0)}</td>
           <td>${(c.roas || 0).toFixed(2)}×</td>
           <td>${c.cpa ? PKR.format(c.cpa) : "—"}</td>
         </tr>`).join("")
-      : `<tr><td colspan="6" class="portal-login-note">No campaign spend in this window yet.</td></tr>`;
+      : `<tr><td colspan="7" class="portal-login-note">No campaign spend in this window yet.</td></tr>`;
   }
 }
 
-function renderAdsQueue(campaigns) {
+function renderAdsQueue(campaigns, external = []) {
   const host = qs("[data-ads-campaign-queue]");
   const count = qs("[data-ads-queue-count]");
   const navBadge = qs('[data-ads-nav-badge="campaigns"]');
@@ -7609,19 +7807,64 @@ function renderAdsQueue(campaigns) {
   const waiting = campaigns.filter((c) => c.approval_state === "built");
   if (count) count.textContent = `${waiting.length} waiting`;
   if (navBadge) navBadge.textContent = waiting.length ? String(waiting.length) : "";
-  if (!campaigns.length) {
-    host.innerHTML = `<p class="portal-login-note">No campaigns built yet. Upload a creative, then build one from the Campaigns tab — it stays paused until you launch it.</p>`;
+  // Ads Manager campaigns render alongside bot-built ones so this page
+  // oversees the whole account. A sync hiccup shows as a note, never an
+  // empty board (the local queue is still valid).
+  const syncNote = state._adsExternalError
+    ? `<p class="portal-login-note">⚠︎ Couldn't sync Ads Manager campaigns: ${esc(state._adsExternalError)}</p>`
+    : "";
+  if (!campaigns.length && !external.length) {
+    host.innerHTML = syncNote || `<p class="portal-login-note">No campaigns yet. Upload a creative and build one here, or campaigns you create in Meta Ads Manager will appear automatically once Meta is connected.</p>`;
     return;
   }
-  // Filter chips (all / built / launched / paused).
+  // Filter chips (all / built / launched / paused) — external campaigns map
+  // ACTIVE→launched / else→paused, so the chips cover them too.
   const filter = state._adsQueueFilter || "all";
-  const filtered = filter === "all" ? campaigns : campaigns.filter((c) => c.approval_state === filter);
+  const merged = [...campaigns, ...external];
+  const filtered = filter === "all" ? merged : merged.filter((c) => c.approval_state === filter);
   if (!filtered.length) {
-    host.innerHTML = `<p class="portal-login-note">No ${esc(filter)} campaigns.</p>`;
+    host.innerHTML = `${syncNote}<p class="portal-login-note">No ${esc(filter)} campaigns.</p>`;
     return;
   }
   const stateClass = (s) => s === "launched" ? "in_stock" : s === "rejected" ? "soldout" : s === "paused" ? "preorder" : "preorder";
-  host.innerHTML = filtered.map((c) => {
+
+  // Card for a campaign created directly in Meta Ads Manager — no local row,
+  // so status/budget actions go straight to the Meta campaign id.
+  const externalCard = (c) => {
+    const active = c.effective_status === "ACTIVE";
+    const statusLabel = active ? "Live" : c.effective_status === "PAUSED" ? "Paused" : (c.effective_status || "Unknown");
+    const canEditBudget = c.budget_level !== "mixed";
+    const dataAttrs = `data-meta-id="${attr(c.meta_campaign_id)}" data-adset-id="${attr(c.meta_adset_id || "")}" data-budget-level="${attr(c.budget_level)}" data-name="${attr(c.name)}"`;
+    const budgetEditor = canEditBudget ? `
+      <div class="ads-budget-edit mini-actions">
+        <label class="ads-budget-label">Daily budget (PKR)
+          <input type="number" min="100" step="100" value="${Number(c.daily_budget_pkr || 0)}" data-ads-ext-budget-input="${attr(c.meta_campaign_id)}" />
+        </label>
+        <button class="button secondary" type="button" data-action="ads-ext-budget" ${dataAttrs}>Update budget</button>
+      </div>` : `<small class="ads-ext-note">Budget is set per ad set (${Number(c.adset_count || 0)} ad sets) — edit it in Ads Manager.</small>`;
+    return `
+      <article class="ugc-admin-card ads-external-card">
+        <div class="ugc-admin-body">
+          <div class="panel-title-row">
+            <strong>${esc(c.name)}</strong>
+            <span class="mini-actions">
+              <span class="ads-source-badge">Ads Manager</span>
+              <span class="status-pill ${active ? "in_stock" : "preorder"}">${esc(statusLabel)}</span>
+            </span>
+          </div>
+          <small>${c.daily_budget_pkr ? `${PKR.format(c.daily_budget_pkr)}/day · ` : ""}${esc(c.objective || "")}</small>
+          ${budgetEditor}
+          <div class="mini-actions">
+            ${active
+              ? `<button class="button secondary" type="button" data-action="ads-ext-status" data-next="PAUSED" ${dataAttrs}>Pause spend</button>`
+              : `<button class="button primary" type="button" data-action="ads-ext-status" data-next="ACTIVE" ${dataAttrs}>Resume spend</button>`}
+          </div>
+        </div>
+      </article>`;
+  };
+
+  host.innerHTML = syncNote + filtered.map((c) => {
+    if (c.source === "ads_manager") return externalCard(c);
     const built = c.approval_state === "built";
     const launched = c.approval_state === "launched";
     const paused = c.approval_state === "paused";
@@ -7639,7 +7882,10 @@ function renderAdsQueue(campaigns) {
         <div class="ugc-admin-body">
           <div class="panel-title-row">
             <strong>${esc(c.name)}</strong>
-            <span class="status-pill ${stateClass(c.approval_state)}">${esc(c.approval_state)}</span>
+            <span class="mini-actions">
+              <span class="ads-source-badge is-local">Built here</span>
+              <span class="status-pill ${stateClass(c.approval_state)}">${esc(c.approval_state)}</span>
+            </span>
           </div>
           <small>${PKR.format(c.daily_budget_pkr || 0)}/day · ${esc(c.objective || "OUTCOME_SALES")}${c.notes ? ` · ${esc(c.notes)}` : ""}</small>
           ${budgetEditor}
@@ -7780,6 +8026,48 @@ async function adsCampaignAction(action, id) {
     await loadAdsAdmin();
   } catch (err) {
     toast(`Could not ${action}: ${err.message || err}`);
+  }
+}
+
+// Pause/resume a campaign that lives only in Meta Ads Manager (no local
+// mirror row) — posts meta_status with the raw Meta campaign id.
+async function adsExternalStatus(ds) {
+  const next = ds.next === "ACTIVE" ? "ACTIVE" : "PAUSED";
+  if (next === "ACTIVE" && !confirm("Resume spend on this Ads Manager campaign?")) return;
+  try {
+    await apiFetch("/api/admin/ads-create", {
+      method: "POST",
+      body: JSON.stringify({ action: "meta_status", meta_campaign_id: ds.metaId, status: next, name: ds.name || "" }),
+    });
+    toast(next === "ACTIVE" ? "Spend resumed." : "Spend paused.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not update: ${err.message || err}`);
+  }
+}
+
+// Edit the daily budget of an Ads Manager campaign (campaign-level for CBO,
+// its single ad set otherwise). Server clamps to the guardrail ceiling.
+async function adsExternalBudget(ds) {
+  const input = qs(`[data-ads-ext-budget-input="${CSS.escape(ds.metaId || "")}"]`);
+  const value = Number(input?.value || 0);
+  if (!(value > 0)) { toast("Enter a daily budget above 0."); return; }
+  try {
+    const res = await apiFetch("/api/admin/ads-create", {
+      method: "POST",
+      body: JSON.stringify({
+        action: "meta_budget",
+        meta_campaign_id: ds.metaId,
+        meta_adset_id: ds.adsetId || "",
+        budget_level: ds.budgetLevel,
+        daily_budget_pkr: value,
+        name: ds.name || "",
+      }),
+    });
+    toast(res.clamped ? "Budget set (capped at your guardrail ceiling)." : "Daily budget updated.");
+    await loadAdsAdmin();
+  } catch (err) {
+    toast(`Could not update budget: ${err.message || err}`);
   }
 }
 
@@ -8615,44 +8903,71 @@ async function setRoute() {
   const fallbackView = document.body.dataset.page === "portal" ? "admin" : "home";
   const safeView = qs(`[data-view="${viewName}"]`) ? viewName : fallbackView;
 
-  const curtain = qs("#page-curtain");
   const isFirstLoad = _firstLoad;
+  _firstLoad = false;
 
-  if (!isFirstLoad && curtain) {
+  // Everything that actually swaps the visible route — shared by the three
+  // transition strategies below so they can't drift.
+  const applyRoute = () => {
+    qsa(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === safeView));
+    document.body.dataset.activeView = safeView;
+
+    // Per-route title + meta description for SEO.
+    const meta = ROUTE_META[safeView];
+    if (meta) {
+      document.title = meta.title;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", meta.description);
+    }
+
+    // Mark the active nav link.
+    qsa("[data-route]").forEach((link) => {
+      link.toggleAttribute("data-current", link.dataset.route === safeView);
+    });
+
+    if (safeView === "shop") {
+      syncShopFiltersFromRoute(params);
+      renderProducts();
+    }
+    // Live-data surfaces — fetch on entry. Each renderer no-ops gracefully and
+    // leaves the static fallback markup in place if the fetch fails.
+    if (safeView === "batches") renderBatchesPage();
+    if (safeView === "this-week") renderThisWeek();
+    setCartDrawerOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Strategy 1 — reduced motion or first paint: swap instantly, no waits.
+  if (isFirstLoad || reduceMotion) {
+    applyRoute();
+    _transitioning = false;
+    return;
+  }
+
+  // Strategy 2 — View Transitions API: a fast crossfade + rise (~350ms)
+  // instead of the ~900ms curtain sweep. The browser snapshots old/new
+  // states; the animation itself lives in CSS (::view-transition-*).
+  if (document.startViewTransition) {
+    try {
+      await document.startViewTransition(applyRoute).finished;
+    } catch {
+      // Transition was skipped or interrupted — the DOM swap still ran.
+    }
+    _transitioning = false;
+    return;
+  }
+
+  // Strategy 3 — curtain-sweep fallback for browsers without the API.
+  const curtain = qs("#page-curtain");
+  if (curtain) {
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(0%)";
     await new Promise((r) => setTimeout(r, 440));
   }
-  _firstLoad = false;
-
-  qsa(".view").forEach((view) => view.classList.toggle("active", view.dataset.view === safeView));
-  document.body.dataset.activeView = safeView;
-
-  // Per-route title + meta description for SEO.
-  const meta = ROUTE_META[safeView];
-  if (meta) {
-    document.title = meta.title;
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.setAttribute("content", meta.description);
-  }
-
-  // Mark the active nav link.
-  qsa("[data-route]").forEach((link) => {
-    link.toggleAttribute("data-current", link.dataset.route === safeView);
-  });
-
-  if (safeView === "shop") {
-    syncShopFiltersFromRoute(params);
-    renderProducts();
-  }
-  // Live-data surfaces — fetch on entry. Each renderer no-ops gracefully and
-  // leaves the static fallback markup in place if the fetch fails.
-  if (safeView === "batches") renderBatchesPage();
-  if (safeView === "this-week") renderThisWeek();
-  setCartDrawerOpen(false);
-  window.scrollTo({ top: 0 });
-
-  if (!isFirstLoad && curtain) {
+  applyRoute();
+  if (curtain) {
     await new Promise((r) => setTimeout(r, 16));
     curtain.style.transition = "transform 420ms cubic-bezier(0.76, 0, 0.24, 1)";
     curtain.style.transform = "translateX(101%)";
@@ -8662,6 +8977,68 @@ async function setRoute() {
   }
 
   _transitioning = false;
+}
+
+// ── Add-to-bag micro-interaction ──────────────────────────────────────
+// A small ghost of the product image arcs from the card (or PDP modal)
+// into the bag icon, then the count badge spring-pulses. Pure feedback —
+// cart state is already saved before any of this runs, so a dropped
+// animation can never lose an add. Skipped for reduced-motion users.
+
+function visibleBagButton() {
+  // Note: offsetParent is null for fixed-position ancestors (the mobile
+  // bottom bar), so visibility is judged by rendered box size instead.
+  return qsa('[data-action="open-cart"]').find((el) => {
+    const rect = el.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    return typeof el.checkVisibility !== "function" || el.checkVisibility();
+  }) || null;
+}
+
+function pulseBagBadge() {
+  qsa("[data-cart-count]").forEach((badge) => {
+    badge.classList.remove("bag-badge-pulse");
+    void badge.offsetWidth; // restart the animation on rapid re-adds
+    badge.classList.add("bag-badge-pulse");
+  });
+}
+
+// Returns the flight duration (ms) so the caller can sequence the drawer
+// open to land right after the ghost does; 0 means no animation ran.
+function flyToBag(productId) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  // Prefer the PDP modal image when it's open; else the first VISIBLE card
+  // image for this product — the same product can render in several views
+  // (home showcase + shop grid) and only the active view has a box.
+  const img = [
+    qs(".detail-modal .gallery-main"),
+    ...qsa(`.product-media[data-product-id="${CSS.escape(productId)}"] img`),
+  ].find((el) => el && el.getBoundingClientRect().width > 0);
+  const target = visibleBagButton();
+  if (!img || !target || typeof img.animate !== "function") return 0;
+  const from = img.getBoundingClientRect();
+  const to = target.getBoundingClientRect();
+  if (!from.width || !to.width) return 0;
+  const size = 56;
+  const ghost = document.createElement("img");
+  ghost.src = img.currentSrc || img.src;
+  ghost.alt = "";
+  ghost.className = "fly-to-bag-ghost";
+  ghost.style.left = `${from.left + from.width / 2 - size / 2}px`;
+  ghost.style.top = `${from.top + from.height / 2 - size / 2}px`;
+  document.body.appendChild(ghost);
+  const dx = to.left + to.width / 2 - (from.left + from.width / 2);
+  const dy = to.top + to.height / 2 - (from.top + from.height / 2);
+  const flight = 520;
+  const anim = ghost.animate([
+    { transform: "translate(0, 0) scale(1)", opacity: 0.95 },
+    { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 56}px) scale(0.65)`, opacity: 0.9, offset: 0.6 },
+    { transform: `translate(${dx}px, ${dy}px) scale(0.18)`, opacity: 0.35 },
+  ], { duration: flight, easing: "cubic-bezier(0.5, -0.1, 0.3, 1)" });
+  const cleanup = () => { ghost.remove(); pulseBagBadge(); };
+  anim.onfinish = cleanup;
+  anim.oncancel = cleanup;
+  return flight;
 }
 
 function addToCart(productId, options = {}) {
@@ -8693,10 +9070,19 @@ function addToCart(productId, options = {}) {
     toast(`${product.title} added. Opening checkout.`);
     navigateTo("checkout");
   } else if (isFreshAdd) {
-    setCartDrawerOpen(true);
+    // Ghost flies to the bag first; the drawer slides open as it lands.
+    const flight = flyToBag(productId);
+    if (flight) {
+      setTimeout(() => setCartDrawerOpen(true), flight - 80);
+    } else {
+      setCartDrawerOpen(true);
+    }
     toast(`${product.title} added to bag.`);
+  } else {
+    // Quiet increments (in-card stepper): no drawer pop or toast spam —
+    // just a badge pulse so the running count registers peripherally.
+    pulseBagBadge();
   }
-  // Quiet increments stay silent — the visible qty changing is feedback enough.
 }
 
 // Decrements a product line in the cart. Hitting "−" at qty 1 removes the
@@ -13124,6 +13510,9 @@ function wireEvents() {
     if (action === "ads-resume") return void adsCampaignAction("resume", target.dataset.adsId);
     if (action === "ads-reject") return void adsCampaignAction("reject", target.dataset.adsId);
     if (action === "ads-set-budget") return void adsSetBudget(target.dataset.adsId);
+    if (action === "ads-ext-status") return void adsExternalStatus(target.dataset);
+    if (action === "ads-ext-budget") return void adsExternalBudget(target.dataset);
+    if (action === "ads-goto-setup") { qs('[data-ads-nav="setup"]')?.click(); return; }
     if (action === "ads-optimize-preview") return void adsOptimizePreview();
     if (action === "ads-audience-refresh") return void adsAudienceRefresh();
     if (action === "close-modal") return closeModal();

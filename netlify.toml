@@ -60,6 +60,14 @@ for = "/ads.html"
 [headers.values]
   X-Robots-Tag = "noindex, nofollow"
 
+# Content-hashed minified bundles (built by check-static-app.mjs). The hash
+# in the filename changes whenever the content does, so these are safe to
+# cache forever — repeat visits skip the download entirely.
+[[headers]]
+for = "/assets/v/*"
+[headers.values]
+  Cache-Control = "public, max-age=31536000, immutable"
+
 [[redirects]]
 from = "/portal"
 to = "/portal.html"

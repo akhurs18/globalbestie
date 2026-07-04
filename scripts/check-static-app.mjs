@@ -1,4 +1,6 @@
-import { access, cp, mkdir, readFile, rm } from "node:fs/promises";
+import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { transform } from "esbuild";
 
 // Production guard for the Maychats Instagram bridge.
 //
@@ -97,6 +99,48 @@ try {
   await rm(preservedBatchDir, { recursive: true, force: true });
 } catch {
   await rm(preservedBatchDir, { recursive: true, force: true });
+}
+
+// ── Minify + content-hash the big assets ────────────────────────────────
+// app.js (~700 KB) and styles.css (~450 KB) ship unminified otherwise —
+// several seconds of extra download on Pakistani mobile connections.
+// Minified copies land in dist/assets/v/<name>-<hash8>.min.<ext> (that
+// directory gets immutable cache headers in netlify.toml), and the dist
+// HTML files are rewritten to point at them. Source files keep their
+// `?v=` cache-bust workflow; the originals also stay in dist/assets as a
+// fallback for anything still referencing the plain paths (e.g. sw.js).
+const hashedAssets = [
+  { src: "assets/app.js", loader: "js", pattern: /\.\/assets\/app\.js(\?v=[^"']*)?/g },
+  { src: "assets/styles.css", loader: "css", pattern: /\.\/assets\/styles\.css(\?v=[^"']*)?/g },
+  { src: "assets/ads.css", loader: "css", pattern: /\.\/assets\/ads\.css(\?v=[^"']*)?/g },
+];
+
+await mkdir("dist/assets/v", { recursive: true });
+const rewrites = [];
+for (const { src, loader, pattern } of hashedAssets) {
+  const code = await readFile(src, "utf8");
+  const { code: minified } = await transform(code, {
+    loader,
+    minify: true,
+    // app.js runs as-is in the browser (no bundler) — keep syntax modern,
+    // just strip whitespace/comments and shorten locals.
+    target: "es2020",
+  });
+  const hash = createHash("sha256").update(minified).digest("hex").slice(0, 8);
+  const base = src.split("/").pop().replace(/\.(js|css)$/, "");
+  const ext = loader === "js" ? "js" : "css";
+  const outName = `${base}-${hash}.min.${ext}`;
+  await writeFile(`dist/assets/v/${outName}`, minified);
+  rewrites.push({ pattern, replacement: `./assets/v/${outName}` });
+  console.log(`[build] ${src} → dist/assets/v/${outName} (${(code.length / 1024).toFixed(0)} KB → ${(minified.length / 1024).toFixed(0)} KB)`);
+}
+
+for (const page of ["dist/index.html", "dist/portal.html", "dist/ads.html"]) {
+  let markup = await readFile(page, "utf8");
+  for (const { pattern, replacement } of rewrites) {
+    markup = markup.replace(pattern, replacement);
+  }
+  await writeFile(page, markup);
 }
 
 console.log("Static app checks passed and dist/ was prepared.");

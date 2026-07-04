@@ -6,7 +6,7 @@
 // Bump CACHE_VERSION when index.html / assets change shape so users get
 // the new shell.
 
-const CACHE_VERSION = "gb-v4";
+const CACHE_VERSION = "gb-v5";
 const SHELL_URLS = [
   "/",
   "/index.html",
@@ -49,7 +49,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Assets are fixed filenames, not content-hashed, so use network-first.
+  // Hashed bundles under /assets/v/ are immutable — cache-first is safe
+  // and skips the network on repeat loads. Everything else in /assets/
+  // (logo, unhashed fallbacks) keeps network-first.
+  if (url.pathname.startsWith("/assets/v/")) {
+    event.respondWith(cacheFirst(req));
+    return;
+  }
   if (url.pathname.startsWith("/assets/")) {
     event.respondWith(networkFirst(req));
     return;

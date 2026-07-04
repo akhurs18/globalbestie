@@ -647,3 +647,83 @@ body[data-page="ads"] .ad-creative-stats span.good { background: var(--ad-ok-bg)
 @media (prefers-reduced-motion: reduce) {
   body[data-page="ads"] * { animation: none !important; transition-duration: 0.01ms !important; }
 }
+
+/* ── Dashboard v2: trend chart, callouts, oversight badges ─────────────── */
+
+/* Spend-vs-revenue trend chart (SVG from adsTrendChartSvg). */
+body[data-page="ads"] .ads-chart-wrap {
+  margin: 14px 0 4px;
+  padding: 14px 14px 8px;
+  background: var(--ad-surface);
+  border: 1px solid var(--ad-border);
+  border-radius: var(--ad-radius);
+  box-shadow: var(--ad-shadow-sm);
+}
+body[data-page="ads"] .ads-trend-chart { display: block; width: 100%; height: auto; }
+body[data-page="ads"] .ads-chart-grid { stroke: var(--ad-border); stroke-width: 1; }
+body[data-page="ads"] .ads-chart-rev { fill: none; stroke: var(--ad-ok-fg); stroke-width: 2; stroke-linejoin: round; }
+body[data-page="ads"] .ads-chart-rev-fill { fill: rgba(22, 163, 74, 0.08); }
+body[data-page="ads"] .ads-chart-spend { fill: none; stroke: var(--ad-accent); stroke-width: 2; stroke-dasharray: none; stroke-linejoin: round; }
+body[data-page="ads"] .ads-chart-label { fill: var(--ad-faint); font-size: 11px; font-weight: 600; }
+body[data-page="ads"] .ads-chart-legend { display: flex; gap: 14px; margin-bottom: 6px; font-size: 0.78rem; font-weight: 600; color: var(--ad-muted); }
+body[data-page="ads"] .ads-chart-legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+body[data-page="ads"] .ads-chart-legend .lg-rev::before { background: var(--ad-ok-fg); }
+body[data-page="ads"] .ads-chart-legend .lg-spend::before { background: var(--ad-accent); }
+
+/* Best / worst creative call-outs. */
+body[data-page="ads"] .ads-callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 4px; }
+body[data-page="ads"] .ads-callout {
+  padding: 12px;
+  border-radius: var(--ad-radius);
+  border: 1px solid var(--ad-border);
+  background: var(--ad-surface);
+  box-shadow: var(--ad-shadow-sm);
+}
+body[data-page="ads"] .ads-callout.is-good { border-left: 3px solid var(--ad-ok-fg); }
+body[data-page="ads"] .ads-callout.is-bad { border-left: 3px solid var(--ad-warn-fg); }
+body[data-page="ads"] .ads-callout-label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ad-faint); margin-bottom: 8px; }
+body[data-page="ads"] .ads-callout-body { display: flex; gap: 10px; align-items: center; }
+body[data-page="ads"] .ads-callout-body img,
+body[data-page="ads"] .ads-callout-noimg { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 1px solid var(--ad-border); flex: 0 0 48px; }
+body[data-page="ads"] .ads-callout-noimg { display: grid; place-items: center; background: var(--ad-neutral-bg); color: var(--ad-faint); font-size: 0.72rem; font-weight: 700; }
+body[data-page="ads"] .ads-callout-body strong { display: block; font-size: 0.9rem; letter-spacing: -0.01em; }
+body[data-page="ads"] .ads-callout-body small { color: var(--ad-muted); font-size: 0.78rem; }
+
+/* Yesterday-vs-average delta in KPI cards. */
+body[data-page="ads"] .today-stat-sub { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--ad-muted); }
+body[data-page="ads"] .today-stat-sub .delta-up { color: var(--ad-ok-fg); font-weight: 600; }
+body[data-page="ads"] .today-stat-sub .delta-down { color: var(--ad-warn-fg); font-weight: 600; }
+
+/* Source badges on campaign cards (Built here vs Ads Manager). */
+body[data-page="ads"] .ads-source-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--ad-neutral-bg);
+  color: var(--ad-muted);
+  border: 1px solid var(--ad-border);
+}
+body[data-page="ads"] .ads-source-badge.is-local { background: var(--ad-accent-soft); color: var(--ad-accent); border-color: transparent; }
+body[data-page="ads"] .ads-external-card { border-left: 3px solid var(--ad-border-strong); }
+body[data-page="ads"] .ads-ext-note { display: block; margin: 6px 0; color: var(--ad-faint); font-size: 0.78rem; }
+
+/* Self-diagnosing unconfigured state on the dashboard. */
+body[data-page="ads"] .ads-unconfigured {
+  grid-column: 1 / -1;
+  padding: 18px;
+  border: 1px dashed var(--ad-border-strong);
+  border-radius: var(--ad-radius);
+  background: var(--ad-surface-2);
+}
+body[data-page="ads"] .ads-unconfigured p { margin-bottom: 8px; color: var(--ad-muted); }
+body[data-page="ads"] .ads-unconfigured p:first-child { color: var(--ad-text); }
+body[data-page="ads"] .ads-unconfigured code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--ad-neutral-bg);
+  font-size: 0.8rem;
+}

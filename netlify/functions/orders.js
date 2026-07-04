@@ -156,6 +156,15 @@ async function repriceItems(items) {
     products = [];
   }
   const byId = new Map(products.map((p) => [p.id, p]));
+  // Settings supply fx_rate/markup_rate fallbacks for products that don't
+  // pin their own — without this, reprice used the hardcoded defaults while
+  // the catalog displayed prices computed with the store's configured rates.
+  let settings = {};
+  try {
+    settings = await getSettings();
+  } catch {
+    settings = {};
+  }
   const notes = [];
   // Overselling guard — collected here, enforced by the POST handler. An
   // in-stock line can't be ordered for more units than are on hand. Preorder
@@ -196,7 +205,7 @@ async function repriceItems(items) {
     }
     // Server-authoritative price via the one shared pricing helper. In-stock
     // items resolve to their direct PKR; preorder items derive from USD retail.
-    const canonical = customerPricePkr(product);
+    const canonical = customerPricePkr(product, settings);
     const clientPrice = Number(item.unit_price_pkr || 0);
     // Allow ±1% drift to absorb rounding. Anything else, server price wins.
     const drift = clientPrice > 0 ? Math.abs(canonical - clientPrice) / canonical : 1;

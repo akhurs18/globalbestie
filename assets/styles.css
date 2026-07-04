@@ -4957,7 +4957,9 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
 
 .active-filter-count {
   margin-left: 4px;
-  color: var(--rose);
+  /* --pink-3, not --rose: the count sits on light surfaces (the trigger
+     bar is a light wash) and the pale rose token vanishes there. */
+  color: var(--pink-3);
   font-weight: 800;
 }
 
@@ -4969,8 +4971,11 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
     z-index: 8;
     margin: 6px 0 12px;
     padding: 6px 0;
-    background: rgba(7, 5, 7, 0.92);
+    /* Light rose wash — the old near-black rgba(7,5,7) band was a leftover
+       from the dark theme and read as a harsh stripe on the light page. */
+    background: rgba(253, 250, 251, 0.9);
     backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
   }
   .mobile-filter-trigger .button {
     width: 100%;
@@ -5897,12 +5902,31 @@ button[type="submit"][data-busy]::after {
   border-left: 1px solid var(--line);
   box-shadow: var(--shadow);
   transform: translateX(105%);
-  transition: transform 260ms var(--ease);
+  /* Long decelerating ease (no positional overshoot — the drawer is
+     right-anchored, so overshooting past 0 would expose a gap). The
+     springy feel comes from the line-item stagger below instead. */
+  transition: transform 440ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .cart-drawer.open {
   transform: translateX(0);
 }
+
+/* Line items cascade in as the drawer lands — each row rises 10px with a
+   45ms offset, capped at the 6th row so long carts don't feel sluggish. */
+@keyframes cart-line-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cart-drawer.just-opened .cart-swipe-shell {
+  animation: cart-line-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(1) { animation-delay: 90ms; }
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(2) { animation-delay: 135ms; }
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(3) { animation-delay: 180ms; }
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(4) { animation-delay: 225ms; }
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(5) { animation-delay: 270ms; }
+.cart-drawer.just-opened .cart-swipe-shell:nth-child(n + 6) { animation-delay: 315ms; }
 
 .drawer-header {
   justify-content: space-between;
@@ -7920,6 +7944,12 @@ body::after {
   .shipment-grid,
   .shipment-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Three collection tiles in this 2-col band left an empty cell next to
+     the third — let an odd last tile span the full row instead. */
+  .collection-grid .collection-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .admin-table-wrap {
@@ -17375,3 +17405,153 @@ body[data-page="portal"] .money-bar-legend .money-bar-key { background: transpar
    generated hue (belt-and-suspenders with the lower avatar lightness). */
 body[data-page="portal"] .owner-chip { text-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.35); }
 
+
+/* ═══════════════════════════════════════ VIEW TRANSITIONS
+   SPA route changes run through document.startViewTransition (app.js
+   setRoute) when the browser supports it — a ~350ms crossfade-and-rise
+   that replaces the 900ms curtain sweep. The curtain remains the JS
+   fallback for browsers without the API. Reduced-motion users skip both
+   (guarded in JS; the global reduced-motion block above also clamps
+   these animations to 1ms as belt-and-suspenders). */
+::view-transition-old(root) {
+  animation: vt-fade-out 200ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: vt-rise-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes vt-fade-out {
+  to { opacity: 0; }
+}
+@keyframes vt-rise-in {
+  from { opacity: 0; transform: translateY(14px); }
+}
+
+/* Shared-element morph: the tapped product-card image grows into the PDP
+   modal's gallery image (view-transition-name: product-hero, tagged in
+   openModalWithProductMorph). object-fit keeps the snapshot from
+   stretching while the aspect ratio changes mid-flight. */
+::view-transition-group(product-hero) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(product-hero),
+::view-transition-new(product-hero) {
+  height: 100%;
+  object-fit: cover;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+/* ═══════════════════════════════════════ ADD-TO-BAG MICRO-INTERACTION
+   Ghost thumbnail that arcs from the product image into the bag icon
+   (flyToBag in app.js), then the count badge spring-pulses. */
+.fly-to-bag-ghost {
+  position: fixed;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 240;
+  pointer-events: none;
+  box-shadow: 0 10px 26px rgba(43, 20, 32, 0.28), 0 0 0 2px rgba(255, 255, 255, 0.85);
+  will-change: transform, opacity;
+}
+
+@keyframes bag-badge-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+.bag-badge-pulse {
+  display: inline-block;
+  animation: bag-badge-pop 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ═══════════════════════════════════════ TRACKING JOURNEY BAND
+   Decorative USA → Pakistan route above the stage list on /track. The
+   plane sits at --journey % of the route (set inline from the order's
+   stage index); the filled portion of the line grows with it and the
+   unfilled dashes drift to suggest motion. The global reduced-motion
+   block clamps the drift + bob to 1ms. */
+.journey-band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.journey-node { white-space: nowrap; }
+
+.journey-route {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--line-strong) 0 8px,
+    transparent 8px 16px
+  );
+  animation: journey-dash-drift 1.6s linear infinite;
+}
+
+/* Solid progress fill under the plane. */
+.journey-route::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--journey, 0%);
+  background: linear-gradient(90deg, var(--pink), var(--pink-3));
+  transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.journey-plane {
+  position: absolute;
+  top: 50%;
+  left: var(--journey, 0%);
+  transform: translate(-50%, -50%);
+  font-size: 1.05rem;
+  color: var(--pink-3);
+  transition: left 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: journey-plane-bob 2.6s ease-in-out infinite;
+  text-shadow: 0 2px 8px rgba(201, 117, 130, 0.35);
+}
+
+@keyframes journey-dash-drift {
+  to { background-position: 16px 0; }
+}
+
+@keyframes journey-plane-bob {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -3px; }
+}
+
+/* ═══════════════════════════════════════ CART / CHECKOUT LINE THUMBS
+   Product image on each bag line — rendered in both the cart drawer and
+   the checkout order summary (shared markup in renderCart). */
+.cart-line-thumb {
+  flex: 0 0 54px;
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  align-self: flex-start;
+}
+
+.cart-line-thumb-empty {
+  display: grid;
+  place-items: center;
+  color: var(--pink-2);
+  font-size: 1.1rem;
+}
+
+/* Let the text block shrink/truncate now that a fixed thumb sits first. */
+.cart-line .cart-line-thumb + div {
+  flex: 1;
+  min-width: 0;
+}

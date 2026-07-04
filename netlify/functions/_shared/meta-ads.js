@@ -327,6 +327,30 @@ export async function setAdSetDailyBudget(adsetId, dailyBudgetPkr) {
   });
 }
 
+// CBO campaigns hold the daily budget on the campaign object itself (ad sets
+// under them have none) — same POST shape as the ad-set version.
+export async function setCampaignDailyBudget(campaignId, dailyBudgetPkr) {
+  return metaGraph(`/${campaignId}`, {
+    method: "POST",
+    body: { daily_budget: toMinorUnits(dailyBudgetPkr) },
+  });
+}
+
+// ── Campaign inventory (oversight) ─────────────────────────────────────────
+// Every campaign on the ad account — including ones created directly in Ads
+// Manager, which the local meta_ad_campaigns table knows nothing about. The
+// nested adsets edge tells us where the budget lives: on the campaign (CBO)
+// or on its ad sets.
+export async function listAccountCampaigns() {
+  const data = await metaGraph(`/${adAccountPath()}/campaigns`, {
+    params: {
+      fields: "id,name,objective,status,effective_status,daily_budget,lifetime_budget,created_time,updated_time,adsets.limit(5){id,name,daily_budget,effective_status}",
+      limit: 100,
+    },
+  });
+  return data?.data || [];
+}
+
 // Read current daily budget (in PKR major units) for guardrail checks.
 export async function getAdSetBudget(adsetId) {
   const data = await metaGraph(`/${adsetId}`, { params: { fields: "daily_budget,name,effective_status" } });

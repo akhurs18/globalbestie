@@ -5,13 +5,23 @@
 //
 // Two pricing modes:
 //   • In-stock  — priced directly in PKR via customer_price_pkr (already in
-//                 Pakistan, no import math).
+//                 Pakistan, no import math). Used verbatim (ceil only) —
+//                 the team sets these by hand and we respect exact control.
 //   • Preorder  — derived from USD retail:
 //                   retailPkr = usd × fx
-//                   total     = retailPkr + retailPkr×markup + shipping  (ceil)
+//                   total     = retailPkr + retailPkr×markup + shipping,
+//                 rounded UP to a clean ₨100 "luxury" figure — the same
+//                 roundLuxuryPrice() the storefront applies, so the order
+//                 total always matches the price the customer browsed.
 //
 // Product fields win over settings fallbacks (fx_rate, markup_rate); settings
 // supply the defaults when a product hasn't pinned its own.
+
+export function roundLuxuryPrice(amount) {
+  const n = Number(amount) || 0;
+  if (n <= 0) return 0;
+  return Math.ceil(n / 100) * 100;
+}
 
 export function customerPricePkr(product = {}, settings = {}) {
   const direct = Number(product.customer_price_pkr || 0);
@@ -20,7 +30,7 @@ export function customerPricePkr(product = {}, settings = {}) {
   const markup = Number(product.markup_rate ?? settings.markup_rate ?? 0.25);
   const retailPkr = Number(product.usa_price_usd || 0) * fx;
   const shipping = Number(product.shipping_pkr || 0);
-  return Math.ceil(retailPkr + retailPkr * markup + shipping);
+  return roundLuxuryPrice(retailPkr + retailPkr * markup + shipping);
 }
 
 // Suggested price for a USD retail figure when there's no product row yet

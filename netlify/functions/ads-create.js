@@ -17,8 +17,8 @@
 
 import { getSettings, hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
 import {
-  createAd, createAdCreative, createAdSet, createCampaign,
-  hasMetaAds, setAdSetDailyBudget, setEntityStatus,
+  createAd, createAdCreative, createAdSet, createCampaign, fromMinorUnits,
+  hasMetaAds, listAccountCampaigns, setAdSetDailyBudget, setCampaignDailyBudget, setEntityStatus,
 } from "./_shared/meta-ads.js";
 
 const SITE_ORIGIN = () => globalThis.Netlify?.env?.get("PUBLIC_SITE_ORIGIN") || "https://globalbestie.com";
@@ -79,11 +79,55 @@ export default async (req) => {
 
   try {
     if (req.method === "GET") {
-      if (!hasSupabase()) return json({ campaigns: [], configured: false });
+      if (!hasSupabase()) return json({ campaigns: [], external: [], configured: false });
       const campaigns = await supabase(
         "/rest/v1/meta_ad_campaigns?select=*&order=created_at.desc&limit=100"
       );
-      return json({ campaigns, configured: true });
+
+      // Oversight: also list campaigns created directly in Ads Manager, so
+      // the portal manages the WHOLE account, not just bot-built campaigns.
+      // Campaigns we already mirror locally are excluded by meta_campaign_id.
+      let external = [];
+      let externalError = null;
+      if (hasMetaAds()) {
+        try {
+          const known = new Set(campaigns.map((c) => c.meta_campaign_id).filter(Boolean));
+          const all = await listAccountCampaigns();
+          external = all
+            .filter((c) => !known.has(c.id) && !["DELETED", "ARCHIVED"].includes(c.effective_status))
+            .map((c) => {
+              const adsets = c.adsets?.data || [];
+              // Budget lives on the campaign (CBO) or on a single ad set —
+              // multi-adset budgets can't be edited from one field, so the UI
+              // gets budget_level to decide whether to show the editor.
+              const budgetLevel = c.daily_budget
+                ? "campaign"
+                : adsets.length === 1 && adsets[0].daily_budget ? "adset" : "mixed";
+              const budgetMinor = Number(
+                c.daily_budget || (budgetLevel === "adset" ? adsets[0].daily_budget : 0) || 0
+              );
+              return {
+                id: `EXT-${c.id}`,
+                source: "ads_manager",
+                meta_campaign_id: c.id,
+                meta_adset_id: budgetLevel === "adset" ? adsets[0].id : null,
+                name: c.name,
+                objective: c.objective || "",
+                daily_budget_pkr: budgetMinor ? fromMinorUnits(budgetMinor) : 0,
+                budget_level: budgetLevel,
+                adset_count: adsets.length,
+                approval_state: c.effective_status === "ACTIVE" ? "launched" : "paused",
+                effective_status: c.effective_status,
+                created_at: c.created_time || null,
+                updated_at: c.updated_time || null,
+              };
+            });
+        } catch (error) {
+          // Meta being briefly unreachable shouldn't blank the local queue.
+          externalError = error.message;
+        }
+      }
+      return json({ campaigns, external, external_error: externalError, configured: true });
     }
 
     if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
@@ -310,6 +354,52 @@ export default async (req) => {
         body: JSON.stringify({ approval_state: "rejected", updated_at: new Date().toISOString() }),
       });
       return json({ campaign: saved });
+    }
+
+    // ── META_STATUS — pause/resume a campaign created in Ads Manager ───────
+    // Operates directly on the Meta campaign id (no local mirror row exists).
+    if (action === "meta_status") {
+      const campaignId = String(rest.meta_campaign_id || "");
+      const status = rest.status === "ACTIVE" ? "ACTIVE" : "PAUSED";
+      if (!campaignId) return json({ error: "meta_campaign_id is required." }, { status: 400 });
+      if (!hasMetaAds()) return json({ error: "Meta is not configured." }, { status: 400 });
+      await setEntityStatus(campaignId, status);
+      await logAction({
+        action: status === "ACTIVE" ? "resume" : "pause", level: "campaign",
+        entity_id: campaignId, entity_name: rest.name || campaignId,
+        reason: "operator_external_control",
+        field: "status", value_before: status === "ACTIVE" ? "PAUSED" : "ACTIVE", value_after: status,
+        performed_by: rest.performed_by || "operator", dry_run: false,
+      });
+      return json({ ok: true, meta_campaign_id: campaignId, status, configured: true });
+    }
+
+    // ── META_BUDGET — edit an Ads Manager campaign's daily budget ──────────
+    // budget_level from the GET sync decides the target: the campaign object
+    // (CBO) or its single ad set. Clamped to the same guardrail cap as build.
+    if (action === "meta_budget") {
+      const campaignId = String(rest.meta_campaign_id || "");
+      const adsetId = String(rest.meta_adset_id || "");
+      const level = rest.budget_level === "adset" ? "adset" : "campaign";
+      if (!campaignId && !adsetId) return json({ error: "meta_campaign_id or meta_adset_id is required." }, { status: 400 });
+      if (!hasMetaAds()) return json({ error: "Meta is not configured." }, { status: 400 });
+      const cap = Number(settings.ads_max_daily_budget_pkr || 5000);
+      const requested = Number(rest.daily_budget_pkr || 0);
+      if (!(requested > 0)) return json({ error: "A positive daily budget is required." }, { status: 400 });
+      const nextBudget = Math.min(requested, cap);
+      if (level === "adset" && adsetId) {
+        await setAdSetDailyBudget(adsetId, nextBudget);
+      } else {
+        await setCampaignDailyBudget(campaignId, nextBudget);
+      }
+      await logAction({
+        action: "set_budget", level,
+        entity_id: level === "adset" ? adsetId : campaignId, entity_name: rest.name || campaignId,
+        reason: "operator_external_budget",
+        field: "daily_budget", value_before: String(rest.previous_budget_pkr ?? ""), value_after: String(nextBudget),
+        performed_by: rest.performed_by || "operator", dry_run: false,
+      });
+      return json({ ok: true, daily_budget_pkr: nextBudget, clamped: requested > cap, configured: true });
     }
 
     return json({ error: "Unknown action." }, { status: 400 });

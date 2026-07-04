@@ -1,58 +1,16 @@
-// Phase 2 — Meta ad creative queue.
+// Phase 2 — Meta ad creative library (operator-supplied media + copy).
 //
-// Holds the image+copy for ads before any of it goes live on Meta. The bot (or
-// an operator) drops creatives here; ads-create.js later promotes a 'ready' one
-// into a real campaign. Nothing in this function touches Meta or spends money.
+// Holds the image+copy for ads before any of it goes live on Meta. The
+// operator uploads media and writes copy on the ads page; ads-create.js later
+// promotes a 'ready' one into a real campaign. Nothing in this function
+// touches Meta or spends money. (The old template-based `generate` action was
+// removed 2026-07 — the team supplies all creative by hand.)
 //
 //   GET  /api/admin/ads-creative                 → list the queue
 //   POST /api/admin/ads-creative {action:'add', creative}      → save a creative
-//   POST /api/admin/ads-creative {action:'generate', product_id} → draft copy
 //   POST /api/admin/ads-creative {action:'status', id, status}  → ready/archive
-//
-// `generate` produces channel-ready copy from the product row using simple,
-// deterministic templates (no external AI call, so it runs 24/7 on a schedule
-// or on demand). Swap the body of draftCopy() for a Claude API call if you want
-// live generation — the queue contract stays identical.
 
-import { getAllProducts, hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
-import { customerPricePkr } from "./_shared/pricing.js";
-
-function pkr(n) {
-  return `Rs ${Math.round(Number(n || 0)).toLocaleString("en-PK")}`;
-}
-
-// Deterministic copy templates. Three angles so an operator can A/B them.
-function draftCopy(product) {
-  const price = customerPricePkr(product);
-  const brand = product.brand || "USA";
-  const name = product.title || "this piece";
-  const isPreorder = (product.stock_mode || "preorder") === "preorder";
-  const eta = isPreorder
-    ? `Preorder now — arrives in about ${product.preorder_weeks || 4} weeks.`
-    : `In stock in Pakistan — ships now.`;
-
-  const angles = [
-    {
-      headline: `${brand} ${product.category || "find"}, priced in PKR`,
-      primary_text:
-        `Authentic ${name} sourced direct from the USA. Final price in rupees — ${pkr(price)}, no hidden customs surprises. ${eta} DM-free checkout on our site. 🇵🇰`,
-      description: `Authenticity-first packaging • Clear PKR pricing`,
-    },
-    {
-      headline: `Stop overpaying local boutiques`,
-      primary_text:
-        `Besties, the ${name} you've been eyeing — we get it from the US so you pay ${pkr(price)} all-in, not double at a local shop. ${eta} Tap to lock yours.`,
-      description: `Real USA sourcing • ${product.category || "Curated"}`,
-    },
-    {
-      headline: `${name} — the bestie way`,
-      primary_text:
-        `Genuine ${brand}, quoted in PKR, delivered to your door. ${pkr(price)} all-in. ${eta} We confirm everything on WhatsApp before sourcing.`,
-      description: `Trusted by besties across Pakistan`,
-    },
-  ];
-  return angles;
-}
+import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
 
 export default async (req) => {
   if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
@@ -69,21 +27,6 @@ export default async (req) => {
     if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
 
     const { action, ...rest } = await req.json();
-
-    // Draft copy for a product and return options (does NOT save). The portal
-    // shows these; the operator picks one and re-POSTs it as `add`.
-    if (action === "generate") {
-      const products = await getAllProducts();
-      const product = products.find((p) => p.id === rest.product_id);
-      if (!product) return json({ error: "Product not found." }, { status: 404 });
-      return json({
-        product_id: product.id,
-        image_url: product.image_url || "",
-        destination_url: `/product/${product.id}`,
-        options: draftCopy(product),
-        configured: hasSupabase(),
-      });
-    }
 
     if (action === "add") {
       const c = rest.creative || rest;
