@@ -18,7 +18,7 @@ const ALLOWED_TYPES = new Set([
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — product photography headroom
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
 
   try {

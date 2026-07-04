@@ -5,7 +5,7 @@
 import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, { status: 405 });
   try {
     const url = new URL(req.url);

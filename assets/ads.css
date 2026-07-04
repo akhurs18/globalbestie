@@ -233,6 +233,27 @@ body[data-page="ads"] .kicker {
 }
 body[data-page="ads"] .portal-login-note,
 body[data-page="ads"] .broadcast-helper { color: var(--ad-muted); font-size: 0.88rem; line-height: 1.55; }
+
+/* Friendly empty states for Campaigns / Creatives instead of a bare line. */
+body[data-page="ads"] .ads-empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 36px 24px;
+  border: 1px dashed var(--ad-line, rgba(20, 20, 31, 0.14));
+  border-radius: 14px;
+  background: var(--ad-surface-2);
+}
+body[data-page="ads"] .ads-empty-glyph { font-size: 1.8rem; line-height: 1; }
+body[data-page="ads"] .ads-empty strong { font-size: 1rem; }
+body[data-page="ads"] .ads-empty p {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--ad-muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
 body[data-page="ads"] .broadcast-helper code {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.82em;

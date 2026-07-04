@@ -62,7 +62,7 @@ export const adsAudience = async (req) => {
   const isScheduled =
     req.headers.get("x-netlify-functions-source") === "schedule" ||
     url.searchParams.get("scheduled") === "1";
-  if (!isScheduled && !requireAdmin(req)) {
+  if (!isScheduled && !(await requireAdmin(req))) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
   if (!hasSupabase()) return json({ configured: false, reason: "supabase_not_configured" });

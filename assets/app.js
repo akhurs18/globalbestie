@@ -1282,10 +1282,10 @@ function productCard(product, options = {}) {
           <span class="price">${PKR.format(parts.total)}</span>
         </div>
         ${!isPortal && product.stock_mode === "preorder" ? `
-          <div class="product-payment-chips" aria-label="Preorder payment split">
-            <span><small>Advance</small>${PKR.format(advanceDue)}</span>
-            <span><small>Balance on arrival</small>${PKR.format(balanceDue)}</span>
-          </div>
+          <p class="product-payment-line" aria-label="Preorder payment split">
+            <span class="pay-advance">${PKR.format(advanceDue)} advance</span>
+            <span class="pay-rest">· 50% balance on arrival</span>
+          </p>
         ` : ""}
         ${isPortal ? `<p class="product-description-line">${esc(product.description || "")}</p>` : ""}
         <div class="product-meta ${isPortal ? "" : "public-listing"}" aria-label="${isPortal ? "Internal pricing details" : "Product details"}">
@@ -1828,11 +1828,16 @@ function renderCart() {
       : isCustomQuote
         ? `Custom quote · Qty ${line.quantity}`
         : `${line.product.stock_mode === "preorder" ? "Preorder" : "In stock"} · Qty ${line.quantity}${line.variant ? ` · ${esc(line.variant)}` : ""}`;
+    // Shoes / makeup / fragrance can't be dispatched without a size/shade, so
+    // the field is flagged required right in the drawer (matches the checkout
+    // guard) — no more discovering it only when "Place order" stalls.
+    const variantRequired = ["shoes", "makeup", "fragrance"].includes(line.product.category);
+    const variantFilled = Boolean(line.variant && line.variant.trim());
     const variantBlock = (isSourcing || isCustomQuote)
       ? (line.variant ? `<small>Variant: ${esc(line.variant)}</small>` : "")
-      : `<label class="cart-variant-edit">
-          <span>${esc(variantLabel(line.product))}</span>
-          <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}" />
+      : `<label class="cart-variant-edit${variantRequired && !variantFilled ? " is-required" : ""}">
+          <span>${esc(variantLabel(line.product))}${variantRequired ? `<em class="cart-variant-req">${variantFilled ? "✓" : "Required"}</em>` : ""}</span>
+          <input type="text" data-cart-variant data-product-id="${attr(line.product_id)}" value="${attr(line.variant || "")}" placeholder="${esc(variantPlaceholder(line.product))}"${variantRequired ? ' aria-required="true"' : ""} />
         </label>`;
     const sourceLine = isSourcing && line.product.source_url
       ? `<small><a href="${safeUrl(line.product.source_url)}" target="_blank" rel="noopener noreferrer">View source link →</a></small>`
@@ -2153,6 +2158,18 @@ function renderSupportLinks() {
   });
 }
 
+// True when the store's bank settings are still the all-zeros placeholders.
+// Money must never be requested against these, so both the console warning
+// and the customer-facing safety banner below key off this.
+function bankDetailsArePlaceholder(settings) {
+  return (
+    settings.account_number === sampleSettings.account_number ||
+    settings.iban === sampleSettings.iban ||
+    /^0+$/.test(String(settings.account_number || "").replace(/\D/g, "").replace(/^0+/, "")) ||
+    /^PK0+/.test(String(settings.iban || ""))
+  );
+}
+
 function renderBankDetails() {
   const settings = state.settings;
   // Bank details now show inline as the primary "where to pay" panel at
@@ -2162,13 +2179,8 @@ function renderBankDetails() {
   // Sanity-warn (dev tools only) if the production settings are still
   // shipping the all-zeros placeholders from sampleSettings — those are
   // not real and customers can't transfer to them.
-  if (
-    !renderBankDetails._placeholderWarned &&
-    (settings.account_number === sampleSettings.account_number ||
-      settings.iban === sampleSettings.iban ||
-      /^0+$/.test(String(settings.account_number || "").replace(/\D/g, "").replace(/^0+/, "")) ||
-      /^PK0+/.test(String(settings.iban || "")))
-  ) {
+  const isPlaceholder = bankDetailsArePlaceholder(settings);
+  if (!renderBankDetails._placeholderWarned && isPlaceholder) {
     // Warn once per session — renderBankDetails runs on every re-render, so an
     // un-guarded warn floods the console (~48× on a single page load) and
     // buries it. A single line is enough of a go-live reminder.
@@ -2179,6 +2191,24 @@ function renderBankDetails() {
       "Update the `settings` row in Supabase before going live."
     );
   }
+  // Customer-facing safety net: if the bank row is still the placeholder,
+  // do NOT show a fake account number a customer could wire money to.
+  // Instead ask them to grab live details over WhatsApp. Better a slower
+  // handoff than a payment sent to 0210-0000-000000.
+  if (isPlaceholder) {
+    const waHref = supportWhatsAppHref(
+      "Hi Global Bestie, I'd like to place an order — can you share your current bank transfer details?",
+    );
+    setHTML("[data-bank-details]", `
+      <div class="bank-details-pending">
+        <strong>Bank details confirmed on WhatsApp</strong>
+        <p>To keep your payment safe, we share live transfer details directly on WhatsApp before you send the advance.</p>
+        <a class="button primary" href="${waHref}" target="_blank" rel="noopener noreferrer">Get transfer details on WhatsApp</a>
+      </div>
+    `);
+    return;
+  }
+
   const copyChip = (val, label) => val
     ? `<button class="copy-chip" type="button" data-action="copy-text" data-copy="${attr(val)}" data-copy-label="${attr(label)}" aria-label="Copy ${attr(label)}"><span>Copy</span></button>`
     : "";
@@ -2468,7 +2498,10 @@ function openModalWithProductMorph(html, productId) {
     const modalImg = qs(".detail-modal .gallery-main");
     if (modalImg) modalImg.style.viewTransitionName = "product-hero";
   });
-  transition.finished.finally(() => {
+  // If a transition is already mid-flight the browser aborts this one and
+  // rejects `.finished` with InvalidStateError. The DOM swap still ran, so
+  // just swallow the rejection (it was polluting the console on fast taps).
+  transition.finished.catch(() => {}).finally(() => {
     const modalImg = qs(".detail-modal .gallery-main");
     if (modalImg) modalImg.style.viewTransitionName = "";
   });
@@ -6273,13 +6306,44 @@ function renderLaunchChecklist() {
     ["Shipment batch created", !issues.includes("Create first shipment batch")],
     ["Supabase + Netlify env set", true],
   ];
-  target.innerHTML = checks.map(([label, ok]) => `
+  // Which admin tab each unfinished item should jump to when clicked.
+  const targetPanel = {
+    "Bank details replaced": "settings",
+    "Support WhatsApp connected": "settings",
+    "Next shipment ETA visible": "settings",
+    "Active catalog published": "products",
+    "Shipment batch created": "shipments",
+  };
+  target.innerHTML = checks.map(([label, ok]) => {
+    const panel = targetPanel[label];
+    // Finished rows are static; unfinished rows become a button that
+    // deep-links to the exact tab that fixes them.
+    if (ok || !panel) {
+      return `
     <div class="checklist-row ${ok ? "done" : "todo"}">
       <span aria-hidden="true">${ok ? "✓" : "!"}</span>
       <strong>${label}</strong>
       <small>${ok ? "Ready" : "Needs attention"}</small>
-    </div>
-  `).join("");
+    </div>`;
+    }
+    return `
+    <button class="checklist-row todo is-actionable" type="button" data-action="goto-admin-panel" data-panel="${attr(panel)}">
+      <span aria-hidden="true">!</span>
+      <strong>${label}</strong>
+      <small>Fix now →</small>
+    </button>`;
+  }).join("");
+}
+
+// Jump to an admin tab (from the readiness checklist deep-links).
+function goToAdminPanel(panel) {
+  const tab = qs(`[data-admin-tab="${panel}"]`);
+  if (tab) {
+    tab.click();
+    tab.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  } else {
+    qs(`[data-admin-panel="${panel}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 // Kanban board view — 6 columns (one per status). Cards are virtualized
@@ -6706,6 +6770,7 @@ function orderRowHTML(order) {
         ${orderActivityTooltip(order)}
       </td>
       <td class="cell-status">
+        ${(() => { const m = timelineMeta(order.status); return `<span class="order-status-pill tone-${m.tone}"><span class="order-status-glyph" aria-hidden="true">${m.glyph}</span>${esc(m.label)}</span>`; })()}
         <div class="status-control" data-stop-row>
           ${advanceControl}
           <select data-order-status="${attr(order.id)}" aria-label="Set stage for ${attr(order.id)}">
@@ -6716,7 +6781,14 @@ function orderRowHTML(order) {
         ${nextActionLine}
         <small class="order-risk">${esc(orderCompletionRisk(order))}</small>
       </td>
-      <td>${PKR.format(payment.total)}<br /><small>Due ${PKR.format(due)} · Advance ${PKR.format(payment.advanceDue)} · Balance ${PKR.format(payment.balanceDue)}</small></td>
+      <td class="cell-amount">
+        <div class="amount-total">${PKR.format(payment.total)}</div>
+        <dl class="amount-breakdown">
+          <div${due > 0 ? ' class="is-due"' : ""}><dt>Due now</dt><dd>${PKR.format(due)}</dd></div>
+          <div><dt>Advance</dt><dd>${PKR.format(payment.advanceDue)}</dd></div>
+          <div><dt>Balance</dt><dd>${PKR.format(payment.balanceDue)}</dd></div>
+        </dl>
+      </td>
       <td>
         <select data-order-payment="${attr(order.id)}" data-stop-row>
           ${PAYMENT_STATES.map(([status, label]) => `<option value="${status}" ${activePaymentStatusForOrder(order) === status ? "selected" : ""}>${label}</option>`).join("")}
@@ -7556,7 +7628,13 @@ function renderAdsCreatives(creatives) {
             </div>
           </article>`;
         }).join("")
-      : `<p class="portal-login-note">${list.length ? "No creatives match your search." : "No creatives yet — upload your first above."}</p>`;
+      : (list.length
+        ? `<p class="portal-login-note">No creatives match your search.</p>`
+        : `<div class="ads-empty">
+             <span class="ads-empty-glyph" aria-hidden="true">🖼️</span>
+             <strong>No creatives yet</strong>
+             <p>Upload an image and ad copy in the form above. Saved creatives appear here and can be dropped into a campaign.</p>
+           </div>`);
   }
   // Campaign-builder dropdown
   const select = qs("[data-ads-campaign-creative]");
@@ -7850,7 +7928,11 @@ function renderAdsQueue(campaigns, external = []) {
     ? `<p class="portal-login-note">⚠︎ Couldn't sync Ads Manager campaigns: ${esc(state._adsExternalError)}</p>`
     : "";
   if (!campaigns.length && !external.length) {
-    host.innerHTML = syncNote || `<p class="portal-login-note">No campaigns yet. Upload a creative and build one here, or campaigns you create in Meta Ads Manager will appear automatically once Meta is connected.</p>`;
+    host.innerHTML = syncNote || `<div class="ads-empty">
+        <span class="ads-empty-glyph" aria-hidden="true">🚀</span>
+        <strong>No campaigns yet</strong>
+        <p>Build a paused campaign from a ready creative above — nothing spends until you launch it. Campaigns you create in Meta Ads Manager also show up here once Meta is connected.</p>
+      </div>`;
     return;
   }
   // Filter chips (all / built / launched / paused) — external campaigns map
@@ -8986,8 +9068,13 @@ async function setRoute() {
   // instead of the ~900ms curtain sweep. The browser snapshots old/new
   // states; the animation itself lives in CSS (::view-transition-*).
   if (document.startViewTransition) {
+    const vt = document.startViewTransition(applyRoute);
+    // `.ready` rejects with InvalidStateError when a transition is already
+    // running (fast route changes). We only await `.finished`, so swallow
+    // `.ready` separately or it surfaces as an unhandled rejection.
+    vt.ready?.catch(() => {});
     try {
-      await document.startViewTransition(applyRoute).finished;
+      await vt.finished;
     } catch {
       // Transition was skipped or interrupted — the DOM swap still ran.
     }
@@ -9240,6 +9327,17 @@ async function handleCheckout(event) {
   if (missingVariant) {
     toast(`Please add a ${variantLabel(missingVariant.product)} for ${missingVariant.product.title}.`);
     setCartDrawerOpen(true);
+    // Point the customer straight at the field that's blocking checkout —
+    // a toast alone is easy to miss with the drawer sliding in over it.
+    setTimeout(() => {
+      const input = qs(`[data-cart-variant][data-product-id="${CSS.escape(missingVariant.product_id)}"]`);
+      if (input) {
+        input.classList.add("field-error");
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+        input.focus();
+        input.addEventListener("input", () => input.classList.remove("field-error"), { once: true });
+      }
+    }, 320); // wait for the drawer's slide-in to finish before scrolling
     return;
   }
 
@@ -13638,6 +13736,11 @@ function wireEvents() {
     }
     // Reset the PKR price input back to the URL-autofill suggestion that's
     // stashed in dataset.suggested. Lets the admin try an edit and roll back.
+    if (action === "goto-admin-panel") {
+      event.preventDefault();
+      goToAdminPanel(target.dataset.panel);
+      return;
+    }
     if (action === "reset-customer-price") {
       event.preventDefault();
       const input = qs("[data-customer-price]");
@@ -15533,6 +15636,11 @@ function openLoginModal(prefilledPhone = "") {
       <p class="kicker">Sign in</p>
       <h2>One-tap login via WhatsApp</h2>
       <p class="confirmation-sub">Enter your phone number and we'll send a 6-digit code to your WhatsApp. No password needed.</p>
+      <ul class="auth-benefits">
+        <li><span aria-hidden="true">📦</span> Track every order in one place</li>
+        <li><span aria-hidden="true">⚡</span> Faster checkout — details saved for next time</li>
+        <li><span aria-hidden="true">🔁</span> Reorder past finds in a tap</li>
+      </ul>
       <label class="auth-label">
         <span>Phone (Pakistani mobile)</span>
         <input type="tel" data-otp-phone value="${attr(prefilledPhone)}" placeholder="0300 1234567" autocomplete="tel" autofocus />

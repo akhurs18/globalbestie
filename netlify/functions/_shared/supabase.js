@@ -163,21 +163,43 @@ export function fallbackData() {
   };
 }
 
+// Pull a named cookie value out of the raw Cookie header.
+function readCookieValue(req, name) {
+  const header = req.headers.get("cookie") || "";
+  for (const part of header.split(";")) {
+    const [k, ...rest] = part.trim().split("=");
+    if (k === name) return rest.join("=");
+  }
+  return "";
+}
+
 // Auth check: passes when EITHER
 //   • the legacy shared bearer secret matches (single-team-key flow), OR
-//   • the request carries a valid gb_team_session cookie (per-user flow).
+//   • the request carries a gb_team_session cookie whose token resolves to a
+//     live (non-expired) row in team_sessions.
 // Defaults to allow when no ADMIN_SHARED_SECRET is set (dev/local).
-export function requireAdmin(req) {
+//
+// This is async because the cookie path validates the session against the DB.
+// A presence-only cookie check (the old behaviour) let anyone forge
+// `gb_team_session=anything` and read the full admin dataset, so every
+// caller MUST `await requireAdmin(req)`.
+export async function requireAdmin(req) {
   const expected = env("ADMIN_SHARED_SECRET");
   if (!expected) return true;
   const header = req.headers.get("authorization") || "";
   if (header === `Bearer ${expected}`) return true;
-  // Team-session cookie check is async; for endpoints that need full per-
-  // user identity, prefer `currentTeamMember(req)` from _shared/auth.js.
-  // This sync helper just whitelists the presence of a team cookie — the
-  // session is validated at the data layer once you act on it.
-  const cookie = req.headers.get("cookie") || "";
-  if (cookie.includes("gb_team_session=")) return true;
+
+  const token = readCookieValue(req, "gb_team_session");
+  if (!token || !hasSupabase()) return false;
+  try {
+    const rows = await supabase(
+      `/rest/v1/team_sessions?token=eq.${encodeURIComponent(token)}&select=token,expires_at`,
+    );
+    const row = rows?.[0];
+    if (row && new Date(row.expires_at).getTime() >= Date.now()) return true;
+  } catch {
+    // Lookup failed — deny rather than fall open.
+  }
   return false;
 }
 

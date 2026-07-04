@@ -107,7 +107,7 @@ export const adsOptimize = async (req) => {
   const isScheduled =
     req.headers.get("x-netlify-functions-source") === "schedule" ||
     url.searchParams.get("scheduled") === "1";
-  if (!isScheduled && !requireAdmin(req)) {
+  if (!isScheduled && !(await requireAdmin(req))) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 

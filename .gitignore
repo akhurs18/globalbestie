@@ -11,3 +11,4 @@ remotion/out/
 
 # Internal QA / audit notes — keep out of public repo
 docs/internal/
+.tmp-marketing-batches/

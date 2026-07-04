@@ -166,7 +166,7 @@ export const adsReport = async (req) => {
     new URL(req.url).searchParams.get("scheduled") === "1";
 
   // Scheduled invocations have no bearer; on-demand portal calls must be admin.
-  if (!isScheduled && !requireAdmin(req)) {
+  if (!isScheduled && !(await requireAdmin(req))) {
     return json({ error: "Unauthorized" }, { status: 401 });
   }
 

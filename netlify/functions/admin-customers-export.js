@@ -31,7 +31,7 @@ function esc(v) {
 }
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   try {
     const url = new URL(req.url);
     const f = {

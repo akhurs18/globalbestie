@@ -14,7 +14,7 @@ const FIELDS = new Set([
 ]);
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   if (!hasSupabase()) return json({ posts: [], configured: false });
 
   try {

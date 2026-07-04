@@ -1,7 +1,7 @@
 import { hasSupabase, json, requireAdmin, supabase } from "./_shared/supabase.js";
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
 
   // DELETE — remove a batch by id. Orders are intentionally left in place: the
   // batch→order link lives in shipment_batches.order_ids, so dropping the row

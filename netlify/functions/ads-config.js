@@ -9,7 +9,7 @@ function env(name) {
 }
 
 export default async (req) => {
-  if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
   const has = (n) => Boolean(env(n));
   return json({
     keys: {

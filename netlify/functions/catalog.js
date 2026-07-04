@@ -35,7 +35,7 @@ export default async (req) => {
   try {
     if (req.method === "GET") {
       const [products, settings] = await Promise.all([getProducts(), getSettings()]);
-      const isAdmin = requireAdmin(req);
+      const isAdmin = await requireAdmin(req);
       const publicSettings = {
         preorder_weeks: settings.preorder_weeks,
         next_shipment_date: settings.next_shipment_date,
@@ -61,7 +61,7 @@ export default async (req) => {
     }
 
     if (req.method === "POST") {
-      if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+      if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
       const body = await req.json();
 
       // Single-product path (legacy + form save). Returns { product, configured }.
@@ -105,7 +105,7 @@ export default async (req) => {
     }
 
     if (req.method === "DELETE") {
-      if (!requireAdmin(req)) return json({ error: "Unauthorized" }, { status: 401 });
+      if (!(await requireAdmin(req))) return json({ error: "Unauthorized" }, { status: 401 });
       const { ids } = await req.json();
       if (!Array.isArray(ids) || !ids.length) return json({ error: "ids array required" }, { status: 400 });
       if (!hasSupabase()) return json({ removed: ids.length, configured: false });

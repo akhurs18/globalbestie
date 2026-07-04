@@ -976,6 +976,27 @@ h3 {
   text-transform: uppercase;
 }
 
+/* Compact single-line preorder split — replaces the two heavy chip boxes
+   on the card. The full breakdown still lives in the quick-view modal. */
+.product-payment-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 6px;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+.product-payment-line .pay-advance {
+  font-weight: 800;
+  color: var(--ink);
+}
+.product-payment-line .pay-rest {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
 .product-meta span,
 .metric-card,
 .order-line,
@@ -5245,6 +5266,24 @@ td.bulk-col input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer;
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: 1.8rem;
 }
+.auth-benefits {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbf4f6;
+}
+.auth-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.auth-benefits li span { font-size: 1rem; line-height: 1; }
 .auth-label {
   display: grid;
   gap: 6px;
@@ -6251,6 +6290,42 @@ button[type="submit"][data-busy]::after {
   min-width: 212px;
 }
 
+/* At-a-glance colored status pill at the top of each order's status cell.
+   Lets an operator scan the queue without reading the dropdown value. */
+.order-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+.order-status-glyph { font-size: 0.78rem; line-height: 1; }
+
+/* Order amount cell — total on top, a tidy label/value breakdown below
+   instead of a single cramped "Due X · Advance Y · Balance Z" line. */
+.cell-amount { min-width: 148px; }
+.cell-amount .amount-total { font-weight: 800; font-size: 0.98rem; }
+.cell-amount .amount-breakdown { display: grid; gap: 3px; margin: 6px 0 0; }
+.cell-amount .amount-breakdown > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.76rem;
+}
+.cell-amount .amount-breakdown dt { color: var(--muted); margin: 0; }
+.cell-amount .amount-breakdown dd { margin: 0; font-variant-numeric: tabular-nums; }
+.cell-amount .amount-breakdown .is-due dt,
+.cell-amount .amount-breakdown .is-due dd { color: var(--amber); font-weight: 800; }
+.order-status-pill.tone-info   { background: rgba(47, 111, 158, 0.12);  color: var(--info);  border-color: rgba(47, 111, 158, 0.28); }
+.order-status-pill.tone-ok     { background: rgba(93, 179, 137, 0.14);  color: #2f7d3e;      border-color: rgba(93, 179, 137, 0.34); }
+.order-status-pill.tone-warn   { background: rgba(211, 154, 53, 0.16);  color: #9a6a12;      border-color: rgba(211, 154, 53, 0.34); }
+.order-status-pill.tone-danger { background: rgba(196, 80, 106, 0.14);  color: var(--red);   border-color: rgba(196, 80, 106, 0.32); }
+
 .status-control {
   display: flex;
   flex-direction: column;
@@ -6741,6 +6816,26 @@ output {
 
 .checklist-row small {
   color: var(--muted);
+}
+
+/* Actionable (unfinished) checklist rows deep-link to the fixing tab. */
+.checklist-row.is-actionable {
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.checklist-row.is-actionable:hover {
+  background: rgba(255, 208, 122, 0.1);
+  border-color: rgba(255, 208, 122, 0.35);
+}
+.checklist-row.is-actionable small {
+  color: var(--amber);
+  font-weight: 700;
 }
 
 .modal-backdrop {
@@ -8073,6 +8168,11 @@ body::after {
   .product-payment-chips { grid-template-columns: 1fr 1fr; gap: 4px; }
   .product-payment-chips span { padding: 5px 6px; font-size: 0.7rem; }
   .product-payment-chips small { font-size: 0.55rem; }
+  /* On narrow cards the single payment line stacks so the advance amount
+     and the "balance on arrival" note each get their own row. */
+  .product-payment-line { font-size: 0.76rem; gap: 2px 0; }
+  .product-payment-line .pay-advance { flex-basis: 100%; }
+  .product-payment-line .pay-rest { font-size: 0.72rem; }
   .product-meta.public-listing { grid-template-columns: 1fr; }
   .product-meta span { padding: 5px 6px; font-size: 0.66rem; }
   .product-actions .button { min-height: 36px; padding: 8px 10px; font-size: 0.82rem; }
@@ -9521,6 +9621,21 @@ body[data-active-view="checkout"] .whatsapp-fab {
   gap: 10px 18px;
   margin: 10px 0;
 }
+
+/* Shown at checkout when bank settings are still placeholders — routes the
+   customer to WhatsApp for live details instead of exposing a fake account. */
+.bank-details-pending {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--rose);
+}
+.bank-details-pending strong { font-size: 1rem; }
+.bank-details-pending p { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.5; }
+.bank-details-pending .button { justify-self: start; margin-top: 4px; }
 
 .bank-details-grid div {
   display: grid;
@@ -16846,6 +16961,45 @@ body.modal-open .wa-bubble { display: none; }
   outline: none;
   border-color: var(--pink-2);
   box-shadow: 0 0 0 3px var(--pink-glow);
+}
+/* "Required" / "✓" marker on the cart variant label for size/shade items. */
+.cart-variant-edit span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cart-variant-req {
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(251, 113, 133, 0.16);
+  color: var(--red);
+}
+.cart-variant-edit.is-required:not(:focus-within) input {
+  border-color: rgba(251, 113, 133, 0.5);
+}
+.cart-variant-edit input[value]:not([value=""]) ~ .cart-variant-req,
+.cart-variant-edit:focus-within .cart-variant-req {
+  background: rgba(120, 190, 130, 0.16);
+  color: #2f7d3e;
+}
+
+/* Highlight a variant field that's blocking checkout until the customer
+   types into it (the JS clears .field-error on first input). */
+.cart-drawer .cart-variant-edit input.field-error,
+input.field-error {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.22);
+  animation: field-error-shake 0.32s ease;
+}
+@keyframes field-error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 /* Empty state in drawer */
