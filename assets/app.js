@@ -7416,6 +7416,26 @@ function adsSkeletonLines(n) {
   return Array.from({ length: n }, () => `<div class="ads-skel ads-skel-line"></div>`).join("");
 }
 
+// Fetch the performance report WITHOUT swallowing real errors. A 502 from
+// the function carries the actual Meta/Supabase failure message ("Invalid
+// OAuth access token", "relation meta_ad_snapshots does not exist", …) —
+// exactly what the operator needs when Setup shows all keys detected but
+// the pill still won't connect. Local-preview 404s (HTML error pages) and
+// network failures stay silent, matching the old fallback behavior.
+async function fetchAdsReport(days) {
+  state._adsReportError = null;
+  try {
+    return await apiFetch(`/api/admin/ads-report?days=${days}`);
+  } catch (err) {
+    const raw = String(err?.message || err || "");
+    let msg = raw;
+    try { msg = JSON.parse(raw).error || raw; } catch { /* not JSON */ }
+    const looksLikeRealError = msg && !/failed to fetch|networkerror|load failed|<!doctype|<html/i.test(msg);
+    state._adsReportError = looksLikeRealError ? msg.slice(0, 400) : null;
+    return { configured: false, totals: {}, campaigns: [], daily: [] };
+  }
+}
+
 // Refetch just the performance report for a new window and repaint the
 // dashboard + creative stats (which are window-scoped).
 async function adsSetReportRange(days) {
@@ -7423,8 +7443,8 @@ async function adsSetReportRange(days) {
   const kpis = qs("[data-ads-kpis]");
   const rows = qs("[data-ads-campaign-rows]");
   if (kpis) kpis.innerHTML = adsSkeletonGrid(6);
-  if (rows) rows.innerHTML = `<tr><td colspan="6">${adsSkeletonLines(2)}</td></tr>`;
-  const report = await apiFetch(`/api/admin/ads-report?days=${days}`, {}, { configured: false, totals: {}, campaigns: [], daily: [] }).catch(() => ({ configured: false, totals: {}, campaigns: [], daily: [] }));
+  if (rows) rows.innerHTML = `<tr><td colspan="7">${adsSkeletonLines(2)}</td></tr>`;
+  const report = await fetchAdsReport(days);
   state._adsReport = report;
   renderAdsDashboard(report);
   if (state._adsCreatives) renderAdsCreatives(state._adsCreatives);
@@ -7442,7 +7462,7 @@ async function loadAdsAdmin() {
   // audience read is cheap/cached (no Meta call) — only the refresh recomputes.
   const emptyConfig = { keys: {}, publisher_platforms: "instagram" };
   const [report, queue, actions, audience, config, creatives] = await Promise.all([
-    apiFetch(`/api/admin/ads-report?days=${days}`, {}, { configured: false, totals: {}, campaigns: [], daily: [] }),
+    fetchAdsReport(days),
     apiFetch(`/api/admin/ads-create`, {}, { configured: false, campaigns: [] }),
     apiFetch(`/api/admin/ads-optimize?preview=1`, {}, { configured: false, actions: [], dry_run: true }).catch(() => ({ actions: [] })),
     apiFetch(`/api/admin/ads-audience?cached=1`, {}, { configured: false, reco: null }).catch(() => ({ reco: null })),
@@ -7470,7 +7490,10 @@ async function loadAdsAdmin() {
 
   if (statusPill) {
     const live = report.configured && queue.configured;
-    statusPill.textContent = live ? "Connected" : "Not configured";
+    // Three states: connected · keys present but the API call fails
+    // (surface it — the fix is on Meta/Supabase, not Netlify env) · keys
+    // genuinely missing.
+    statusPill.textContent = live ? "Connected" : state._adsReportError ? "Connection error" : "Not configured";
     statusPill.className = `status-pill ${live ? "in_stock" : "soldout"}`;
   }
   renderAdsConfig(state._adsConfig);
@@ -7715,7 +7738,20 @@ function renderAdsDashboard(report) {
   if (windowPill) windowPill.textContent = report.configured ? `${report.window_days || 7}d` : "offline";
 
   if (kpis) {
-    if (!report.configured) {
+    if (!report.configured && state._adsReportError) {
+      // Keys are present but the report call failed — show the REAL error
+      // from Meta/Supabase plus the usual suspects, so this is fixable
+      // without opening devtools.
+      kpis.innerHTML = `
+        <div class="ads-unconfigured">
+          <p><strong>Keys detected, but the connection is failing.</strong></p>
+          <p><code>${esc(state._adsReportError)}</code></p>
+          <p>Common causes: the system-user token is missing <code>ads_management</code>/<code>ads_read</code> permissions; the ad account wasn't assigned to the system user (Business settings → System users → Add assets); <code>META_AD_ACCOUNT_ID</code> includes the <code>act_</code> prefix or has a typo; or the ads tables migration (<code>supabase/migrations/2026-06-25-meta-ads.sql</code>) hasn't been run in Supabase.</p>
+          <div class="mini-actions">
+            <button class="button primary" type="button" data-action="ads-refresh">Retry</button>
+          </div>
+        </div>`;
+    } else if (!report.configured) {
       // Self-diagnosing empty state: name the exact missing keys (from the
       // Setup probe already in state) instead of a generic "add META_*" line.
       const keys = state._adsConfig?.keys || {};
