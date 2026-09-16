@@ -46,9 +46,10 @@ export default function PriceReceipt({ product, batchNo = settings.currentBatch.
       <div className="wrap receipt-grid">
         <Reveal className="stack-lg">
           <p className="label">No hidden fees</p>
-          <h2 className="h2">The receipt resellers won&rsquo;t show you.</h2>
+          <h2 className="h2">One price.<br />Everything in.</h2>
           <p className="lead">
-            Every product shows the full maths: the US price, today&rsquo;s exchange rate, our {Math.round(settings.markup * 100)}%, and shipping. We confirm it before you pay a rupee.
+            The price on the tag is the price you pay. Shipping from the US is already in it, there is no customs bill at
+            your door, and we confirm it with you before you pay a rupee.
           </p>
           <Link href="/how-it-works" className="btn btn--ink">How pricing works →</Link>
         </Reveal>

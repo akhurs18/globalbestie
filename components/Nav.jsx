@@ -28,6 +28,7 @@ export default function Nav() {
           {LINKS.map(([href, label]) => (
             <Link key={href} href={href}>{label}</Link>
           ))}
+          <Link href="/my-orders">My orders</Link>
         </nav>
         <div className="nav__actions">
           <Link href="/#club" className="btn btn--ghost btn--sm hide-sm">Bestie Club</Link>
@@ -49,6 +50,7 @@ export default function Nav() {
         {LINKS.map(([href, label]) => (
           <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
         ))}
+        <Link href="/my-orders" onClick={() => setOpen(false)}>My orders</Link>
         <Link href="/#club" onClick={() => setOpen(false)}>Bestie Club</Link>
       </div>
     </header>

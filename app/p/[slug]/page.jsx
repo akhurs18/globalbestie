@@ -55,7 +55,6 @@ export default async function ProductPage({ params }) {
   // Same category first, so a blush suggests other beauty rather than a bag.
   const more = [...all.filter((x) => x.slug !== p.slug && x.category === p.category), ...all.filter((x) => x.category !== p.category)].slice(0, 4);
   const steps = journey(b, pre);
-  const n = (v) => v.toLocaleString('en-US');
 
   return (
     <>
@@ -80,20 +79,6 @@ export default async function ProductPage({ params }) {
               <div className="price-big">{pkr(b.total)}</div>
               <p className="muted small" style={{ margin: '6px 0 0' }}>Final price. Shipping to Pakistan included.</p>
             </div>
-
-            {b.usd != null && (
-              <details className="acc" open>
-                <summary>See the price breakdown</summary>
-                <div className="acc__rows">
-                  <div className="receipt__row"><span>US price</span><b>${b.usd.toFixed(2)}</b></div>
-                  <div className="receipt__row"><span>× FX rate (today)</span><b>{b.fx}</b></div>
-                  <div className="receipt__row"><span>= in PKR</span><b>{n(b.inPkr)}</b></div>
-                  <div className="receipt__row"><span>+ our {Math.round(b.markupRate * 100)}%</span><b>{n(b.markup)}</b></div>
-                  <div className="receipt__row"><span>+ shipping to PK</span><b>{n(b.shipping)}</b></div>
-                  <div className="receipt__row acc__total"><span>You pay</span><b>{pkr(b.total)}</b></div>
-                </div>
-              </details>
-            )}
 
             {p.description && <p className="muted" style={{ margin: 0 }}>{p.description}</p>}
 

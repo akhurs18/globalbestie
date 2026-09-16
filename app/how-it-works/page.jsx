@@ -2,7 +2,7 @@ import Link from 'next/link';
 import HowItWorks from '@/components/HowItWorks';
 import Receipt from '@/components/Receipt';
 import FaqList from '@/components/FaqList';
-import { getBatchInfo, getLiveProducts, getPricing } from '@/lib/live';
+import { getBatchInfo, getLiveProducts } from '@/lib/live';
 
 export const metadata = {
   title: 'How it works',
@@ -12,8 +12,8 @@ export const metadata = {
 export const revalidate = 300;
 
 export default async function HowItWorksPage() {
-  const [items, pricing, batches] = await Promise.all([getLiveProducts(), getPricing(), getBatchInfo()]);
-  const p = items.find((x) => x.b.usd != null) ?? items[0];
+  const [items, batches] = await Promise.all([getLiveProducts(), getBatchInfo()]);
+  const p = items[0];
 
   return (
     <>
@@ -31,11 +31,11 @@ export default async function HowItWorksPage() {
         <div className="wrap receipt-grid">
           <div className="stack-lg">
             <p className="label">Pricing</p>
-            <h2 className="h2">The maths, out loud.</h2>
-            <p className="lead">Every price on the site follows one formula. No hidden fees, no &ldquo;DM for price&rdquo;.</p>
-            <p className="formula">(US price × {pricing.fxRate}) + {Math.round(pricing.markup * 100)}% + shipping = your PKR price</p>
+            <h2 className="h2">One price, everything in.</h2>
+            <p className="lead">Every price on the site is the final PKR price. No hidden fees, no &ldquo;DM for price&rdquo;.</p>
             <p className="small muted" style={{ margin: 0 }}>
-              We update the exchange rate twice a week and confirm your final price before you pay anything.
+              Shipping from the US is included and there is nothing to pay at your door. We confirm your price with you
+              before you pay anything.
             </p>
           </div>
           <div className="receipt-wrap">

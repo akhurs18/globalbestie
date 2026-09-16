@@ -1,6 +1,5 @@
 import RequestForm from '@/components/RequestForm';
 import Sparkle from '@/components/Sparkle';
-import { getPricing } from '@/lib/live';
 
 export const metadata = {
   title: 'Request anything',
@@ -9,8 +8,7 @@ export const metadata = {
 
 export const revalidate = 300;
 
-export default async function RequestPage() {
-  const pricing = await getPricing();
+export default function RequestPage() {
   return (
     <div className="wrap two-col">
       <div className="stack-lg">
@@ -25,7 +23,7 @@ export default async function RequestPage() {
           <li><Sparkle size={14} tone="berry" />A real person replies, not a bot guessing prices</li>
         </ul>
       </div>
-      <RequestForm pricing={pricing} />
+      <RequestForm />
     </div>
   );
 }

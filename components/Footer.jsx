@@ -24,6 +24,7 @@ export default function Footer() {
             </div>
             <div className="footer__col">
               <p className="mono muted">Help</p>
+              <Link href="/my-orders">My orders</Link>
               <Link href="/track">Track order</Link>
               <Link href="/how-it-works">How it works</Link>
               <Link href="/request">Request anything</Link>

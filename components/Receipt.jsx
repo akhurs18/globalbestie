@@ -1,35 +1,23 @@
 import { pkr } from '@/lib/products';
 
-const n = (v) => v.toLocaleString('en-US');
-
+/**
+ * What the customer pays, and when. Deliberately no cost breakdown: what a piece costs
+ * us, the rate we bought at and our margin are ours, not the shopper's.
+ */
 export default function Receipt({ b, item, batch, rootRef, totalRef, split = true }) {
-  // Without a breakdown from the order system, show the final price only: a breakdown
-  // that doesn't add up to the price charged would be worse than none.
-  const rows =
-    b.usd == null
-      ? []
-      : [
-          ['US price', `$${b.usd.toFixed(2)}`],
-          ['× FX rate (today)', String(b.fx)],
-          ['= in PKR', n(b.inPkr)],
-          [`+ our ${Math.round(b.markupRate * 100)}%`, n(b.markup)],
-          ['+ shipping to PK', n(b.shipping)],
-        ];
   return (
     <div className="receipt" ref={rootRef}>
       <div className="receipt__head">Global Bestie · Receipt</div>
       <div className="receipt__item">{item}{batch ? ` · Batch ${batch}` : ''}</div>
-      {rows.length > 0 && (
-        <>
-          <hr className="receipt__rule" />
-          {rows.map(([label, value]) => (
-            <div className="receipt__row" key={label} data-row>
-              <span>{label}</span>
-              <b>{value}</b>
-            </div>
-          ))}
-        </>
-      )}
+      <hr className="receipt__rule" />
+      <div className="receipt__row" data-row>
+        <span>Shipping to Pakistan</span>
+        <b>Included</b>
+      </div>
+      <div className="receipt__row" data-row>
+        <span>Customs &amp; extras</span>
+        <b>None</b>
+      </div>
       <hr className="receipt__rule" />
       <div className="receipt__total" data-row>
         <span>You pay</span>

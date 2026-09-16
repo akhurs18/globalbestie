@@ -1,19 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ProductCard from './ProductCard';
 import Countdown from './Countdown';
 import { channel, contactLink } from '@/lib/site';
+import useIsomorphicLayoutEffect from '@/lib/useIsomorphicLayoutEffect';
 
 export default function TheDrop({ items, batch }) {
   const section = useRef(null);
   const viewport = useRef(null);
   const track = useRef(null);
 
-  useEffect(() => {
+  // Layout effect, not useEffect: this pins `section.drop`, so GSAP wraps it in a
+  // pin-spacer. The cleanup below has to unwrap it *before* React detaches the section,
+  // or React removes a node that is no longer its child. See lib/useIsomorphicLayoutEffect.
+  useIsomorphicLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const mm = gsap.matchMedia();
     mm.add('(min-width: 901px) and (prefers-reduced-motion: no-preference)', () => {

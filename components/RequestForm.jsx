@@ -1,24 +1,17 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { categories, pkr, settings, shippingEstimates } from '@/lib/products';
+import { useState } from 'react';
+import { categories } from '@/lib/products';
 import { channel, sendMessage } from '@/lib/site';
 
-/** `pricing` = { fxRate, markup } from the order system (lib/live.js getPricing). */
-export default function RequestForm({ pricing }) {
-  const fxRate = pricing?.fxRate ?? settings.fxRate;
-  const markup = pricing?.markup ?? settings.markup;
+/**
+ * The US price is asked for because it makes quoting quick, but no estimate is shown
+ * back: a number worked out from it would give away what we add.
+ */
+export default function RequestForm() {
   const [f, setF] = useState({ link: '', details: '', category: 'bags', usd: '', city: '', whatsapp: '' });
   const [copied, setCopied] = useState(false);
   const set = (key) => (e) => setF((s) => ({ ...s, [key]: e.target.value }));
-
-  const estimate = useMemo(() => {
-    const usd = parseFloat(f.usd);
-    if (!usd || usd <= 0) return null;
-    const base = usd * fxRate * (1 + markup);
-    const [lo, hi] = shippingEstimates[f.category];
-    return { low: base + lo, high: base + hi };
-  }, [f.usd, f.category, fxRate, markup]);
 
   async function submit(e) {
     e.preventDefault();
@@ -27,7 +20,6 @@ export default function RequestForm({ pricing }) {
       `Product: ${f.link}`,
       f.details && `Size / shade / colour: ${f.details}`,
       f.usd && `US price: $${f.usd}`,
-      estimate && `Site estimate: ${pkr(estimate.low)} – ${pkr(estimate.high)}`,
       `City: ${f.city}`,
       `My WhatsApp: ${f.whatsapp}`,
     ].filter(Boolean);
@@ -58,15 +50,6 @@ export default function RequestForm({ pricing }) {
           <input className="input" type="number" min="0" step="0.01" inputMode="decimal" placeholder="$" value={f.usd} onChange={set('usd')} />
         </label>
       </div>
-      {estimate && (
-        <div className="estimate" aria-live="polite">
-          <span className="mono muted">Estimated final price</span>
-          <b>{pkr(estimate.low)} – {pkr(estimate.high)}</b>
-          <span className="small muted">
-            US price × {fxRate} + {Math.round(markup * 100)}% + shipping. We confirm the exact price before you pay.
-          </span>
-        </div>
-      )}
       <div className="form__row">
         <label>
           City

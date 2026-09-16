@@ -21,9 +21,14 @@ function Tracker({ t }) {
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const el = box.current;
+    // Called from a scrubbed tween's onUpdate, which can fire after React has unmounted
+    // this tracker — `el` is then detached and the stage refs are null. Bail out rather
+    // than throw "Cannot read properties of null (reading 'classList')" on navigation.
     const apply = (p) => {
+      if (!el) return;
       el.style.setProperty('--p', p.toFixed(4));
       stageEls.current.forEach((s, i) => {
+        if (!s) return;
         const reached = i / (STAGES.length - 1) <= p + 0.001;
         s.classList.toggle('is-done', reached && i < t.stage);
         s.classList.toggle('is-current', reached && i === t.stage);

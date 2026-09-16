@@ -1,0 +1,50 @@
+/* ---------- my orders (customer sign-in + order history) ---------- */
+.acct__wrap { display: grid; place-items: center; padding-block: clamp(40px, 7vw, 96px); }
+.acct__card {
+  width: min(560px, 100%); display: grid; gap: 18px; justify-items: start;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: clamp(24px, 4vw, 40px); box-shadow: var(--shadow);
+}
+.acct__card .display-serif { font-size: clamp(32px, 4.4vw, 44px); }
+.acct__card .form { width: 100%; }
+.acct__links { display: flex; justify-content: space-between; gap: 16px; width: 100%; }
+.input--code { font-family: var(--f-mono); font-size: 22px; letter-spacing: .4em; text-align: center; }
+
+.acct { display: grid; gap: 20px; padding-bottom: var(--sec); }
+.acct__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 4px; }
+.acct__list { display: grid; gap: 16px; }
+.acct__pay { display: grid; gap: 4px; }
+.acct__foot { margin: 8px 0 0; }
+.ulink { text-decoration: underline; }
+
+.ord {
+  display: grid; gap: 16px; background: #fff; border: 1px solid var(--line);
+  border-radius: var(--r-md); padding: clamp(20px, 3vw, 28px);
+}
+.ord__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ord__no { margin: 0 0 2px; font-size: 16px; letter-spacing: .04em; }
+.ord__stage--allocated { background: #E7F3EC; border-color: transparent; color: #2E8559; }
+.ord__stage--awaiting, .ord__stage--production { background: var(--blush); border-color: transparent; }
+.ord__stage--critical { background: var(--berry); border-color: transparent; color: #fff; }
+
+/* Progress: a row on desktop, a list on a phone — the labels must never collide. */
+.ord__steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 28px; }
+.ord__steps li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--mauve); }
+.ord__steps li i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); flex: none; }
+.ord__steps li.is-done { color: var(--ink); }
+.ord__steps li.is-done i { background: var(--berry); }
+.ord__steps em { font-style: normal; color: var(--mauve); margin-left: 6px; }
+
+.ord__items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ord__items li { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 15px; }
+
+.ord__money { display: flex; flex-wrap: wrap; gap: 12px 40px; padding-top: 14px; border-top: 1px solid var(--line); }
+.ord__money > div { display: grid; gap: 2px; }
+.ord__money span { font-size: 11px; letter-spacing: .08em; }
+.ord__money b { font-size: 20px; font-weight: 800; }
+.ord__money .paid { color: #2E8559; }
+
+@media (max-width: 700px) {
+  .ord__steps { gap: 8px 18px; }
+  .ord__money b { font-size: 18px; }
+}

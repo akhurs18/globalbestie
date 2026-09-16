@@ -66,21 +66,13 @@ const STEPS = [
   },
   {
     f: 0.25, side: 'bottom', title: 'We quote in PKR',
-    body: ({ b }) =>
-      b.usd != null ? (
-        <dl className="jrows">
-          <div style={{ '--i': 0 }}><dt>US price</dt><dd>${b.usd.toLocaleString('en-US')}</dd></div>
-          <div style={{ '--i': 1 }}><dt>× rate {b.fx}</dt><dd>{pkr(b.inPkr)}</dd></div>
-          <div style={{ '--i': 2 }}><dt>+ {Math.round(b.markupRate * 100)}% markup</dt><dd>{pkr(b.markup)}</dd></div>
-          <div style={{ '--i': 3 }}><dt>+ shipping</dt><dd>{pkr(b.shipping)}</dd></div>
-          <div style={{ '--i': 4 }} className="jrows__total"><dt>Final price</dt><dd>{pkr(b.total)}</dd></div>
-        </dl>
-      ) : (
-        <>
-          <p className="jbig">{pkr(b.total)}</p>
-          <p className="jnote">Your final PKR price. Nothing gets added later.</p>
-        </>
-      ),
+    body: ({ b }) => (
+      <>
+        <p className="jmeta">Your price, all in</p>
+        <p className="jbig">{pkr(b.total)}</p>
+        <p className="jnote">Shipping to Pakistan included. Nothing gets added later.</p>
+      </>
+    ),
   },
   {
     f: 0.42, side: 'top', title: 'You approve, pay 50%',
@@ -137,6 +129,11 @@ export default function Journey({ sample, batchNo }) {
   const planeRef = useRef(null);
   const fillRef = useRef(null);
 
+  // Deliberately useEffect, not a layout effect (unlike TheDrop). This pins
+  // .flight__pin, which sits *inside* this component's root <section>, so GSAP's
+  // pin-spacer never comes between <main> and a node React removes directly — there is
+  // no teardown-order bug to fix here. Moving this cleanup earlier breaks it instead:
+  // fly()/setStep() below touch refs that React has already nulled by then.
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
     const root = rootRef.current;
@@ -148,14 +145,20 @@ export default function Journey({ sample, batchNo }) {
       if (idx === current) return;
       current = idx;
       cards.forEach((c, i) => {
+        if (!c) return;
         c.classList.toggle('is-on', i <= idx);
         c.classList.toggle('is-now', i === idx);
       });
-      dots.forEach((d, i) => d.classList.toggle('is-on', i <= idx));
-      root.classList.toggle('is-landed', idx === LAST);
+      dots.forEach((d, i) => d && d.classList.toggle('is-on', i <= idx));
+      if (root) root.classList.toggle('is-landed', idx === LAST);
     };
 
+    // GSAP drives this from a scrubbed tween's onUpdate, and the ticker can fire once
+    // more after React has unmounted this section and nulled the refs. Without the
+    // guard that last call throws "Cannot read properties of null (reading 'style')"
+    // and takes the whole page down through the error boundary.
     const fly = (p) => {
+      if (!pathRef.current || !planeRef.current) return;
       pathRef.current.style.strokeDashoffset = String(1 - p);
       planeRef.current.setAttribute('transform', planeAt(p));
       setStep(STEPS.reduce((acc, s, i) => (p >= s.f ? i : acc), -1));
