@@ -20,7 +20,7 @@ export default async function TrackPage() {
           <h1 className="display-serif">Where&rsquo;s my stuff?</h1>
           <p className="lead">Enter your order number and the phone number you ordered with. We&rsquo;ll show you every stage, what you&rsquo;ve paid and what&rsquo;s left.</p>
           <div className="notice" style={{ margin: 0 }}>
-            <b>Lost your order number?</b> Sign in with your mobile number instead and see every order you&rsquo;ve
+            <b>Lost your order number?</b> Sign in with your email address instead and see every order you&rsquo;ve
             placed with us, what you&rsquo;ve paid and what&rsquo;s left.{' '}
             <Link href="/my-orders" style={{ textDecoration: 'underline' }}>Sign in to My orders →</Link>
           </div>

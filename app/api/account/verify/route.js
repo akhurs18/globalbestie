@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { SESSION_COOKIE, sessionCookieOptions } from '@/lib/account';
+import { SESSION_COOKIE, isEmail, sessionCookieOptions } from '@/lib/account';
 import { clientIpOf, omsEnabled, verifyPortalCode } from '@/lib/oms';
 
 export const dynamic = 'force-dynamic';
@@ -18,12 +18,12 @@ export async function POST(req) {
     return fail(400, 'invalid_request');
   }
 
-  const phone = typeof body?.phone === 'string' ? body.phone.trim().slice(0, 30) : '';
+  const email = typeof body?.email === 'string' ? body.email.trim().slice(0, 254) : '';
   const code = typeof body?.code === 'string' ? body.code.replace(/\D/g, '').slice(0, 6) : '';
-  if (!phone || code.length !== 6) return fail(422, 'wrong_code');
+  if (!isEmail(email) || code.length !== 6) return fail(422, 'wrong_code');
 
   try {
-    const r = await verifyPortalCode(phone, code, clientIpOf(req));
+    const r = await verifyPortalCode(email, code, clientIpOf(req));
     if (r.ok) {
       const { token, expiresAt, firstName } = r.json.data;
       (await cookies()).set(SESSION_COOKIE, token, sessionCookieOptions(new Date(expiresAt)));

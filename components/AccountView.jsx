@@ -7,7 +7,7 @@ import { channel, contactLink } from '@/lib/site';
 import './account.css';
 
 const ERRORS = {
-  invalid_phone: 'Enter the mobile number you ordered with, e.g. 0300 1234567.',
+  invalid_email: 'Enter the email address you ordered with, e.g. you@example.com.',
   wrong_code: 'That code is not right, or it has expired.',
   locked: 'Too many wrong tries. Ask for a new code.',
   rate_limited: 'Too many tries. Please wait a few minutes.',
@@ -81,7 +81,7 @@ function OrderCard({ o }) {
 
 export default function AccountView() {
   const [step, setStep] = useState('loading');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -103,7 +103,7 @@ export default function AccountView() {
 
   // Already signed in on this device? Go straight to the orders.
   useEffect(() => {
-    load().then((signedIn) => setStep((s) => (signedIn ? s : 'phone')));
+    load().then((signedIn) => setStep((s) => (signedIn ? s : 'email')));
   }, [load]);
 
   async function post(url, body) {
@@ -121,10 +121,10 @@ export default function AccountView() {
     setBusy(true);
     setError(null);
     try {
-      const { res, json } = await post('/api/account/code', { phone });
+      const { res, json } = await post('/api/account/code', { email });
       if (res.ok && json.ok) {
         setStep('code');
-        setNotice('If this number has orders with us, a 6-digit code is on its way to the email on your order. It works for 10 minutes.');
+        setNotice('If this address has orders with us, a 6-digit code is on its way. It works for 10 minutes.');
       } else {
         setError(message(json.error));
       }
@@ -140,7 +140,7 @@ export default function AccountView() {
     setBusy(true);
     setError(null);
     try {
-      const { res, json } = await post('/api/account/verify', { phone, code });
+      const { res, json } = await post('/api/account/verify', { email, code });
       if (res.ok && json.ok) {
         setCode('');
         setNotice(null);
@@ -157,10 +157,10 @@ export default function AccountView() {
   async function signOut() {
     await fetch('/api/account/sign-out', { method: 'POST' }).catch(() => {});
     setData(null);
-    setPhone('');
+    setEmail('');
     setCode('');
     setNotice(null);
-    setStep('phone');
+    setStep('email');
   }
 
   if (step === 'loading') {
@@ -212,23 +212,23 @@ export default function AccountView() {
           {step === 'code' ? 'Enter your code.' : 'Everything you’ve ordered, in one place.'}
         </h1>
 
-        {step === 'phone' ? (
+        {step === 'email' ? (
           <>
             <p className="lead">
-              Sign in with the mobile number you ordered with. We&rsquo;ll email you a 6-digit code — no password to remember.
+              Sign in with the email address you ordered with. We&rsquo;ll send you a 6-digit code — no password to remember.
             </p>
             <form className="form" onSubmit={sendCode}>
               <label>
-                Your mobile number
+                Your email address
                 <input
                   className="input"
                   required
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="03XX XXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
               {error && <p className="notice notice--error" role="alert" style={{ margin: 0 }}>{error}</p>}
@@ -263,8 +263,8 @@ export default function AccountView() {
               </button>
             </form>
             <div className="acct__links">
-              <button type="button" className="link-btn" onClick={() => { setStep('phone'); setError(null); setNotice(null); }}>
-                Use a different number
+              <button type="button" className="link-btn" onClick={() => { setStep('email'); setError(null); setNotice(null); }}>
+                Use a different email
               </button>
               <button type="button" className="link-btn" onClick={sendCode} disabled={busy}>Send a new code</button>
             </div>

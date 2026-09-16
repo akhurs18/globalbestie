@@ -2,7 +2,7 @@ import AccountView from '@/components/AccountView';
 
 export const metadata = {
   title: 'My orders',
-  description: 'Sign in with your mobile number to see every Global Bestie order: where it is, what you paid and what is left.',
+  description: 'Sign in with your email address to see every Global Bestie order: where it is, what you paid and what is left.',
   // Nothing here is for a search engine, and the page is per-customer.
   robots: { index: false, follow: false },
 };
