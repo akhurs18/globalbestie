@@ -1,0 +1,124 @@
+/* ---------- journey (home: how it works) ----------
+   Without JS every stop is shown and the flight is drawn and landed; `.is-live` (added by
+   Journey.jsx when motion is allowed) is what hides the stops the plane has not reached. */
+.flight { --ok: #2E8559; --cw: max(176px, 18%); background: var(--blush); padding-top: var(--sec); }
+.flight .h2 em { font-style: italic; color: var(--berry); }
+
+.flight__pin { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; }
+.flight__pin > .wrap { width: min(1280px, 100% - var(--pad) * 2); }
+.flight__map {
+  position: relative; margin: 176px auto 196px;
+  width: clamp(640px, (100vh - 400px) * 3.53, 100%);
+  aspect-ratio: 1200 / 340;
+}
+
+.flight__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.flight__svg--plane { pointer-events: none; }
+.flight pattern circle { fill: var(--rose); opacity: .45; }
+.jtrack { fill: none; stroke: var(--rose); stroke-width: 2; stroke-dasharray: 6 10; }
+.jpath { fill: none; stroke: var(--berry); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.jdot { fill: #fff; stroke: var(--rose); stroke-width: 2; transition: fill .4s, stroke .4s; }
+.jdot.is-on { fill: var(--berry); stroke: #fff; }
+.jdot--pin { fill: var(--berry); stroke: #fff; stroke-width: 3; }
+.jdot--end { fill: #fff; stroke: var(--berry); stroke-width: 3; }
+.is-landed .jdot--end, .flight:not(.is-live) .jdot--end { fill: var(--ok); stroke: #fff; }
+.jplane circle { fill: var(--ink); }
+.jplane path { fill: #fff; }
+
+.jpin {
+  position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, 16px);
+  font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--mauve);
+}
+
+.jsteps { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+.jwp {
+  position: absolute; width: var(--cw); top: var(--y);
+  left: clamp(0px, calc(var(--x) - var(--cw) * var(--k)), calc(100% - var(--cw)));
+}
+.jwp--top { transform: translateY(calc(-100% - 22px)); }
+.jwp--bottom { transform: translateY(22px); }
+
+.jcard {
+  background: #fff; border: 1px solid var(--line); border-radius: 20px;
+  box-shadow: 0 10px 30px -18px rgba(140, 64, 84, .35);
+  transition: opacity .6s var(--ease), transform .6s var(--ease), border-color .4s, box-shadow .4s;
+}
+.jwp.is-now .jcard { border-color: var(--berry); box-shadow: var(--shadow); }
+.is-live .jwp:not(.is-on) .jcard { opacity: 0; transform: translateY(14px) scale(.96); }
+.is-live .jwp--bottom:not(.is-on) .jcard { transform: translateY(-14px) scale(.96); }
+.is-live .jwp.is-on:not(.is-now) .jcard { opacity: .5; }
+
+.jcard__top { display: flex; align-items: baseline; gap: 8px; padding: 12px 16px 10px; border-bottom: 1px solid var(--line); }
+.jcard__n { font-family: var(--f-serif); font-style: italic; font-size: 24px; line-height: 1; color: var(--berry); }
+.jcard__t { margin: 0; font-size: 14px; font-weight: 800; letter-spacing: -.01em; }
+.jcard__body { display: grid; gap: 8px; justify-items: start; padding: 12px 16px 16px; font-size: 13px; }
+.jcard__body p { margin: 0; }
+
+.jmeta { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--mauve); }
+.jnote { color: var(--mauve); font-size: 12.5px; line-height: 1.45; }
+.jbig { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.jbubble { background: var(--blush); border-radius: 16px 16px 16px 4px; padding: 9px 13px; line-height: 1.4; }
+.jlink { font-size: 12px; font-weight: 600; color: var(--berry); }
+
+.jrows { display: grid; gap: 0; width: 100%; margin: 0; }
+.jrows > div { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.jrows dt { color: var(--mauve); font-size: 12px; }
+.jrows dd { margin: 0; font-family: var(--f-mono); font-size: 11.5px; white-space: nowrap; }
+.jrows .jrows__total { border-bottom: 0; padding-top: 8px; }
+.jrows .jrows__total dt { color: var(--ink); font-weight: 800; font-size: 13px; }
+.jrows .jrows__total dd { color: var(--berry); font-weight: 600; font-size: 13px; }
+
+.jstamp {
+  display: inline-block; padding: 6px 12px; border: 2px solid var(--ok); border-radius: 8px;
+  background: rgba(46, 133, 89, .1); color: var(--ok); transform: rotate(-3deg);
+  font-family: var(--f-mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+}
+.jicons { display: flex; align-items: center; gap: 6px; font-size: 22px; }
+.jicons b { font-size: 14px; color: var(--mauve); font-weight: 400; }
+.jroute { font-family: var(--f-serif); font-size: 30px; line-height: 1; }
+.jroute span { color: var(--berry); }
+.jlive { color: var(--ok); }
+.jlive i { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.jsplit { display: flex; justify-content: space-between; gap: 10px; width: 100%; }
+.jsplit span { color: var(--mauve); font-size: 12px; }
+.jsplit b { font-family: var(--f-mono); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.jdone { font-family: var(--f-serif); font-style: italic; font-size: 24px; line-height: 1; }
+
+/* Motion that plays as a stop switches on. */
+.jrows > div { transition: opacity .5s var(--ease), transform .5s var(--ease); transition-delay: calc(var(--i) * 80ms + 150ms); }
+.is-live .jwp:not(.is-on) .jrows > div { opacity: 0; transform: translateY(6px); transition-delay: 0ms; }
+.is-live .jwp.is-on .jstamp { animation: jstamp .7s var(--ease) .3s both; }
+.is-live .jlive i { animation: jpulse 1.4s ease-in-out infinite; }
+@keyframes jstamp {
+  0% { opacity: 0; transform: scale(1.5) rotate(-10deg); }
+  60% { opacity: 1; transform: scale(.95) rotate(-1deg); }
+  100% { opacity: 1; transform: rotate(-3deg); }
+}
+@keyframes jpulse { 50% { transform: scale(1.8); opacity: .35; } }
+
+.jrail { display: none; }
+
+/* Mobile: the same stops as a vertical timeline down the left edge. */
+@media (max-width: 900px) {
+  .flight { padding-bottom: var(--sec); }
+  .flight__pin { display: block; min-height: 0; }
+  .flight__map { width: auto; aspect-ratio: auto; margin: 0; padding-left: 40px; }
+  .flight__svg, .jpin { display: none; }
+  .jsteps { position: static; display: grid; gap: 22px; }
+  .jwp, .jwp--top, .jwp--bottom { position: relative; left: auto; top: auto; width: auto; max-width: 440px; transform: none; }
+  .jwp::before {
+    content: ''; position: absolute; left: -35px; top: 16px; width: 12px; height: 12px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--rose); transition: background .4s, border-color .4s;
+  }
+  .jwp.is-on::before { background: var(--berry); border-color: var(--berry); }
+  .jwp.is-now .jcard { border-color: var(--line); box-shadow: 0 10px 30px -18px rgba(140, 64, 84, .35); }
+  .is-live .jwp:not(.is-on) .jcard, .is-live .jwp--bottom:not(.is-on) .jcard { opacity: .35; transform: translateX(-8px); }
+  .is-live .jwp.is-on:not(.is-now) .jcard { opacity: 1; }
+  .jrail { display: block; position: absolute; left: 13px; top: 20px; bottom: 20px; width: 2px; background: var(--line); }
+  .jrail i { display: block; height: 100%; background: var(--berry); transform-origin: top; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jcard, .jdot, .jrows > div, .jwp::before { transition: none; }
+  .jstamp, .jlive i { animation: none !important; }
+}

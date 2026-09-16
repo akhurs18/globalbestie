@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+.env*.local
+.DS_Store
+*.log
+*.zip
+
+# Local dev tooling
+.claude/
