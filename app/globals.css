@@ -118,6 +118,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav__links a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 1.5px; background: var(--berry); transform: scaleX(0); transform-origin: left; transition: transform .35s var(--ease); }
 .nav__links a:hover::after { transform: scaleX(1); }
 .nav__actions { display: flex; gap: 10px; align-items: center; }
+/* Stays on a phone, where the buttons beside it do not: search is how you find things. */
+.nav__search { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); flex: none; }
+.nav__search:hover { border-color: var(--berry); color: var(--berry); }
 .nav__burger { display: none; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: #fff; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 0; }
 .nav__burger span { width: 16px; height: 1.5px; background: var(--ink); transition: transform .3s var(--ease); }
 .nav.is-open .nav__burger span:first-child { transform: translateY(3.25px) rotate(45deg); }
@@ -349,6 +352,10 @@ details.acc[open] summary::after { content: '–'; }
 .pills { display: flex; gap: 8px; flex-wrap: wrap; }
 .pill-opt { padding: 10px 20px; border-radius: 999px; border: 1px solid var(--line); background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
 .pill-opt[aria-pressed='true'], .pill-opt[aria-current='page'] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.searchbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; width: min(620px, 100%); margin-bottom: 20px; }
+.searchbar .input { min-width: 200px; }
+.searchbar .input::-webkit-search-cancel-button { cursor: pointer; }
+.searchbar .pill-opt { padding: 10px 18px; }
 .batch-card { background: var(--blush); border-radius: 20px; padding: 20px; display: grid; gap: 10px; }
 .batch-card__row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .trust { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }

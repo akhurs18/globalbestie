@@ -31,6 +31,12 @@ export default function Nav() {
           <Link href="/my-orders">My orders</Link>
         </nav>
         <div className="nav__actions">
+          <Link href="/shop#find" className="nav__search" aria-label="Search products" title="Search products">
+            <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <circle cx="7" cy="7" r="4.6" />
+              <path d="M10.6 10.6 14 14" strokeLinecap="round" />
+            </svg>
+          </Link>
           <Link href="/#club" className="btn btn--ghost btn--sm hide-sm">Bestie Club</Link>
           <BagLink className="btn btn--berry btn--sm" />
           <button
