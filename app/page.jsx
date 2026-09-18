@@ -24,7 +24,6 @@ export default async function Home() {
       <Hero product={featured} />
       <Marquee />
       <TheDrop items={drop} batch={batches.open} />
-      <Journey sample={featured} batchNo={batches.open?.number} />
       <PriceReceipt product={featured} batchNo={batches.open?.number} />
 
       {batches.current && (
@@ -60,6 +59,9 @@ export default async function Home() {
       </section>
 
       <BestieWall />
+      {/* Near the end: by here a shopper has seen the goods and the price, and "how does
+          this reach me?" is the question actually left over. */}
+      <Journey sample={featured} batchNo={batches.open?.number} />
       <BestieClub />
     </>
   );

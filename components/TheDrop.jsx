@@ -1,45 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ProductCard from './ProductCard';
 import Countdown from './Countdown';
 import { channel, contactLink } from '@/lib/site';
-import useIsomorphicLayoutEffect from '@/lib/useIsomorphicLayoutEffect';
 
+/**
+ * The Drop: one row of what is landing next.
+ *
+ * The row scrolls sideways under the reader's own finger or trackpad, and never on its
+ * own. It used to be pinned to the viewport and dragged across as you scrolled down,
+ * which takes the page away from the person reading it — you scroll to leave and the
+ * page refuses. Vertical scrolling stays vertical; sideways is a choice.
+ */
 export default function TheDrop({ items, batch }) {
-  const section = useRef(null);
-  const viewport = useRef(null);
-  const track = useRef(null);
-
-  // Layout effect, not useEffect: this pins `section.drop`, so GSAP wraps it in a
-  // pin-spacer. The cleanup below has to unwrap it *before* React detaches the section,
-  // or React removes a node that is no longer its child. See lib/useIsomorphicLayoutEffect.
-  useIsomorphicLayoutEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 901px) and (prefers-reduced-motion: no-preference)', () => {
-      const distance = () => Math.max(0, track.current.scrollWidth - viewport.current.clientWidth);
-      gsap.to(track.current, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: section.current,
-          start: 'top top',
-          end: () => `+=${distance()}`,
-          pin: true,
-          scrub: 0.6,
-          invalidateOnRefresh: true,
-        },
-      });
-    });
-    return () => mm.revert();
-  }, []);
-
   return (
-    <section id="drop" className="drop" ref={section}>
+    <section id="drop" className="drop">
       <div className="wrap drop__head">
         <div className="stack">
           <p className="label">The Drop{batch ? ` / Batch ${batch.number}` : ''}</p>
@@ -64,8 +40,8 @@ export default function TheDrop({ items, batch }) {
           </a>
         </div>
       </div>
-      <div className="drop__viewport" ref={viewport}>
-        <div className="drop__track" ref={track}>
+      <div className="drop__viewport">
+        <div className="drop__track">
           {items.map((p) => (
             <ProductCard key={p.slug} p={p} />
           ))}
