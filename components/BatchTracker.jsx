@@ -1,56 +1,19 @@
-'use client';
-
-import { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Reveal from './Reveal';
 import { settings } from '@/lib/products';
 
 const STAGES = ['Collecting', 'Sourcing', 'Shipped', 'Arriving', 'Arrived'];
 
-/** `batch` = { number, stage (0–4), dates[5] } from lib/live.js. Nothing renders without one. */
-export default function BatchTracker({ batch }) {
-  if (!batch) return null;
-  return <Tracker t={batch} />;
-}
-
-function Tracker({ t }) {
-  const target = t.stage / (STAGES.length - 1);
-  const box = useRef(null);
-  const stageEls = useRef([]);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const el = box.current;
-    // Called from a scrubbed tween's onUpdate, which can fire after React has unmounted
-    // this tracker — `el` is then detached and the stage refs are null. Bail out rather
-    // than throw "Cannot read properties of null (reading 'classList')" on navigation.
-    const apply = (p) => {
-      if (!el) return;
-      el.style.setProperty('--p', p.toFixed(4));
-      stageEls.current.forEach((s, i) => {
-        if (!s) return;
-        const reached = i / (STAGES.length - 1) <= p + 0.001;
-        s.classList.toggle('is-done', reached && i < t.stage);
-        s.classList.toggle('is-current', reached && i === t.stage);
-      });
-    };
-    const mm = gsap.matchMedia();
-    mm.add('(prefers-reduced-motion: no-preference)', () => {
-      const o = { p: 0 };
-      apply(0);
-      gsap.to(o, {
-        p: target,
-        ease: 'none',
-        onUpdate: () => apply(o.p),
-        scrollTrigger: { trigger: el, start: 'top 80%', end: 'top 30%', scrub: 0.8 },
-      });
-    });
-    mm.add('(prefers-reduced-motion: reduce)', () => apply(target));
-    return () => mm.revert();
-  }, [target, t.stage]);
+/**
+ * `batch` = { number, stage (0–4), dates[5] } from lib/live.js. Nothing renders without one.
+ *
+ * The markup is the finished trip; the sweep along the rail is CSS, held back until
+ * .is-in lands (components/Reveal.jsx) so it plays when the tracker reaches the reader.
+ */
+export default function BatchTracker({ batch: t }) {
+  if (!t) return null;
 
   return (
-    <div className="tracker" ref={box} style={{ '--p': target }}>
+    <Reveal className="tracker" style={{ '--p': t.stage / (STAGES.length - 1) }}>
       <div className="tracker__ends">
         <div className="tracker__place"><b>USA</b><small>New York</small></div>
         <span className="chip">Batch {t.number} · ETA ~{settings.preorderWeeks} weeks*</span>
@@ -64,7 +27,6 @@ function Tracker({ t }) {
         {STAGES.map((s, i) => (
           <li
             key={s}
-            ref={(node) => { stageEls.current[i] = node; }}
             className={`stage ${i < t.stage ? 'is-done' : ''} ${i === t.stage ? 'is-current' : ''}`}
             style={{ '--i': i }}
             aria-current={i === t.stage ? 'step' : undefined}
@@ -76,6 +38,6 @@ function Tracker({ t }) {
         ))}
       </ol>
       <p className="tracker__note">*Batch timing can vary. We update you at every stage.</p>
-    </div>
+    </Reveal>
   );
 }

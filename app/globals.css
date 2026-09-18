@@ -30,9 +30,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-stopped { overflow: hidden; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 body {
   margin: 0;
   background: var(--cream);
@@ -121,6 +119,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Stays on a phone, where the buttons beside it do not: search is how you find things. */
 .nav__search { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); flex: none; }
 .nav__search:hover { border-color: var(--berry); color: var(--berry); }
+/* Only on a phone, where the menu is behind a burger and the drop needs a way in. */
+.nav__drop { display: none; }
 .nav__burger { display: none; width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--line); background: #fff; flex-direction: column; align-items: center; justify-content: center; gap: 5px; cursor: pointer; padding: 0; }
 .nav__burger span { width: 16px; height: 1.5px; background: var(--ink); transition: transform .3s var(--ease); }
 .nav.is-open .nav__burger span:first-child { transform: translateY(3.25px) rotate(45deg); }
@@ -247,6 +247,8 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .receipt__total b { font-family: var(--f-body); font-weight: 800; font-size: clamp(26px, 3vw, 34px); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .receipt .split { font-family: var(--f-body); }
 .barcode { height: 40px; margin-top: 8px; background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px, var(--ink) 5px 9px, transparent 9px 11px, var(--ink) 11px 12px, transparent 12px 16px); }
+.receipt-print .receipt { clip-path: inset(0 0 100% 0); transition: clip-path 1.3s var(--ease); }
+.receipt-print.is-in .receipt { clip-path: inset(0 0 0 0); }
 .receipt-wrap > .sticker { position: absolute; right: -4px; top: 4px; transform: rotate(-8deg); background: var(--berry); color: #fff; z-index: 2; }
 .receipt-wrap > .sparkle { position: absolute; left: -12px; top: 40px; z-index: 2; }
 
@@ -256,29 +258,36 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .tracker__place b { display: block; font-weight: 800; font-size: clamp(28px, 4vw, 48px); color: var(--berry); letter-spacing: -.02em; line-height: 1; }
 .tracker__place small { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; color: var(--mauve); text-transform: uppercase; }
 .tracker__rail { position: relative; height: 3px; margin: 0 9px; background: repeating-linear-gradient(90deg, var(--line) 0 10px, transparent 10px 20px); }
-.tracker__fill { position: absolute; inset: 0; background: var(--berry); transform-origin: left; transform: scaleX(var(--p, 0)); }
-.tracker__plane { position: absolute; top: -46px; left: calc(var(--p, 0) * 100%); transform: translateX(-50%); }
+.tracker__fill { position: absolute; inset: 0; background: var(--berry); transform-origin: left; transform: scaleX(0); transition: transform 1.4s var(--ease) .1s; }
+.tracker.is-in .tracker__fill { transform: scaleX(var(--p, 0)); }
+.tracker__plane { position: absolute; top: -46px; left: 0; transform: translateX(-50%); transition: left 1.4s var(--ease) .1s; }
+.tracker.is-in .tracker__plane { left: calc(var(--p, 0) * 100%); }
 .tracker__stages { position: relative; height: 84px; margin: 0 9px; }
 .stage { position: absolute; top: -10px; left: calc(var(--i) * 25%); transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; text-align: center; white-space: nowrap; }
 .stage:first-child { transform: translateX(-9px); justify-items: start; text-align: left; }
 .stage:last-child { transform: translateX(calc(-100% + 9px)); justify-items: end; text-align: right; }
-.stage__dot { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--line); transition: all .4s var(--ease); }
+.stage__dot { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--line); transition: all .4s var(--ease) calc(var(--i, 0) * 300ms); }
+.stage__label, .stage__date { transition: color .4s var(--ease) calc(var(--i, 0) * 300ms); }
 .stage.is-done .stage__dot { background: var(--berry); border-color: var(--berry); }
 .stage.is-current .stage__dot { background: var(--berry); border-color: var(--berry); box-shadow: 0 0 0 6px rgba(233, 184, 187, .8); }
 .stage__label { font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--mauve); }
 .stage.is-done .stage__label, .stage.is-current .stage__label { color: var(--ink); }
 .stage__date { font-family: var(--f-mono); font-size: 10.5px; color: var(--mauve); }
 .stage.is-current .stage__date { color: var(--berry); }
+.tracker:not(.is-in) .stage__dot { background: #fff; border-color: var(--line); box-shadow: none; }
+.tracker:not(.is-in) .stage__label, .tracker:not(.is-in) .stage__date { color: var(--mauve); }
 .tracker__note { margin: 16px 0 0; font-size: 13px; color: var(--mauve); }
 
 /* ---------- shop by vibe ---------- */
 .vibe { display: flex; gap: 16px; height: clamp(420px, 42vw, 560px); }
 .tile { position: relative; flex: 1; border-radius: var(--r-lg); min-width: 0; isolation: isolate; transition: flex .7s var(--ease); display: block; }
 .vibe:not(:hover) .tile:first-child, .tile:hover, .tile:focus-visible { flex: 3.2; }
-.tile__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.tile__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; filter: saturate(1.08) contrast(1.05); }
 /* A cream wash from the foot of the tile: the name and the count are ink, and ink on a
    photograph is unreadable without something between them. */
-.tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(to top, rgba(255, 248, 244, .94) 0%, rgba(255, 248, 244, .6) 30%, rgba(255, 248, 244, .08) 62%); }
+/* The wash only has to carry the name at the foot of the tile. Any higher and it drains
+   the photograph, which is the thing worth looking at. */
+.tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(to top, rgba(255, 248, 244, .92) 0%, rgba(255, 248, 244, .5) 15%, rgba(255, 248, 244, .1) 32%, rgba(255, 248, 244, 0) 48%); }
 .tile__count, .tile > .sparkle, .tile__v, .tile__h { z-index: 2; }
 .tile__count { position: absolute; left: 22px; top: 22px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; background: rgba(255, 248, 244, .82); padding: 5px 10px; border-radius: 999px; }
 .tile > .sparkle { position: absolute; right: 22px; top: 22px; }
@@ -322,7 +331,7 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .phone-sticker { position: absolute; right: 12%; top: 2%; transform: rotate(10deg); }
 .form-note { font-size: 13px; color: var(--berry); margin: 0; }
 
-/* ---------- footer + sticky ---------- */
+/* ---------- footer ---------- */
 .footer { background: var(--blush); padding: clamp(56px, 7vw, 96px) 0 32px; overflow: hidden; }
 .footer__top { display: flex; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
 .footer__cols { display: flex; gap: clamp(40px, 6vw, 88px); flex-wrap: wrap; }
@@ -331,7 +340,6 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .footer__col a:hover { color: var(--berry); }
 .footer__word { font-family: var(--f-script); font-size: clamp(84px, 18vw, 290px); line-height: 1.2; color: var(--rose-deep); text-align: center; margin: 24px 0 8px; white-space: nowrap; }
 .footer__bar { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 20px; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--mauve); }
-.sticky { display: none; }
 
 /* ---------- inner pages ---------- */
 .page-head { padding: clamp(40px, 6vw, 80px) 0 clamp(24px, 4vw, 48px); display: grid; gap: 18px; justify-items: start; }
@@ -451,10 +459,9 @@ details.acc[open] summary::after { content: '–'; }
   .wall__cols { grid-template-columns: 1fr 1fr; height: 520px; }
   .wall__col:nth-child(n + 3) { display: none; }
   .ugc--note p { font-size: 20px; }
-  .sticky { display: flex; position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 60; background: var(--ink); border-radius: 999px; padding: 7px; gap: 7px; box-shadow: var(--shadow); }
-  .sticky .btn { flex: 1; padding: 13px 16px; }
-  .sticky .btn--white { flex: 0 0 auto; }
-  body { padding-bottom: 84px; }
+  /* The drop and the bag live in the header now. Nothing floats over the foot of the
+     page, so the page no longer has to reserve room for it. */
+  .nav__drop { display: inline-flex; }
 }
 @media (max-width: 700px) {
   .tracker__ends { flex-wrap: wrap; margin-bottom: 28px; }
@@ -467,10 +474,16 @@ details.acc[open] summary::after { content: '–'; }
   .stage.is-done:not(:last-child)::after { background: var(--berry); }
 }
 @media (max-width: 560px) {
-  .logo__word { font-size: 15px; letter-spacing: .12em; }
-  .logo__script { font-size: 20px; }
-  .nav__inner { height: 64px; }
-  .nav__actions .btn { display: none; }
+  /* Everything in the header has to fit one 375px line beside the logo, so each piece
+     gives up a little: Bestie Club and the magnifier move into the menu, and the logo,
+     the gaps and the buttons all come in. */
+  .logo__word { font-size: 13.5px; letter-spacing: .09em; }
+  .logo__script { font-size: 17px; }
+  .nav__inner { height: 64px; gap: 10px; }
+  .nav__actions .btn--ghost, .nav__search { display: none; }
+  .nav__actions .btn { padding: 8px 11px; font-size: 12.5px; }
+  .nav__actions { gap: 6px; }
+  .nav__burger { width: 40px; height: 40px; }
   .form__row { grid-template-columns: 1fr; }
   .journey { grid-template-columns: 1fr; }
   .hero__stats { gap: 20px; }
@@ -488,6 +501,7 @@ details.acc[open] summary::after { content: '–'; }
   .hero__curtain { display: none; }
   .line > span, .fade-in, .fade-only, .pop { opacity: 1 !important; }
   .reveal { opacity: 1; transform: none; }
+  .receipt-print .receipt { clip-path: none; }
   .wall__col, .marquee__track, .announce__track { animation: none !important; }
 }
 

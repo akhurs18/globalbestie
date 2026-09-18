@@ -37,6 +37,9 @@ export default function Nav() {
               <path d="M10.6 10.6 14 14" strokeLinecap="round" />
             </svg>
           </Link>
+          {/* On a phone these two are the whole point of the header: the drop and the bag.
+              They used to sit in a bar floating over the bottom of every page. */}
+          <Link href="/#drop" className="btn btn--ink btn--sm nav__drop">Drop</Link>
           <Link href="/#club" className="btn btn--ghost btn--sm hide-sm">Bestie Club</Link>
           <BagLink className="btn btn--berry btn--sm" />
           <button
@@ -53,6 +56,8 @@ export default function Nav() {
         </div>
       </div>
       <div className="nav__sheet" id="nav-sheet">
+        {/* The magnifier is hidden on the narrowest screens, so search lives here too. */}
+        <Link href="/shop#find" onClick={() => setOpen(false)}>Search</Link>
         {LINKS.map(([href, label]) => (
           <Link key={href} href={href} onClick={() => setOpen(false)}>{label}</Link>
         ))}

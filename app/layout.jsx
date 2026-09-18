@@ -1,9 +1,7 @@
 import './globals.css';
-import SmoothScroll from '@/components/SmoothScroll';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Nav from '@/components/Nav';
 import Footer from '@/components/Footer';
-import StickyBar from '@/components/StickyBar';
 import { BagProvider } from '@/components/BagProvider';
 
 export const metadata = {
@@ -44,13 +42,11 @@ export default function RootLayout({ children }) {
             </linearGradient>
           </defs>
         </svg>
-        <SmoothScroll />
         <BagProvider>
           <AnnouncementBar />
           <Nav />
           <main>{children}</main>
           <Footer />
-          <StickyBar />
         </BagProvider>
       </body>
     </html>
