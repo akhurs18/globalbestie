@@ -6,12 +6,15 @@ import { usePathname } from 'next/navigation';
 import Logo from './Logo';
 import BagLink from './BagLink';
 
+// "Track order" is deliberately not here. It answers the same question as My orders —
+// where is my stuff — and two entries for one question only makes a shopper choose
+// between them. The page stays, reached from the My orders sign-in card by anyone
+// without an order email, and from the footer.
 const LINKS = [
   ['/shop', 'Shop'],
   ['/#drop', 'The Drop'],
   ['/request', 'Request anything'],
   ['/how-it-works', 'How it works'],
-  ['/track', 'Track order'],
 ];
 
 export default function Nav() {

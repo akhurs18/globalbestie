@@ -14,7 +14,7 @@ export default function HowItWorks({ withHead = true, sample, batchNo = settings
               <h2 className="h2">Three taps.<br />Zero stress.</h2>
             </Reveal>
             <Reveal delay={120}>
-              <p className="lead">No DM ping-pong, no hidden fees. You request it, we confirm it, you pay in two halves.</p>
+              <p className="lead">No DM ping-pong, no hidden fees. Every piece is bought from an official US retailer, receipt kept. You request it, we confirm it, you pay in two halves.</p>
             </Reveal>
           </div>
         )}

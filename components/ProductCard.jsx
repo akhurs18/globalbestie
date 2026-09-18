@@ -26,7 +26,7 @@ export default function ProductCard({ p, grid = false }) {
       {shades > 1 && <span className="mono muted" style={{ fontSize: 11 }}>{shades} shades</span>}
       <span className="pcard__price">
         <b>{pkr(b.total)}</b>
-        <small>{pre ? `final · ~${settings.preorderWeeks} wks` : 'final · ships now'}</small>
+        <small>{pre ? `final · ~${settings.preorderWeeks} wks` : `final · ~${settings.inStockDays} days`}</small>
       </span>
     </Link>
   );

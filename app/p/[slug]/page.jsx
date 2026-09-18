@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
   if (!p) return {};
   return {
     title: p.name,
-    description: `${p.name}: ${pkr(p.b.total)} final price in Pakistan. ${p.stock === 'preorder' ? 'Preorder: pay 50% after we confirm, 50% when it lands.' : 'In stock, ships now.'}`,
+    description: `${p.name}: ${pkr(p.b.total)} final price in Pakistan. ${p.stock === 'preorder' ? 'Preorder: pay 50% after we confirm, 50% when it lands.' : `In stock, delivered within ~${settings.inStockDays} days.`}`,
   };
 }
 
@@ -31,7 +31,7 @@ function journey(b, pre) {
       ['01', 'Request it', 'Add to bag and send your request. No payment yet.', 'PKR 0 now'],
       ['02', 'We confirm', 'Stock and final PKR price, sent to you.', 'Final price'],
       ['03', 'Pay in full', 'Bank transfer after we confirm. We verify your proof.', pkr(b.total)],
-      ['04', 'We dispatch', 'Packed with love and sent to your door.', 'Ships now'],
+      ['04', 'We dispatch', 'Packed with love and sent to your door.', `~${settings.inStockDays} days`],
     ];
   }
   return [
@@ -72,7 +72,7 @@ export default async function ProductPage({ params }) {
             {p.brand && <span className="pcard__brand">{p.brand}</span>}
             <h1>{p.name}</h1>
             <div className="pills">
-              <span className={`chip ${pre ? 'chip--pre' : ''}`}>{pre ? `Preorder · ~${settings.preorderWeeks} wks` : 'In stock · ships now'}</span>
+              <span className={`chip ${pre ? 'chip--pre' : ''}`}>{pre ? `Preorder · ~${settings.preorderWeeks} wks` : `In stock · ~${settings.inStockDays} days`}</span>
               {open && <span className="chip">Batch {open.number}</span>}
             </div>
             <div>
@@ -91,13 +91,18 @@ export default async function ProductPage({ params }) {
                   <Countdown compact to={open.closesAt} />
                 </div>
                 <p className="small muted" style={{ margin: 0 }}>
-                  Estimated arrival ~{settings.preorderWeeks} weeks after the batch closes. Timing can vary; we update you at every stage.
+                  Estimated arrival ~{settings.preorderWeeks} weeks after the batch closes. Timing depends on when that shipment goes out; we keep this estimate updated on the site and update you at every stage.
                 </p>
               </div>
             )}
+            {!pre && (
+              <p className="small muted" style={{ margin: 0 }}>
+                Already in Pakistan. Ships to your door within ~{settings.inStockDays} days of payment.
+              </p>
+            )}
 
             <ul className="trust">
-              <li><Sparkle size={14} tone="berry" />Sourced from US retailers</li>
+              <li><Sparkle size={14} tone="berry" />Bought from official US retailers, receipt kept</li>
               <li><Sparkle size={14} tone="berry" />Team confirms before you pay</li>
               <li><Sparkle size={14} tone="berry" />Track every stage of your {pre ? 'batch' : 'order'}</li>
             </ul>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Art from './Art';
 import { useBag } from './BagProvider';
-import { pkr } from '@/lib/products';
+import { pkr, settings } from '@/lib/products';
 import { channel, sendMessage } from '@/lib/site';
 
 const ERRORS = {
@@ -118,7 +118,7 @@ export default function BagView({ catalogue }) {
         <ol className="steps-v">
           <li className="is-current"><span><b>We review your request</b><span className="muted small">Stock, your final PKR price and batch, sent to you on {channel}.</span></span></li>
           <li><span><b>You pay {anyPre ? 'the 50% advance' : 'in full'}</b><span className="muted small">By bank transfer, only after we confirm. Nothing to pay before that.</span></span></li>
-          <li><span><b>{anyPre ? 'Your batch flies home' : 'We dispatch'}</b><span className="muted small">{anyPre ? 'The balance is due when it lands in Pakistan.' : 'Straight to your door.'}</span></span></li>
+          <li><span><b>{anyPre ? 'Your batch flies home' : 'We dispatch'}</b><span className="muted small">{anyPre ? `The balance is due when it lands, ~${settings.preorderWeeks} wks after your batch closes.` : `Straight to your door, within ~${settings.inStockDays} days.`}</span></span></li>
         </ol>
         <div className="hero__ctas">
           <Link href="/track" className="btn btn--berry">Track my order</Link>
@@ -160,7 +160,7 @@ export default function BagView({ catalogue }) {
               <Link href={`/p/${x.slug}`} className="pcard__name">{x.p.name}</Link>
               {x.options && <span className="muted small">{x.options}</span>}
               <span className="mono muted" style={{ fontSize: 11 }}>
-                {!x.orderable ? (x.p.missing ? 'Coming soon: remove to continue' : 'Sold out: remove to continue') : x.p.stock === 'preorder' ? 'Preorder · ~4 wks' : 'In stock · ships now'}
+                {!x.orderable ? (x.p.missing ? 'Coming soon: remove to continue' : 'Sold out: remove to continue') : x.p.stock === 'preorder' ? `Preorder · ~${settings.preorderWeeks} wks` : `In stock · ~${settings.inStockDays} days`}
               </span>
             </div>
             <div className="bag-line__right">

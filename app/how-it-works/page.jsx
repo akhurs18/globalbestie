@@ -3,6 +3,7 @@ import HowItWorks from '@/components/HowItWorks';
 import Receipt from '@/components/Receipt';
 import FaqList from '@/components/FaqList';
 import { getBatchInfo, getLiveProducts } from '@/lib/live';
+import { settings } from '@/lib/products';
 
 export const metadata = {
   title: 'How it works',
@@ -56,12 +57,12 @@ export default async function HowItWorksPage() {
             <div className="card">
               <span className="chip chip--pre" style={{ justifySelf: 'start' }}>Preorder</span>
               <h3>50% after we confirm, 50% on arrival</h3>
-              <p>Once we confirm your price and batch, pay 50% by bank transfer to lock it in. The other 50% is due when the shipment lands in Pakistan, before we dispatch to you.</p>
+              <p>Once we confirm your price and batch, pay 50% by bank transfer to lock it in. The other 50% is due when the shipment lands in Pakistan, before we dispatch to you. Expect ~{settings.preorderWeeks} weeks after your batch closes, depending on when that batch ships, updated on the site as it moves.</p>
             </div>
             <div className="card">
               <span className="chip" style={{ justifySelf: 'start' }}>In stock</span>
-              <h3>Pay in full, ships now</h3>
-              <p>In-stock pieces are already in Pakistan. Pay in full after we confirm, and we dispatch straight away.</p>
+              <h3>Pay in full, delivered in ~{settings.inStockDays} days</h3>
+              <p>In-stock pieces are already in Pakistan. Pay in full after we confirm, and we dispatch straight away, within about {settings.inStockDays} days.</p>
             </div>
           </div>
         </div>

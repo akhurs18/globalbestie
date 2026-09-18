@@ -3,7 +3,7 @@ import Sparkle from './Sparkle';
 import Parallax from './Parallax';
 import Art from './Art';
 import { LogoMark } from './Logo';
-import { products, priceBreakdown, pkr } from '@/lib/products';
+import { products, priceBreakdown, pkr, settings } from '@/lib/products';
 
 export default function Hero({ product }) {
   const p = product ?? products[0];
@@ -19,7 +19,7 @@ export default function Hero({ product }) {
         <div className="hero__copy">
           <p className="eyebrow fade-in" style={{ '--d': '1.3s' }}>
             <Sparkle size={12} />
-            USA brands / delivered to Pakistan
+            Official US retailers / delivered to Pakistan
           </p>
           <h1 className="hero__title">
             <span className="line"><span style={{ '--i': 0 }}>US BRANDS.</span></span>
@@ -28,14 +28,14 @@ export default function Hero({ product }) {
           </h1>
           <p className="hero__serif fade-in" style={{ '--d': '1.8s' }}>your rich bestie in the States, basically.</p>
           <p className="hero__sub fade-in" style={{ '--d': '1.9s' }}>
-            Bags, shoes, beauty and fragrance from the US. See the final PKR price upfront, pay 50% now and 50% when it lands in Pakistan.
+            Bags, shoes, beauty and fragrance bought from official US retailers, never resellers, with the receipt kept for every order. See the final PKR price upfront, pay 50% now and 50% when it lands in Pakistan.
           </p>
           <div className="hero__ctas fade-in" style={{ '--d': '2s' }}>
             <Link href="/#drop" className="btn btn--berry btn--lg">Shop the drop →</Link>
             <Link href="/request" className="btn btn--ghost btn--lg">Request anything</Link>
           </div>
           <dl className="hero__stats fade-in" style={{ '--d': '2.1s' }}>
-            <div><dt>~4 wks</dt><dd>preorder delivery</dd></div>
+            <div><dt>~{settings.preorderWeeks} wks</dt><dd>preorder delivery</dd></div>
             <div><dt>PKR</dt><dd>final prices, no surprises</dd></div>
             <div><dt>50/50</dt><dd>split payments</dd></div>
           </dl>

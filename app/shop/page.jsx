@@ -55,7 +55,7 @@ export default async function ShopPage({ searchParams }) {
           <p className="lead">
             {query
               ? `${list.length} ${list.length === 1 ? 'match' : 'matches'} in ${where}.`
-              : `Every price is the final PKR price. Preorders take ~${settings.preorderWeeks} weeks; in-stock pieces ship now.`}
+              : `Every price is the final PKR price. Preorders take ~${settings.preorderWeeks} weeks depending on the batch; in-stock pieces arrive within ~${settings.inStockDays} days.`}
           </p>
         )}
       </header>
