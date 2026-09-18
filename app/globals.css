@@ -197,12 +197,12 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .countdown__u b { display: block; font-weight: 800; font-size: 26px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .countdown__u small { font-family: var(--f-mono); font-size: 9px; letter-spacing: .12em; color: var(--mauve); }
 /* The reader scrolls this row themselves; scrolling down the page never moves it. */
-.drop__viewport { overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity; scrollbar-width: none; padding-left: max(var(--pad), calc((100% - 1280px) / 2)); }
+.drop__viewport { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; padding-left: max(var(--pad), calc((100% - 1280px) / 2)); }
 .drop__viewport::-webkit-scrollbar { display: none; }
 .drop__track { display: flex; gap: 24px; width: max-content; padding-right: var(--pad); }
 .drop__end { width: 280px; flex: none; border-radius: var(--r-md); border: 1.5px dashed var(--rose-deep); display: grid; place-content: center; justify-items: center; gap: 16px; text-align: center; padding: 24px; }
 .drop__hint { margin-top: 24px; }
-.drop .pcard { width: 280px; scroll-snap-align: start; }
+.drop .pcard { width: 280px; }
 
 /* ---------- product card + art ---------- */
 .pcard { width: 300px; display: grid; gap: 8px; flex: none; }
