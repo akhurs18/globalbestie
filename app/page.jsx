@@ -1,6 +1,6 @@
 import Hero from '@/components/Hero';
 import Marquee from '@/components/Marquee';
-import Journey from '@/components/Journey';
+import HowItWorks from '@/components/HowItWorks';
 import TheDrop from '@/components/TheDrop';
 import PriceReceipt from '@/components/PriceReceipt';
 import BatchTracker from '@/components/BatchTracker';
@@ -61,7 +61,7 @@ export default async function Home() {
       <BestieWall />
       {/* Near the end: by here a shopper has seen the goods and the price, and "how does
           this reach me?" is the question actually left over. */}
-      <Journey sample={featured} batchNo={batches.open?.number} />
+      <HowItWorks sample={featured} batchNo={batches.open?.number} />
       <BestieClub />
     </>
   );
