@@ -222,6 +222,13 @@ html.no-intro .fade-in, html.no-intro .fade-only, html.no-intro .pop { animation
 .art--lilac { background: var(--lilacg); }
 .art--rose { background: var(--roseg); }
 .art > .chip { position: absolute; left: 14px; top: 14px; }
+/* Stand-in art for a product whose photo has not arrived: one still life per category. */
+.catart__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.catart--bags { background: var(--roseg); }
+.catart--shoes { background: var(--lilacg); }
+.catart--beauty { background: var(--pink); }
+.catart--fragrance { background: linear-gradient(135deg, #DCCFF3, #F7E4E3); }
+.catart--accessories { background: linear-gradient(135deg, #F7E4E3, #FFF8F4); }
 .art__orb { width: 48%; aspect-ratio: 1; border-radius: 50%; background: var(--chrome); box-shadow: inset -12px -18px 36px rgba(120, 120, 140, .3); }
 .art--chrome .art__orb { background: #fff; box-shadow: inset -10px -14px 30px rgba(120, 120, 140, .18); }
 .art__label { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: rgba(42, 33, 36, .5); white-space: nowrap; }

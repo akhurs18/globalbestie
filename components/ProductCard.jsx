@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import Art from './Art';
+import CategoryArt from './CategoryArt';
 import { priceBreakdown, pkr, settings } from '@/lib/products';
 
 export default function ProductCard({ p, grid = false }) {
@@ -17,9 +17,9 @@ export default function ProductCard({ p, grid = false }) {
           {chipEl}
         </div>
       ) : (
-        <Art art={p.art} className="pcard__art" label="photo coming soon">
+        <CategoryArt category={p.category} className="pcard__art" label="photo coming soon">
           {chipEl}
-        </Art>
+        </CategoryArt>
       )}
       {p.brand && <span className="pcard__brand">{p.brand}</span>}
       <span className="pcard__name">{p.name}</span>

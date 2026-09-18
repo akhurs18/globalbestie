@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Art from './Art';
-
-const VARIANTS = ['holo', 'pink', 'chrome', 'lilac', 'rose'];
+import CategoryArt from './CategoryArt';
 
 export default function Gallery({ p, batch }) {
   const [active, setActive] = useState(0);
@@ -47,27 +45,14 @@ export default function Gallery({ p, batch }) {
     );
   }
 
-  const views = [p.art, ...VARIANTS.filter((v) => v !== p.art)].slice(0, 4);
+  // No photo yet: its category's still life, and nothing pretending to be a second view.
+  // The four recoloured "views" that used to sit here showed the same nothing four times.
   return (
     <div className="gallery">
-      <Art art={views[active]} className="gallery__main" label="product photos coming soon">
+      <CategoryArt category={p.category} className="gallery__main" label="product photos coming soon">
         {chips}
         <span className="sticker sticker--script" aria-hidden="true">she got it!</span>
-      </Art>
-      <div className="gallery__thumbs">
-        {views.map((v, i) => (
-          <button
-            key={v}
-            type="button"
-            className={`thumb art art--${v}`}
-            aria-label={`Show view ${i + 1}`}
-            aria-pressed={active === i}
-            onClick={() => setActive(i)}
-          >
-            <span className="art__orb" />
-          </button>
-        ))}
-      </div>
+      </CategoryArt>
     </div>
   );
 }
